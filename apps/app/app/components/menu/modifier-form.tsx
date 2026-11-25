@@ -48,7 +48,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
-import { useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Form, useActionData, useNavigation } from 'react-router'
 import {
 	useDiscardKey,
@@ -66,6 +66,7 @@ import {
 	emptyDailyLimitForm,
 	type DailyLimitFormState,
 } from '#app/utils/menu/daily-limit-form.ts'
+import { type PosEntityLockInfo } from '#app/utils/menu/pos-ownership.server.ts'
 import { AssignedSortableList } from './assigned-sortable-list.tsx'
 import { DailyLimitFields } from './daily-limit-fields.tsx'
 import {
@@ -82,6 +83,7 @@ import {
 	ModifierSelectionLimitsFields,
 	ModifierSelectionModeField,
 } from './modifier-selection-fields.tsx'
+import { PosFieldControl, PosManagedBadge } from './pos-field-controls.tsx'
 
 export interface ModifierOptionData {
 	id: string
@@ -115,6 +117,7 @@ function SortableOptionRow({
 	onRemove,
 	onAddNestedGroup,
 	onRemoveNestedGroup,
+	disabled = false,
 }: {
 	option: ModifierOptionData
 	selectionType: 'single' | 'multiple' | 'quantity' | 'pizza'
@@ -130,6 +133,7 @@ function SortableOptionRow({
 	onRemove: () => void
 	onAddNestedGroup?: (groupId: string) => void
 	onRemoveNestedGroup?: (groupId: string) => void
+	disabled?: boolean
 }) {
 	const {
 		attributes,
@@ -139,7 +143,7 @@ function SortableOptionRow({
 		transform,
 		transition,
 		isDragging,
-	} = useSortable({ id: option.id })
+	} = useSortable({ id: option.id, disabled })
 
 	const displayName =
 		getLocalizedMenuValue(option.displayName, activeLocale, defaultLocale) ||
@@ -170,7 +174,8 @@ function SortableOptionRow({
 				ref={setActivatorNodeRef}
 				{...attributes}
 				{...listeners}
-				className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring shrink-0 cursor-grab rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing"
+				disabled={disabled}
+				className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring shrink-0 cursor-grab rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
 				aria-label="Drag to reorder option"
 			>
 				<Icon name="grip-vertical" className="size-4" />
@@ -362,6 +367,7 @@ function SortableOptionRow({
 					type="button"
 					variant="ghost"
 					size="icon-sm"
+					disabled={disabled}
 					onClick={onRemove}
 					aria-label={t`Remove option`}
 				>
@@ -432,6 +438,8 @@ interface ModifierFormProps {
 		groupName: string | null
 		groupInternalName: string | null
 	}>
+	/** POS field ownership & override state (#93). */
+	posLock?: PosEntityLockInfo
 	isSubmitting: boolean
 	pageTitle: string
 }
@@ -439,7 +447,26 @@ interface ModifierFormProps {
 export function ModifierForm(props: ModifierFormProps) {
 	// Discard remounts the form with the values it opened with.
 	const { discardKey, discard } = useDiscardKey()
-	return <ModifierFormBody key={discardKey} {...props} onDiscard={discard} />
+	const [restoreEpoch, setRestoreEpoch] = useState(0)
+	const prevOverriddenRef = useRef<string[]>(
+		props.posLock?.overriddenFields ?? [],
+	)
+	useEffect(() => {
+		const next = props.posLock?.overriddenFields ?? []
+		const restored = prevOverriddenRef.current.some(
+			(field) => !next.includes(field),
+		)
+		prevOverriddenRef.current = next
+		if (restored) setRestoreEpoch((n) => n + 1)
+	}, [props.posLock?.overriddenFields])
+
+	return (
+		<ModifierFormBody
+			key={`${discardKey}:${restoreEpoch}`}
+			{...props}
+			onDiscard={discard}
+		/>
+	)
 }
 
 function ModifierFormBody({
@@ -454,6 +481,7 @@ function ModifierFormBody({
 	allLocations,
 	initialParentOptionIds = [],
 	availableParentOptions = [],
+	posLock,
 	isSubmitting,
 	pageTitle,
 	onDiscard,
@@ -876,6 +904,8 @@ function ModifierFormBody({
 		setEditingOption(null)
 	}
 
+	const isNameLocked = Boolean(posLock?.lockedFields.includes('name'))
+	const isModifiersLocked = Boolean(posLock?.lockedFields.includes('modifiers'))
 	const isSingleSelection = selectionType === 'single'
 	const effectiveMinSelections = isSingleSelection
 		? minSelections > 0
@@ -937,6 +967,7 @@ function ModifierFormBody({
 					{/* Minimal Sticky Full-Width Header */}
 					<MenuFormHeader
 						pageTitle={pageTitle}
+						titleAccessory={<PosManagedBadge lock={posLock} />}
 						backHref={`/${orgSlug}/menu/modifiers`}
 						backLabel={t`Back to modifier groups`}
 						saveButtonText={t`Save Modifier Group`}
@@ -978,8 +1009,14 @@ function ModifierFormBody({
 											<LocalizedInput
 												value={name}
 												onChange={setName}
+												disabled={isNameLocked}
 												placeholder="e.g. Choice of Protein, Pizza Toppings, Sides"
 												required
+											/>
+											<PosFieldControl
+												lock={posLock}
+												field="name"
+												orgSlug={orgSlug}
 											/>
 										</div>
 
@@ -1008,11 +1045,17 @@ function ModifierFormBody({
 												Configure how guests interact with these options.
 											</Trans>
 										</FrameDescription>
+										<PosFieldControl
+											lock={posLock}
+											field="modifiers"
+											orgSlug={orgSlug}
+										/>
 									</FrameHeader>
 									<FramePanel className="p-5">
 										<ModifierSelectionModeField
 											value={selectionType}
 											onChange={handleSelectionTypeChange}
+											disabled={isModifiersLocked}
 										/>
 									</FramePanel>
 
@@ -1020,6 +1063,7 @@ function ModifierFormBody({
 										<FramePanel className="flex items-center justify-between gap-4 p-5">
 											<ModifierRequiredSelectionField
 												required={effectiveMinSelections === 1}
+												disabled={isModifiersLocked}
 												onChange={(isRequired) =>
 													setMinSelections(isRequired ? 1 : 0)
 												}
@@ -1030,6 +1074,7 @@ function ModifierFormBody({
 											<ModifierSelectionLimitsFields
 												minSelections={minSelections}
 												maxSelections={maxSelections}
+												disabled={isModifiersLocked}
 												onMinChange={setMinSelections}
 												onMaxChange={setMaxSelections}
 											/>
@@ -1048,6 +1093,11 @@ function ModifierFormBody({
 												Add the individual choices, prices, and dietary tags.
 											</Trans>
 										</FrameDescription>
+										<PosFieldControl
+											lock={posLock}
+											field="modifiers"
+											orgSlug={orgSlug}
+										/>
 									</FrameHeader>
 									{options.length === 0 ? (
 										<FramePanel className="text-muted-foreground px-5 py-6 text-center text-sm">
@@ -1079,6 +1129,7 @@ function ModifierFormBody({
 														activeLocale={activeLocale}
 														defaultLocale={defaultLocale}
 														availableModifierGroups={eligibleModifierGroups}
+														disabled={isModifiersLocked}
 														onToggleDefault={(checked) =>
 															handleSetOptionDefault(option.id, checked)
 														}
@@ -1094,6 +1145,7 @@ function ModifierFormBody({
 											type="button"
 											variant="outline"
 											size="sm"
+											disabled={isModifiersLocked}
 											onClick={handleOpenAddOption}
 											className="w-full"
 										>

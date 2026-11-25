@@ -7,6 +7,7 @@ import {
 	OrganizationMenuLocationOverride,
 	OrganizationMenuOption,
 } from '@repo/database'
+import { safeEnqueueMenuSync } from './menu-sync.server.ts'
 
 /** A change the App made by hand within this long of the region's own is still the region's. */
 export const AVAILABILITY_RESTORE_GRACE_MS = 60_000
@@ -53,8 +54,17 @@ export async function applyMenuAvailability(input: {
 					input.change,
 					input.by,
 				)
-	if (changed && input.by === 'hand' && input.recordManualEvent) {
-		void input.recordManualEvent(input.change)
+	if (changed) {
+		if (input.by === 'hand' && input.recordManualEvent) {
+			void input.recordManualEvent(input.change)
+		}
+		await safeEnqueueMenuSync(input.organizationId, {
+			locationIds: input.locationId ? [input.locationId] : null,
+			kind: 'availability',
+			entityType: input.change.entityType,
+			entityId: input.change.entityId,
+			available: input.change.available,
+		})
 	}
 	return changed
 }

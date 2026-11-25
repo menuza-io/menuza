@@ -18,6 +18,7 @@ import {
 	readFields,
 	sandboxUrls,
 	type PosProvider,
+	type RemoteHolidayHour,
 	type RemoteItem,
 	type RemoteMenu,
 } from './types.ts'
@@ -35,12 +36,37 @@ type Catalog = {
 	currency: string
 	version: number
 }
-type Store = { provider: PosProvider; merchantId: string; catalog: Catalog }
+type Store = {
+	provider: PosProvider
+	merchantId: string
+	catalog: Catalog
+	pausedUntil: string | null
+	holidayHours: RemoteHolidayHour[]
+}
 
 const stores = new Map<string, Store>()
 
 export function resetPosSandbox() {
 	stores.clear()
+}
+
+export function getSandboxPauseState(
+	integrationId: string,
+): { pausedUntil: string | null } | null {
+	const store = stores.get(integrationId)
+	if (!store) return null
+	return { pausedUntil: store.pausedUntil }
+}
+
+export function getSandboxHolidayHours(
+	integrationId: string,
+): RemoteHolidayHour[] | null {
+	const store = stores.get(integrationId)
+	if (!store) return null
+	return store.holidayHours.map((entry) => ({
+		...entry,
+		intervals: entry.intervals.map((slot) => ({ ...slot })),
+	}))
 }
 
 const json = (body: unknown, status = 200) =>
@@ -121,7 +147,13 @@ function getStore(request: { headers: Headers }, provider: PosProvider): Store {
 	}
 	const existing = stores.get(storeId)
 	if (existing) return existing
-	const created: Store = { provider, merchantId, catalog: seedCatalog() }
+	const created: Store = {
+		provider,
+		merchantId,
+		catalog: seedCatalog(),
+		pausedUntil: null,
+		holidayHours: [],
+	}
 	stores.set(storeId, created)
 	return created
 }
@@ -183,7 +215,14 @@ function handler(provider: PosProvider) {
 			catalog.items.find((entry) => entry.id === decodeURIComponent(id))
 
 		if (path.endsWith('/pause') && method === 'POST') {
-			return json({ pausedUntil: null })
+			const data = await body<{ until?: string | null }>().catch(() => ({
+				until: null,
+			}))
+			store.pausedUntil =
+				typeof data?.until === 'string' && data.until.trim()
+					? data.until.trim()
+					: null
+			return json({ pausedUntil: store.pausedUntil })
 		}
 
 		if (provider === 'clover') {
@@ -433,6 +472,13 @@ function handler(provider: PosProvider) {
 				replaceCatalog(catalog, decoded.items, decoded.menus)
 				return noContent()
 			}
+			if (path === `${root}/holiday-hours` && method === 'POST') {
+				const data = await body<{ holiday_hours?: RemoteHolidayHour[] }>()
+				store.holidayHours = Array.isArray(data.holiday_hours)
+					? data.holiday_hours
+					: []
+				return noContent()
+			}
 			const match = path.match(new RegExp(`^${root}/menus/items/([^/]+)$`))
 			if (match && method === 'POST') {
 				const target = find(match[1]!)
@@ -493,6 +539,13 @@ function handler(provider: PosProvider) {
 			}
 			if (path.startsWith(`${root}/menus/jobs/`)) {
 				return json({ job_id: path.split('/').pop(), status: 'COMPLETED' })
+			}
+			if (path === `${root}/holiday-hours` && method === 'PUT') {
+				const data = await body<{ holiday_hours?: RemoteHolidayHour[] }>()
+				store.holidayHours = Array.isArray(data.holiday_hours)
+					? data.holiday_hours
+					: []
+				return json({ updated: store.holidayHours.length })
 			}
 			if (path === `${root}/items/status` && method === 'PATCH') {
 				const updates =

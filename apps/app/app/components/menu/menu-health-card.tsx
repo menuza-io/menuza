@@ -212,6 +212,14 @@ function FixLabel({ check }: { check: MenuHealthCheckSummary }) {
 					other="# dishes are listed twice (same name and price)"
 				/>
 			)
+		case 'delivery_menu_differs':
+			return (
+				<Plural
+					value={n}
+					one="# delivery menu differs from Menuza"
+					other="# delivery menus differ from Menuza"
+				/>
+			)
 	}
 }
 
@@ -229,6 +237,7 @@ const CHECK_TITLES: Record<MenuHealthCheckKey, MessageDescriptor> = {
 	empty_option_group: msg`Option groups with no choices`,
 	impossible_minimum: msg`Option groups with an impossible minimum`,
 	duplicate_item: msg`Dishes listed twice`,
+	delivery_menu_differs: msg`Delivery menus out of sync`,
 }
 
 const CHECK_HINTS: Record<MenuHealthCheckKey, MessageDescriptor> = {
@@ -245,6 +254,7 @@ const CHECK_HINTS: Record<MenuHealthCheckKey, MessageDescriptor> = {
 	empty_option_group: msg`Guests are asked to choose and have nothing to pick.`,
 	impossible_minimum: msg`Guests can never finish ordering this dish.`,
 	duplicate_item: msg`Guests see the same dish twice.`,
+	delivery_menu_differs: msg`Dishes, prices, or availability on a delivery platform differ from Menuza.`,
 }
 
 const DISMISS_LABELS: Partial<Record<MenuHealthCheckKey, MessageDescriptor>> = {
@@ -269,6 +279,9 @@ function editHref(
 	entityType: MenuHealthEntityType,
 	id: string,
 ) {
+	if (entityType === 'integration') {
+		return `/${orgSlug}/settings/integrations`
+	}
 	const folder =
 		entityType === 'category'
 			? 'categories'
@@ -372,7 +385,7 @@ function RecordRow({
 					<Trans>Fix in photo studio</Trans>
 				</Link>
 			) : null}
-			{canEdit ? (
+			{canEdit && check.entityType !== 'integration' ? (
 				<Button
 					variant="ghost"
 					size="sm"
@@ -531,6 +544,14 @@ function CheckRow({
 							</Trans>
 						</Link>
 					) : null}
+					{check.key === 'delivery_menu_differs' ? (
+						<Link
+							to={`/${orgSlug}/settings/integrations`}
+							className="text-primary block text-sm hover:underline"
+						>
+							<Trans>Review differences in Integrations</Trans>
+						</Link>
+					) : null}
 					<DismissedList orgSlug={orgSlug} check={check} canEdit={canEdit} />
 				</div>
 			</CollapsibleContent>
@@ -540,6 +561,9 @@ function CheckRow({
 
 function fixHref(orgSlug: string, key: MenuHealthCheckKey) {
 	const entityType = menuHealthEntityType(key)
+	if (entityType === 'integration') {
+		return `/${orgSlug}/settings/integrations`
+	}
 	const list =
 		entityType === 'category'
 			? 'categories'
@@ -785,6 +809,8 @@ function FilterLabel({ checkKey }: { checkKey: MenuHealthCheckKey }) {
 			)
 		case 'duplicate_item':
 			return <Trans>Showing dishes listed twice</Trans>
+		case 'delivery_menu_differs':
+			return <Trans>Showing delivery connections that differ from Menuza</Trans>
 	}
 }
 

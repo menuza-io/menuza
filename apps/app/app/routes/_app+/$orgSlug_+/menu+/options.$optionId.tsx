@@ -22,6 +22,7 @@ import {
 	OrganizationMenuOptionNestedModifierGroupAssignment,
 	OrganizationMediaAsset,
 } from '@repo/database'
+import { type PosOwnershipField } from '@repo/integrations'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -40,6 +41,7 @@ import {
 	dailyLimitColumn,
 	dailyLimitLocationIds,
 } from '#app/utils/menu/daily-limit-save.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import {
 	dietaryAndOrderTypeColumns,
 	MENU_JSON_FORM_KEYS,
@@ -55,6 +57,13 @@ import {
 	assertModifierGroupIdsInOrganization,
 	assertOptionIdsInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
+import {
+	assertNoLockedFieldWrites,
+	handlePosFieldOverrideIntent,
+	localizedStringsEqual,
+	lockedFieldsForOne,
+	PosFieldLockedError,
+} from '#app/utils/menu/pos-ownership.server.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -198,13 +207,19 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	} catch {}
 
+	const [dailyLimitsEnabled, posLock] = await Promise.all([
+		isDailyDishLimitsEnabled(organization.id),
+		lockedFieldsForOne(organization.id, 'modifier_option', option.id),
+	])
+
 	return {
 		orgSlug: organization.slug,
 		optionId: option.id,
 		dataRegion: organization.dataRegion,
 		defaultLocale,
 		supportedLocales,
-		dailyLimitsEnabled: await isDailyDishLimitsEnabled(organization.id),
+		dailyLimitsEnabled,
+		posLock,
 		availableModifierGroups,
 		locations: locations.map((loc) => ({
 			id: loc.id,
@@ -258,9 +273,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		siteDefaultLocale: true,
 	})
 
-	await requireMenuWrite(request, organization.id)
+	const userId = await requireMenuWrite(request, organization.id)
 
 	const { optionId } = params
 	if (!optionId) {
@@ -270,6 +286,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await assertOptionIdsInOrganization(organization.id, [optionId])
 
 	const formData = await request.formData()
+	const defaultLocale = organization.siteDefaultLocale ?? 'en'
+
+	const overrideResponse = await handlePosFieldOverrideIntent({
+		organization,
+		userId,
+		request,
+		formData,
+		entityType: 'modifier_option',
+		entityId: optionId,
+		defaultLocale,
+	})
+	if (overrideResponse) return overrideResponse
+
 	const rawData: Record<string, unknown> = {}
 
 	for (const [key, value] of formData.entries()) {
@@ -323,6 +352,130 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		isTopping = pizzaGroups.length > 0
 	}
+
+	const posLock = await lockedFieldsForOne(
+		organization.id,
+		'modifier_option',
+		optionId,
+	)
+	if (posLock.isLinked) {
+		const [currentOption, currentLocOverrides] = await Promise.all([
+			db
+				.select()
+				.from(OrganizationMenuOption)
+				.where(
+					and(
+						eq(OrganizationMenuOption.id, optionId),
+						eq(OrganizationMenuOption.organizationId, organization.id),
+					),
+				)
+				.limit(1)
+				.then((r) => r[0]),
+			db
+				.select()
+				.from(OrganizationMenuLocationOverride)
+				.where(
+					and(
+						eq(
+							OrganizationMenuLocationOverride.organizationId,
+							organization.id,
+						),
+						eq(OrganizationMenuLocationOverride.entityType, 'modifier_option'),
+						eq(OrganizationMenuLocationOverride.entityId, optionId),
+					),
+				),
+		])
+		if (currentOption) {
+			const nextUnavailableUntil =
+				(data.availabilityStatus === 'unavailable_until' ||
+					data.availabilityStatus === 'unavailable_until_tomorrow') &&
+				data.unavailableUntil
+					? data.unavailableUntil
+					: null
+			const changedPosFields: PosOwnershipField[] = []
+			if (
+				!localizedStringsEqual(
+					currentOption.displayName,
+					data.displayName,
+					defaultLocale,
+				)
+			) {
+				changedPosFields.push('name')
+			}
+			const nextPriceLeft = isTopping ? (data.priceLeft ?? null) : null
+			const nextPriceRight = isTopping ? (data.priceRight ?? null) : null
+			if (
+				Math.abs(currentOption.price - data.price) > 1e-6 ||
+				(currentOption.priceLeft ?? null) !== nextPriceLeft ||
+				(currentOption.priceRight ?? null) !== nextPriceRight
+			) {
+				changedPosFields.push('price')
+			}
+			if (
+				currentOption.availabilityStatus !== data.availabilityStatus ||
+				(currentOption.unavailableUntil?.getTime() ?? null) !==
+					(nextUnavailableUntil?.getTime() ?? null)
+			) {
+				changedPosFields.push('available')
+			}
+			try {
+				assertNoLockedFieldWrites(posLock, changedPosFields)
+
+				const prevPriceByLoc = new Map(
+					currentLocOverrides.map((ov) => [ov.locationId, ov.price ?? null]),
+				)
+				const incomingOverrides = data.locationOverrides ?? {}
+				const allLocIds = new Set([
+					...prevPriceByLoc.keys(),
+					...Object.keys(incomingOverrides),
+				])
+				for (const locId of allLocIds) {
+					const prevLocPrice = prevPriceByLoc.get(locId) ?? null
+					const nextLocPrice = incomingOverrides[locId]?.price ?? null
+					const priceDiffers =
+						prevLocPrice === null || nextLocPrice === null
+							? prevLocPrice !== nextLocPrice
+							: Math.abs(prevLocPrice - nextLocPrice) > 1e-6
+					if (priceDiffers) {
+						assertNoLockedFieldWrites(posLock, ['price'], { locationId: locId })
+					}
+				}
+			} catch (error) {
+				if (error instanceof PosFieldLockedError) return error.toResponse()
+				throw error
+			}
+		}
+	}
+
+	const [priorOptionRow, priorOptionLocOverrides] = await Promise.all([
+		db
+			.select({
+				availabilityStatus: OrganizationMenuOption.availabilityStatus,
+				unavailableUntil: OrganizationMenuOption.unavailableUntil,
+			})
+			.from(OrganizationMenuOption)
+			.where(
+				and(
+					eq(OrganizationMenuOption.id, optionId),
+					eq(OrganizationMenuOption.organizationId, organization.id),
+				),
+			)
+			.limit(1)
+			.then((r) => r[0]),
+		db
+			.select({
+				locationId: OrganizationMenuLocationOverride.locationId,
+				availabilityStatus: OrganizationMenuLocationOverride.availabilityStatus,
+			})
+			.from(OrganizationMenuLocationOverride)
+			.where(
+				and(
+					eq(OrganizationMenuLocationOverride.organizationId, organization.id),
+					eq(OrganizationMenuLocationOverride.entityType, 'modifier_option'),
+					eq(OrganizationMenuLocationOverride.entityId, optionId),
+				),
+			),
+	])
 
 	const graphFailure = await db.transaction(async (tx) => {
 		await assertMediaKeysInOrganization(
@@ -472,6 +625,54 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	// Purge site KV cache
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
 
+	const nextOptionUntil =
+		(data.availabilityStatus === 'unavailable_until' ||
+			data.availabilityStatus === 'unavailable_until_tomorrow') &&
+		data.unavailableUntil
+			? data.unavailableUntil
+			: null
+	const globalOptAvailChanged =
+		priorOptionRow !== undefined &&
+		(priorOptionRow.availabilityStatus !== data.availabilityStatus ||
+			(priorOptionRow.unavailableUntil?.getTime() ?? null) !==
+				(nextOptionUntil?.getTime() ?? null))
+	const priorOptAvailByLoc = new Map(
+		priorOptionLocOverrides.map((ov) => [
+			ov.locationId,
+			ov.availabilityStatus ?? null,
+		]),
+	)
+	const nextOptOverrides = data.locationOverrides ?? {}
+	const changedOptLocations = [
+		...new Set([
+			...priorOptAvailByLoc.keys(),
+			...Object.keys(nextOptOverrides),
+		]),
+	].filter(
+		(locId) =>
+			(priorOptAvailByLoc.get(locId) ?? null) !==
+			(nextOptOverrides[locId]?.availabilityStatus ?? null),
+	)
+
+	if (globalOptAvailChanged) {
+		await safeEnqueueMenuSync(organization.id, {
+			kind: 'availability',
+			entityType: 'modifier_option',
+			entityId: optionId,
+		})
+	} else if (changedOptLocations.length > 0) {
+		await safeEnqueueMenuSync(organization.id, {
+			locationIds: changedOptLocations,
+			kind: 'availability',
+			entityType: 'modifier_option',
+			entityId: optionId,
+		})
+	}
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
+	})
+
 	return redirect(`/${organization.slug}/menu/options`)
 }
 
@@ -486,6 +687,7 @@ export default function EditOptionRoute() {
 		supportedLocales,
 		defaultLocale,
 		dailyLimitsEnabled,
+		posLock,
 	} = useLoaderData<typeof loader>()
 	const navigation = useNavigation()
 	const actionData = useActionData<{ error?: Record<string, string[]> }>()
@@ -503,6 +705,7 @@ export default function EditOptionRoute() {
 				supportedLocales={supportedLocales}
 				defaultLocale={defaultLocale}
 				dailyLimitsEnabled={dailyLimitsEnabled}
+				posLock={posLock}
 				isSubmitting={isSubmitting}
 				pageTitle="Edit Option"
 				actionError={actionData?.error}

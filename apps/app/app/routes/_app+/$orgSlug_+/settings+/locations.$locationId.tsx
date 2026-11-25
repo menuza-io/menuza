@@ -57,10 +57,12 @@ import { type OrderPolicyValues } from '#app/components/locations/order-policies
 import { CopyLocationOverridesDialog } from '#app/components/menu/copy-location-overrides-dialog.tsx'
 import { gbpFlags } from '#app/utils/gbp/context.server.ts'
 import { enqueueGbpPush } from '#app/utils/gbp/sync.server.ts'
+import { isStoreSettingsEnabled } from '#app/utils/integrations/flags.server.ts'
 import { loadLocationPolicyView } from '#app/utils/location/chain-defaults.server.ts'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
 import { lockedSettingsChangedByFormSave } from '#app/utils/location/location-settings.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import {
 	type CheckoutRulesBundle,
 	orderCapsFormFromRecord,
@@ -115,6 +117,7 @@ const LocationInputSchema = z.object({
 			'Slug must contain only lowercase letters, numbers, and hyphens',
 		),
 	phone: z.string().optional(),
+	email: z.string().optional(),
 	timezone: z.string().default('America/New_York'),
 	taxRate: z.coerce.number().min(0).default(0),
 	...locationTaxInputFields,
@@ -596,6 +599,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		name: data.name,
 		slug: data.slug,
 		phone: data.phone || null,
+		...(data.email !== undefined ? { email: data.email.trim() || null } : {}),
 		timezone: data.timezone,
 		taxRate: data.taxRate,
 		taxInclusive: data.taxInclusive,
@@ -660,7 +664,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const [before] = await db
-		.select({ slug: OrganizationLocation.slug })
+		.select({
+			slug: OrganizationLocation.slug,
+			specialHours: OrganizationLocation.specialHours,
+		})
 		.from(OrganizationLocation)
 		.where(
 			and(
@@ -701,6 +708,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		organizationLocationId: locationId,
 		actorId: userId,
 	})
+	if (
+		(before?.specialHours ?? null) !== (updateSet.specialHours ?? null) &&
+		(await isStoreSettingsEnabled(organization.id))
+	) {
+		await safeEnqueueMenuSync(organization.id, {
+			kind: 'holiday_hours',
+			entityType: 'all',
+			locationIds: [locationId],
+			immediate: true,
+		})
+	}
 
 	return redirectWithToast(`/${organization.slug}/settings/locations`, {
 		type: 'success',

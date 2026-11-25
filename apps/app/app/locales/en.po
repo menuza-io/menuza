@@ -300,6 +300,11 @@ msgstr "{0, plural, one {# delivery} other {# deliveries}}"
 msgid "{0, plural, one {# device is still counting} other {# devices are still counting}}"
 msgstr "{0, plural, one {# device is still counting} other {# devices are still counting}}"
 
+#. placeholder {0}: integration.menuCheck.diffCount
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:481
+msgid "{0, plural, one {# difference} other {# differences}}"
+msgstr "{0, plural, one {# difference} other {# differences}}"
+
 #. placeholder {0}: entries.length
 #: app/components/inventory/sold-out-panel.tsx:131
 msgid "{0, plural, one {# dish or option is off the menu.} other {# dishes and options are off the menu.}}"
@@ -311,7 +316,7 @@ msgid "{0, plural, one {# dish was left alone because its photo changed or the d
 msgstr "{0, plural, one {# dish was left alone because its photo changed or the draft changed.} other {# dishes were left alone because their photo changed or the draft changed.}}"
 
 #. placeholder {0}: check.dismissedCount
-#: app/components/menu/menu-health-card.tsx:443
+#: app/components/menu/menu-health-card.tsx:456
 msgid "{0, plural, one {# dismissed} other {# dismissed}}"
 msgstr "{0, plural, one {# dismissed} other {# dismissed}}"
 
@@ -731,7 +736,7 @@ msgid "{0, plural, one {# task} other {# tasks}}"
 msgstr "{0, plural, one {# task} other {# tasks}}"
 
 #. placeholder {0}: health.fixCount
-#: app/components/menu/menu-health-card.tsx:666
+#: app/components/menu/menu-health-card.tsx:690
 msgid "{0, plural, one {# thing to fix.} other {# things to fix.}}"
 msgstr "{0, plural, one {# thing to fix.} other {# things to fix.}}"
 
@@ -1058,6 +1063,10 @@ msgstr "{0} blocks · rendered in your website branding"
 msgid "{0} categories"
 msgstr "{0} categories"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:743
+#~ msgid "{0} created"
+#~ msgstr "{0} created"
+
 #. placeholder {0}: filteredDrops.length
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:414
 msgid "{0} drops"
@@ -1069,7 +1078,7 @@ msgid "{0} is locked to its current table. Unlock and move?"
 msgstr "{0} is locked to its current table. Unlock and move?"
 
 #. placeholder {0}: filteredItems.length
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:823
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:914
 msgid "{0} items"
 msgstr "{0} items"
 
@@ -1106,6 +1115,10 @@ msgstr "{0} of {1} text sends used"
 msgid "{0} of {1} text sends used this month"
 msgstr "{0} of {1} text sends used this month"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:759
+#~ msgid "{0} pushed"
+#~ msgstr "{0} pushed"
+
 #. placeholder {0}: formatRating(store.ratingX100)
 #. placeholder {1}: store.ratingCount
 #: app/components/settings/cards/organization/customer-app-card.tsx:99
@@ -1116,6 +1129,18 @@ msgstr "{0} stars from {1} ratings"
 #: app/routes/_app+/$orgSlug_+/loyalty+/promotions.tsx:572
 msgid "{0} stops giving bonus points right away. Points it already gave stay where they are. To pause it for a while, turn it off instead."
 msgstr "{0} stops giving bonus points right away. Points it already gave stay where they are. To pause it for a while, turn it off instead."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:634
+#~ msgid "{0} sync history"
+#~ msgstr "{0} sync history"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:753
+#~ msgid "{0} unchanged"
+#~ msgstr "{0} unchanged"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:748
+#~ msgid "{0} updated"
+#~ msgstr "{0} updated"
 
 #. placeholder {0}: slot.used
 #: app/components/orders/slot-limits-panel.tsx:209
@@ -1639,6 +1664,10 @@ msgstr "{created, plural, one {# task added.} other {# tasks added.}}"
 msgid "{created} imported, {existing} already on your team, {notImported} not imported."
 msgstr "{created} imported, {existing} already on your team, {notImported} not imported."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1312
+msgid "{createdCount} created"
+msgstr "{createdCount} created"
+
 #: app/components/pos/terminals-manager.tsx:2005
 msgid "{createdLabel} is ready to take orders."
 msgstr "{createdLabel} is ready to take orders."
@@ -1704,7 +1733,7 @@ msgstr "{days} days"
 msgid "{days}, {from} to {to}"
 msgstr "{days}, {from} to {to}"
 
-#: app/components/ui/notification-bell.tsx:153
+#: app/components/ui/notification-bell.tsx:158
 msgid "{days}d ago"
 msgstr ""
 
@@ -1760,11 +1789,11 @@ msgstr "{dishName} is available again"
 msgid "{dishName} is hidden from your menu"
 msgstr "{dishName} is hidden from your menu"
 
-#: app/components/menu/menu-health-card.tsx:654
+#: app/components/menu/menu-health-card.tsx:678
 msgid "{dismissedTotal, plural, one {Nothing left to fix. # dismissed.} other {Nothing left to fix. # dismissed.}}"
 msgstr "{dismissedTotal, plural, one {Nothing left to fix. # dismissed.} other {Nothing left to fix. # dismissed.}}"
 
-#: app/components/menu/menu-health-card.tsx:358
+#: app/components/menu/menu-health-card.tsx:371
 msgid "{dismissLabel}: {name}"
 msgstr "{dismissLabel}: {name}"
 
@@ -1960,7 +1989,7 @@ msgstr "{hours}h"
 msgid "{hours}h {rest}m"
 msgstr "{hours}h {rest}m"
 
-#: app/components/ui/notification-bell.tsx:149
+#: app/components/ui/notification-bell.tsx:154
 msgid "{hours}h ago"
 msgstr ""
 
@@ -2168,7 +2197,7 @@ msgstr "{minutes} minutes"
 msgid "{minutes}m {remainingSec}s"
 msgstr ""
 
-#: app/components/ui/notification-bell.tsx:145
+#: app/components/ui/notification-bell.tsx:150
 msgid "{minutes}m ago"
 msgstr ""
 
@@ -2208,6 +2237,10 @@ msgstr "{n, plural, one {# certificate is expiring or has expired} other {# cert
 #: app/utils/inventory/alert-copy.ts:90
 msgid "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
 msgstr "{n, plural, one {# count is waiting for review} other {# counts are waiting for review}}"
+
+#: app/components/menu/menu-health-card.tsx:217
+msgid "{n, plural, one {# delivery menu differs from Menuza} other {# delivery menus differ from Menuza}}"
+msgstr "{n, plural, one {# delivery menu differs from Menuza} other {# delivery menus differ from Menuza}}"
 
 #: app/components/menu/menu-health-card.tsx:153
 msgid "{n, plural, one {# dish doesn't list allergens or calories} other {# dishes don't list allergens or calories}}"
@@ -2677,7 +2710,7 @@ msgstr "{percent}% (up to {max})"
 msgid "{percent}% of orders used a discount ({withDiscount} of {total}), till discounts included."
 msgstr "{percent}% of orders used a discount ({withDiscount} of {total}), till discounts included."
 
-#: app/components/menu/item-form.tsx:609
+#: app/components/menu/item-form.tsx:703
 msgid "{photoCount}/5 photos"
 msgstr "{photoCount}/5 photos"
 
@@ -2737,9 +2770,25 @@ msgstr "{provider} is connected."
 msgid "{provider} is disconnected, so its orders and menu are not syncing."
 msgstr "{provider} is disconnected, so its orders and menu are not syncing."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1406
+msgid "{providerDisplayName} menu differences"
+msgstr "{providerDisplayName} menu differences"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:949
+msgid "{providerDisplayName} store settings"
+msgstr "{providerDisplayName} store settings"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1199
+msgid "{providerDisplayName} sync history"
+msgstr "{providerDisplayName} sync history"
+
 #: app/routes/_app+/$orgSlug_+/loyalty+/overview.tsx:509
 msgid "{purchaseCount, plural, one {# purchase} other {# purchases}}"
 msgstr "{purchaseCount, plural, one {# purchase} other {# purchases}}"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1328
+msgid "{pushedCount} pushed"
+msgstr "{pushedCount} pushed"
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:244
 msgid "{pushSent} sent, {pushOpened} opened ({pushOpenRate})."
@@ -2922,7 +2971,7 @@ msgstr "{seconds, plural, one {Closing in # second} other {Closing in # seconds}
 msgid "{seconds} seconds"
 msgstr "{seconds} seconds"
 
-#: app/components/ui/notification-bell.tsx:141
+#: app/components/ui/notification-bell.tsx:146
 msgid "{seconds}s ago"
 msgstr ""
 
@@ -2970,6 +3019,10 @@ msgstr "{shown} of {total} reviewed"
 #: app/components/media-library/bulk-dish-photos.tsx:246
 msgid "{skippedCount} files in {fileName} were left out because they are not photos, are too large or could not be read."
 msgstr "{skippedCount} files in {fileName} were left out because they are not photos, are too large or could not be read."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1322
+msgid "{skippedCount} unchanged"
+msgstr "{skippedCount} unchanged"
 
 #: app/components/menu/drop-wizard/drop-drawers.tsx:302
 #: app/components/menu/drop-wizard/drop-form.tsx:1131
@@ -3134,7 +3187,7 @@ msgstr ""
 msgid "{trend}%"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1228
+#: app/components/menu/modifier-form.tsx:1282
 msgid "{triggerCount} of {optionCount}"
 msgstr "{triggerCount} of {optionCount}"
 
@@ -3173,6 +3226,10 @@ msgstr "{unread} unread"
 #: app/components/website/domain/connect-card.tsx:383
 msgid "{unreadLines} lines of the file could not be read."
 msgstr "{unreadLines} lines of the file could not be read."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1317
+msgid "{updatedCount} updated"
+msgstr "{updatedCount} updated"
 
 #: app/components/media-library/bulk-file-list.tsx:90
 msgid "{uploaded} of {total} uploaded"
@@ -3323,7 +3380,7 @@ msgstr "**A discount reached its weekly budget**"
 msgid "**New form response**"
 msgstr "**New form response**"
 
-#: app/components/ui/notification-bell.tsx:261
+#: app/components/ui/notification-bell.tsx:266
 msgid "**New response to {safeFormName}**"
 msgstr "**New response to {safeFormName}**"
 
@@ -3389,7 +3446,7 @@ msgstr "+{lateMin}m late"
 msgid "+{minutes} min"
 msgstr "+{minutes} min"
 
-#: app/components/orders/ordering-controls.tsx:199
+#: app/components/orders/ordering-controls.tsx:301
 msgid "+{minutes} minutes"
 msgstr "+{minutes} minutes"
 
@@ -3638,7 +3695,7 @@ msgstr ""
 msgid "${basePriceValue} billed annually"
 msgstr ""
 
-#: app/components/menu/modifier-selection-fields.tsx:152
+#: app/components/menu/modifier-selection-fields.tsx:165
 msgid "0 = optional choice, 1+ = required"
 msgstr "0 = optional choice, 1+ = required"
 
@@ -3689,7 +3746,7 @@ msgid "1 form"
 msgstr "1 form"
 
 #: app/components/locations/bulk-ordering-dialog.tsx:44
-#: app/components/orders/ordering-controls.tsx:117
+#: app/components/orders/ordering-controls.tsx:167
 #: app/components/settings/cards/alert-settings-card.tsx:398
 msgid "1 hour"
 msgstr "1 hour"
@@ -3703,7 +3760,7 @@ msgstr "1 hour late"
 msgid "1 hour prior"
 msgstr "1 hour prior"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:820
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:911
 msgid "1 item"
 msgstr "1 item"
 
@@ -3806,7 +3863,7 @@ msgid "15 min"
 msgstr "15 min"
 
 #: app/components/locations/bulk-ordering-dialog.tsx:42
-#: app/components/orders/ordering-controls.tsx:115
+#: app/components/orders/ordering-controls.tsx:165
 msgid "15 minutes"
 msgstr "15 minutes"
 
@@ -3849,7 +3906,7 @@ msgid "30 min"
 msgstr "30 min"
 
 #: app/components/locations/bulk-ordering-dialog.tsx:43
-#: app/components/orders/ordering-controls.tsx:116
+#: app/components/orders/ordering-controls.tsx:166
 msgid "30 minutes"
 msgstr "30 minutes"
 
@@ -4175,7 +4232,7 @@ msgstr "A former team member"
 msgid "A former team member has this email or phone number. Rehire them from the team list instead."
 msgstr "A former team member has this email or phone number. Rehire them from the team list instead."
 
-#: app/components/menu/menu-health-card.tsx:235
+#: app/components/menu/menu-health-card.tsx:244
 msgid "A free dish is usually a mistake."
 msgstr "A free dish is usually a mistake."
 
@@ -4342,7 +4399,7 @@ msgstr "A name and a color are enough. The rest is optional."
 msgid "A name can have only one SPF record. Edit the existing one."
 msgstr "A name can have only one SPF record. Edit the existing one."
 
-#: app/components/menu/option-form.tsx:638
+#: app/components/menu/option-form.tsx:686
 msgid "A name that removes something, such as “No onions”, starts as Attention. Choose None to leave it plain."
 msgstr "A name that removes something, such as “No onions”, starts as Attention. Choose None to leave it plain."
 
@@ -4641,7 +4698,7 @@ msgstr "A set price needs specific items or categories, or a meal deal."
 msgid "A setup check needs attention."
 msgstr "A setup check needs attention."
 
-#: app/components/menu/menu-health-card.tsx:238
+#: app/components/menu/menu-health-card.tsx:247
 msgid "A short description helps guests order."
 msgstr "A short description helps guests order."
 
@@ -4922,7 +4979,7 @@ msgstr "Accept within {clock}"
 msgid "Accepted by"
 msgstr "Accepted by"
 
-#: app/components/menu/item-form.tsx:613
+#: app/components/menu/item-form.tsx:707
 msgid "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 msgstr "Accepts JPG, PNG, WebP up to 5MB. Uploads go directly to your media library."
 
@@ -5021,7 +5078,7 @@ msgstr "Action failed"
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:535
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:354
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:264
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:598
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:681
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:350
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:409
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:462
@@ -5199,7 +5256,7 @@ msgstr "Add a break"
 msgid "Add a card in Billing first, then come back."
 msgstr "Add a card in Billing first, then come back."
 
-#: app/components/menu/item-form.tsx:912
+#: app/components/menu/item-form.tsx:1056
 #: app/components/menu/menu-form.tsx:366
 msgid "Add a category"
 msgstr "Add a category"
@@ -5268,7 +5325,7 @@ msgid "Add a dining area first, then add its tables."
 msgstr "Add a dining area first, then add its tables."
 
 #: ../../packages/marketing/src/components/email/menu-item-inspector.tsx:279
-#: app/components/menu/menu-health-card.tsx:624
+#: app/components/menu/menu-health-card.tsx:648
 msgid "Add a dish"
 msgstr "Add a dish"
 
@@ -5344,7 +5401,7 @@ msgstr "Add a location, or ask an admin for access to one, to see its status."
 msgid "Add a menu"
 msgstr "Add a menu"
 
-#: app/components/menu/item-form.tsx:814
+#: app/components/menu/item-form.tsx:950
 msgid "Add a modifier group"
 msgstr "Add a modifier group"
 
@@ -5585,7 +5642,7 @@ msgstr "Add an event, then put the Upcoming events section on any page."
 #: app/components/inventory/review-order-screen.tsx:902
 #: app/components/inventory/supplier-products.tsx:143
 #: app/components/menu/category-form.tsx:499
-#: app/components/menu/modifier-form.tsx:1353
+#: app/components/menu/modifier-form.tsx:1407
 msgid "Add an item"
 msgstr "Add an item"
 
@@ -5593,7 +5650,7 @@ msgstr "Add an item"
 msgid "Add an item that is not in Stock yet. You can fill in the rest later."
 msgstr "Add an item that is not in Stock yet. You can fill in the rest later."
 
-#: app/components/menu/modifier-form.tsx:1490
+#: app/components/menu/modifier-form.tsx:1544
 msgid "Add an Option"
 msgstr "Add an Option"
 
@@ -5730,7 +5787,7 @@ msgstr "Add bonus points"
 msgid "Add card"
 msgstr ""
 
-#: app/components/menu/item-form.tsx:911
+#: app/components/menu/item-form.tsx:1055
 #: app/components/menu/menu-form.tsx:365
 msgid "Add category"
 msgstr "Add category"
@@ -5804,7 +5861,7 @@ msgstr ""
 msgid "Add field"
 msgstr "Add field"
 
-#: app/components/menu/item-form.tsx:813
+#: app/components/menu/item-form.tsx:949
 msgid "Add group"
 msgstr "Add group"
 
@@ -5848,7 +5905,7 @@ msgstr "Add ingredient"
 #: app/components/inventory/transfer-dialogs.tsx:269
 #: app/components/menu/category-form.tsx:498
 #: app/components/menu/menu-sortable-category.tsx:179
-#: app/components/menu/modifier-form.tsx:1352
+#: app/components/menu/modifier-form.tsx:1406
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:246
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:459
 msgid "Add item"
@@ -5920,7 +5977,7 @@ msgstr "Add more photos"
 msgid "Add name, email, choices, and more to start collecting responses."
 msgstr "Add name, email, choices, and more to start collecting responses."
 
-#: app/components/menu/modifier-form.tsx:1326
+#: app/components/menu/modifier-form.tsx:1380
 msgid "Add nested modifier group"
 msgstr "Add nested modifier group"
 
@@ -5951,14 +6008,14 @@ msgstr "Add number"
 msgid "Add one in your business settings first."
 msgstr "Add one in your business settings first."
 
-#: app/components/menu/item-variations.tsx:284
-#: app/components/menu/modifier-form.tsx:1101
+#: app/components/menu/item-variations.tsx:290
+#: app/components/menu/modifier-form.tsx:1155
 #: app/components/menu/quick-modifier-group-sheet.tsx:422
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:304
 msgid "Add option"
 msgstr "Add option"
 
-#: app/components/menu/modifier-form.tsx:1775
+#: app/components/menu/modifier-form.tsx:1829
 msgid "Add Option"
 msgstr "Add Option"
 
@@ -5966,7 +6023,7 @@ msgstr "Add Option"
 msgid "Add option type"
 msgstr "Add option type"
 
-#: app/components/menu/modifier-form.tsx:1204
+#: app/components/menu/modifier-form.tsx:1258
 msgid "Add options to this group first."
 msgstr "Add options to this group first."
 
@@ -6019,7 +6076,7 @@ msgstr "Add phone number"
 msgid "Add photo"
 msgstr "Add photo"
 
-#: app/components/menu/item-form.tsx:605
+#: app/components/menu/item-form.tsx:699
 msgid "Add Photo"
 msgstr "Add Photo"
 
@@ -6048,7 +6105,7 @@ msgstr "Add position"
 msgid "Add positions on the Team page first."
 msgstr "Add positions on the Team page first."
 
-#: app/components/orders/ordering-controls.tsx:185
+#: app/components/orders/ordering-controls.tsx:287
 msgid "Add prep time for the rest of today"
 msgstr "Add prep time for the rest of today"
 
@@ -6233,7 +6290,7 @@ msgstr ""
 msgid "Add the hours and meal periods guests can book."
 msgstr "Add the hours and meal periods guests can book."
 
-#: app/components/menu/modifier-form.tsx:1047
+#: app/components/menu/modifier-form.tsx:1094
 msgid "Add the individual choices, prices, and dietary tags."
 msgstr "Add the individual choices, prices, and dietary tags."
 
@@ -6335,7 +6392,7 @@ msgstr "Add to waitlist"
 msgid "Add transfer case"
 msgstr "Add transfer case"
 
-#: app/components/menu/item-form.tsx:542
+#: app/components/menu/item-form.tsx:610
 msgid "Add up to five high-resolution photos. The first photo is used on menu cards. Photos are stored in your organization's Media Library."
 msgstr "Add up to five high-resolution photos. The first photo is used on menu cards. Photos are stored in your organization's Media Library."
 
@@ -6359,11 +6416,11 @@ msgstr "Add window"
 msgid "Add your business details to see what the assistant is told."
 msgstr "Add your business details to see what the assistant is told."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:545
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:606
 msgid "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 msgstr "Add your dishes, drinks, and culinary creations to build your restaurant menu."
 
-#: app/components/menu/menu-health-card.tsx:613
+#: app/components/menu/menu-health-card.tsx:637
 msgid "Add your first dishes to see how complete your menu is."
 msgstr "Add your first dishes to see how complete your menu is."
 
@@ -6795,8 +6852,8 @@ msgstr ""
 msgid "Alcohol"
 msgstr "Alcohol"
 
-#: app/components/menu/modifier-form.tsx:1661
-#: app/components/menu/modifier-form.tsx:2040
+#: app/components/menu/modifier-form.tsx:1715
+#: app/components/menu/modifier-form.tsx:2094
 msgid "Alcohol (21+)"
 msgstr "Alcohol (21+)"
 
@@ -6938,7 +6995,7 @@ msgstr "All devices"
 msgid "All events"
 msgstr "All events"
 
-#: app/components/menu/menu-health-card.tsx:809
+#: app/components/menu/menu-health-card.tsx:837
 msgid "All fixed. Nothing left in this list."
 msgstr "All fixed. Nothing left in this list."
 
@@ -6984,8 +7041,8 @@ msgstr "All messages in this channel are permanently deleted for everyone. This 
 msgid "All none left"
 msgstr "All none left"
 
-#: app/components/ui/notification-bell.tsx:693
-#: app/components/ui/notification-bell.tsx:793
+#: app/components/ui/notification-bell.tsx:719
+#: app/components/ui/notification-bell.tsx:819
 msgid "All Notifications"
 msgstr ""
 
@@ -7136,8 +7193,8 @@ msgid "Allergies:"
 msgstr "Allergies:"
 
 #: app/components/customers/people-list-screen.tsx:523
-#: app/components/menu/item-form.tsx:683
-#: app/components/menu/option-form.tsx:633
+#: app/components/menu/item-form.tsx:783
+#: app/components/menu/option-form.tsx:681
 #: app/components/pos/ticket-settings.tsx:297
 #: app/components/reservations/guest-flags.tsx:119
 #: app/components/reservations/guest-flags.tsx:120
@@ -7271,7 +7328,7 @@ msgstr "Already on order"
 msgid "Already paid"
 msgstr "Already paid"
 
-#: app/components/ui/notification-bell.tsx:521
+#: app/components/ui/notification-bell.tsx:547
 msgid "Already read"
 msgstr ""
 
@@ -7312,6 +7369,10 @@ msgstr "Also change locations that override the current default"
 #: app/components/inventory/counting-screen.tsx:925
 msgid "Also counted:"
 msgstr "Also counted:"
+
+#: app/components/orders/ordering-controls.tsx:265
+msgid "Also pause delivery apps"
+msgstr "Also pause delivery apps"
 
 #: app/components/orders/provider-refund-dialog.tsx:391
 #: app/components/orders/record-order-refund-dialog.tsx:315
@@ -7996,8 +8057,8 @@ msgstr "Apply import"
 msgid "Apply options"
 msgstr "Apply options"
 
-#: app/components/menu/item-form.tsx:772
-#: app/components/menu/option-form.tsx:831
+#: app/components/menu/item-form.tsx:892
+#: app/components/menu/option-form.tsx:886
 msgid "Apply Sales Tax"
 msgstr "Apply Sales Tax"
 
@@ -8269,7 +8330,7 @@ msgstr "Are you open right now?"
 msgid "Are you sure you want to delete \"{journeyName}\"?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:955
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:973
 msgid "Are you sure you want to delete \"{locationName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 msgstr "Are you sure you want to delete \"{locationName}\"? This action cannot be undone and will remove operating hours and delivery zones."
 
@@ -8543,7 +8604,7 @@ msgstr "Assigned {guest} to {tableLabel} and reflowed overlapping parties."
 msgid "Assigned {guest} to {tableLabel}."
 msgstr "Assigned {guest} to {tableLabel}."
 
-#: app/components/menu/item-form.tsx:905
+#: app/components/menu/item-form.tsx:1041
 #: app/components/menu/menu-form.tsx:361
 msgid "Assigned Categories"
 msgstr "Assigned Categories"
@@ -8553,7 +8614,7 @@ msgid "Assigned Groups"
 msgstr "Assigned Groups"
 
 #: app/components/menu/category-form.tsx:494
-#: app/components/menu/modifier-form.tsx:1348
+#: app/components/menu/modifier-form.tsx:1402
 msgid "Assigned Items"
 msgstr "Assigned Items"
 
@@ -8561,7 +8622,7 @@ msgstr "Assigned Items"
 msgid "Assigned Menus"
 msgstr "Assigned Menus"
 
-#: app/components/menu/option-form.tsx:899
+#: app/components/menu/option-form.tsx:954
 msgid "Assigned Modifier Groups"
 msgstr "Assigned Modifier Groups"
 
@@ -8656,7 +8717,7 @@ msgstr "Attach an image"
 msgid "Attach at most {SOCIAL_MAX_MEDIA} images."
 msgstr "Attach at most {SOCIAL_MAX_MEDIA} images."
 
-#: app/components/menu/option-form.tsx:1011
+#: app/components/menu/option-form.tsx:1066
 msgid "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 msgstr "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 
@@ -8672,8 +8733,8 @@ msgstr ""
 msgid "Attempts"
 msgstr "Attempts"
 
-#: app/components/menu/item-form.tsx:684
-#: app/components/menu/option-form.tsx:634
+#: app/components/menu/item-form.tsx:784
+#: app/components/menu/option-form.tsx:682
 msgid "Attention"
 msgstr "Attention"
 
@@ -8863,9 +8924,11 @@ msgid "Autoplay"
 msgstr ""
 
 #: app/components/hiring/job-labels.ts:40
-#: app/components/menu/item-variations.tsx:305
-#: app/components/menu/item-variations.tsx:511
+#: app/components/menu/item-variations.tsx:311
+#: app/components/menu/item-variations.tsx:518
 #: app/components/my-schedule/requests-view.tsx:226
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:376
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1272
 #: app/components/workspace-breadcrumb.tsx:36
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:179
 #: app/routes/_app+/$orgSlug_+/staff+/schedule.tsx:40
@@ -8880,7 +8943,11 @@ msgstr "Availability approved."
 msgid "Availability declined."
 msgstr "Availability declined."
 
-#: app/components/menu/item-variations.tsx:517
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1465
+msgid "Availability differs"
+msgstr "Availability differs"
+
+#: app/components/menu/item-variations.tsx:524
 msgid "Availability for {name}"
 msgstr "Availability for {name}"
 
@@ -8892,18 +8959,20 @@ msgstr "Availability override removed."
 msgid "Availability saved."
 msgstr "Availability saved."
 
-#: app/components/menu/menu-availability-card.tsx:239
+#: app/components/menu/menu-availability-card.tsx:243
 msgid "Availability Status"
 msgstr "Availability Status"
 
 #: app/components/loyalty/customer-loyalty-panel.tsx:310
-#: app/components/menu/item-variations.tsx:531
-#: app/components/menu/item-variations.tsx:544
-#: app/components/menu/menu-availability-card.tsx:228
-#: app/components/menu/menu-availability-card.tsx:264
+#: app/components/menu/item-variations.tsx:538
+#: app/components/menu/item-variations.tsx:551
+#: app/components/menu/menu-availability-card.tsx:232
+#: app/components/menu/menu-availability-card.tsx:273
 #: app/components/menu/menu-bulk-edit-sheet.tsx:616
 #: app/components/menu/menu-status-badge.tsx:53
 #: app/components/reservations/status-style.tsx:169
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1435
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1438
 #: app/components/staff/schedule/availability-page.tsx:256
 #: app/components/staff/schedule/availability-sheet.tsx:301
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:183
@@ -8917,7 +8986,7 @@ msgstr "Available"
 msgid "Available all day"
 msgstr "Available all day"
 
-#: app/components/menu/location-overrides-card.tsx:164
+#: app/components/menu/location-overrides-card.tsx:167
 msgid "Available at this location"
 msgstr "Available at this location"
 
@@ -9006,7 +9075,7 @@ msgstr "back"
 #: app/components/website/create-page-dialog.tsx:197
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.add-many.tsx:210
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:332
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:755
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:773
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:254
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:141
 #: app/routes/_app+/$orgSlug_+/settings+/locations.new.tsx:271
@@ -9093,7 +9162,7 @@ msgstr "Back to imports"
 msgid "Back to latest"
 msgstr "Back to latest"
 
-#: app/components/menu/modifier-form.tsx:1767
+#: app/components/menu/modifier-form.tsx:1821
 msgid "Back to list"
 msgstr "Back to list"
 
@@ -9102,7 +9171,7 @@ msgstr "Back to list"
 msgid "Back to login"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:941
+#: app/components/menu/modifier-form.tsx:974
 msgid "Back to modifier groups"
 msgstr "Back to modifier groups"
 
@@ -9110,7 +9179,7 @@ msgstr "Back to modifier groups"
 msgid "Back to nodes"
 msgstr ""
 
-#: app/components/menu/option-form.tsx:470
+#: app/components/menu/option-form.tsx:512
 msgid "Back to options"
 msgstr "Back to options"
 
@@ -9249,11 +9318,11 @@ msgstr "Base Preparation Time (minutes)"
 msgid "Base price"
 msgstr "Base price"
 
-#: app/components/menu/item-form.tsx:738
+#: app/components/menu/item-form.tsx:851
 msgid "Base Price ($)"
 msgstr "Base Price ($)"
 
-#: app/components/menu/option-form.tsx:693
+#: app/components/menu/option-form.tsx:741
 msgid "Base Price Delta ($)"
 msgstr "Base Price Delta ($)"
 
@@ -9292,8 +9361,8 @@ msgstr "Battery {battery}%"
 msgid "Be told only after this many have happened within an hour. 1 means every time."
 msgstr "Be told only after this many have happened within an hour. 1 means every time."
 
-#: app/components/menu/item-variations.tsx:567
-#: app/components/menu/menu-availability-card.tsx:308
+#: app/components/menu/item-variations.tsx:574
+#: app/components/menu/menu-availability-card.tsx:317
 msgid "Becomes available"
 msgstr "Becomes available"
 
@@ -10046,7 +10115,7 @@ msgstr "Business type settings"
 msgid "Bussing"
 msgstr "Bussing"
 
-#: app/components/orders/ordering-controls.tsx:178
+#: app/components/orders/ordering-controls.tsx:280
 msgid "Busy mode"
 msgstr "Busy mode"
 
@@ -10054,11 +10123,11 @@ msgstr "Busy mode"
 msgid "Busy mode (+{minutes} min prep)"
 msgstr "Busy mode (+{minutes} min prep)"
 
-#: app/components/orders/ordering-controls.tsx:155
+#: app/components/orders/ordering-controls.tsx:205
 msgid "Busy: {totalPrep} min prep (+{busyMinutes})"
 msgstr "Busy: {totalPrep} min prep (+{busyMinutes})"
 
-#: app/components/orders/ordering-controls.tsx:153
+#: app/components/orders/ordering-controls.tsx:203
 msgid "Busy: {totalPrep} min prep (+{busyMinutes}) until {busyEnd}"
 msgstr "Busy: {totalPrep} min prep (+{busyMinutes}) until {busyEnd}"
 
@@ -10417,8 +10486,8 @@ msgstr "Calls with an important tag always stay open."
 msgid "Calls your agent answers will appear here. Try a test call from your browser to see how it sounds."
 msgstr "Calls your agent answers will appear here. Try a test call from your browser to see how it sounds."
 
-#: app/components/menu/item-form.tsx:870
-#: app/components/menu/option-form.tsx:869
+#: app/components/menu/item-form.tsx:1006
+#: app/components/menu/option-form.tsx:924
 msgid "Calories (kCal)"
 msgstr "Calories (kCal)"
 
@@ -10475,11 +10544,11 @@ msgstr "Can get texts"
 msgid "Can ship"
 msgstr "Can ship"
 
-#: app/components/menu/option-form.tsx:1075
+#: app/components/menu/option-form.tsx:1130
 msgid "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
 msgstr "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
 
-#: app/components/menu/option-form.tsx:1070
+#: app/components/menu/option-form.tsx:1125
 msgid "Can't nest: it would loop back to this option."
 msgstr "Can't nest: it would loop back to this option."
 
@@ -10569,10 +10638,11 @@ msgstr "Can't text that number"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:590
 #: app/components/menu/drop-wizard/drop-drawers.tsx:777
 #: app/components/menu/drop-wizard/drop-drawers.tsx:930
+#: app/components/menu/item-form.tsx:1348
 #: app/components/menu/menu-duplicate-dialog.tsx:127
 #: app/components/menu/menu-form-header.tsx:80
 #: app/components/menu/menu-review-stack.tsx:1165
-#: app/components/menu/modifier-form.tsx:2143
+#: app/components/menu/modifier-form.tsx:2197
 #: app/components/menu/quick-modifier-group-sheet.tsx:434
 #: app/components/my-schedule/availability-sheet.tsx:200
 #: app/components/my-schedule/requests-view.tsx:261
@@ -10683,7 +10753,7 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:551
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:445
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:319
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:906
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:1012
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:530
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:597
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:788
@@ -10703,7 +10773,7 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1244
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:966
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:984
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:614
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:130
@@ -10976,7 +11046,7 @@ msgstr "Capitalize each word"
 msgid "Capitalize the first word only"
 msgstr "Capitalize the first word only"
 
-#: app/components/menu/menu-health-card.tsx:243
+#: app/components/menu/menu-health-card.tsx:252
 msgid "Capitals read like shouting. Use normal case."
 msgstr "Capitals read like shouting. Use normal case."
 
@@ -11171,7 +11241,7 @@ msgstr "categories"
 #: app/components/menu/menu-review-card.tsx:102
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:84
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:281
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:588
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:671
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:340
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:456
 msgid "Categories"
@@ -11185,7 +11255,7 @@ msgstr "Categories are easier to browse in a familiar order."
 msgid "Categories that belong to this menu."
 msgstr "Categories that belong to this menu."
 
-#: app/components/menu/item-form.tsx:907
+#: app/components/menu/item-form.tsx:1043
 msgid "Categories that display this item on the menu."
 msgstr "Categories that display this item on the menu."
 
@@ -11211,6 +11281,7 @@ msgstr "category"
 #: app/components/menu/menu-bulk-edit-sheet.tsx:698
 #: app/components/menu/menu-sortable-category.tsx:132
 #: app/components/phone-agent/training-rules-section.tsx:491
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:378
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:341
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:779
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:174
@@ -11396,6 +11467,10 @@ msgstr "Change interview"
 msgid "Change labor rules, pair time clock devices, and set pay periods. Includes View labor policy."
 msgstr "Change labor rules, pair time clock devices, and set pay periods. Includes View labor policy."
 
+#: app/components/menu/pos-field-controls.tsx:72
+msgid "Change ownership"
+msgstr "Change ownership"
+
 #: app/components/settings/cards/security-card.tsx:93
 #: app/components/settings/cards/security-card.tsx:131
 #: app/components/settings/cards/security-card.tsx:142
@@ -11407,7 +11482,7 @@ msgstr ""
 msgid "Change pay rates"
 msgstr "Change pay rates"
 
-#: app/components/menu/option-form.tsx:538
+#: app/components/menu/option-form.tsx:580
 msgid "Change Photo"
 msgstr "Change Photo"
 
@@ -11487,6 +11562,11 @@ msgstr "Changed {sections}"
 #: app/routes/_app+/$orgSlug_+/website+/activity.tsx:58
 msgid "Changed a redirect"
 msgstr "Changed a redirect"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:489
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1452
+msgid "Changed in POS"
+msgstr "Changed in POS"
 
 #: app/components/staff/timesheets/payroll-summary.tsx:175
 msgid "Changed since approval"
@@ -11576,13 +11656,13 @@ msgstr "Channel: {requestedChannelLabel}"
 #: app/components/discounts/discount-form.tsx:676
 #: app/components/discounts/discount-form.tsx:1915
 #: app/components/menu/category-form.tsx:609
-#: app/components/menu/item-form.tsx:953
+#: app/components/menu/item-form.tsx:1105
 #: app/components/menu/menu-bulk-edit-sheet.tsx:685
 #: app/components/menu/menu-form.tsx:412
 msgid "Channels"
 msgstr "Channels"
 
-#: app/components/menu/location-overrides-card.tsx:204
+#: app/components/menu/location-overrides-card.tsx:217
 msgid "Channels at this location"
 msgstr "Channels at this location"
 
@@ -11636,11 +11716,11 @@ msgstr "Charge late-cancel fee"
 msgid "Charge no-show fee"
 msgstr "Charge no-show fee"
 
-#: app/components/menu/option-form.tsx:834
+#: app/components/menu/option-form.tsx:889
 msgid "Charge sales tax on this option at checkout."
 msgstr "Charge sales tax on this option at checkout."
 
-#: app/components/menu/item-form.tsx:775
+#: app/components/menu/item-form.tsx:895
 msgid "Charge tax at checkout."
 msgstr "Charge tax at checkout."
 
@@ -11774,6 +11854,7 @@ msgstr "Check its power and its internet connection."
 msgid "Check nameservers"
 msgstr "Check nameservers"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:823
 #: app/components/website/domain/forwarding-panel.tsx:274
 #: app/components/website/domain/site-domains-card.tsx:229
 msgid "Check now"
@@ -12621,8 +12702,8 @@ msgstr "Choose options"
 msgid "Choose Pair a tablet and create a code."
 msgstr "Choose Pair a tablet and create a code."
 
-#: app/components/menu/item-variations.tsx:331
-#: app/components/menu/item-variations.tsx:332
+#: app/components/menu/item-variations.tsx:337
+#: app/components/menu/item-variations.tsx:338
 msgid "Choose photo for {name}"
 msgstr "Choose photo for {name}"
 
@@ -12800,7 +12881,7 @@ msgstr "Choose where the interview takes place."
 msgid "Choose where they will work."
 msgstr "Choose where they will work."
 
-#: app/components/menu/item-form.tsx:956
+#: app/components/menu/item-form.tsx:1108
 msgid "Choose where this dish is sold."
 msgstr "Choose where this dish is sold."
 
@@ -12823,6 +12904,10 @@ msgstr ""
 #: app/components/member-location-scope.tsx:140
 msgid "Choose which locations {memberName} can see and manage: staff, reservations, loyalty, discounts, orders and reports. Their other permissions do not change."
 msgstr "Choose which locations {memberName} can see and manage: staff, reservations, loyalty, discounts, orders and reports. Their other permissions do not change."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:952
+msgid "Choose which menus this store serves, configure holiday hours sync, and review readiness before going live."
+msgstr "Choose which menus this store serves, configure holiday hours sync, and review readiness before going live."
 
 #: app/utils/staffing/timesheet-form.ts:185
 msgid "Choose which position they worked."
@@ -13484,11 +13569,11 @@ msgstr "Combination"
 msgid "Combination name is required."
 msgstr "Combination name is required."
 
-#: app/components/menu/item-form.tsx:723
+#: app/components/menu/item-form.tsx:829
 msgid "Combination prices are set below. Sales tax applies to every combination."
 msgstr "Combination prices are set below. Sales tax applies to every combination."
 
-#: app/components/menu/item-variations.tsx:291
+#: app/components/menu/item-variations.tsx:297
 msgid "Combinations"
 msgstr "Combinations"
 
@@ -13735,11 +13820,11 @@ msgstr "Configure allowed and restricted areas via Radius, Zip Codes, or Drawn P
 msgid "Configure delivery rules, pricing, provider, and boundary areas."
 msgstr "Configure delivery rules, pricing, provider, and boundary areas."
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:842
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:860
 msgid "Configure dining areas, floor plan tables, service periods, turn times, and online booking rules for this location."
 msgstr "Configure dining areas, floor plan tables, service periods, turn times, and online booking rules for this location."
 
-#: app/components/menu/modifier-form.tsx:1007
+#: app/components/menu/modifier-form.tsx:1046
 msgid "Configure how guests interact with these options."
 msgstr "Configure how guests interact with these options."
 
@@ -13783,7 +13868,7 @@ msgstr "Confirm close"
 msgid "Confirm contact details"
 msgstr "Confirm contact details"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:973
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:991
 msgid "Confirm Delete"
 msgstr "Confirm Delete"
 
@@ -13949,9 +14034,9 @@ msgstr "Conflicts"
 
 #: app/components/pos/zatca-settings.tsx:400
 #: app/components/pos/zatca-settings.tsx:565
-#: app/components/settings/cards/organization/integrations-card.tsx:344
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:287
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:310
+#: app/components/settings/cards/organization/integrations-card.tsx:365
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:895
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:918
 msgid "Connect"
 msgstr ""
 
@@ -14095,7 +14180,7 @@ msgstr "Connect your POS"
 #: app/components/pos/terminal-health.tsx:190
 #: app/components/pos/terminals-manager.tsx:2010
 #: app/components/pos/zatca-settings.tsx:378
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:102
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:434
 #: app/components/settings/cards/organization/review-integrations-card.tsx:54
 #: app/components/staff/kiosk-manager.tsx:718
 msgid "Connected"
@@ -14161,6 +14246,10 @@ msgstr "Connecting your site and its certificate"
 #: app/components/pos/zatca-settings.tsx:565
 msgid "Connecting…"
 msgstr "Connecting…"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1274
+msgid "Connection"
+msgstr "Connection"
 
 #: app/components/chat/chat-view.tsx:983
 msgid "Connection lost. Reconnecting…"
@@ -14344,7 +14433,7 @@ msgstr "Contrast"
 msgid "Contributors"
 msgstr "Contributors"
 
-#: app/components/menu/location-overrides-card.tsx:117
+#: app/components/menu/location-overrides-card.tsx:120
 msgid "Control availability and custom pricing per location."
 msgstr "Control availability and custom pricing per location."
 
@@ -14352,7 +14441,7 @@ msgstr "Control availability and custom pricing per location."
 msgid "Control checkout timing and what customers see."
 msgstr "Control checkout timing and what customers see."
 
-#: app/components/menu/menu-availability-card.tsx:242
+#: app/components/menu/menu-availability-card.tsx:246
 msgid "Control overall ordering availability for guests."
 msgstr "Control overall ordering availability for guests."
 
@@ -14507,7 +14596,7 @@ msgid "Copy order number"
 msgstr "Copy order number"
 
 #: app/components/menu/copy-location-overrides-dialog.tsx:127
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:896
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:914
 msgid "Copy overrides"
 msgstr "Copy overrides"
 
@@ -14550,7 +14639,7 @@ msgstr "Copy shifts"
 msgid "Copy the text"
 msgstr "Copy the text"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:884
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:902
 msgid "Copy this location's menu prices and availability overrides to another location."
 msgstr "Copy this location's menu prices and availability overrides to another location."
 
@@ -14698,6 +14787,10 @@ msgstr "Could not change who can manage terminals."
 #: app/components/pos/terminals-manager.tsx:456
 msgid "Could not change who runs the host stand."
 msgstr "Could not change who runs the host stand."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:476
+msgid "Could not check"
+msgstr "Could not check"
 
 #: app/components/menu/delete-effects.tsx:378
 msgid "Could not check recipes"
@@ -14991,6 +15084,14 @@ msgstr "Could not start the conversation. Try again."
 msgid "Could not undo."
 msgstr "Could not undo."
 
+#: app/components/orders/ordering-controls.tsx:224
+#~ msgid "Could not update {0}: {1}"
+#~ msgstr "Could not update {0}: {1}"
+
+#: app/components/orders/ordering-controls.tsx:228
+msgid "Could not update {storeName}: {storeError}"
+msgstr "Could not update {storeName}: {storeError}"
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:199
 msgid "Could not update read status. Try again."
 msgstr "Could not update read status. Try again."
@@ -15016,7 +15117,7 @@ msgstr "Could not update the table block."
 msgid "Could not update this call. Try again."
 msgstr "Could not update this call. Try again."
 
-#: app/components/menu/menu-health-card.tsx:324
+#: app/components/menu/menu-health-card.tsx:337
 msgid "Could not update this check. Try again."
 msgstr "Could not update this check. Try again."
 
@@ -15486,11 +15587,15 @@ msgstr "Create a landing page for my business with a hero, a few feature section
 msgid "Create a layout to give each server their own group of tables."
 msgstr "Create a layout to give each server their own group of tables."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1008
+msgid "Create a menu to publish to this store."
+msgstr "Create a menu to publish to this store."
+
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:324
 msgid "Create a menu to start organizing your dishes and drinks."
 msgstr "Create a menu to start organizing your dishes and drinks."
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:181
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:706
 msgid "Create a menu to sync it to this platform."
 msgstr "Create a menu to sync it to this platform."
 
@@ -15506,7 +15611,7 @@ msgstr ""
 msgid "Create a new choice"
 msgstr "Create a new choice"
 
-#: app/components/menu/modifier-form.tsx:1495
+#: app/components/menu/modifier-form.tsx:1549
 msgid "Create a new choice for this modifier group."
 msgstr "Create a new choice for this modifier group."
 
@@ -15573,7 +15678,7 @@ msgstr ""
 msgid "Create an automatic discount or a coupon code. Customers see it at checkout when their order qualifies."
 msgstr "Create an automatic discount or a coupon code. Customers see it at checkout when their order qualifies."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:564
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:647
 msgid "Create an item to start building your menu."
 msgstr "Create an item to start building your menu."
 
@@ -15594,7 +15699,7 @@ msgstr ""
 msgid "Create and manage pages for your organization's website."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:513
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:574
 msgid "Create and manage your dishes, beverages, sides, and retail products."
 msgstr "Create and manage your dishes, beverages, sides, and retail products."
 
@@ -15693,7 +15798,7 @@ msgstr "Create group"
 msgid "Create group chats"
 msgstr "Create group chats"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:523
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:584
 msgid "Create Item"
 msgstr "Create Item"
 
@@ -15726,12 +15831,12 @@ msgstr "Create modifier groups like \"Meat Temperature\", \"Choice of Dressing\"
 msgid "Create my site with AI"
 msgstr "Create my site with AI"
 
-#: app/components/menu/assigned-sortable-list.tsx:257
+#: app/components/menu/assigned-sortable-list.tsx:267
 msgid "Create new"
 msgstr "Create new"
 
-#: app/components/menu/item-form.tsx:845
-#: app/components/menu/option-form.tsx:1113
+#: app/components/menu/item-form.tsx:981
+#: app/components/menu/option-form.tsx:1168
 #: app/components/menu/quick-modifier-group-sheet.tsx:300
 msgid "Create new group"
 msgstr "Create new group"
@@ -15748,8 +15853,8 @@ msgstr ""
 msgid "Create New Note"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1488
-#: app/components/menu/modifier-form.tsx:1788
+#: app/components/menu/modifier-form.tsx:1542
+#: app/components/menu/modifier-form.tsx:1842
 msgid "Create New Option"
 msgstr "Create New Option"
 
@@ -16147,7 +16252,7 @@ msgstr "Custom maximum"
 msgid "Custom notes"
 msgstr "Custom notes"
 
-#: app/components/menu/item-form.tsx:808
+#: app/components/menu/item-form.tsx:936
 msgid "Custom options, toppings, sides, and choices offered with this item."
 msgstr "Custom options, toppings, sides, and choices offered with this item."
 
@@ -16363,9 +16468,9 @@ msgid "Daily double time"
 msgstr "Daily double time"
 
 #: app/components/menu/daily-limit-fields.tsx:207
-#: app/components/menu/modifier-form.tsx:231
-#: app/components/menu/modifier-form.tsx:1670
-#: app/components/menu/modifier-form.tsx:2049
+#: app/components/menu/modifier-form.tsx:236
+#: app/components/menu/modifier-form.tsx:1724
+#: app/components/menu/modifier-form.tsx:2103
 msgid "Daily limit"
 msgstr "Daily limit"
 
@@ -16425,7 +16530,7 @@ msgstr "Dark & dramatic"
 msgid "Dark mode"
 msgstr ""
 
-#: app/components/menu/menu-health-card.tsx:237
+#: app/components/menu/menu-health-card.tsx:246
 msgid "Dark, blurry or small photos hurt orders. Fix them in the photo studio."
 msgstr "Dark, blurry or small photos hurt orders. Fix them in the photo studio."
 
@@ -16461,7 +16566,7 @@ msgstr ""
 #: app/components/locations/copy-settings-dialog.tsx:519
 #: app/components/locations/special-hours-picker.tsx:122
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
-#: app/components/menu/menu-availability-card.tsx:341
+#: app/components/menu/menu-availability-card.tsx:350
 #: app/components/reservations/booking-sheet.tsx:620
 #: app/components/staff/schedule/availability-sheet.tsx:289
 #: app/components/staff/timesheets/card-fields.tsx:101
@@ -16751,7 +16856,7 @@ msgstr "Deduct an unpaid break when none was recorded"
 msgid "Deep black background, moody rim light"
 msgstr "Deep black background, moody rim light"
 
-#: app/components/menu/location-overrides-card.tsx:158
+#: app/components/menu/location-overrides-card.tsx:161
 #: app/components/website/link-inspector.tsx:612
 #: app/components/website/link-inspector.tsx:628
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:191
@@ -16855,6 +16960,7 @@ msgstr ""
 #: app/components/hiring/job-editor.tsx:972
 #: app/components/marketing/campaign-actions.tsx:154
 #: app/components/marketing/campaign-actions.tsx:285
+#: app/components/menu/item-form.tsx:1364
 #: app/components/note/comment-item.tsx:239
 #: app/components/pos/terminal-profiles.tsx:765
 #: app/components/reservations/floor-plan-canvas.tsx:1229
@@ -16877,8 +16983,8 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:563
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:398
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:457
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:807
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:918
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:898
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:1025
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:470
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:543
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:544
@@ -17036,7 +17142,13 @@ msgstr ""
 msgid "Delete item"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:896
+#: app/components/menu/item-form.tsx:1275
+#: app/components/menu/item-form.tsx:1306
+msgid "Delete Item"
+msgstr "Delete Item"
+
+#: app/components/menu/item-form.tsx:1323
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:987
 msgid "Delete item?"
 msgstr "Delete item?"
 
@@ -17053,7 +17165,7 @@ msgid "Delete link"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1247
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:778
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:796
 msgid "Delete Location"
 msgstr "Delete Location"
 
@@ -17129,7 +17241,7 @@ msgid "Delete restaurant"
 msgstr "Delete restaurant"
 
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:1227
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:949
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:967
 msgid "Delete restaurant location?"
 msgstr "Delete restaurant location?"
 
@@ -17314,7 +17426,7 @@ msgstr "Delivers on"
 #: app/components/orders/slot-limits-panel.tsx:172
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:131
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:524
 #: app/components/workspace-breadcrumb.tsx:125
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:145
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:164
@@ -17391,6 +17503,10 @@ msgstr "Delivery limit"
 msgid "Delivery max subtotal ({currency})"
 msgstr "Delivery max subtotal ({currency})"
 
+#: app/components/menu/menu-health-card.tsx:240
+msgid "Delivery menus out of sync"
+msgstr "Delivery menus out of sync"
+
 #: app/components/orders/order-detail.tsx:873
 msgid "Delivery notes:"
 msgstr "Delivery notes:"
@@ -17398,6 +17514,10 @@ msgstr "Delivery notes:"
 #: app/components/staff/labor/tip-settings-dialog.tsx:99
 msgid "Delivery orders"
 msgstr "Delivery orders"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:564
+msgid "Delivery pause update failed"
+msgstr "Delivery pause update failed"
 
 #: app/components/menu/order-type-price-fields.tsx:15
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:178
@@ -17516,6 +17636,7 @@ msgstr "Describe when the agent should transfer to a specific contact. For examp
 #: app/components/roles/tenant-role-access-manager.tsx:1355
 #: app/components/roles/tenant-role-access-manager.tsx:1514
 #: app/components/roles/tenant-role-access-manager.tsx:1696
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:372
 #: app/components/settings/cards/organization/shop-card.tsx:345
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:976
@@ -17547,8 +17668,8 @@ msgid "Description (guest-facing)"
 msgstr "Description (guest-facing)"
 
 #: app/components/menu/category-form.tsx:481
-#: app/components/menu/item-form.tsx:703
-#: app/components/menu/option-form.tsx:658
+#: app/components/menu/item-form.tsx:803
+#: app/components/menu/option-form.tsx:706
 msgid "Description (Guest-Facing)"
 msgstr "Description (Guest-Facing)"
 
@@ -17747,7 +17868,7 @@ msgstr "Dietary / allergies"
 msgid "Dietary / allergy flag on file (restricted detail)"
 msgstr "Dietary / allergy flag on file (restricted detail)"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:591
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:674
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:453
 msgid "Dietary & Allergens"
 msgstr "Dietary & Allergens"
@@ -17770,14 +17891,14 @@ msgstr "Dietary needs"
 msgid "Dietary notes"
 msgstr "Dietary notes"
 
-#: app/components/menu/modifier-form.tsx:1607
-#: app/components/menu/modifier-form.tsx:1986
+#: app/components/menu/modifier-form.tsx:1661
+#: app/components/menu/modifier-form.tsx:2040
 #: app/components/reservations/booking-sheet.tsx:1048
 msgid "Dietary Tags"
 msgstr "Dietary Tags"
 
-#: app/components/menu/item-form.tsx:852
-#: app/components/menu/option-form.tsx:851
+#: app/components/menu/item-form.tsx:988
+#: app/components/menu/option-form.tsx:906
 msgid "Dietary, Allergens & Calories"
 msgstr "Dietary, Allergens & Calories"
 
@@ -17785,6 +17906,10 @@ msgstr "Dietary, Allergens & Calories"
 #: app/routes/_app+/$orgSlug_+/inventory+/counts.tsx:341
 msgid "Difference"
 msgstr "Difference"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1409
+msgid "Differences between your Menuza menu and what guests see on {providerDisplayName}."
+msgstr "Differences between your Menuza menu and what guests see on {providerDisplayName}."
 
 #. placeholder {0}: data.issues.length
 #: app/components/gbp/google-listing-tab.tsx:564
@@ -17927,7 +18052,7 @@ msgstr ""
 msgid "Disable 2FA"
 msgstr ""
 
-#: app/components/menu/location-overrides-card.tsx:166
+#: app/components/menu/location-overrides-card.tsx:169
 msgid "Disabled for this location"
 msgstr "Disabled for this location"
 
@@ -17986,8 +18111,8 @@ msgstr "Discarded unsaved floor plan changes"
 msgid "Disclose any allergens present to inform guest dietary and safety filters."
 msgstr "Disclose any allergens present to inform guest dietary and safety filters."
 
-#: app/components/settings/cards/organization/integrations-card.tsx:322
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:243
+#: app/components/settings/cards/organization/integrations-card.tsx:343
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:768
 #: app/components/settings/cards/organization/review-integrations-card.tsx:139
 #: app/components/settings/connections.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/social.accounts.tsx:396
@@ -18102,15 +18227,15 @@ msgstr "Dish cut off"
 msgid "Dish ids, one per line, in order"
 msgstr "Dish ids, one per line, in order"
 
-#: app/components/menu/menu-health-card.tsx:227
+#: app/components/menu/menu-health-card.tsx:235
 msgid "Dish names in capitals"
 msgstr "Dish names in capitals"
 
-#: app/components/menu/menu-health-card.tsx:228
+#: app/components/menu/menu-health-card.tsx:236
 msgid "Dish names that are too long"
 msgstr "Dish names that are too long"
 
-#: app/components/menu/item-form.tsx:629
+#: app/components/menu/item-form.tsx:723
 msgid "Dish or drink title, description, and internal SKU/code."
 msgstr "Dish or drink title, description, and internal SKU/code."
 
@@ -18145,15 +18270,15 @@ msgstr "Dishes I pick"
 msgid "Dishes in this category start in this course on a dine-in ticket. The location chooses the course names."
 msgstr "Dishes in this category start in this course on a dine-in ticket. The location chooses the course names."
 
-#: app/components/menu/menu-health-card.tsx:231
+#: app/components/menu/menu-health-card.tsx:239
 msgid "Dishes listed twice"
 msgstr "Dishes listed twice"
 
-#: app/components/menu/menu-health-card.tsx:223
+#: app/components/menu/menu-health-card.tsx:231
 msgid "Dishes missing a translation"
 msgstr "Dishes missing a translation"
 
-#: app/components/menu/menu-health-card.tsx:219
+#: app/components/menu/menu-health-card.tsx:227
 msgid "Dishes priced at 0"
 msgstr "Dishes priced at 0"
 
@@ -18165,19 +18290,19 @@ msgstr "Dishes that sell without a recipe will show up here, best sellers first.
 msgid "Dishes to feature (up to three)"
 msgstr "Dishes to feature (up to three)"
 
-#: app/components/menu/menu-health-card.tsx:225
+#: app/components/menu/menu-health-card.tsx:233
 msgid "Dishes unavailable for a week"
 msgstr "Dishes unavailable for a week"
 
-#: app/components/menu/menu-health-card.tsx:221
+#: app/components/menu/menu-health-card.tsx:229
 msgid "Dishes with a weak photo"
 msgstr "Dishes with a weak photo"
 
-#: app/components/menu/menu-health-card.tsx:222
+#: app/components/menu/menu-health-card.tsx:230
 msgid "Dishes with no description"
 msgstr "Dishes with no description"
 
-#: app/components/menu/menu-health-card.tsx:220
+#: app/components/menu/menu-health-card.tsx:228
 msgid "Dishes with no photo"
 msgstr "Dishes with no photo"
 
@@ -18185,16 +18310,20 @@ msgstr "Dishes with no photo"
 msgid "Dishes without a recipe"
 msgstr "Dishes without a recipe"
 
-#: app/components/menu/menu-health-card.tsx:224
+#: app/components/menu/menu-health-card.tsx:232
 msgid "Dishes without allergens or calories"
 msgstr "Dishes without allergens or calories"
+
+#: app/components/menu/menu-health-card.tsx:257
+msgid "Dishes, prices, or availability on a delivery platform differ from Menuza."
+msgstr "Dishes, prices, or availability on a delivery platform differ from Menuza."
 
 #: app/components/feature-updates.tsx:145
 #: app/components/feature-updates.tsx:225
 #: app/components/inventory/count-controls-panels.tsx:530
 #: app/components/inventory/setup-checklist.tsx:70
 #: app/components/marketing/marketing-calendar.tsx:162
-#: app/components/menu/menu-health-card.tsx:355
+#: app/components/menu/menu-health-card.tsx:368
 #: app/components/orders/new-order-banner.tsx:71
 #: app/components/reservations/settings/setup-checklist.tsx:94
 #: app/components/reservations/settings/setup-list-chrome.tsx:117
@@ -18294,7 +18423,7 @@ msgstr "docs"
 msgid "Documents ZATCA rejected"
 msgstr "Documents ZATCA rejected"
 
-#: app/components/menu/item-form.tsx:1085
+#: app/components/menu/item-form.tsx:1237
 msgid "Does not count toward per-slot order or dish caps."
 msgstr "Does not count toward per-slot order or dish caps."
 
@@ -18410,7 +18539,7 @@ msgstr "Door"
 msgid "DoorDash Drive"
 msgstr "DoorDash Drive"
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:262
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:870
 msgid "DoorDash store ID"
 msgstr "DoorDash store ID"
 
@@ -18823,7 +18952,7 @@ msgstr "Due today"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:571
 #: app/routes/_app+/$orgSlug_+/marketing+/templates._index.tsx:210
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:491
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:800
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:891
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:460
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:537
 msgid "Duplicate"
@@ -19196,7 +19325,7 @@ msgstr "Earning reversed"
 #: app/routes/_app+/$orgSlug_+/media.tsx:2569
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:478
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:374
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:787
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:878
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:447
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:524
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:299
@@ -19339,7 +19468,7 @@ msgstr "Edit item"
 msgid "Edit layout"
 msgstr "Edit layout"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:760
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:778
 msgid "Edit Location"
 msgstr "Edit Location"
 
@@ -19361,11 +19490,11 @@ msgstr "Edit note"
 msgid "Edit Note"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:357
+#: app/components/menu/modifier-form.tsx:362
 msgid "Edit option"
 msgstr "Edit option"
 
-#: app/components/menu/modifier-form.tsx:1877
+#: app/components/menu/modifier-form.tsx:1931
 msgid "Edit Option"
 msgstr "Edit Option"
 
@@ -19758,7 +19887,7 @@ msgstr "Employee"
 msgid "Empty bottle weight (g)"
 msgstr "Empty bottle weight (g)"
 
-#: app/components/menu/menu-health-card.tsx:226
+#: app/components/menu/menu-health-card.tsx:234
 msgid "Empty categories"
 msgstr "Empty categories"
 
@@ -19961,7 +20090,7 @@ msgstr "Enhanced"
 msgid "Enter 0 or more copies"
 msgstr "Enter 0 or more copies"
 
-#: app/components/menu/option-form.tsx:719
+#: app/components/menu/option-form.tsx:773
 msgid "Enter 0.00 for no extra charge (e.g. Free choice)."
 msgstr "Enter 0.00 for no extra charge (e.g. Free choice)."
 
@@ -20127,8 +20256,8 @@ msgstr "Enter a number of copies"
 msgid "Enter a number of days from 0 to 14."
 msgstr "Enter a number of days from 0 to 14."
 
-#: app/components/staff/hour-limits-section.tsx:145
-#: app/components/staff/hour-limits-section.tsx:157
+#: app/components/staff/hour-limits-section.tsx:149
+#: app/components/staff/hour-limits-section.tsx:161
 msgid "Enter a number of hours, or leave it empty."
 msgstr "Enter a number of hours, or leave it empty."
 
@@ -21049,7 +21178,7 @@ msgstr "Every delivery here is marked as paid."
 msgid "Every dish"
 msgstr "Every dish"
 
-#: app/components/menu/menu-health-card.tsx:660
+#: app/components/menu/menu-health-card.tsx:684
 msgid "Every dish has a photo, a description and a price. Nice work."
 msgstr "Every dish has a photo, a description and a price. Nice work."
 
@@ -21224,7 +21353,7 @@ msgstr "Everyone you import is added to this workplace."
 msgid "Everything"
 msgstr "Everything"
 
-#: app/components/menu/assigned-sortable-list.tsx:287
+#: app/components/menu/assigned-sortable-list.tsx:297
 msgid "Everything available is already assigned."
 msgstr "Everything available is already assigned."
 
@@ -21284,7 +21413,7 @@ msgstr "Exceptions"
 msgid "Exclude"
 msgstr "Exclude"
 
-#: app/components/menu/item-variations.tsx:398
+#: app/components/menu/item-variations.tsx:404
 msgid "Exclude {name} from discounts"
 msgstr "Exclude {name} from discounts"
 
@@ -21293,20 +21422,20 @@ msgstr "Exclude {name} from discounts"
 msgid "Exclude categories"
 msgstr "Exclude categories"
 
-#: app/components/menu/item-form.tsx:1061
+#: app/components/menu/item-form.tsx:1213
 msgid "Exclude from discounts"
 msgstr "Exclude from discounts"
 
-#: app/components/menu/item-variations.tsx:410
+#: app/components/menu/item-variations.tsx:416
 msgid "Exclude from discounts. Never receives a discount, for example gift cards."
 msgstr "Exclude from discounts. Never receives a discount, for example gift cards."
 
 #: app/components/menu/category-form.tsx:669
-#: app/components/menu/item-form.tsx:1082
+#: app/components/menu/item-form.tsx:1234
 msgid "Exclude from slot limits"
 msgstr "Exclude from slot limits"
 
-#: app/components/menu/item-form.tsx:1041
+#: app/components/menu/item-form.tsx:1193
 msgid "Exclude from Throttling"
 msgstr "Exclude from Throttling"
 
@@ -21340,7 +21469,7 @@ msgstr ""
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "Execution runs and step history, triggered by \"{triggerLabel}\"."
 
-#: app/components/menu/item-form.tsx:1044
+#: app/components/menu/item-form.tsx:1196
 msgid "Exempt from kitchen prep delay calculations."
 msgstr "Exempt from kitchen prep delay calculations."
 
@@ -21596,7 +21725,7 @@ msgstr "Exported or printed menu PDF up to 10 MB."
 msgid "Extend turn by 15m"
 msgstr "Extend turn by 15m"
 
-#: app/components/menu/option-form.tsx:714
+#: app/components/menu/option-form.tsx:768
 msgid "Extra charge when this topping is added to the whole pizza."
 msgstr "Extra charge when this topping is added to the whole pizza."
 
@@ -21615,6 +21744,10 @@ msgstr "Extra line"
 #: app/components/inventory/confirm-prices-dialog.tsx:439
 msgid "Extra lines on the invoice"
 msgstr "Extra lines on the invoice"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1461
+msgid "Extra on platform"
+msgstr "Extra on platform"
 
 #: app/components/locations/location-setting-labels.ts:33
 msgid "Extra time for large orders."
@@ -21669,6 +21802,7 @@ msgstr "failed"
 #: app/components/phone-agent/call-data.ts:136
 #: app/components/print/print-order-labels.ts:19
 #: app/components/settings/cards/organization/email-sending-card.tsx:78
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1289
 #: app/components/settings/cards/organization/shop-card.tsx:49
 #: app/components/social/social-labels.ts:35
 #: app/components/social/social-labels.ts:45
@@ -21896,7 +22030,7 @@ msgstr "Failed to save availability rule."
 msgid "Failed to save floor plan."
 msgstr "Failed to save floor plan."
 
-#: app/components/menu/option-form.tsx:483
+#: app/components/menu/option-form.tsx:525
 msgid "Failed to save option. Please check the fields below."
 msgstr "Failed to save option. Please check the fields below."
 
@@ -21964,6 +22098,10 @@ msgstr "Failed to update table."
 msgid "Failing"
 msgstr "Failing"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1216
+msgid "Failures only"
+msgstr "Failures only"
+
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:327
 #: app/utils/reservations/host-errors.test.ts:6
 msgid "Fallback"
@@ -21997,7 +22135,7 @@ msgstr "Feature"
 msgid "Feature Preview"
 msgstr ""
 
-#: app/components/menu/item-form.tsx:982
+#: app/components/menu/item-form.tsx:1134
 msgid "Feature this item prominently in ordering flows."
 msgstr "Feature this item prominently in ordering flows."
 
@@ -22285,7 +22423,7 @@ msgstr "Finish the open count, transfer or order that uses this item first."
 msgid "Finish these first"
 msgstr "Finish these first"
 
-#: app/components/menu/menu-health-card.tsx:671
+#: app/components/menu/menu-health-card.tsx:695
 msgid "Finish these to help guests choose and order."
 msgstr "Finish these to help guests choose and order."
 
@@ -22394,6 +22532,7 @@ msgid "Five tasks for the first week: confirm contact details, add an emergency 
 msgstr "Five tasks for the first week: confirm contact details, add an emergency contact, share the house rules, set up their clock-in PIN and add them to the schedule. Make a template to use your own."
 
 #: app/components/reservations/settings/setup-diagnostics.tsx:79
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1141
 #: app/components/status/location-status-view.tsx:157
 msgid "Fix"
 msgstr "Fix"
@@ -22403,8 +22542,12 @@ msgstr "Fix"
 msgid "Fix before publishing"
 msgstr "Fix before publishing"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1532
+msgid "Fix by pushing"
+msgstr "Fix by pushing"
+
 #: app/components/media-library/photo-quality-info.tsx:98
-#: app/components/menu/menu-health-card.tsx:372
+#: app/components/menu/menu-health-card.tsx:385
 msgid "Fix in photo studio"
 msgstr "Fix in photo studio"
 
@@ -22590,7 +22733,7 @@ msgstr "Follow-up text sent"
 msgid "Follows {profileName}. Change a setting here to override it for this terminal only."
 msgstr "Follows {profileName}. Change a setting here to override it for this terminal only."
 
-#: app/components/staff/hour-limits-section.tsx:164
+#: app/components/staff/hour-limits-section.tsx:168
 msgid "Follows the Ramadan limit"
 msgstr "Follows the Ramadan limit"
 
@@ -22648,7 +22791,7 @@ msgstr "For example 2 for double points, or 1.5."
 msgid "For example 5.00."
 msgstr "For example 5.00."
 
-#: app/components/menu/item-variations.tsx:154
+#: app/components/menu/item-variations.tsx:160
 msgid "For example, add Size with Small and Medium, then Color with Black and Blue. The combinations appear automatically."
 msgstr "For example, add Size with Small and Medium, then Color with Black and Blue. The combinations appear automatically."
 
@@ -22957,7 +23100,7 @@ msgstr "Fries"
 #: app/components/staff/schedule/availability-sheet.tsx:313
 #: app/components/staff/schedule/time-off-sheet.tsx:217
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:191
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:677
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:768
 msgid "From"
 msgstr "From"
 
@@ -23000,7 +23143,7 @@ msgstr "From calendar"
 msgid "From Canva"
 msgstr "From Canva"
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:269
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:877
 msgid "From DoorDash Portal or onboarding"
 msgstr "From DoorDash Portal or onboarding"
 
@@ -23381,8 +23524,8 @@ msgid "Give your group a name"
 msgstr "Give your group a name"
 
 #: app/components/menu/dietary-tag-switches.tsx:12
-#: app/components/menu/modifier-form.tsx:1625
-#: app/components/menu/modifier-form.tsx:2004
+#: app/components/menu/modifier-form.tsx:1679
+#: app/components/menu/modifier-form.tsx:2058
 #: app/components/reservations/booking-sheet.tsx:62
 #: app/utils/reservations/labels.ts:103
 msgid "Gluten-Free"
@@ -23398,6 +23541,10 @@ msgstr "Go"
 #: app/components/discounts/message-impact.tsx:513
 msgid "Go back"
 msgstr "Go back"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1183
+msgid "Go live"
+msgstr "Go live"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:310
 msgid "Go there"
@@ -23483,7 +23630,7 @@ msgstr "Goodwill"
 
 #: app/components/mailbox/reviews-tab.tsx:71
 #: app/components/social/social-labels.ts:23
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:811
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:829
 msgid "Google"
 msgstr "Google"
 
@@ -23609,7 +23756,7 @@ msgstr "Grabbed {grabbedGuestName} ({grabbedPartySize}) at {grabbedTime}. Use ar
 msgid "Grace period until <0>{graceText}</0>"
 msgstr "Grace period until <0>{graceText}</0>"
 
-#: app/components/menu/menu-health-card.tsx:296
+#: app/components/menu/menu-health-card.tsx:309
 msgid "Grade"
 msgstr "Grade"
 
@@ -23689,7 +23836,7 @@ msgstr "Group locations (a region, a franchisee) to give a team member access to
 msgid "Group name"
 msgstr "Group name"
 
-#: app/components/menu/modifier-form.tsx:976
+#: app/components/menu/modifier-form.tsx:1009
 msgid "Group Name (Guest-Facing)"
 msgstr "Group Name (Guest-Facing)"
 
@@ -23762,8 +23909,8 @@ msgstr ""
 msgid "Guest details at checkout"
 msgstr "Guest details at checkout"
 
-#: app/components/menu/item-form.tsx:855
-#: app/components/menu/option-form.tsx:854
+#: app/components/menu/item-form.tsx:991
+#: app/components/menu/option-form.tsx:909
 msgid "Guest dietary tags and allergen disclosure information."
 msgstr "Guest dietary tags and allergen disclosure information."
 
@@ -23888,7 +24035,7 @@ msgid "Guest tags"
 msgstr "Guest tags"
 
 #: app/components/menu/menu-form.tsx:228
-#: app/components/menu/modifier-form.tsx:970
+#: app/components/menu/modifier-form.tsx:1003
 msgid "Guest-facing name and internal identifier."
 msgstr "Guest-facing name and internal identifier."
 
@@ -23896,7 +24043,7 @@ msgstr "Guest-facing name and internal identifier."
 msgid "Guest-facing name, internal identifier, and description."
 msgstr "Guest-facing name, internal identifier, and description."
 
-#: app/components/menu/option-form.tsx:577
+#: app/components/menu/option-form.tsx:619
 msgid "Guest-facing name, internal SKU, and description."
 msgstr "Guest-facing name, internal SKU, and description."
 
@@ -23920,7 +24067,7 @@ msgstr "Guestbook profiles & merges"
 msgid "Guests"
 msgstr "Guests"
 
-#: app/components/menu/menu-health-card.tsx:245
+#: app/components/menu/menu-health-card.tsx:254
 msgid "Guests are asked to choose and have nothing to pick."
 msgstr "Guests are asked to choose and have nothing to pick."
 
@@ -23949,7 +24096,7 @@ msgstr "Guests can choose this area when they book."
 msgid "Guests can join online"
 msgstr "Guests can join online"
 
-#: app/components/menu/menu-health-card.tsx:246
+#: app/components/menu/menu-health-card.tsx:255
 msgid "Guests can never finish ordering this dish."
 msgstr "Guests can never finish ordering this dish."
 
@@ -23957,11 +24104,11 @@ msgstr "Guests can never finish ordering this dish."
 msgid "Guests can no longer book its seatings. Bookings already made are kept."
 msgstr "Guests can no longer book its seatings. Bookings already made are kept."
 
-#: app/components/menu/modifier-selection-fields.tsx:58
+#: app/components/menu/modifier-selection-fields.tsx:61
 msgid "Guests can pick multiple options."
 msgstr "Guests can pick multiple options."
 
-#: app/components/menu/modifier-selection-fields.tsx:46
+#: app/components/menu/modifier-selection-fields.tsx:49
 msgid "Guests can pick up to 1 option."
 msgstr "Guests can pick up to 1 option."
 
@@ -23973,7 +24120,7 @@ msgstr "Guests can pick which half gets each topping."
 msgid "Guests can skip this choice, but most dishes need it."
 msgstr "Guests can skip this choice, but most dishes need it."
 
-#: app/components/menu/modifier-selection-fields.tsx:114
+#: app/components/menu/modifier-selection-fields.tsx:119
 msgid "Guests can skip this selection."
 msgstr "Guests can skip this selection."
 
@@ -24001,7 +24148,7 @@ msgstr "Guests cannot find you or order online yet."
 msgid "Guests cannot see when you are open."
 msgstr "Guests cannot see when you are open."
 
-#: app/components/menu/modifier-selection-fields.tsx:70
+#: app/components/menu/modifier-selection-fields.tsx:73
 msgid "Guests choose counts per option."
 msgstr "Guests choose counts per option."
 
@@ -24017,11 +24164,11 @@ msgstr "Guests leave a card to book. Nothing is charged up front."
 msgid "Guests leave a card. Nothing is charged unless you charge a fee."
 msgstr "Guests leave a card. Nothing is charged unless you charge a fee."
 
-#: app/components/menu/menu-health-card.tsx:240
+#: app/components/menu/menu-health-card.tsx:249
 msgid "Guests look for allergens and calories."
 msgstr "Guests look for allergens and calories."
 
-#: app/components/menu/modifier-selection-fields.tsx:112
+#: app/components/menu/modifier-selection-fields.tsx:117
 msgid "Guests must choose one option before continuing."
 msgstr "Guests must choose one option before continuing."
 
@@ -24093,7 +24240,7 @@ msgstr "Guests reached"
 msgid "Guests read these terms and accept them before they book. Write them in each language your website offers."
 msgstr "Guests read these terms and accept them before they book. Write them in each language your website offers."
 
-#: app/components/menu/menu-health-card.tsx:239
+#: app/components/menu/menu-health-card.tsx:248
 msgid "Guests reading another language see a gap."
 msgstr "Guests reading another language see a gap."
 
@@ -24101,7 +24248,7 @@ msgstr "Guests reading another language see a gap."
 msgid "Guests scan the code on their table to order rounds and pay once when they leave."
 msgstr "Guests scan the code on their table to order rounds and pay once when they leave."
 
-#: app/components/menu/menu-health-card.tsx:242
+#: app/components/menu/menu-health-card.tsx:251
 msgid "Guests see a heading with nothing under it."
 msgstr "Guests see a heading with nothing under it."
 
@@ -24113,7 +24260,7 @@ msgstr "Guests see how many are left once there are only a few. Sold out is alwa
 msgid "Guests see nothing to order."
 msgstr "Guests see nothing to order."
 
-#: app/components/menu/menu-health-card.tsx:247
+#: app/components/menu/menu-health-card.tsx:256
 msgid "Guests see the same dish twice."
 msgstr "Guests see the same dish twice."
 
@@ -24164,7 +24311,7 @@ msgstr "Half"
 msgid "Half and whole toppings"
 msgstr "Half and whole toppings"
 
-#: app/components/menu/option-form.tsx:747
+#: app/components/menu/option-form.tsx:801
 msgid "Half pizza price ($)"
 msgstr "Half pizza price ($)"
 
@@ -24392,8 +24539,8 @@ msgstr "Hi {personName}, enter your PIN"
 msgid "Hi, {userName}"
 msgstr "Hi, {userName}"
 
-#: app/components/menu/menu-availability-card.tsx:232
-#: app/components/menu/menu-availability-card.tsx:288
+#: app/components/menu/menu-availability-card.tsx:236
+#: app/components/menu/menu-availability-card.tsx:297
 #: app/components/menu/menu-bulk-edit-sheet.tsx:622
 #: app/components/menu/menu-review-card.tsx:75
 #: app/components/menu/menu-review-card.tsx:88
@@ -24405,7 +24552,7 @@ msgstr "Hi, {userName}"
 msgid "Hidden"
 msgstr "Hidden"
 
-#: app/components/menu/menu-availability-card.tsx:297
+#: app/components/menu/menu-availability-card.tsx:306
 msgid "Hidden from public discovery. Ideal for exclusive drops, secret menus, and scheduled events."
 msgstr "Hidden from public discovery. Ideal for exclusive drops, secret menus, and scheduled events."
 
@@ -24450,7 +24597,7 @@ msgstr ""
 msgid "Hide from site"
 msgstr "Hide from site"
 
-#: app/components/menu/menu-health-card.tsx:241
+#: app/components/menu/menu-health-card.tsx:250
 msgid "Hide it or bring it back."
 msgstr "Hide it or bring it back."
 
@@ -24506,7 +24653,7 @@ msgstr "High match"
 msgid "High return"
 msgstr "High return"
 
-#: app/components/menu/option-form.tsx:502
+#: app/components/menu/option-form.tsx:544
 msgid "High-resolution photos increase ordering conversion by over 30%. Stored in your organization's Media Library."
 msgstr "High-resolution photos increase ordering conversion by over 30%. Stored in your organization's Media Library."
 
@@ -24644,6 +24791,10 @@ msgstr "Holds"
 msgid "Holiday"
 msgstr "Holiday"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1053
+msgid "Holiday hours sync"
+msgstr "Holiday hours sync"
+
 #: app/components/staff/labor-policy-editor.tsx:1323
 msgid "Holiday pay rate"
 msgstr "Holiday pay rate"
@@ -24718,7 +24869,7 @@ msgstr "Hosted checkout not connected"
 msgid "hour"
 msgstr "hour"
 
-#: app/components/staff/hour-limits-section.tsx:114
+#: app/components/staff/hour-limits-section.tsx:118
 msgid "Hour limits"
 msgstr "Hour limits"
 
@@ -24726,7 +24877,7 @@ msgstr "Hour limits"
 msgid "Hour limits for the schedule"
 msgstr "Hour limits for the schedule"
 
-#: app/components/staff/hour-limits-section.tsx:106
+#: app/components/staff/hour-limits-section.tsx:110
 msgid "Hour limits saved."
 msgstr "Hour limits saved."
 
@@ -25253,6 +25404,7 @@ msgstr ""
 msgid "Impersonating <0>{targetName}</0>"
 msgstr "Impersonating <0>{targetName}</0>"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1268
 #: app/components/staff/labor/sales-import-dialog.tsx:250
 #: app/components/workspace-breadcrumb.tsx:28
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:154
@@ -25308,7 +25460,7 @@ msgstr "Import from website or file"
 msgid "Import in progress"
 msgstr "Import in progress"
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:169
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:694
 msgid "Import menu"
 msgstr "Import menu"
 
@@ -25428,7 +25580,7 @@ msgstr "In person"
 msgid "In progress"
 msgstr "In progress"
 
-#: app/components/staff/hour-limits-section.tsx:166
+#: app/components/staff/hour-limits-section.tsx:170
 msgid "In Ramadan the workplace's shorter limits apply to this person. Only managers who can see private details see this setting."
 msgstr "In Ramadan the workplace's shorter limits apply to this person. Only managers who can see private details see this setting."
 
@@ -25444,6 +25596,10 @@ msgstr "In review"
 #: app/utils/discounts/labels.ts:173
 msgid "In store till"
 msgstr "In store till"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:493
+msgid "In sync"
+msgstr "In sync"
 
 #: app/components/inventory/bottle-count-input.tsx:92
 msgid "In tenths"
@@ -25710,7 +25866,7 @@ msgid "Instantly enable Stripe (mock)"
 msgstr "Instantly enable Stripe (mock)"
 
 #: app/components/app-sidebar.tsx:777
-#: app/components/settings/cards/organization/integrations-card.tsx:181
+#: app/components/settings/cards/organization/integrations-card.tsx:195
 #: app/components/workspace-breadcrumb.tsx:66
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
 msgid "Integrations"
@@ -25736,14 +25892,14 @@ msgstr "Internal notes"
 
 #: app/components/menu/category-form.tsx:469
 #: app/components/menu/menu-form.tsx:246
-#: app/components/menu/modifier-form.tsx:988
-#: app/components/menu/modifier-form.tsx:1520
-#: app/components/menu/modifier-form.tsx:1899
+#: app/components/menu/modifier-form.tsx:1027
+#: app/components/menu/modifier-form.tsx:1574
+#: app/components/menu/modifier-form.tsx:1953
 msgid "Internal Reference (Optional)"
 msgstr "Internal Reference (Optional)"
 
-#: app/components/menu/item-form.tsx:691
-#: app/components/menu/option-form.tsx:646
+#: app/components/menu/item-form.tsx:791
+#: app/components/menu/option-form.tsx:694
 msgid "Internal Reference / SKU (Optional)"
 msgstr "Internal Reference / SKU (Optional)"
 
@@ -26252,7 +26408,7 @@ msgstr "item"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:143
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.$itemId.tsx:157
 #: app/routes/_app+/$orgSlug_+/inventory+/waste.tsx:611
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:581
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:664
 msgid "Item"
 msgstr "Item"
 
@@ -26260,7 +26416,7 @@ msgstr "Item"
 msgid "Item {position}"
 msgstr "Item {position}"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:771
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:862
 msgid "Item actions"
 msgstr "Item actions"
 
@@ -26277,7 +26433,7 @@ msgstr "Item discount"
 msgid "Item discounts"
 msgstr "Item discounts"
 
-#: app/components/menu/item-form.tsx:626
+#: app/components/menu/item-form.tsx:720
 msgid "Item Information"
 msgstr "Item Information"
 
@@ -26289,7 +26445,7 @@ msgstr "Item label"
 msgid "Item name"
 msgstr "Item name"
 
-#: app/components/menu/item-form.tsx:637
+#: app/components/menu/item-form.tsx:731
 msgid "Item Name (Guest-Facing)"
 msgstr "Item Name (Guest-Facing)"
 
@@ -26301,7 +26457,7 @@ msgstr "Item notes"
 msgid "Item options"
 msgstr "Item options"
 
-#: app/components/menu/item-form.tsx:539
+#: app/components/menu/item-form.tsx:607
 msgid "Item Photos"
 msgstr "Item Photos"
 
@@ -26326,7 +26482,7 @@ msgstr "items"
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.lists.tsx:357
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:91
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:347
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:511
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:572
 msgid "Items"
 msgstr "Items"
 
@@ -26392,7 +26548,7 @@ msgstr "Items taken off tabs"
 msgid "Items that earn"
 msgstr "Items that earn"
 
-#: app/components/menu/modifier-form.tsx:1350
+#: app/components/menu/modifier-form.tsx:1404
 msgid "Items that offer this modifier group."
 msgstr "Items that offer this modifier group."
 
@@ -26545,7 +26701,7 @@ msgstr "Just Eat"
 msgid "just now"
 msgstr "just now"
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:54
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:174
 msgid "Just now"
 msgstr "Just now"
 
@@ -26918,8 +27074,8 @@ msgstr ""
 msgid "Kitchen closed"
 msgstr "Kitchen closed"
 
-#: app/components/menu/item-form.tsx:671
-#: app/components/menu/option-form.tsx:621
+#: app/components/menu/item-form.tsx:771
+#: app/components/menu/option-form.tsx:669
 msgid "Kitchen highlight"
 msgstr "Kitchen highlight"
 
@@ -26927,8 +27083,8 @@ msgstr "Kitchen highlight"
 msgid "Kitchen manager"
 msgstr "Kitchen manager"
 
-#: app/components/menu/item-form.tsx:649
-#: app/components/menu/option-form.tsx:597
+#: app/components/menu/item-form.tsx:749
+#: app/components/menu/option-form.tsx:645
 msgid "Kitchen name (optional)"
 msgstr "Kitchen name (optional)"
 
@@ -27726,8 +27882,8 @@ msgstr "Left Message"
 msgid "Left on {leftOn}"
 msgstr "Left on {leftOn}"
 
-#: app/components/menu/modifier-form.tsx:1550
-#: app/components/menu/modifier-form.tsx:1929
+#: app/components/menu/modifier-form.tsx:1604
+#: app/components/menu/modifier-form.tsx:1983
 msgid "Left or right ($)"
 msgstr "Left or right ($)"
 
@@ -28131,7 +28287,7 @@ msgstr "Listing Sync"
 
 #: app/components/hiring/job-labels.ts:50
 #: app/components/settings/cards/organization/customer-app-card.tsx:33
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:124
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:517
 #: app/components/website/domain/site-domains-card.tsx:129
 #: app/components/website/publish-controls.tsx:289
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:955
@@ -28427,6 +28583,10 @@ msgstr "Loading submissions"
 msgid "Loading suggested orders"
 msgstr "Loading suggested orders"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1242
+msgid "Loading sync history…"
+msgstr "Loading sync history…"
+
 #: app/components/reservations/waitlist/seat-dialog.tsx:184
 msgid "Loading tables..."
 msgstr "Loading tables..."
@@ -28647,7 +28807,7 @@ msgstr "Location override"
 msgid "Location override updated"
 msgstr "Location override updated"
 
-#: app/components/menu/location-overrides-card.tsx:114
+#: app/components/menu/location-overrides-card.tsx:117
 msgid "Location Overrides"
 msgstr "Location Overrides"
 
@@ -28675,7 +28835,7 @@ msgstr "Location tags and import"
 msgid "Location time zone changed"
 msgstr "Location time zone changed"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:865
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:883
 msgid "Location time zone is used to compute reservation seating slots. Changing the time zone will prompt you to re-derive future reservation times in Reservations Settings."
 msgstr "Location time zone is used to compute reservation seating slots. Changing the time zone will prompt you to re-derive future reservation times in Reservations Settings."
 
@@ -28860,12 +29020,12 @@ msgstr ""
 msgid "Logout"
 msgstr ""
 
-#: app/components/menu/menu-health-card.tsx:244
+#: app/components/menu/menu-health-card.tsx:253
 msgid "Long names get cut off on small screens."
 msgstr "Long names get cut off on small screens."
 
-#: app/components/menu/item-form.tsx:685
-#: app/components/menu/option-form.tsx:635
+#: app/components/menu/item-form.tsx:785
+#: app/components/menu/option-form.tsx:683
 msgid "Long prep"
 msgstr "Long prep"
 
@@ -29348,7 +29508,7 @@ msgstr "Manage reservation book & waitlist"
 msgid "Manage reservation settings & experiences"
 msgstr "Manage reservation settings & experiences"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:860
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:878
 msgid "Manage reservations settings"
 msgstr "Manage reservations settings"
 
@@ -29441,6 +29601,11 @@ msgstr "Manage your restaurant's subscription"
 msgid "Managed by Menuza"
 msgstr "Managed by Menuza"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:459
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:966
+msgid "Managed by POS"
+msgstr "Managed by POS"
+
 #: app/components/website/domain/records-panel.tsx:179
 msgid "Managed by the registrar"
 msgstr "Managed by the registrar"
@@ -29456,6 +29621,22 @@ msgstr "Managed for email sending"
 #: app/components/website/domain/records-panel.tsx:176
 msgid "Managed for your site"
 msgstr "Managed for your site"
+
+#: app/components/menu/item-form.tsx:1278
+#~ msgid "Managed in {0}. Remove it in the POS or <0>change ownership</0> before deleting here."
+#~ msgstr "Managed in {0}. Remove it in the POS or <0>change ownership</0> before deleting here."
+
+#: app/components/menu/item-form.tsx:1279
+msgid "Managed in {deleteLockedProvider}. Remove it in the POS or <0>change ownership</0> before deleting here."
+msgstr "Managed in {deleteLockedProvider}. Remove it in the POS or <0>change ownership</0> before deleting here."
+
+#: app/components/menu/pos-field-controls.tsx:67
+msgid "Managed in {provider}."
+msgstr "Managed in {provider}."
+
+#: app/components/menu/pos-field-controls.tsx:15
+msgid "Managed in {providerLabel}"
+msgstr "Managed in {providerLabel}"
 
 #: app/components/pos/terminals-manager.tsx:867
 #: app/components/staff/timesheets/card-history.tsx:67
@@ -29508,7 +29689,7 @@ msgstr "Mark {reviewableCount} as reviewed"
 msgid "Mark Active"
 msgstr "Mark Active"
 
-#: app/components/ui/notification-bell.tsx:818
+#: app/components/ui/notification-bell.tsx:844
 msgid "Mark all as read"
 msgstr ""
 
@@ -29530,11 +29711,11 @@ msgstr "Mark as done"
 msgid "Mark as not done"
 msgstr "Mark as not done"
 
-#: app/components/menu/modifier-form.tsx:183
+#: app/components/menu/modifier-form.tsx:188
 msgid "Mark as preselected"
 msgstr "Mark as preselected"
 
-#: app/components/ui/notification-bell.tsx:523
+#: app/components/ui/notification-bell.tsx:549
 msgid "Mark as read"
 msgstr ""
 
@@ -29692,6 +29873,11 @@ msgstr "Marked as sent."
 msgid "Marked as unpaid."
 msgstr "Marked as unpaid."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1334
+msgid "Marked available"
+msgstr "Marked available"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1336
 #: app/components/staff/schedule/shift-editor-sheet.tsx:761
 msgid "Marked unavailable"
 msgstr "Marked unavailable"
@@ -29770,6 +29956,11 @@ msgstr "Matches the invoice."
 msgid "Matching your photos to dishes…"
 msgstr "Matching your photos to dishes…"
 
+#. placeholder {0}: integration.storeSettings?.menuLimit ?? 5
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1001
+msgid "Max {0}"
+msgstr "Max {0}"
+
 #: app/components/loyalty/program-extension-cards.tsx:669
 msgid "Max discount cap"
 msgstr "Max discount cap"
@@ -29820,8 +30011,8 @@ msgstr "Maximum discount"
 msgid "Maximum off"
 msgstr "Maximum off"
 
-#: app/components/menu/modifier-selection-fields.tsx:158
-#: app/components/menu/option-form.tsx:798
+#: app/components/menu/modifier-selection-fields.tsx:171
+#: app/components/menu/option-form.tsx:853
 msgid "Maximum Selections (Optional)"
 msgstr "Maximum Selections (Optional)"
 
@@ -30003,12 +30194,12 @@ msgstr "Menu and drop orders placed by this customer."
 msgid "Menu columns"
 msgstr "Menu columns"
 
-#: app/components/menu/menu-health-card.tsx:610
-#: app/components/menu/menu-health-card.tsx:649
+#: app/components/menu/menu-health-card.tsx:634
+#: app/components/menu/menu-health-card.tsx:673
 msgid "Menu health"
 msgstr "Menu health"
 
-#: app/components/menu/menu-health-card.tsx:692
+#: app/components/menu/menu-health-card.tsx:716
 msgid "Menu health score"
 msgstr "Menu health score"
 
@@ -30042,7 +30233,7 @@ msgstr "Menu Information"
 msgid "Menu item"
 msgstr "Menu item"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:881
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:899
 msgid "Menu location overrides"
 msgstr "Menu location overrides"
 
@@ -30088,6 +30279,18 @@ msgstr "Menu prices already include tax (VAT), as required in Saudi Arabia, the 
 msgid "Menu Settings"
 msgstr "Menu Settings"
 
+#: app/utils/integrations/sync-alerts.ts:33
+msgid "Menu sync failing for **{platform}**"
+msgstr "Menu sync failing for **{platform}**"
+
+#: app/utils/integrations/sync-alerts.ts:25
+msgid "Menu sync failing for **{platform}** ({location})"
+msgstr "Menu sync failing for **{platform}** ({location})"
+
+#: app/utils/integrations/sync-alerts.ts:40
+msgid "Menu sync is failing"
+msgstr "Menu sync is failing"
+
 #: app/routes/_app+/$orgSlug_+/inventory+/settings.tsx:674
 msgid "Menu tax"
 msgstr "Menu tax"
@@ -30104,6 +30307,10 @@ msgstr "Menu Type"
 msgid "Menu Type & Capabilities"
 msgstr "Menu Type & Capabilities"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:542
+msgid "Menu updates have been failing for over 24 hours."
+msgstr "Menu updates have been failing for over 24 hours."
+
 #: app/components/app-sidebar.tsx:381
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:77
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:344
@@ -30116,6 +30323,11 @@ msgstr "Menus"
 msgid "Menus that display this category."
 msgstr "Menus that display this category."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:998
+msgid "Menus to publish"
+msgstr "Menus to publish"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:661
 #: app/components/website/action-targets-card.tsx:204
 #: app/utils/gift-cards/labels.ts:33
 msgid "Menuza"
@@ -30152,6 +30364,19 @@ msgstr ""
 #: app/components/gbp/google-listing-tab.tsx:1087
 msgid "Menuza will stop syncing hours, links, and menu updates to this Google profile. Your Google listing itself will not be deleted."
 msgstr "Menuza will stop syncing hours, links, and menu updates to this Google profile. Your Google listing itself will not be deleted."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1466
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1473
+#~ msgid "Menuza: {0} · Platform: {1}"
+#~ msgstr "Menuza: {0} · Platform: {1}"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1482
+msgid "Menuza: {localAvailableLabel} · Platform: {remoteAvailableLabel}"
+msgstr "Menuza: {localAvailableLabel} · Platform: {remoteAvailableLabel}"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1475
+msgid "Menuza: {localPriceLabel} · Platform: {remotePriceLabel}"
+msgstr "Menuza: {localPriceLabel} · Platform: {remotePriceLabel}"
 
 #: app/components/inventory/merge-dialog.tsx:414
 #: app/components/inventory/merge-dialog.tsx:602
@@ -30396,8 +30621,8 @@ msgstr "Minimum party size cannot exceed maximum."
 msgid "Minimum qualifying spend"
 msgstr "Minimum qualifying spend"
 
-#: app/components/menu/modifier-selection-fields.tsx:142
-#: app/components/menu/option-form.tsx:783
+#: app/components/menu/modifier-selection-fields.tsx:154
+#: app/components/menu/option-form.tsx:838
 msgid "Minimum Selections"
 msgstr "Minimum Selections"
 
@@ -30482,6 +30707,10 @@ msgstr "Missing from this price list"
 #: app/routes/_app+/$orgSlug_+/menu+/translations.tsx:198
 msgid "Missing names: {missingNames} of {names}"
 msgstr "Missing names: {missingNames} of {names}"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1459
+msgid "Missing on platform"
+msgstr "Missing on platform"
 
 #: app/utils/inventory/labels.ts:70
 msgid "Missing or stolen"
@@ -30586,7 +30815,7 @@ msgstr "Modifier Group"
 msgid "Modifier group actions"
 msgstr "Modifier group actions"
 
-#: app/components/menu/modifier-form.tsx:967
+#: app/components/menu/modifier-form.tsx:1000
 msgid "Modifier Group Information"
 msgstr "Modifier Group Information"
 
@@ -30600,7 +30829,7 @@ msgid "Modifier groups"
 msgstr "Modifier groups"
 
 #: app/components/app-sidebar.tsx:396
-#: app/components/menu/item-form.tsx:806
+#: app/components/menu/item-form.tsx:934
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:98
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:333
 msgid "Modifier Groups"
@@ -30611,9 +30840,17 @@ msgstr "Modifier Groups"
 msgid "Modifier options"
 msgstr "Modifier options"
 
-#: app/components/menu/modifier-form.tsx:1044
+#: app/components/menu/modifier-form.tsx:1091
 msgid "Modifier Options"
 msgstr "Modifier Options"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:380
+msgid "Modifiers"
+msgstr "Modifiers"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1467
+msgid "Modifiers differ"
+msgstr "Modifiers differ"
 
 #: app/components/roles/tenant-role-access-manager.tsx:106
 msgid "Modify notes created by other team members."
@@ -30797,7 +31034,7 @@ msgstr "Most expensive first"
 msgid "Most guests"
 msgstr "Most guests"
 
-#: app/components/staff/hour-limits-section.tsx:138
+#: app/components/staff/hour-limits-section.tsx:142
 #: app/components/staff/labor-core-rules.tsx:479
 msgid "Most hours in a day"
 msgstr "Most hours in a day"
@@ -30806,7 +31043,7 @@ msgstr "Most hours in a day"
 msgid "Most hours in a day in Ramadan"
 msgstr "Most hours in a day in Ramadan"
 
-#: app/components/staff/hour-limits-section.tsx:150
+#: app/components/staff/hour-limits-section.tsx:154
 #: app/components/staff/labor-core-rules.tsx:492
 msgid "Most hours in a week"
 msgstr "Most hours in a week"
@@ -31006,7 +31243,7 @@ msgstr "Mozzarella"
 msgid "Multi-factor authentication"
 msgstr ""
 
-#: app/components/menu/option-form.tsx:978
+#: app/components/menu/option-form.tsx:1033
 msgid "Multiple"
 msgstr "Multiple"
 
@@ -31015,7 +31252,7 @@ msgstr "Multiple"
 msgid "Multiple choice"
 msgstr "Multiple choice"
 
-#: app/components/menu/modifier-selection-fields.tsx:55
+#: app/components/menu/modifier-selection-fields.tsx:58
 msgid "Multiple Choice (Checkboxes)"
 msgstr "Multiple Choice (Checkboxes)"
 
@@ -31077,6 +31314,7 @@ msgstr "My support requests"
 #: app/components/reservations/walk-in-dialog.tsx:239
 #: app/components/settings/cards/organization/email-sending-card.tsx:321
 #: app/components/settings/cards/organization/general-settings-card.tsx:91
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:370
 #: app/components/settings/cards/organization/verified-domain-card.tsx:150
 #: app/components/settings/cards/profile-card.tsx:116
 #: app/components/staff/staff-roster.tsx:134
@@ -31251,7 +31489,7 @@ msgstr "Nearest"
 msgid "Need a new code? Request one here."
 msgstr ""
 
-#: app/components/settings/cards/organization/integrations-card.tsx:236
+#: app/components/settings/cards/organization/integrations-card.tsx:257
 msgid "Need an integration but don't see it here?"
 msgstr ""
 
@@ -31304,6 +31542,7 @@ msgstr "Needs at least {minimum} orders"
 #: app/components/dashboard/blocks/attention-block.tsx:433
 #: app/components/reservations/conflict-panel.tsx:123
 #: app/components/reservations/host-subnav.tsx:163
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1116
 #: app/components/staff/staff-profile-page.tsx:36
 #: app/components/staff/timeclock-today.tsx:125
 #: app/routes/_app+/$orgSlug_+/inventory+/today.tsx:344
@@ -31376,7 +31615,7 @@ msgstr ""
 msgid "Nest up to 3 levels deep (e.g. Drinks > Hot Coffees > Americanos)."
 msgstr "Nest up to 3 levels deep (e.g. Drinks > Hot Coffees > Americanos)."
 
-#: app/components/menu/modifier-form.tsx:248
+#: app/components/menu/modifier-form.tsx:253
 msgid "Nested Groups:"
 msgstr "Nested Groups:"
 
@@ -31384,7 +31623,7 @@ msgstr "Nested Groups:"
 msgid "Nested Modifier"
 msgstr "Nested Modifier"
 
-#: app/components/menu/modifier-form.tsx:1110
+#: app/components/menu/modifier-form.tsx:1164
 msgid "Nested Modifier Groups"
 msgstr "Nested Modifier Groups"
 
@@ -31392,11 +31631,11 @@ msgstr "Nested Modifier Groups"
 msgid "Nested modifier groups:"
 msgstr "Nested modifier groups:"
 
-#: app/components/menu/modifier-form.tsx:1402
+#: app/components/menu/modifier-form.tsx:1456
 msgid "Nested Modifier Usage"
 msgstr "Nested Modifier Usage"
 
-#: app/components/menu/option-form.tsx:999
+#: app/components/menu/option-form.tsx:1054
 msgid "Nested Modifiers"
 msgstr "Nested Modifiers"
 
@@ -31466,7 +31705,7 @@ msgstr "Never free"
 msgid "Never mark this dish as Popular."
 msgstr "Never mark this dish as Popular."
 
-#: app/components/menu/item-form.tsx:1064
+#: app/components/menu/item-form.tsx:1216
 msgid "Never receives a discount, for example gift cards."
 msgstr "Never receives a discount, for example gift cards."
 
@@ -31880,6 +32119,7 @@ msgstr "Newer template available"
 
 #: app/components/hiring/job-editor.tsx:443
 #: app/components/kiosk/kiosk-screens.tsx:276
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1389
 #: app/components/website/create-page-dialog.tsx:131
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:520
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:281
@@ -32153,7 +32393,7 @@ msgstr "No card matches that number."
 msgid "No categories assigned to this menu"
 msgstr "No categories assigned to this menu"
 
-#: app/components/menu/item-form.tsx:917
+#: app/components/menu/item-form.tsx:1061
 #: app/components/menu/menu-form.tsx:371
 msgid "No categories assigned yet. Add a category to get started."
 msgstr "No categories assigned yet. Add a category to get started."
@@ -32346,7 +32586,7 @@ msgstr ""
 msgid "No delivery zones configured"
 msgstr "No delivery zones configured"
 
-#: app/components/menu/menu-health-card.tsx:253
+#: app/components/menu/menu-health-card.tsx:263
 msgid "No description on purpose"
 msgstr "No description on purpose"
 
@@ -32478,6 +32718,10 @@ msgstr "No experiences configured yet"
 msgid "No Facebook Page found"
 msgstr "No Facebook Page found"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1247
+msgid "No failed syncs recorded."
+msgstr "No failed syncs recorded."
+
 #: app/components/website/form-builder-sidebar.tsx:1339
 msgid "No fields yet"
 msgstr "No fields yet"
@@ -32571,7 +32815,7 @@ msgid "No item selected"
 msgstr "No item selected"
 
 #: app/components/menu/category-form.tsx:504
-#: app/components/menu/modifier-form.tsx:1358
+#: app/components/menu/modifier-form.tsx:1412
 msgid "No items assigned yet. Add one to get started."
 msgstr "No items assigned yet. Add one to get started."
 
@@ -32587,7 +32831,7 @@ msgstr "No items in this section."
 msgid "No items match"
 msgstr "No items match"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:560
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:643
 msgid "No items match these filters"
 msgstr "No items match these filters"
 
@@ -32596,7 +32840,7 @@ msgid "No items match."
 msgstr "No items match."
 
 #: app/routes/_app+/$orgSlug_+/inventory+/stock.tsx:445
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:543
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:604
 msgid "No items yet"
 msgstr "No items yet"
 
@@ -32739,7 +32983,7 @@ msgstr "No matching images"
 msgid "No matching locations"
 msgstr "No matching locations"
 
-#: app/components/menu/modifier-form.tsx:1809
+#: app/components/menu/modifier-form.tsx:1863
 msgid "No matching options found."
 msgstr "No matching options found."
 
@@ -32774,6 +33018,10 @@ msgstr ""
 #: app/components/note/share-note-button.tsx:214
 msgid "No members have been given direct access."
 msgstr "No members have been given direct access."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1428
+msgid "No menu differences recorded."
+msgstr "No menu differences recorded."
 
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:519
 msgid "No menu imports yet."
@@ -32831,11 +33079,11 @@ msgstr "No messages yet"
 msgid "No microphone was found. Connect one and try again."
 msgstr "No microphone was found. Connect one and try again."
 
-#: app/components/menu/item-form.tsx:819
+#: app/components/menu/item-form.tsx:955
 msgid "No modifier groups assigned yet. Add one to get started."
 msgstr "No modifier groups assigned yet. Add one to get started."
 
-#: app/components/menu/option-form.tsx:917
+#: app/components/menu/option-form.tsx:972
 msgid "No modifier groups found. You can create modifier groups first in the Modifier Groups tab."
 msgstr "No modifier groups found. You can create modifier groups first in the Modifier Groups tab."
 
@@ -32867,7 +33115,7 @@ msgstr "No named delivery areas"
 msgid "No names to show. Ask a manager to set up your PIN."
 msgstr "No names to show. Ask a manager to set up your PIN."
 
-#: app/components/menu/modifier-form.tsx:1127
+#: app/components/menu/modifier-form.tsx:1181
 msgid "No nested groups yet"
 msgstr "No nested groups yet"
 
@@ -32976,7 +33224,7 @@ msgstr "No open times for this date and party size. Enter another time below, or
 msgid "No opening hours are set, so guests cannot tell when you are open."
 msgstr "No opening hours are set, so guests cannot tell when you are open."
 
-#: app/components/menu/modifier-form.tsx:1055
+#: app/components/menu/modifier-form.tsx:1107
 msgid "No options added yet. Click “Add option” to get started."
 msgstr "No options added yet. Click “Add option” to get started."
 
@@ -33024,13 +33272,13 @@ msgstr "No other item in the same unit."
 msgid "No other members to share with"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1325
+#: app/components/menu/modifier-form.tsx:1379
 msgid "No other modifier groups available"
 msgstr "No other modifier groups available"
 
-#: app/components/menu/modifier-form.tsx:1702
-#: app/components/menu/modifier-form.tsx:2081
-#: app/components/menu/option-form.tsx:1021
+#: app/components/menu/modifier-form.tsx:1756
+#: app/components/menu/modifier-form.tsx:2135
+#: app/components/menu/option-form.tsx:1076
 msgid "No other modifier groups available to nest."
 msgstr "No other modifier groups available to nest."
 
@@ -33121,7 +33369,7 @@ msgstr "No phone is signed in to the Menuza app for alerts yet."
 msgid "No photo"
 msgstr "No photo"
 
-#: app/components/menu/menu-health-card.tsx:251
+#: app/components/menu/menu-health-card.tsx:261
 msgid "No photo on purpose"
 msgstr "No photo on purpose"
 
@@ -33505,6 +33753,10 @@ msgstr "No suppliers yet"
 msgid "No support requests yet. Use Help, then Contact support, and we will reply here."
 msgstr "No support requests yet. Use Help, then Contact support, and we will reply here."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1249
+msgid "No sync history yet."
+msgstr "No sync history yet."
+
 #: app/utils/reservations/setup-progress.ts:239
 msgid "No table fits online parties of {ranges}."
 msgstr "No table fits online parties of {ranges}."
@@ -33835,13 +34087,13 @@ msgstr "none"
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/inventory/count-review-screen.tsx:991
 #: app/components/menu/category-form.tsx:452
-#: app/components/menu/item-form.tsx:682
+#: app/components/menu/item-form.tsx:782
 #: app/components/menu/menu-bulk-edit-sheet.tsx:558
 #: app/components/menu/menu-schedule-card.tsx:248
 #: app/components/menu/menu-schedule-card.tsx:249
 #: app/components/menu/menu-schedule-card.tsx:254
-#: app/components/menu/modifier-form.tsx:283
-#: app/components/menu/option-form.tsx:632
+#: app/components/menu/modifier-form.tsx:288
+#: app/components/menu/option-form.tsx:680
 #: app/components/reservations/booking-sheet.tsx:87
 #: app/components/settings/cards/organization/site-theme-card.tsx:946
 #: app/components/staff/empty-value.tsx:14
@@ -34191,11 +34443,11 @@ msgstr "Not shared with anyone yet."
 msgid "Not shown"
 msgstr "Not shown"
 
-#: app/components/menu/modifier-form.tsx:1223
+#: app/components/menu/modifier-form.tsx:1277
 msgid "Not shown yet"
 msgstr "Not shown yet"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:663
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:746
 msgid "Not sold everywhere"
 msgstr "Not sold everywhere"
 
@@ -34235,8 +34487,8 @@ msgstr "Not updated"
 msgid "Not uploaded"
 msgstr "Not uploaded"
 
-#: app/components/menu/item-form.tsx:834
-#: app/components/menu/option-form.tsx:1084
+#: app/components/menu/item-form.tsx:970
+#: app/components/menu/option-form.tsx:1139
 msgid "Not used anywhere else yet"
 msgstr "Not used anywhere else yet"
 
@@ -34475,7 +34727,7 @@ msgstr "Nothing has fired yet."
 msgid "Nothing has happened to this item yet."
 msgstr "Nothing has happened to this item yet."
 
-#: app/components/ui/notification-bell.tsx:576
+#: app/components/ui/notification-bell.tsx:602
 msgid "Nothing here yet!"
 msgstr ""
 
@@ -34552,7 +34804,7 @@ msgstr "Nothing is waiting"
 msgid "Nothing is waiting for review."
 msgstr "Nothing is waiting for review."
 
-#: app/components/menu/menu-health-card.tsx:710
+#: app/components/menu/menu-health-card.tsx:734
 msgid "Nothing left to fix"
 msgstr "Nothing left to fix"
 
@@ -35180,7 +35432,7 @@ msgstr "One date"
 msgid "One decimal (10.90)"
 msgstr "One decimal (10.90)"
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:273
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:881
 msgid "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
 msgstr "One DoorDash store per connection. Use the store id DoorDash assigns after onboarding (SSIO or Store Onboarding)."
 
@@ -35376,7 +35628,7 @@ msgstr "Online order tips"
 msgid "Online order tips that join the pool"
 msgstr "Online order tips that join the pool"
 
-#: app/components/orders/ordering-controls.tsx:63
+#: app/components/orders/ordering-controls.tsx:66
 msgid "Online ordering"
 msgstr "Online ordering"
 
@@ -35909,7 +36161,7 @@ msgstr ""
 msgid "Open link"
 msgstr "Open link"
 
-#: app/components/ui/notification-bell.tsx:808
+#: app/components/ui/notification-bell.tsx:834
 msgid "Open menu"
 msgstr ""
 
@@ -36279,8 +36531,8 @@ msgstr "Option {position} price"
 msgid "Option actions"
 msgstr "Option actions"
 
-#: app/components/menu/modifier-form.tsx:1508
-#: app/components/menu/modifier-form.tsx:1887
+#: app/components/menu/modifier-form.tsx:1562
+#: app/components/menu/modifier-form.tsx:1941
 msgid "Option Display Name (Guest-Facing)"
 msgstr "Option Display Name (Guest-Facing)"
 
@@ -36288,32 +36540,32 @@ msgstr "Option Display Name (Guest-Facing)"
 msgid "Option group"
 msgstr "Option group"
 
-#: app/components/menu/menu-health-card.tsx:230
+#: app/components/menu/menu-health-card.tsx:238
 msgid "Option groups with an impossible minimum"
 msgstr "Option groups with an impossible minimum"
 
-#: app/components/menu/menu-health-card.tsx:229
+#: app/components/menu/menu-health-card.tsx:237
 msgid "Option groups with no choices"
 msgstr "Option groups with no choices"
 
-#: app/components/menu/option-form.tsx:574
+#: app/components/menu/option-form.tsx:616
 msgid "Option Information"
 msgstr "Option Information"
 
-#: app/components/menu/item-variations.tsx:178
+#: app/components/menu/item-variations.tsx:184
 #: app/components/menu/quick-modifier-group-sheet.tsx:112
 msgid "Option name"
 msgstr "Option name"
 
-#: app/components/menu/option-form.tsx:585
+#: app/components/menu/option-form.tsx:627
 msgid "Option Name (Guest-Facing)"
 msgstr "Option Name (Guest-Facing)"
 
-#: app/components/menu/option-form.tsx:499
+#: app/components/menu/option-form.tsx:541
 msgid "Option Photo"
 msgstr "Option Photo"
 
-#: app/components/menu/option-form.tsx:560
+#: app/components/menu/option-form.tsx:602
 msgid "Option photos are displayed in online ordering menus and modifier trays."
 msgstr "Option photos are displayed in online ordering menus and modifier trays."
 
@@ -36480,7 +36732,7 @@ msgstr "Options for option type {number}"
 msgid "Options in a sensible order are quicker to scan."
 msgstr "Options in a sensible order are quicker to scan."
 
-#: app/components/menu/item-variations.tsx:146
+#: app/components/menu/item-variations.tsx:150
 msgid "Options like size or color. Price and availability per combination."
 msgstr "Options like size or color. Price and availability per combination."
 
@@ -37122,7 +37374,7 @@ msgstr "OT {hours}"
 msgid "Other"
 msgstr "Other"
 
-#: app/components/settings/cards/organization/integrations-card.tsx:170
+#: app/components/settings/cards/organization/integrations-card.tsx:184
 msgid "Other integrations"
 msgstr "Other integrations"
 
@@ -37505,6 +37757,10 @@ msgstr "Packaging fee"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:1012
 msgid "Page"
 msgstr ""
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1380
+msgid "Page {historyPage}"
+msgstr "Page {historyPage}"
 
 #: app/components/mailbox/reviews-tab.tsx:541
 msgid "Page {pageNumber}"
@@ -37943,7 +38199,7 @@ msgstr "Pause online ordering"
 msgid "Pause online ordering around daily prayers using the store address coordinates."
 msgstr "Pause online ordering around daily prayers using the store address coordinates."
 
-#: app/components/orders/ordering-controls.tsx:245
+#: app/components/orders/ordering-controls.tsx:347
 msgid "Pause online orders for"
 msgstr "Pause online orders for"
 
@@ -37952,7 +38208,7 @@ msgstr "Pause online orders for"
 msgid "Pause ordering"
 msgstr "Pause ordering"
 
-#: app/components/orders/ordering-controls.tsx:238
+#: app/components/orders/ordering-controls.tsx:340
 msgid "Pause orders"
 msgstr "Pause orders"
 
@@ -37960,7 +38216,7 @@ msgstr "Pause orders"
 msgid "Pause program"
 msgstr "Pause program"
 
-#: app/components/orders/ordering-controls.tsx:66
+#: app/components/orders/ordering-controls.tsx:69
 msgid "Pause web and QR orders when the kitchen is overwhelmed, or add prep time in busy mode. Counter sales are not affected."
 msgstr "Pause web and QR orders when the kitchen is overwhelmed, or add prep time in busy mode. Counter sales are not affected."
 
@@ -37992,11 +38248,23 @@ msgstr "Paused since {since}, until {until}."
 msgid "Paused since {since}, until someone resumes it."
 msgstr "Paused since {since}, until someone resumes it."
 
-#: app/components/orders/ordering-controls.tsx:140
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:330
+#~ msgid "Paused until {0}"
+#~ msgstr "Paused until {0}"
+
+#: app/components/orders/ordering-controls.tsx:190
 msgid "Paused until {pauseEnd}"
 msgstr "Paused until {pauseEnd}"
 
-#: app/components/orders/ordering-controls.tsx:141
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:448
+msgid "Paused until {pauseTime}"
+msgstr "Paused until {pauseTime}"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:450
+msgid "Paused until resumed"
+msgstr "Paused until resumed"
+
+#: app/components/orders/ordering-controls.tsx:191
 msgid "Paused until you resume"
 msgstr "Paused until you resume"
 
@@ -38281,6 +38549,7 @@ msgstr "pending"
 #: app/components/customers/person-marketing-card.tsx:392
 #: app/components/inventory/setup-import-flow.tsx:687
 #: app/components/settings/cards/organization/email-sending-card.tsx:80
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1291
 #: app/components/settings/cards/organization/shop-card.tsx:47
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:503
 #: app/routes/_app+/$orgSlug_+/menu+/guest-photos.tsx:384
@@ -38473,6 +38742,10 @@ msgstr "Permanently delete notes created by any teammate."
 msgid "Permanently delete notes created by this user."
 msgstr "Permanently delete notes created by this user."
 
+#: app/components/menu/item-form.tsx:1291
+msgid "Permanently remove this dish from your menu."
+msgstr "Permanently remove this dish from your menu."
+
 #: app/components/roles/tenant-role-access-manager.tsx:1140
 #: app/components/roles/tenant-role-access-manager.tsx:1352
 msgid "Permission"
@@ -38619,6 +38892,7 @@ msgid "Phone Verified (OTP Success)"
 msgstr ""
 
 #: app/components/media-library/photo-studio-dialog.tsx:523
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:382
 #: app/components/website/hero-video-maker.tsx:266
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:222
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4026
@@ -38680,7 +38954,7 @@ msgstr "Photo changed during the run"
 msgid "Photo format cannot be restyled"
 msgstr "Photo format cannot be restyled"
 
-#: app/components/menu/menu-health-card.tsx:252
+#: app/components/menu/menu-health-card.tsx:262
 msgid "Photo is fine"
 msgstr "Photo is fine"
 
@@ -38736,7 +39010,7 @@ msgstr ""
 msgid "Photos guests submit after ordering appear here for your review."
 msgstr "Photos guests submit after ordering appear here for your review."
 
-#: app/components/menu/menu-health-card.tsx:236
+#: app/components/menu/menu-health-card.tsx:245
 msgid "Photos help guests choose."
 msgstr "Photos help guests choose."
 
@@ -38816,7 +39090,7 @@ msgstr "Pick a different unit from the one the item has now."
 msgid "Pick a field to add to your form."
 msgstr "Pick a field to add to your form."
 
-#: app/components/menu/modifier-form.tsx:1130
+#: app/components/menu/modifier-form.tsx:1184
 msgid "Pick a group below to reveal it after a guest selects a triggering option."
 msgstr "Pick a group below to reveal it after a guest selects a triggering option."
 
@@ -39096,11 +39370,11 @@ msgstr "Pizza dough"
 msgid "Pizza sizes"
 msgstr "Pizza sizes"
 
-#: app/components/menu/option-form.tsx:968
+#: app/components/menu/option-form.tsx:1023
 msgid "Pizza Topping"
 msgstr "Pizza Topping"
 
-#: app/components/menu/modifier-selection-fields.tsx:79
+#: app/components/menu/modifier-selection-fields.tsx:82
 msgid "Pizza Toppings (Whole / Halves)"
 msgstr "Pizza Toppings (Whole / Halves)"
 
@@ -39380,7 +39654,7 @@ msgid "Point movements appear here as customers earn and redeem."
 msgstr "Point movements appear here as customers earn and redeem."
 
 #: app/components/settings/cards/organization/integrations-card.tsx:53
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:133
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:526
 msgid "Point of sale"
 msgstr "Point of sale"
 
@@ -39475,7 +39749,7 @@ msgstr "Popular"
 msgid "Popular Badge"
 msgstr "Popular Badge"
 
-#: app/components/menu/item-form.tsx:1004
+#: app/components/menu/item-form.tsx:1156
 msgid "Popular Item"
 msgstr "Popular Item"
 
@@ -39497,8 +39771,17 @@ msgid "Popups never show on checkout, payment, account or booking management pag
 msgstr "Popups never show on checkout, payment, account or booking management pages. Only one popup shows per page view."
 
 #: app/components/menu/channel-switches.tsx:21
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:647
 msgid "POS"
 msgstr "POS"
+
+#: app/components/menu/pos-field-controls.tsx:105
+msgid "POS value: {preview}"
+msgstr "POS value: {preview}"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:609
+msgid "POS-owned fields are locked in Menuza and updated on re-import."
+msgstr "POS-owned fields are locked in Menuza and updated on re-import."
 
 #: app/components/hiring/hire-dialog.tsx:226
 #: app/components/hiring/job-editor.tsx:633
@@ -39764,17 +40047,17 @@ msgstr "Prepayment"
 msgid "Prerender"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:190
-#: app/components/menu/modifier-form.tsx:196
+#: app/components/menu/modifier-form.tsx:195
+#: app/components/menu/modifier-form.tsx:201
 msgid "Preselected"
 msgstr "Preselected"
 
-#: app/components/menu/modifier-form.tsx:183
+#: app/components/menu/modifier-form.tsx:188
 msgid "Preselected (default)"
 msgstr "Preselected (default)"
 
-#: app/components/menu/modifier-form.tsx:1599
-#: app/components/menu/modifier-form.tsx:1978
+#: app/components/menu/modifier-form.tsx:1653
+#: app/components/menu/modifier-form.tsx:2032
 msgid "Preselected (Included when guests first open this group)"
 msgstr "Preselected (Included when guests first open this group)"
 
@@ -39865,6 +40148,7 @@ msgstr "Preview prices"
 msgid "Previewing an earlier version. Nothing has changed yet."
 msgstr "Previewing an earlier version. Nothing has changed yet."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1377
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:509
 msgid "Previous"
 msgstr "Previous"
@@ -39890,12 +40174,13 @@ msgid "Previous week"
 msgstr "Previous week"
 
 #: app/components/inventory/recipe-section.tsx:763
-#: app/components/menu/location-overrides-card.tsx:178
+#: app/components/menu/location-overrides-card.tsx:181
 #: app/components/menu/menu-review-card.tsx:432
 #: app/components/orders/order-detail.tsx:906
 #: app/components/reservations/experiences/experiences-screen.tsx:295
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:374
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:965
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:584
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:667
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:175
 msgid "Price"
 msgstr "Price"
@@ -39906,10 +40191,10 @@ msgstr "Price"
 msgid "Price ({currency})"
 msgstr "Price ({currency})"
 
-#: app/components/menu/item-variations.tsx:302
-#: app/components/menu/item-variations.tsx:369
-#: app/components/menu/modifier-form.tsx:1572
-#: app/components/menu/modifier-form.tsx:1951
+#: app/components/menu/item-variations.tsx:308
+#: app/components/menu/item-variations.tsx:375
+#: app/components/menu/modifier-form.tsx:1626
+#: app/components/menu/modifier-form.tsx:2005
 msgid "Price ($)"
 msgstr "Price ($)"
 
@@ -39921,7 +40206,7 @@ msgstr ""
 msgid "Price / count"
 msgstr "Price / count"
 
-#: app/components/menu/menu-health-card.tsx:254
+#: app/components/menu/menu-health-card.tsx:264
 msgid "Price 0 on purpose"
 msgstr "Price 0 on purpose"
 
@@ -39949,11 +40234,15 @@ msgstr "Price comparison"
 msgid "Price Delta"
 msgstr "Price Delta"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1463
+msgid "Price differs"
+msgstr "Price differs"
+
 #: app/components/menu/menu-bulk-edit-sheet.tsx:545
 msgid "Price ending"
 msgstr "Price ending"
 
-#: app/components/menu/item-variations.tsx:373
+#: app/components/menu/item-variations.tsx:379
 msgid "Price for {name}"
 msgstr "Price for {name}"
 
@@ -40092,8 +40381,8 @@ msgstr "Prices, photos and names come from the menu when the page is viewed. A p
 msgid "Pricing"
 msgstr "Pricing"
 
-#: app/components/menu/item-form.tsx:719
-#: app/components/menu/option-form.tsx:673
+#: app/components/menu/item-form.tsx:825
+#: app/components/menu/option-form.tsx:721
 msgid "Pricing & Tax"
 msgstr "Pricing & Tax"
 
@@ -40105,7 +40394,7 @@ msgstr ""
 msgid "Pricing rules"
 msgstr "Pricing rules"
 
-#: app/components/menu/item-form.tsx:569
+#: app/components/menu/item-form.tsx:642
 #: app/components/website/domain/site-domains-card.tsx:148
 #: app/components/website/link-inspector.tsx:394
 #: app/routes/_app+/$orgSlug_+/website+/seo.keywords.tsx:441
@@ -40402,7 +40691,7 @@ msgstr "Project management"
 msgid "Promote a coupon"
 msgstr "Promote a coupon"
 
-#: app/components/menu/item-form.tsx:1023
+#: app/components/menu/item-form.tsx:1175
 msgid "Promote as Upsell"
 msgstr "Promote as Upsell"
 
@@ -40423,7 +40712,7 @@ msgstr "Promotion"
 msgid "Promotions"
 msgstr "Promotions"
 
-#: app/components/menu/item-form.tsx:979
+#: app/components/menu/item-form.tsx:1131
 msgid "Promotions & Highlights"
 msgstr "Promotions & Highlights"
 
@@ -40725,6 +41014,7 @@ msgstr "Purchasing spending limits"
 #: ../../packages/marketing-workflow/src/nodes/action-push-node.tsx:19
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:18
 #: app/components/marketing/journey-step-attribution.tsx:83
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1270
 msgid "Push"
 msgstr "Push"
 
@@ -40775,6 +41065,10 @@ msgstr "Push title is required."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1040
 msgid "Push two or more combinable tables together to seat larger parties. The same set of tables can only be saved once."
 msgstr "Push two or more combinable tables together to seat larger parties. The same set of tables can only be saved once."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1056
+msgid "Push upcoming special hours for this location automatically."
+msgstr "Push upcoming special hours for this location automatically."
 
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:228
 msgid "Put {TAG} in your message where the code should go. Each customer gets their own code. It works once and expires after the days you set."
@@ -40903,12 +41197,12 @@ msgstr "Quantities are in packs, the way the supplier sells them."
 #: app/components/discounts/discount-form.tsx:1682
 #: app/components/inventory/cash-purchase-dialog.tsx:437
 #: app/components/inventory/confirm-prices-dialog.tsx:575
-#: app/components/menu/option-form.tsx:980
+#: app/components/menu/option-form.tsx:1035
 #: app/utils/discounts/summary.ts:292
 msgid "Quantity"
 msgstr "Quantity"
 
-#: app/components/menu/modifier-selection-fields.tsx:67
+#: app/components/menu/modifier-selection-fields.tsx:70
 msgid "Quantity Counter (+/-)"
 msgstr "Quantity Counter (+/-)"
 
@@ -41135,8 +41429,8 @@ msgstr "Read aloud, then the call moves on."
 msgid "Read another file"
 msgstr "Read another file"
 
-#: app/components/settings/cards/organization/integrations-card.tsx:362
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:326
+#: app/components/settings/cards/organization/integrations-card.tsx:383
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:934
 msgid "Read documentation"
 msgstr ""
 
@@ -41206,6 +41500,10 @@ msgstr "Read-only access"
 msgid "Read-only access to organization notes"
 msgstr "Read-only access to organization notes"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1106
+msgid "Readiness"
+msgstr "Readiness"
+
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:211
 msgid "Reading"
 msgstr "Reading"
@@ -41249,6 +41547,7 @@ msgid "Reading…"
 msgstr "Reading…"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:570
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1114
 #: app/components/website/domain/buy-card.tsx:130
 #: app/utils/orders/status-label.ts:10
 msgid "Ready"
@@ -41422,6 +41721,10 @@ msgstr "Recent Google Activity"
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:508
 msgid "Recent imports"
 msgstr "Recent imports"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1202
+msgid "Recent imports, menu pushes, and availability updates."
+msgstr "Recent imports, menu pushes, and availability updates."
 
 #: app/components/settings/cards/organization/shop-card.tsx:432
 msgid "Recent orders"
@@ -41823,6 +42126,7 @@ msgstr "Reflow later parties"
 #: app/components/reservations/host-subnav.tsx:375
 #: app/components/reservations/host-subnav.tsx:395
 #: app/components/reservations/waitlist/waitlist-screen.tsx:81
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1226
 #: app/components/staff/timeclock-today.tsx:172
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:401
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:247
@@ -42288,8 +42592,8 @@ msgstr "Removal not published"
 #: app/components/locations/location-order-alerts-card.tsx:318
 #: app/components/locations/ordering-settings-cards.tsx:403
 #: app/components/menu/drop-wizard/drop-form.tsx:714
-#: app/components/menu/item-variations.tsx:202
-#: app/components/menu/option-form.tsx:555
+#: app/components/menu/item-variations.tsx:208
+#: app/components/menu/option-form.tsx:597
 #: app/components/note/share-note-button.tsx:265
 #: app/components/phone-agent/phone-number-dialogs.tsx:178
 #: app/components/pos/terminals-manager.tsx:584
@@ -42371,7 +42675,7 @@ msgstr "Remove {name}"
 msgid "Remove {name} as manager"
 msgstr "Remove {name} as manager"
 
-#: app/components/menu/item-variations.tsx:116
+#: app/components/menu/item-variations.tsx:120
 msgid "Remove {optionName}? Its combinations will be removed when you save the item."
 msgstr "Remove {optionName}? Its combinations will be removed when you save the item."
 
@@ -42529,7 +42833,7 @@ msgstr ""
 msgid "Remove modifier group"
 msgstr "Remove modifier group"
 
-#: app/components/menu/modifier-form.tsx:1182
+#: app/components/menu/modifier-form.tsx:1236
 msgid "Remove nested modifier group"
 msgstr "Remove nested modifier group"
 
@@ -42537,7 +42841,7 @@ msgstr "Remove nested modifier group"
 msgid "Remove number"
 msgstr "Remove number"
 
-#: app/components/menu/modifier-form.tsx:366
+#: app/components/menu/modifier-form.tsx:372
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:213
 msgid "Remove option"
 msgstr "Remove option"
@@ -42551,8 +42855,9 @@ msgid "Remove option type {number}"
 msgstr "Remove option type {number}"
 
 #: app/components/inventory/record-delivery-screen.tsx:1096
-#: app/components/menu/item-form.tsx:578
-#: app/components/menu/item-variations.tsx:358
+#: app/components/menu/item-form.tsx:652
+#: app/components/menu/item-form.tsx:673
+#: app/components/menu/item-variations.tsx:364
 msgid "Remove photo"
 msgstr "Remove photo"
 
@@ -43087,7 +43392,7 @@ msgstr "Request declined."
 msgid "Request deletion"
 msgstr ""
 
-#: app/components/settings/cards/organization/integrations-card.tsx:243
+#: app/components/settings/cards/organization/integrations-card.tsx:264
 msgid "Request integration"
 msgstr ""
 
@@ -43196,7 +43501,7 @@ msgstr "Required choices first"
 msgid "Required items"
 msgstr "Required items"
 
-#: app/components/menu/modifier-selection-fields.tsx:108
+#: app/components/menu/modifier-selection-fields.tsx:113
 msgid "Required selection"
 msgstr "Required selection"
 
@@ -43285,7 +43590,7 @@ msgstr "Reservation records will be deleted too"
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 #: app/components/website/action-targets-card.tsx:78
 #: app/components/workspace-breadcrumb.tsx:75
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:839
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:857
 msgid "Reservations"
 msgstr "Reservations"
 
@@ -43518,7 +43823,7 @@ msgid "Rest break"
 msgstr "Rest break"
 
 #: app/components/locations/bulk-ordering-dialog.tsx:45
-#: app/components/orders/ordering-controls.tsx:118
+#: app/components/orders/ordering-controls.tsx:168
 msgid "Rest of today"
 msgstr "Rest of today"
 
@@ -43545,7 +43850,7 @@ msgstr "Restaurants"
 msgid "Restaurants are used to manage your locations, menus, and orders."
 msgstr "Restaurants are used to manage your locations, menus, and orders."
 
-#: app/components/menu/menu-health-card.tsx:413
+#: app/components/menu/menu-health-card.tsx:426
 #: app/components/website/publish-controls.tsx:332
 #: app/routes/_app+/$orgSlug_+/discounts+/_index.tsx:593
 #: app/routes/_app+/$orgSlug_+/discounts+/$discountId.tsx:397
@@ -43559,11 +43864,15 @@ msgstr "Restore"
 msgid "Restore {name}"
 msgstr "Restore {name}"
 
+#: app/components/menu/pos-field-controls.tsx:122
+msgid "Restore from POS"
+msgstr "Restore from POS"
+
 #: app/routes/_app+/$orgSlug_+/menu+/history.$snapshotId.tsx:94
 msgid "Restore this snapshot"
 msgstr "Restore this snapshot"
 
-#: app/components/menu/menu-health-card.tsx:357
+#: app/components/menu/menu-health-card.tsx:370
 msgid "Restore: {name}"
 msgstr "Restore: {name}"
 
@@ -43691,7 +44000,7 @@ msgstr "Resume only the discount"
 msgid "Resume ordering"
 msgstr "Resume ordering"
 
-#: app/components/orders/ordering-controls.tsx:225
+#: app/components/orders/ordering-controls.tsx:327
 msgid "Resume orders"
 msgstr "Resume orders"
 
@@ -43719,10 +44028,13 @@ msgstr "Resy"
 #: app/components/customers/people-summary-row.tsx:144
 #: app/components/dashboard/blocks/today-block.tsx:258
 #: app/components/inventory/counting-screen.tsx:776
+#: app/components/orders/ordering-controls.tsx:241
 #: app/components/reservations/messages/message-preview.tsx:89
 #: app/components/reservations/settings/setup-list-chrome.tsx:83
 #: app/components/reservations/waitlist/waitlist-screen.tsx:213
 #: app/components/reservations/waitlist/waitlist-settings.tsx:227
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:591
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1358
 #: app/routes/_app+/$orgSlug_+/orders_.$orderId.tsx:291
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:240
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:199
@@ -43751,7 +44063,7 @@ msgstr "Retrying…"
 msgid "Return path"
 msgstr "Return path"
 
-#: app/components/menu/item-variations.tsx:594
+#: app/components/menu/item-variations.tsx:601
 msgid "Return time for {name}"
 msgstr "Return time for {name}"
 
@@ -43838,6 +44150,10 @@ msgstr "Review before importing"
 msgid "Review details"
 msgstr "Review details"
 
+#: app/components/menu/menu-health-card.tsx:552
+msgid "Review differences in Integrations"
+msgstr "Review differences in Integrations"
+
 #: app/components/inventory/repeat-orders-panel.tsx:301
 msgid "Review draft"
 msgstr "Review draft"
@@ -43881,7 +44197,7 @@ msgstr "Review redemption"
 msgid "Review sale"
 msgstr "Review sale"
 
-#: app/components/menu/menu-health-card.tsx:700
+#: app/components/menu/menu-health-card.tsx:724
 #: app/components/menu/menu-review-stack.tsx:875
 msgid "Review suggestions"
 msgstr "Review suggestions"
@@ -44439,7 +44755,7 @@ msgstr "Same name as an earlier row."
 msgid "Same phone or email as an earlier row."
 msgstr "Same phone or email as an earlier row."
 
-#: app/components/menu/option-form.tsx:765
+#: app/components/menu/option-form.tsx:820
 msgid "Same price for left or right half."
 msgstr "Same price for left or right half."
 
@@ -44471,7 +44787,7 @@ msgstr "Sample order total"
 msgid "Sample text message"
 msgstr "Sample text message"
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:126
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:519
 msgid "Sandbox"
 msgstr "Sandbox"
 
@@ -44544,7 +44860,7 @@ msgstr ""
 #: app/components/settings/cards/organization/cuisine-price-card.tsx:61
 #: app/components/settings/cards/organization/email-sending-card.tsx:121
 #: app/components/settings/email-form.tsx:98
-#: app/components/staff/hour-limits-section.tsx:130
+#: app/components/staff/hour-limits-section.tsx:134
 #: app/components/staff/kiosk-manager.tsx:910
 #: app/components/staff/labor/labor-sales.tsx:203
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
@@ -44662,7 +44978,7 @@ msgstr ""
 
 #: app/components/locations/location-form.tsx:1652
 #: app/components/menu/drop-wizard/drop-drawers.tsx:939
-#: app/components/menu/modifier-form.tsx:2150
+#: app/components/menu/modifier-form.tsx:2204
 #: app/components/reservations/detail-sheet.tsx:1159
 msgid "Save Changes"
 msgstr "Save Changes"
@@ -44730,7 +45046,7 @@ msgstr "Save locations"
 msgid "Save market"
 msgstr "Save market"
 
-#: app/components/menu/modifier-form.tsx:942
+#: app/components/menu/modifier-form.tsx:975
 msgid "Save Modifier Group"
 msgstr "Save Modifier Group"
 
@@ -44742,7 +45058,7 @@ msgstr "Save my changes on top"
 msgid "Save name"
 msgstr "Save name"
 
-#: app/components/menu/option-form.tsx:471
+#: app/components/menu/option-form.tsx:513
 msgid "Save Option"
 msgstr "Save Option"
 
@@ -44807,6 +45123,10 @@ msgstr "Save settings"
 #: app/routes/_app+/$orgSlug_+/inventory+/settings.tsx:569
 msgid "Save spending limits"
 msgstr "Save spending limits"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1092
+msgid "Save store settings"
+msgstr "Save store settings"
 
 #: ../../packages/marketing/src/components/email/email-templates.tsx:226
 #: app/components/staff/onboarding/template-editor.tsx:94
@@ -45080,7 +45400,7 @@ msgstr ""
 #: app/components/reservations/settings/save-bar.tsx:87
 #: app/components/roles/tenant-role-access-manager.tsx:1237
 #: app/components/save-bar.tsx:349
-#: app/components/staff/hour-limits-section.tsx:130
+#: app/components/staff/hour-limits-section.tsx:134
 #: app/components/staff/kiosk-manager.tsx:910
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
 #: app/components/staff/onboarding/certificate-form.tsx:146
@@ -45447,7 +45767,7 @@ msgstr "Search applicants"
 msgid "Search automations..."
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1798
+#: app/components/menu/modifier-form.tsx:1852
 msgid "Search available options..."
 msgstr "Search available options..."
 
@@ -45970,7 +46290,7 @@ msgstr "See all"
 #~ msgstr "See all {0}"
 
 #: app/components/inventory/setup-checks-panel.tsx:373
-#: app/components/menu/menu-health-card.tsx:520
+#: app/components/menu/menu-health-card.tsx:533
 msgid "See all {total}"
 msgstr "See all {total}"
 
@@ -46029,7 +46349,7 @@ msgstr "See discounts, coupon codes, and their usage."
 msgid "See every check"
 msgstr "See every check"
 
-#: app/components/menu/menu-health-card.tsx:528
+#: app/components/menu/menu-health-card.tsx:541
 msgid "See every missing name and description, for options and categories too"
 msgstr "See every missing name and description, for options and categories too"
 
@@ -46164,13 +46484,13 @@ msgstr "Segments: {smsSegments} (opt-out line included)"
 
 #: app/components/staff/timesheets/timesheet-table.tsx:204
 #: app/routes/_app+/$orgSlug_+/media.tsx:1508
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:576
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:659
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:442
 msgid "Select"
 msgstr "Select"
 
 #: app/routes/_app+/$orgSlug_+/media.tsx:1648
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:623
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:706
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:483
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:704
 #: app/routes/_app+/$orgSlug_+/settings+/locations.compare.tsx:188
@@ -46190,7 +46510,7 @@ msgstr "Select a call to read the summary and transcript, call the customer back
 msgid "Select a category to add to this menu."
 msgstr "Select a category to add to this menu."
 
-#: app/components/menu/item-form.tsx:914
+#: app/components/menu/item-form.tsx:1058
 msgid "Select a category to display this item."
 msgstr "Select a category to display this item."
 
@@ -46206,11 +46526,11 @@ msgstr "Select a location"
 msgid "Select a menu to display this category."
 msgstr "Select a menu to display this category."
 
-#: app/components/menu/item-form.tsx:816
+#: app/components/menu/item-form.tsx:952
 msgid "Select a modifier group for this item."
 msgstr "Select a modifier group for this item."
 
-#: app/components/menu/item-variations.tsx:581
+#: app/components/menu/item-variations.tsx:588
 msgid "Select a return time"
 msgstr "Select a return time"
 
@@ -46261,7 +46581,7 @@ msgstr "Select all locations you can manage"
 msgid "Select all matching filter"
 msgstr "Select all matching filter"
 
-#: app/components/menu/option-form.tsx:902
+#: app/components/menu/option-form.tsx:957
 msgid "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 msgstr "Select all modifier groups where this option should appear. Assigning to a Pizza Topping group automatically enables whole/half split pricing."
 
@@ -46286,11 +46606,11 @@ msgstr "Select an issue to jump to its step."
 msgid "Select an item to add to this category."
 msgstr "Select an item to add to this category."
 
-#: app/components/menu/modifier-form.tsx:1355
+#: app/components/menu/modifier-form.tsx:1409
 msgid "Select an item to offer this modifier group."
 msgstr "Select an item to offer this modifier group."
 
-#: app/components/menu/modifier-form.tsx:1497
+#: app/components/menu/modifier-form.tsx:1551
 msgid "Select an option to add to this modifier group."
 msgstr "Select an option to add to this modifier group."
 
@@ -46343,11 +46663,11 @@ msgstr ""
 msgid "Select Organization"
 msgstr ""
 
-#: app/components/menu/option-form.tsx:540
+#: app/components/menu/option-form.tsx:582
 msgid "Select Photo"
 msgstr "Select Photo"
 
-#: app/components/menu/item-form.tsx:603
+#: app/components/menu/item-form.tsx:697
 msgid "Select Photos"
 msgstr "Select Photos"
 
@@ -46359,7 +46679,7 @@ msgstr "Select several"
 msgid "Select status"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:306
+#: app/components/menu/modifier-form.tsx:311
 msgid "Select sub-modifier group..."
 msgstr "Select sub-modifier group..."
 
@@ -46383,7 +46703,7 @@ msgstr ""
 msgid "Select type"
 msgstr ""
 
-#: app/components/menu/menu-availability-card.tsx:320
+#: app/components/menu/menu-availability-card.tsx:329
 msgid "Select when it becomes available"
 msgstr "Select when it becomes available"
 
@@ -46450,11 +46770,11 @@ msgstr "Selected menu rows"
 msgid "Selected when checkout opens"
 msgstr "Selected when checkout opens"
 
-#: app/components/menu/modifier-form.tsx:1004
+#: app/components/menu/modifier-form.tsx:1043
 msgid "Selection Behavior & Limits"
 msgstr "Selection Behavior & Limits"
 
-#: app/components/menu/modifier-selection-fields.tsx:32
+#: app/components/menu/modifier-selection-fields.tsx:34
 msgid "Selection Mode"
 msgstr "Selection Mode"
 
@@ -47040,11 +47360,11 @@ msgstr "Set at least one day."
 msgid "Set availability"
 msgstr "Set availability"
 
-#: app/components/menu/item-form.tsx:728
+#: app/components/menu/item-form.tsx:834
 msgid "Set baseline dish price and sales tax settings."
 msgstr "Set baseline dish price and sales tax settings."
 
-#: app/components/menu/option-form.tsx:676
+#: app/components/menu/option-form.tsx:724
 msgid "Set baseline option price delta and sales tax settings."
 msgstr "Set baseline option price delta and sales tax settings."
 
@@ -47235,7 +47555,7 @@ msgstr "Setting up DNS"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:395
 #: app/routes/_app+/$orgSlug_+/marketing+/calendar.tsx:174
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:13
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:796
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:814
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:6214
 msgid "Settings"
 msgstr ""
@@ -47573,7 +47893,7 @@ msgstr "Show"
 msgid "Show \"Only N left\" to guests"
 msgstr "Show \"Only N left\" to guests"
 
-#: app/components/menu/item-form.tsx:1007
+#: app/components/menu/item-form.tsx:1159
 msgid "Show \"Popular\" badge on menus."
 msgstr "Show \"Popular\" badge on menus."
 
@@ -47613,7 +47933,7 @@ msgstr "Show a second photo to half of your visitors and keep the one that gets 
 msgid "Show active experiences"
 msgstr "Show active experiences"
 
-#: app/components/menu/menu-health-card.tsx:818
+#: app/components/menu/menu-health-card.tsx:846
 msgid "Show all"
 msgstr "Show all"
 
@@ -47841,55 +48161,59 @@ msgstr "Showing all lines"
 msgid "Showing changed & new"
 msgstr "Showing changed & new"
 
-#: app/components/menu/menu-health-card.tsx:787
+#: app/components/menu/menu-health-card.tsx:814
+msgid "Showing delivery connections that differ from Menuza"
+msgstr "Showing delivery connections that differ from Menuza"
+
+#: app/components/menu/menu-health-card.tsx:811
 msgid "Showing dishes listed twice"
 msgstr "Showing dishes listed twice"
 
-#: app/components/menu/menu-health-card.tsx:766
+#: app/components/menu/menu-health-card.tsx:790
 msgid "Showing dishes missing a translated name or description"
 msgstr "Showing dishes missing a translated name or description"
 
-#: app/components/menu/menu-health-card.tsx:757
+#: app/components/menu/menu-health-card.tsx:781
 msgid "Showing dishes priced at 0"
 msgstr "Showing dishes priced at 0"
 
-#: app/components/menu/menu-health-card.tsx:769
+#: app/components/menu/menu-health-card.tsx:793
 msgid "Showing dishes that don't list allergens or calories"
 msgstr "Showing dishes that don't list allergens or calories"
 
-#: app/components/menu/menu-health-card.tsx:771
+#: app/components/menu/menu-health-card.tsx:795
 msgid "Showing dishes unavailable for more than a week"
 msgstr "Showing dishes unavailable for more than a week"
 
-#: app/components/menu/menu-health-card.tsx:761
+#: app/components/menu/menu-health-card.tsx:785
 msgid "Showing dishes with a weak photo"
 msgstr "Showing dishes with a weak photo"
 
-#: app/components/menu/menu-health-card.tsx:775
+#: app/components/menu/menu-health-card.tsx:799
 msgid "Showing dishes with names in capitals"
 msgstr "Showing dishes with names in capitals"
 
-#: app/components/menu/menu-health-card.tsx:777
+#: app/components/menu/menu-health-card.tsx:801
 msgid "Showing dishes with names over 60 characters"
 msgstr "Showing dishes with names over 60 characters"
 
-#: app/components/menu/menu-health-card.tsx:763
+#: app/components/menu/menu-health-card.tsx:787
 msgid "Showing dishes with no description"
 msgstr "Showing dishes with no description"
 
-#: app/components/menu/menu-health-card.tsx:759
+#: app/components/menu/menu-health-card.tsx:783
 msgid "Showing dishes with no photo"
 msgstr "Showing dishes with no photo"
 
-#: app/components/menu/menu-health-card.tsx:773
+#: app/components/menu/menu-health-card.tsx:797
 msgid "Showing empty categories"
 msgstr "Showing empty categories"
 
-#: app/components/menu/menu-health-card.tsx:782
+#: app/components/menu/menu-health-card.tsx:806
 msgid "Showing option groups that require more picks than they allow"
 msgstr "Showing option groups that require more picks than they allow"
 
-#: app/components/menu/menu-health-card.tsx:779
+#: app/components/menu/menu-health-card.tsx:803
 msgid "Showing option groups with no choices guests can see"
 msgstr "Showing option groups with no choices guests can see"
 
@@ -47917,11 +48241,11 @@ msgstr "Shown in the table and in the CSV file."
 msgid "Shown on the booking page. Write it in each language your website offers; guests see the default language where a translation is missing."
 msgstr "Shown on the booking page. Write it in each language your website offers; guests see the default language where a translation is missing."
 
-#: app/components/menu/option-form.tsx:610
+#: app/components/menu/option-form.tsx:658
 msgid "Shown on the kitchen screen and kitchen tickets. Guest receipts keep the full name."
 msgstr "Shown on the kitchen screen and kitchen tickets. Guest receipts keep the full name."
 
-#: app/components/menu/item-form.tsx:662
+#: app/components/menu/item-form.tsx:762
 msgid "Shown on the kitchen screen and kitchen tickets. Guest receipts keep the full name. Leave blank to use the guest name."
 msgstr "Shown on the kitchen screen and kitchen tickets. Guest receipts keep the full name. Leave blank to use the guest name."
 
@@ -48097,7 +48421,7 @@ msgstr "Since the first record:"
 msgid "Since the last count:"
 msgstr "Since the last count:"
 
-#: app/components/menu/option-form.tsx:976
+#: app/components/menu/option-form.tsx:1031
 msgid "Single"
 msgstr "Single"
 
@@ -48106,7 +48430,7 @@ msgstr "Single"
 msgid "Single choice"
 msgstr "Single choice"
 
-#: app/components/menu/modifier-selection-fields.tsx:43
+#: app/components/menu/modifier-selection-fields.tsx:46
 msgid "Single Choice (Radio)"
 msgstr "Single Choice (Radio)"
 
@@ -49430,7 +49754,7 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:350
 #: app/routes/_app+/$orgSlug_+/menu+/drops._index.tsx:254
 #: app/routes/_app+/$orgSlug_+/menu+/import.tsx:529
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:594
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:677
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:346
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:405
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:459
@@ -49482,7 +49806,7 @@ msgstr "Stay"
 msgid "Stayed on current page"
 msgstr "Stayed on current page"
 
-#: app/components/menu/menu-health-card.tsx:418
+#: app/components/menu/menu-health-card.tsx:431
 msgid "Stays dismissed until this changes."
 msgstr "Stays dismissed until this changes."
 
@@ -49640,8 +49964,8 @@ msgid "Stop taking orders for this dish once this many are sold in a day. The co
 msgstr "Stop taking orders for this dish once this many are sold in a day. The count starts again each business day."
 
 #: app/components/menu/daily-limit-fields.tsx:211
-#: app/components/menu/modifier-form.tsx:1673
-#: app/components/menu/modifier-form.tsx:2052
+#: app/components/menu/modifier-form.tsx:1727
+#: app/components/menu/modifier-form.tsx:2106
 msgid "Stop taking this option once this many are chosen in a day. The count starts again each business day."
 msgstr "Stop taking this option once this many are chosen in a day. The count starts again each business day."
 
@@ -49722,9 +50046,17 @@ msgstr "Store Hours"
 msgid "Store info"
 msgstr "Store info"
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:467
+msgid "Store live"
+msgstr "Store live"
+
 #: app/components/locations/location-form.tsx:1089
 msgid "Store Pickup"
 msgstr "Store Pickup"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:783
+msgid "Store settings"
+msgstr "Store settings"
 
 #: app/utils/customer-apps/alerts.ts:137
 msgid "Store terms"
@@ -49815,8 +50147,8 @@ msgstr "Style: {activeStyle}"
 msgid "Style: {styleLabel}. Your live photos only change when you choose a new one."
 msgstr "Style: {styleLabel}. Your live photos only change when you choose a new one."
 
-#: app/components/menu/modifier-form.tsx:1690
-#: app/components/menu/modifier-form.tsx:2069
+#: app/components/menu/modifier-form.tsx:1744
+#: app/components/menu/modifier-form.tsx:2123
 msgid "Sub / Nested Modifier Groups"
 msgstr "Sub / Nested Modifier Groups"
 
@@ -49913,6 +50245,7 @@ msgid "Succeeded"
 msgstr "Succeeded"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:335
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1287
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:417
 msgid "Success"
 msgstr ""
@@ -49930,7 +50263,7 @@ msgstr "Sugar"
 msgid "Suggest add-ons"
 msgstr "Suggest add-ons"
 
-#: app/components/menu/item-form.tsx:1026
+#: app/components/menu/item-form.tsx:1178
 msgid "Suggest as an add-on at checkout."
 msgstr "Suggest as an add-on at checkout."
 
@@ -50194,13 +50527,21 @@ msgstr "Switching away from Coupon code archives every code when you save, and t
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr ""
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:211
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:736
 msgid "Sync"
 msgstr "Sync"
 
 #: app/components/settings/cards/organization/review-integrations-card.tsx:113
 msgid "Sync details"
 msgstr "Sync details"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:439
+msgid "Sync failing"
+msgstr "Sync failing"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:851
+msgid "Sync history"
+msgstr "Sync history"
 
 #: app/components/settings/cards/organization/shop-card.tsx:252
 msgid "Sync hosted product"
@@ -50218,7 +50559,7 @@ msgstr "Sync Menuza attributes"
 msgid "Sync photos"
 msgstr "Sync photos"
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:138
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:531
 msgid "Synced {lastSync}"
 msgstr "Synced {lastSync}"
 
@@ -50667,7 +51008,7 @@ msgstr "Takes offline: {takeOffMenuName}"
 msgid "Takes the delivery fee off."
 msgstr "Takes the delivery fee off."
 
-#: app/components/orders/ordering-controls.tsx:145
+#: app/components/orders/ordering-controls.tsx:195
 msgid "Taking online orders"
 msgstr "Taking online orders"
 
@@ -50765,6 +51106,7 @@ msgstr "Tasks to finish when someone joins."
 #: app/components/orders/order-detail.tsx:1042
 #: app/components/pos/pos-day-report.tsx:256
 #: app/components/pos/ticket-settings.tsx:73
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:384
 #: app/routes/_app+/$orgSlug_+/reports+/financial-summary.tsx:124
 msgid "Tax"
 msgstr "Tax"
@@ -51443,7 +51785,7 @@ msgstr "That date is already listed."
 msgid "That design is not in your Canva account anymore."
 msgstr "That design is not in your Canva account anymore."
 
-#: app/components/orders/ordering-controls.tsx:161
+#: app/components/orders/ordering-controls.tsx:211
 #: app/components/pos/ready-text-settings.tsx:94
 #: app/components/settings/cards/guest-messages-card.tsx:133
 msgid "That did not save. Try again."
@@ -53579,7 +53921,7 @@ msgstr "The schedule is not available right now"
 msgid "The schedule warns when a shift takes someone over a limit, and publishing lists every one. You can still publish if you say why. Each person can have their own limit on their profile."
 msgstr "The schedule warns when a shift takes someone over a limit, and publishing lists every one. You can still publish if you say why. Each person can have their own limit on their profile."
 
-#: app/components/staff/hour-limits-section.tsx:117
+#: app/components/staff/hour-limits-section.tsx:121
 msgid "The schedule warns when this person is scheduled past these hours. Leave a box empty to follow the workplace's limit. Use it for part-time work or a minor."
 msgstr "The schedule warns when this person is scheduled past these hours. Leave a box empty to follow the workplace's limit. Use it for part-time work or a minor."
 
@@ -54758,6 +55100,14 @@ msgstr "This dish already has the maximum number of photos."
 msgid "This dish block has no dish."
 msgstr "This dish block has no dish."
 
+#: app/components/menu/item-form.tsx:1327
+#~ msgid "This dish cannot be deleted while {0} owns its name or price. Remove it in {1} or <0>change ownership</0>."
+#~ msgstr "This dish cannot be deleted while {0} owns its name or price. Remove it in {1} or <0>change ownership</0>."
+
+#: app/components/menu/item-form.tsx:1327
+msgid "This dish cannot be deleted while {deleteLockedProvider} owns its name or price. Remove it in {deleteLockedProvider} or <0>change ownership</0>."
+msgstr "This dish cannot be deleted while {deleteLockedProvider} owns its name or price. Remove it in {deleteLockedProvider} or <0>change ownership</0>."
+
 #: app/components/media-library/restyle-labels.ts:28
 msgid "This dish cannot be tried again."
 msgstr "This dish cannot be tried again."
@@ -54777,6 +55127,14 @@ msgstr "This dish is free"
 #: app/routes/_app+/$orgSlug_+/menu+/spreadsheet.tsx:165
 msgid "This dish is in the file twice."
 msgstr "This dish is in the file twice."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:985
+#~ msgid "This dish is managed in {0}. Remove it in {1} or <0>change ownership</0>."
+#~ msgstr "This dish is managed in {0}. Remove it in {1} or <0>change ownership</0>."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:991
+msgid "This dish is managed in {deleteLockedProvider}. Remove it in {deleteLockedProvider} or <0>change ownership</0>."
+msgstr "This dish is managed in {deleteLockedProvider}. Remove it in {deleteLockedProvider} or <0>change ownership</0>."
 
 #: app/components/orders/daily-limits-panel.tsx:153
 msgid "This dish no longer has a daily limit here."
@@ -54987,13 +55345,17 @@ msgstr "This item duplicates another one. Remove it and add it again."
 msgid "This item has no recipe yet. Add what goes into it first, then record a batch."
 msgstr "This item has no recipe yet. Add what goes into it first, then record a batch."
 
-#: app/components/menu/item-variations.tsx:263
+#: app/components/menu/item-variations.tsx:269
 msgid "This item has reached the 100 combination limit."
 msgstr "This item has reached the 100 combination limit."
 
 #: app/components/inventory/blocker-list.tsx:79
 msgid "This item is part of an ingredient group. Take it out of the group first."
 msgstr "This item is part of an ingredient group. Take it out of the group first."
+
+#: app/components/menu/item-form.tsx:1340
+msgid "This item will be permanently deleted from your menu."
+msgstr "This item will be permanently deleted from your menu."
 
 #: app/components/hiring/candidate-parts.tsx:98
 msgid "This job had no screening questions."
@@ -55056,7 +55418,7 @@ msgstr "This message uses the Coupon code tag. Choose a coupon, or remove the ta
 msgid "This message was deleted."
 msgstr "This message was deleted."
 
-#: app/components/menu/modifier-form.tsx:1405
+#: app/components/menu/modifier-form.tsx:1459
 msgid "This modifier group is triggered when customers select these modifier items:"
 msgstr "This modifier group is triggered when customers select these modifier items:"
 
@@ -55094,7 +55456,7 @@ msgstr "This number reaches the AI agent, so transfers would loop back to it. Us
 msgid "This one"
 msgstr "This one"
 
-#: app/components/menu/menu-health-card.tsx:323
+#: app/components/menu/menu-health-card.tsx:336
 msgid "This one already passes, so there is nothing to dismiss."
 msgstr "This one already passes, so there is nothing to dismiss."
 
@@ -55110,7 +55472,7 @@ msgstr "This one kept failing"
 msgid "This one uses a cost somebody typed. You need cost access to see or change it."
 msgstr "This one uses a cost somebody typed. You need cost access to see or change it."
 
-#: app/components/menu/item-variations.tsx:111
+#: app/components/menu/item-variations.tsx:115
 msgid "this option"
 msgstr "this option"
 
@@ -55362,7 +55724,7 @@ msgstr "This photo is still being prepared."
 msgid "This PIN is paused for a few minutes. Ask a manager."
 msgstr "This PIN is paused for a few minutes. Ask a manager."
 
-#: app/components/settings/cards/organization/pos-integrations-card.tsx:175
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:700
 msgid "This platform is import-only. Menu changes stay here."
 msgstr "This platform is import-only. Menu changes stay here."
 
@@ -55651,6 +56013,10 @@ msgstr "This shift would be flagged for review as too long."
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:440
 msgid "This special day was updated by another operator. Reloading latest data."
 msgstr "This special day was updated by another operator. Reloading latest data."
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1122
+msgid "This store passes all menu and location checks."
+msgstr "This store passes all menu and location checks."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:733
 msgid "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
@@ -55972,7 +56338,7 @@ msgstr "Till"
 
 #: app/components/customers/person-profile-screen.tsx:767
 #: app/components/hiring/interview-dialog.tsx:196
-#: app/components/menu/menu-availability-card.tsx:357
+#: app/components/menu/menu-availability-card.tsx:366
 #: app/components/reservations/detail-sheet.tsx:1088
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:457
 msgid "Time"
@@ -56435,7 +56801,7 @@ msgstr "Today's reservations by status, covers by service, and the next arrivals
 msgid "Toggle announcement visibility"
 msgstr ""
 
-#: app/components/ui/notification-bell.tsx:749
+#: app/components/ui/notification-bell.tsx:775
 msgid "Toggle notifications"
 msgstr ""
 
@@ -56841,11 +57207,11 @@ msgid "Trial period active"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/nodes/trigger-node.tsx:23
-#: app/components/menu/modifier-form.tsx:1454
+#: app/components/menu/modifier-form.tsx:1508
 msgid "Trigger"
 msgstr ""
 
-#: app/components/menu/modifier-form.tsx:1113
+#: app/components/menu/modifier-form.tsx:1167
 msgid "Trigger a child modifier group when a guest selects one of these options."
 msgstr "Trigger a child modifier group when a guest selects one of these options."
 
@@ -56869,7 +57235,7 @@ msgstr ""
 msgid "Trigger Timing"
 msgstr "Trigger Timing"
 
-#: app/components/menu/modifier-form.tsx:1212
+#: app/components/menu/modifier-form.tsx:1266
 msgid "Triggered by"
 msgstr "Triggered by"
 
@@ -56935,7 +57301,7 @@ msgstr "Try adjusting your filters or clear them to see all categories."
 msgid "Try adjusting your filters or clear them to see all drops."
 msgstr "Try adjusting your filters or clear them to see all drops."
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:563
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:646
 msgid "Try adjusting your filters or clear them to see all items."
 msgstr "Try adjusting your filters or clear them to see all items."
 
@@ -57137,7 +57503,7 @@ msgstr "Turn off"
 msgid "Turn off agent audio"
 msgstr "Turn off agent audio"
 
-#: app/components/orders/ordering-controls.tsx:210
+#: app/components/orders/ordering-controls.tsx:312
 msgid "Turn off busy mode"
 msgstr "Turn off busy mode"
 
@@ -57524,7 +57890,7 @@ msgstr "Unable to update this order. Refresh and try again."
 #: app/components/reservations/detail-sheet.tsx:571
 #: app/components/reservations/today-party-card.tsx:208
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:423
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:690
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:781
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:620
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:238
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:498
@@ -57542,12 +57908,14 @@ msgstr "Unassigned"
 msgid "Unassigned: drag onto a table row below"
 msgstr "Unassigned: drag onto a table row below"
 
-#: app/components/menu/item-variations.tsx:535
-#: app/components/menu/item-variations.tsx:556
-#: app/components/menu/menu-availability-card.tsx:231
-#: app/components/menu/menu-availability-card.tsx:280
+#: app/components/menu/item-variations.tsx:542
+#: app/components/menu/item-variations.tsx:563
+#: app/components/menu/menu-availability-card.tsx:235
+#: app/components/menu/menu-availability-card.tsx:289
 #: app/components/menu/menu-bulk-edit-sheet.tsx:619
 #: app/components/menu/menu-status-badge.tsx:65
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1436
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:1439
 #: app/components/staff/schedule/availability-page.tsx:258
 #: app/components/staff/schedule/availability-sheet.tsx:300
 #: app/components/staff/schedule/week-grid.tsx:107
@@ -57570,11 +57938,11 @@ msgstr "Unavailable during…"
 msgid "Unavailable until"
 msgstr "Unavailable until"
 
-#: app/components/menu/item-variations.tsx:533
-#: app/components/menu/item-variations.tsx:550
-#: app/components/menu/menu-availability-card.tsx:229
-#: app/components/menu/menu-availability-card.tsx:230
-#: app/components/menu/menu-availability-card.tsx:272
+#: app/components/menu/item-variations.tsx:540
+#: app/components/menu/item-variations.tsx:557
+#: app/components/menu/menu-availability-card.tsx:233
+#: app/components/menu/menu-availability-card.tsx:234
+#: app/components/menu/menu-availability-card.tsx:281
 msgid "Unavailable Until"
 msgstr "Unavailable Until"
 
@@ -57583,7 +57951,7 @@ msgid "Unavailable until {formattedUntil}"
 msgstr "Unavailable until {formattedUntil}"
 
 #. placeholder {0}: formatUnavailableUntil(internalDate, timezone)
-#: app/components/menu/menu-availability-card.tsx:378
+#: app/components/menu/menu-availability-card.tsx:387
 msgid "Unavailable until <0>{0}</0>"
 msgstr "Unavailable until <0>{0}</0>"
 
@@ -57894,8 +58262,8 @@ msgstr "Unpublished changes"
 msgid "Unread"
 msgstr "Unread"
 
-#: app/components/ui/notification-bell.tsx:694
-#: app/components/ui/notification-bell.tsx:798
+#: app/components/ui/notification-bell.tsx:720
+#: app/components/ui/notification-bell.tsx:824
 msgid "Unread Notifications"
 msgstr ""
 
@@ -57973,7 +58341,7 @@ msgstr "until {end}"
 msgid "Until {expires}"
 msgstr "Until {expires}"
 
-#: app/components/menu/item-variations.tsx:619
+#: app/components/menu/item-variations.tsx:626
 msgid "Until {returnTime}"
 msgstr "Until {returnTime}"
 
@@ -57986,7 +58354,7 @@ msgstr "Until {until}"
 msgid "Until I resume it"
 msgstr "Until I resume it"
 
-#: app/components/orders/ordering-controls.tsx:119
+#: app/components/orders/ordering-controls.tsx:169
 msgid "Until I turn it back on"
 msgstr "Until I turn it back on"
 
@@ -58136,7 +58504,7 @@ msgstr "Update from Canva"
 msgid "Update from menu"
 msgstr "Update from menu"
 
-#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:763
+#: app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx:781
 msgid "Update location details, hours, and fulfillment preferences."
 msgstr "Update location details, hours, and fulfillment preferences."
 
@@ -58148,7 +58516,7 @@ msgstr "Update my availability"
 msgid "Update now"
 msgstr "Update now"
 
-#: app/components/menu/modifier-form.tsx:1880
+#: app/components/menu/modifier-form.tsx:1934
 msgid "Update option details and pricing."
 msgstr "Update option details and pricing."
 
@@ -58247,9 +58615,18 @@ msgstr "updates"
 msgid "Updates as you edit"
 msgstr "Updates as you edit"
 
+#: app/utils/integrations/sync-alerts.ts:27
+#: app/utils/integrations/sync-alerts.ts:35
+msgid "Updates have failed for 24 hours. Open Integrations to reconnect or retry syncing."
+msgstr "Updates have failed for 24 hours. Open Integrations to reconnect or retry syncing."
+
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:955
 msgid "Updates paused"
 msgstr "Updates paused"
+
+#: app/utils/integrations/sync-alerts.ts:42
+msgid "Updates to a connected platform have failed for 24 hours. Open Integrations to check the connection."
+msgstr "Updates to a connected platform have failed for 24 hours. Open Integrations to check the connection."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:184
 msgid "Updating section"
@@ -58561,11 +58938,11 @@ msgstr "Use a blocked table"
 msgid "Use a CSV file with a Date column and a Net sales column. Days you have already entered are replaced."
 msgstr "Use a CSV file with a Date column and a Net sales column. Days you have already entered are replaced."
 
-#: app/components/menu/item-variations.tsx:193
+#: app/components/menu/item-variations.tsx:199
 msgid "Use a different option name."
 msgstr "Use a different option name."
 
-#: app/components/menu/item-variations.tsx:255
+#: app/components/menu/item-variations.tsx:261
 msgid "Use a different value."
 msgstr "Use a different value."
 
@@ -58713,7 +59090,7 @@ msgstr "Use international format, for example +15551234567."
 msgid "Use invoice lines"
 msgstr "Use invoice lines"
 
-#: app/components/menu/item-variations.tsx:356
+#: app/components/menu/item-variations.tsx:362
 msgid "Use item photo"
 msgstr "Use item photo"
 
@@ -58740,6 +59117,10 @@ msgstr "Use lowercase letters, numbers and dashes only (up to 64)."
 #: app/components/gbp/google-listing-tab.tsx:594
 msgid "Use Menuza"
 msgstr "Use Menuza"
+
+#: app/components/menu/pos-field-controls.tsx:89
+msgid "Use my own"
+msgstr "Use my own"
 
 #: app/components/media-library/restyle-item-card.tsx:154
 msgid "Use new"
@@ -59043,7 +59424,7 @@ msgstr "Value"
 msgid "Value (%)"
 msgstr "Value (%)"
 
-#: app/components/menu/item-variations.tsx:207
+#: app/components/menu/item-variations.tsx:213
 msgid "Values"
 msgstr "Values"
 
@@ -59063,15 +59444,15 @@ msgstr "Variable prep time"
 msgid "Variables"
 msgstr "Variables"
 
-#: app/components/menu/item-variations.tsx:299
+#: app/components/menu/item-variations.tsx:305
 msgid "Variant"
 msgstr "Variant"
 
-#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:682
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:773
 msgid "variations"
 msgstr "variations"
 
-#: app/components/menu/item-variations.tsx:143
+#: app/components/menu/item-variations.tsx:147
 msgid "Variations"
 msgstr "Variations"
 
@@ -59108,8 +59489,8 @@ msgid "Vegan"
 msgstr "Vegan"
 
 #: app/components/menu/dietary-tag-switches.tsx:11
-#: app/components/menu/modifier-form.tsx:1643
-#: app/components/menu/modifier-form.tsx:2022
+#: app/components/menu/modifier-form.tsx:1697
+#: app/components/menu/modifier-form.tsx:2076
 #: app/components/reservations/booking-sheet.tsx:60
 #: app/utils/reservations/labels.ts:101
 msgid "Vegetarian"
@@ -59302,6 +59683,10 @@ msgstr "View calls"
 #: app/routes/_app+/$orgSlug_+/loyalty+/activity.tsx:232
 msgid "View customer"
 msgstr "View customer"
+
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:836
+msgid "View differences"
+msgstr "View differences"
 
 #: app/components/roles/tenant-role-access-manager.tsx:546
 msgid "View discounts"
@@ -60956,8 +61341,8 @@ msgstr "When a call connects"
 msgid "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 msgstr "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 
-#: app/components/menu/modifier-form.tsx:1694
-#: app/components/menu/modifier-form.tsx:2073
+#: app/components/menu/modifier-form.tsx:1748
+#: app/components/menu/modifier-form.tsx:2127
 msgid "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 msgstr "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 
@@ -61149,7 +61534,7 @@ msgstr "When visitors or search engines request a URL that doesn't exist, it wil
 msgid "When you close it"
 msgstr "When you close it"
 
-#: app/components/ui/notification-bell.tsx:579
+#: app/components/ui/notification-bell.tsx:605
 msgid "When you get notifications, they'll show up here."
 msgstr ""
 
@@ -61383,6 +61768,10 @@ msgstr "Who is on the clock, the tablets people punch in on, and the rules they 
 msgid "Who is told when an online order arrives, waits too long or is large. Alerts never show a guest's name, phone or what they ordered."
 msgstr "Who is told when an online order arrives, waits too long or is large. Alerts never show a guest's name, phone or what they ordered."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:606
+msgid "Who owns what"
+msgstr "Who owns what"
+
 #: app/components/staff/labor-policy-editor.tsx:598
 msgid "Who signs off on time cards."
 msgstr "Who signs off on time cards."
@@ -61409,11 +61798,11 @@ msgstr "Who works"
 msgid "Whole"
 msgstr "Whole"
 
-#: app/components/menu/option-form.tsx:773
+#: app/components/menu/option-form.tsx:828
 msgid "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 msgstr "Whole / half pricing is on because this option is assigned to a pizza-style modifier group."
 
-#: app/components/menu/modifier-form.tsx:336
+#: app/components/menu/modifier-form.tsx:341
 msgid "Whole / Left or right"
 msgstr "Whole / Left or right"
 
@@ -61432,16 +61821,16 @@ msgstr "Whole order"
 msgid "Whole order discount"
 msgstr "Whole order discount"
 
-#: app/components/menu/modifier-form.tsx:1533
-#: app/components/menu/modifier-form.tsx:1912
+#: app/components/menu/modifier-form.tsx:1587
+#: app/components/menu/modifier-form.tsx:1966
 msgid "Whole pizza ($)"
 msgstr "Whole pizza ($)"
 
-#: app/components/menu/option-form.tsx:691
+#: app/components/menu/option-form.tsx:739
 msgid "Whole pizza price ($)"
 msgstr "Whole pizza price ($)"
 
-#: app/components/menu/modifier-selection-fields.tsx:82
+#: app/components/menu/modifier-selection-fields.tsx:85
 msgid "Whole pizza, left half, or right half pricing."
 msgstr "Whole pizza, left half, or right half pricing."
 
@@ -61542,6 +61931,10 @@ msgstr "With one of these answers"
 #: app/routes/organizations+/create.tsx:1578
 msgid "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
 msgstr "With platform credentials configured, OAuth connects your live store. Without them, only the local development sandbox is available."
+
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:636
+msgid "With POS overrides ({overriddenItemsCount})"
+msgstr "With POS overrides ({overriddenItemsCount})"
 
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:660
 msgid "With the rule"
@@ -62730,6 +63123,10 @@ msgstr "Your card's security code is incomplete."
 msgid "Your changes are saved, but the QR codes could not be loaded to approve the proof. Try again in a minute."
 msgstr "Your changes are saved, but the QR codes could not be loaded to approve the proof. Try again in a minute."
 
+#: app/components/settings/cards/organization/pos-integrations-card.tsx:969
+msgid "Your connected POS manages menus for this delivery store."
+msgstr "Your connected POS manages menus for this delivery store."
+
 #: app/components/dashboard/blocks/attention-block.tsx:249
 msgid "Your custom domain has a problem"
 msgstr "Your custom domain has a problem"
@@ -63148,6 +63545,11 @@ msgstr "Your website is not published yet, so people cannot see this job. <0>Pub
 #: app/components/website/action-targets-card.tsx:98
 msgid "Your whole site"
 msgstr "Your whole site"
+
+#: app/components/menu/pos-field-controls.tsx:101
+#: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:754
+msgid "Yours, not from POS"
+msgstr "Yours, not from POS"
 
 #: app/components/pos/zatca-settings.tsx:248
 #: app/components/pos/zatca-settings.tsx:253

@@ -18,7 +18,10 @@ import {
  * Callers check access first: `requireMenuWrite` (`update:menu:any`).
  */
 
-export const MENU_CHECK_DISMISS_REASONS = ['on_purpose', 'not_applicable'] as const
+export const MENU_CHECK_DISMISS_REASONS = [
+	'on_purpose',
+	'not_applicable',
+] as const
 export type MenuCheckDismissReason = (typeof MENU_CHECK_DISMISS_REASONS)[number]
 
 export class MenuCheckDismissalError extends Error {
@@ -41,13 +44,17 @@ function auditTarget(checkKey: MenuHealthCheckKey) {
 		action:
 			entityType === 'category'
 				? AuditAction.MENU_CATEGORY_UPDATED
-				: AuditAction.MENU_ITEM_UPDATED,
+				: entityType === 'integration'
+					? AuditAction.ORG_SETTINGS_UPDATED
+					: AuditAction.MENU_ITEM_UPDATED,
 		resourceType:
 			entityType === 'item'
 				? 'menu_item'
 				: entityType === 'category'
 					? 'menu_category'
-					: 'menu_modifier_group',
+					: entityType === 'integration'
+						? 'integration'
+						: 'menu_modifier_group',
 	}
 }
 
@@ -82,7 +89,11 @@ export async function dismissMenuCheck({
 			? data.items.some((row) => row.id === entityId)
 			: entityType === 'category'
 				? data.categories.some((row) => row.id === entityId)
-				: data.modifierGroups.some((row) => row.id === entityId)
+				: entityType === 'integration'
+					? (data.deliveryMenuDiffs ?? []).some(
+							(row) => row.integrationId === entityId,
+						)
+					: data.modifierGroups.some((row) => row.id === entityId)
 	if (!exists) throw new MenuCheckDismissalError('not_found')
 
 	const check = health.checks.find((entry) => entry.key === checkKey)

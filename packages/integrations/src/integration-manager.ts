@@ -26,7 +26,13 @@ import {
 	eq,
 	gte,
 	inArray,
+	lt,
 } from '@repo/database'
+import {
+	redactSecrets,
+	toSafeSyncErrorMessage,
+	trimRawResponse,
+} from './redact.ts'
 import {
 	findScopedIntegration,
 	resolveOrganizationLocationIdForConnect,
@@ -887,18 +893,22 @@ export class IntegrationManager {
 			status,
 			lastSync: integration.lastSyncAt || undefined,
 			connectionCount: integration.connections?.length || 0,
-			recentErrors: recentErrors.map((log: any) => ({
-				action: log.action,
-				status: log.status as 'success' | 'error' | 'pending',
-				requestData: log.requestData
+			recentErrors: recentErrors.map((log: any) => {
+				const parsedRequest = log.requestData
 					? this.safeJsonParse(log.requestData)
-					: undefined,
-				responseData: log.responseData
-					? this.safeJsonParse(log.responseData)
-					: undefined,
-				errorMessage: log.errorMessage || undefined,
-				timestamp: log.createdAt,
-			})),
+					: undefined
+				return {
+					action: log.action,
+					status: log.status as 'success' | 'error' | 'pending',
+					requestData: parsedRequest
+						? (redactSecrets(parsedRequest) as Record<string, any>)
+						: undefined,
+					errorMessage: log.errorMessage
+						? toSafeSyncErrorMessage(log.errorMessage)
+						: undefined,
+					timestamp: log.createdAt,
+				}
+			}),
 		}
 	}
 
@@ -960,33 +970,54 @@ export class IntegrationManager {
 	// Logging and Monitoring
 
 	/**
-	 * Log integration activity
+	 * Log integration activity with automatic secret redaction, response
+	 * trimming, and safe operator error messages.
 	 * @param integrationId - Integration ID
 	 * @param action - Action performed
 	 * @param status - Action status
-	 * @param data - Additional data
-	 * @param error - Error message if applicable
+	 * @param data - Additional request/summary data (redacted before insert)
+	 * @param error - Error or error message if applicable (sanitized)
+	 * @param responseData - Raw platform response for server-side storage only (redacted and trimmed)
 	 */
 	async logIntegrationActivity(
 		integrationId: string,
 		action: string,
 		status: 'success' | 'error' | 'pending',
 		data?: Record<string, any>,
-		error?: string,
+		error?: unknown,
+		responseData?: unknown,
 	): Promise<void> {
 		try {
+			const redactedData = data !== undefined ? redactSecrets(data) : undefined
+			const safeError =
+				error !== undefined && error !== null && error !== ''
+					? toSafeSyncErrorMessage(error)
+					: null
+			const trimmedResponse = trimRawResponse(responseData)
 			await db.insert(IntegrationLogTable).values({
 				integrationId,
 				action,
 				status,
-				requestData: data ? JSON.stringify(data) : null,
-				errorMessage: error,
+				requestData:
+					redactedData !== undefined ? JSON.stringify(redactedData) : null,
+				responseData: trimmedResponse,
+				errorMessage: safeError,
 				createdAt: new Date(),
 			})
 		} catch (logError) {
 			// Don't throw on logging errors to avoid breaking main functionality
 			console.error('Failed to log integration activity:', logError)
 		}
+	}
+
+	/**
+	 * Deletes `IntegrationLog` rows older than `retentionDays` days.
+	 */
+	async pruneOldIntegrationLogs(
+		retentionDays = 90,
+		now = new Date(),
+	): Promise<{ deleted: number }> {
+		return pruneOldIntegrationLogs(retentionDays, now)
 	}
 
 	// Utility Methods
@@ -1089,6 +1120,24 @@ export class IntegrationManager {
 
 		return { ...connection, integration, note }
 	}
+}
+
+/**
+ * Deletes `IntegrationLog` rows older than `retentionDays` days (default 90).
+ */
+export async function pruneOldIntegrationLogs(
+	retentionDays = 90,
+	now = new Date(),
+): Promise<{ deleted: number }> {
+	if (!Number.isFinite(retentionDays) || retentionDays < 0) {
+		throw new Error('retentionDays must be a non-negative finite number')
+	}
+	const cutoff = new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000)
+	const deleted = await db
+		.delete(IntegrationLogTable)
+		.where(lt(IntegrationLogTable.createdAt, cutoff))
+		.returning({ id: IntegrationLogTable.id })
+	return { deleted: deleted.length }
 }
 
 // Export singleton instance

@@ -28,6 +28,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 	let mockPhotoQualityWorkflowCreate: any
 	let mockMediaRestyleWorkflowCreate: any
 	let mockOperatorAlertsWorkflowCreate: any
+	let mockMenuSyncWorkflowCreate: any
 	let env: Env
 
 	beforeEach(() => {
@@ -71,6 +72,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
 		mockOperatorAlertsWorkflowCreate = vi
+			.fn()
+			.mockImplementation(({ id }) => Promise.resolve({ id }))
+		mockMenuSyncWorkflowCreate = vi
 			.fn()
 			.mockImplementation(({ id }) => Promise.resolve({ id }))
 
@@ -126,6 +130,10 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			} as any,
 			OPERATOR_ALERTS_WORKFLOW: {
 				create: mockOperatorAlertsWorkflowCreate,
+				get: vi.fn(),
+			} as any,
+			MENU_SYNC_WORKFLOW: {
+				create: mockMenuSyncWorkflowCreate,
 				get: vi.fn(),
 			} as any,
 		}
@@ -279,6 +287,55 @@ describe('Jobs-Cron Worker Endpoints', () => {
 			const far = new Date(Date.now() + 10 * 24 * 60 * 60_000).toISOString()
 			expect((await start({ runAt: far })).status).toBe(400)
 			expect(mockOperatorAlertsWorkflowCreate).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('POST /workflows/menu-sync/start (#74)', () => {
+		const start = (body: unknown, token = mockInternalToken) =>
+			worker.fetch(
+				new Request('http://localhost/workflows/menu-sync/start', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(body),
+				}),
+				env,
+			)
+
+		it('rejects a caller without the internal token', async () => {
+			const runAt = new Date(Date.now() + 60_000).toISOString()
+			mockMenuSyncWorkflowCreate.mockClear()
+			expect((await start({ runAt }, 'wrong')).status).toBe(401)
+			expect(mockMenuSyncWorkflowCreate).not.toHaveBeenCalled()
+		})
+
+		it('starts one instance per 15-second bucket, carrying a timestamp only', async () => {
+			const runAt = new Date(Date.now() + 60_000).toISOString()
+			mockMenuSyncWorkflowCreate.mockClear()
+			const res = await start({ runAt })
+			expect(res.status).toBe(200)
+			expect(mockMenuSyncWorkflowCreate).toHaveBeenCalledWith({
+				id: `menu-sync-${Math.floor(Date.parse(runAt) / 15_000)}`,
+				params: { runAt },
+			})
+		})
+
+		it('treats an instance that already exists as started', async () => {
+			const runAt = new Date(Date.now() + 60_000).toISOString()
+			mockMenuSyncWorkflowCreate.mockRejectedValueOnce(
+				new Error('instance.already_exists'),
+			)
+			expect((await start({ runAt })).status).toBe(200)
+		})
+
+		it('refuses a missing or far-off time', async () => {
+			mockMenuSyncWorkflowCreate.mockClear()
+			expect((await start({ runAt: 'invalid' })).status).toBe(400)
+			const far = new Date(Date.now() + 10 * 24 * 60 * 60_000).toISOString()
+			expect((await start({ runAt: far })).status).toBe(400)
+			expect(mockMenuSyncWorkflowCreate).not.toHaveBeenCalled()
 		})
 	})
 
@@ -1188,6 +1245,13 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				}),
 			)
 			expect(fetchMock).toHaveBeenCalledWith(
+				'https://app.example.com/resources/jobs/integration-log-prune',
+				expect.objectContaining({
+					method: 'POST',
+					headers: { Authorization: `Bearer ${mockInternalToken}` },
+				}),
+			)
+			expect(fetchMock).toHaveBeenCalledWith(
 				'https://app.example.com/resources/jobs/menu-snapshot-prune',
 				expect.objectContaining({
 					method: 'POST',
@@ -1240,10 +1304,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				'https://app.example.com/resources/jobs/search-console-sync',
 				'https://app.example.com/resources/jobs/gbp-metrics',
 				'https://app.example.com/resources/jobs/customer-app-health',
+				'https://app.example.com/resources/jobs/menu-sync?nightly=1',
+				'https://app.example.com/resources/jobs/menu-check',
 			])
 			// One failing job does not stop the others from running.
 			expect(results.map((result) => result.status)).toEqual([
 				'rejected',
+				'fulfilled',
+				'fulfilled',
 				'fulfilled',
 				'fulfilled',
 				'fulfilled',
@@ -2112,8 +2180,8 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				passThroughOnException: vi.fn(),
 			} as any
 			await worker.scheduled({ cron: '*/15 * * * *' } as any, env, ctx)
-			// The domain sweep and the form alert digest share the slot (#139, #142).
-			expect(ctx.waitUntil).toHaveBeenCalledTimes(2)
+			// The domain sweep, form alert digest, and POS/delivery menu sync outbox share the slot (#139, #142, #74).
+			expect(ctx.waitUntil).toHaveBeenCalledTimes(3)
 			await Promise.all(
 				ctx.waitUntil.mock.calls.map((call: unknown[]) => call[0]),
 			)
@@ -2127,6 +2195,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				(call) => String(call[0]),
 			)
 			expect(urls.some((u) => u.endsWith('/resources/jobs/form-alerts'))).toBe(
+				true,
+			)
+			expect(urls.some((u) => u.endsWith('/resources/jobs/menu-sync'))).toBe(
 				true,
 			)
 			expect(init.method).toBe('POST')

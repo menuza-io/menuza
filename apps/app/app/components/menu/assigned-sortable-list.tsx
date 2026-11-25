@@ -59,14 +59,18 @@ interface AssignedSortableListProps {
 	 */
 	onCreate?: () => void
 	createLabel?: React.ReactNode
+	disabled?: boolean
+	headerControl?: React.ReactNode
 }
 
 function AssignedRow({
 	entry,
 	onRemove,
+	disabled = false,
 }: {
 	entry: AssignableEntry
 	onRemove: () => void
+	disabled?: boolean
 }) {
 	const {
 		attributes,
@@ -76,7 +80,7 @@ function AssignedRow({
 		transform,
 		transition,
 		isDragging,
-	} = useSortable({ id: entry.id })
+	} = useSortable({ id: entry.id, disabled })
 
 	return (
 		<FramePanel
@@ -95,7 +99,8 @@ function AssignedRow({
 				ref={setActivatorNodeRef}
 				{...attributes}
 				{...listeners}
-				className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring shrink-0 cursor-grab rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing"
+				disabled={disabled}
+				className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring shrink-0 cursor-grab rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
 				aria-label="Drag to reorder"
 			>
 				<Icon name="grip-vertical" className="size-4" />
@@ -117,6 +122,7 @@ function AssignedRow({
 				type="button"
 				variant="ghost"
 				size="icon-sm"
+				disabled={disabled}
 				onClick={onRemove}
 				aria-label="Remove assignment"
 			>
@@ -139,6 +145,8 @@ export function AssignedSortableList({
 	onChange,
 	onCreate,
 	createLabel,
+	disabled = false,
+	headerControl,
 }: AssignedSortableListProps) {
 	const generatedId = useId()
 	const dndId = idProp ?? generatedId
@@ -192,6 +200,7 @@ export function AssignedSortableList({
 				<FrameHeader>
 					<FrameTitle className="text-base">{title}</FrameTitle>
 					<FrameDescription>{description}</FrameDescription>
+					{headerControl}
 				</FrameHeader>
 				{selectedEntries.length === 0 ? (
 					<FramePanel className="text-muted-foreground px-5 py-6 text-center text-sm">
@@ -214,6 +223,7 @@ export function AssignedSortableList({
 								<AssignedRow
 									key={entry.id}
 									entry={entry}
+									disabled={disabled}
 									onRemove={() =>
 										onChange(selectedIds.filter((id) => id !== entry.id))
 									}
@@ -229,7 +239,7 @@ export function AssignedSortableList({
 						className="w-full"
 						variant="outline"
 						onClick={() => setIsPickerOpen(true)}
-						disabled={availableEntries.length === 0 && !onCreate}
+						disabled={disabled || (availableEntries.length === 0 && !onCreate)}
 					>
 						<Icon name="plus" className="size-4" />
 						{addLabel}

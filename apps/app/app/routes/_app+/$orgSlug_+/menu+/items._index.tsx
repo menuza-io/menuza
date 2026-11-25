@@ -85,6 +85,7 @@ import { MenuHealthFilterNotice } from '#app/components/menu/menu-health-card.ts
 import { useMenuListFilters } from '#app/components/menu/menu-list-filters.tsx'
 import { MenuStatusBadge } from '#app/components/menu/menu-status-badge.tsx'
 import { useMenuListSelection } from '#app/components/menu/use-menu-list-selection.ts'
+import { isPosOwnershipEnabled } from '#app/utils/integrations/flags.server.ts'
 import {
 	requireMenuRead,
 	requireMenuWrite,
@@ -108,6 +109,13 @@ import {
 	MENU_HEALTH_PARAM,
 	parseMenuHealthCheckKey,
 } from '#app/utils/menu/menu-health.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
+import {
+	assertCanDeleteMenuItem,
+	lockedFieldsFor,
+	PosFieldLockedError,
+	type PosEntityLockInfo,
+} from '#app/utils/menu/pos-ownership.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
@@ -197,6 +205,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return Response.json({ error: 'Invalid request' }, { status: 400 })
 	}
 
+	try {
+		await assertCanDeleteMenuItem(organization.id, result.data.itemId)
+	} catch (error) {
+		if (error instanceof PosFieldLockedError) return error.toResponse()
+		throw error
+	}
+
 	await db.transaction(async (tx) => {
 		await tx
 			.delete(OrganizationMenuItem)
@@ -216,6 +231,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
+	})
 
 	return Response.json({ success: true })
 }
@@ -231,12 +250,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	await requireMenuRead(request, organization.id)
-	const [menuBulkEditEnabled, menuHistoryEnabled, autoPopular] =
-		await Promise.all([
-			getMenuBulkEditEnabled(organization.id),
-			getMenuHistoryEnabled(organization.id),
-			getAutoPopularSettings(organization.id),
-		])
+	const [
+		menuBulkEditEnabled,
+		menuHistoryEnabled,
+		autoPopular,
+		posOwnershipEnabled,
+	] = await Promise.all([
+		getMenuBulkEditEnabled(organization.id),
+		getMenuHistoryEnabled(organization.id),
+		getAutoPopularSettings(organization.id),
+		isPosOwnershipEnabled(organization.id),
+	])
 
 	const defaultLocale = organization.siteDefaultLocale ?? 'en'
 	const bulkCatalogPromise = menuBulkEditEnabled
@@ -309,10 +333,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
+	const requestUrl = new URL(request.url)
+	const overridesParam = requestUrl.searchParams.get('overrides') ?? ''
+	const overridesFilter = overridesParam === '1' || overridesParam === 'true'
+	const posLocks = posOwnershipEnabled
+		? await lockedFieldsFor(
+				organization.id,
+				'item',
+				items.map((i) => i.id),
+			)
+		: new Map<string, PosEntityLockInfo>()
+
 	// `?health=<check>` narrows the list to the dishes a Menu health line
 	// counted, using the same function as the card.
 	const healthKey = parseMenuHealthCheckKey(
-		new URL(request.url).searchParams.get(MENU_HEALTH_PARAM),
+		requestUrl.searchParams.get(MENU_HEALTH_PARAM),
 	)
 	const healthFilter =
 		healthKey && menuHealthEntityType(healthKey) === 'item'
@@ -327,6 +362,58 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		: [[], [], []]
 	const [bulkLocations, bulkCategories, bulkModifierGroups] = bulkCatalog
 
+	const mappedItems = items.map((i) => {
+		let allergens: string[] = []
+		try {
+			if (i.allergens) allergens = JSON.parse(i.allergens) as string[]
+		} catch {}
+		const channels = parseMenuChannels(i.channels)
+		const notSoldEverywhere =
+			channels.length < MENU_CHANNELS.length ||
+			narrowedOverrideItemIds.has(i.id)
+		const lock = posLocks.get(i.id)
+
+		return {
+			id: i.id,
+			displayName: i.displayName,
+			internalName: i.internalName,
+			price: i.price,
+			variationCount: parseMenuVariations(i.variations).variants.length,
+			imageUrl: i.imageUrl,
+			isAlcohol: i.isAlcohol,
+			isGlutenFree: i.isGlutenFree,
+			isVegetarian: i.isVegetarian,
+			dietaryTags: dietaryTagsOf(i),
+			isPopular: i.isPopular,
+			isUpsell: i.isUpsell,
+			channels,
+			notSoldEverywhere,
+			allergens,
+			calorieMin: i.calorieMin,
+			calorieMax: i.calorieMax,
+			availabilityStatus: i.availabilityStatus,
+			unavailableUntil: i.unavailableUntil
+				? i.unavailableUntil.toISOString()
+				: null,
+			categories: i.categoryAssignments.map((ca) => ({
+				id: ca.category.id,
+				displayName: ca.category.displayName,
+			})),
+			modifierGroupsCount: i.modifierGroupAssignments.length,
+			updatedAt: i.updatedAt.toISOString(),
+			hasPosOverrides: Boolean(lock && lock.overriddenFields.length > 0),
+			posProviders: lock?.providers ?? [],
+			deleteLocked: Boolean(lock?.deleteLocked),
+			deleteLockedProvider: lock?.deleteLockedProvider ?? null,
+		}
+	})
+	const overriddenItemsCount = mappedItems.filter(
+		(item) => item.hasPosOverrides,
+	).length
+	const visibleItems = overridesFilter
+		? mappedItems.filter((item) => item.hasPosOverrides)
+		: mappedItems
+
 	return {
 		organization: {
 			id: organization.id,
@@ -335,6 +422,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		},
 		defaultLocale,
 		healthFilter,
+		posOwnershipEnabled,
+		overridesFilter,
+		overriddenItemsCount,
+		hasAnyItems: mappedItems.length > 0,
 		menuBulkEditEnabled,
 		menuHistoryEnabled,
 		autoPopular,
@@ -357,46 +448,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			id: row.id,
 			label: getLocalizedMenuValue(row.name, defaultLocale, defaultLocale),
 		})),
-		items: items.map((i) => {
-			let allergens: string[] = []
-			try {
-				if (i.allergens) allergens = JSON.parse(i.allergens) as string[]
-			} catch {}
-			const channels = parseMenuChannels(i.channels)
-			const notSoldEverywhere =
-				channels.length < MENU_CHANNELS.length ||
-				narrowedOverrideItemIds.has(i.id)
-
-			return {
-				id: i.id,
-				displayName: i.displayName,
-				internalName: i.internalName,
-				price: i.price,
-				variationCount: parseMenuVariations(i.variations).variants.length,
-				imageUrl: i.imageUrl,
-				isAlcohol: i.isAlcohol,
-				isGlutenFree: i.isGlutenFree,
-				isVegetarian: i.isVegetarian,
-				dietaryTags: dietaryTagsOf(i),
-				isPopular: i.isPopular,
-				isUpsell: i.isUpsell,
-				channels,
-				notSoldEverywhere,
-				allergens,
-				calorieMin: i.calorieMin,
-				calorieMax: i.calorieMax,
-				availabilityStatus: i.availabilityStatus,
-				unavailableUntil: i.unavailableUntil
-					? i.unavailableUntil.toISOString()
-					: null,
-				categories: i.categoryAssignments.map((ca) => ({
-					id: ca.category.id,
-					displayName: ca.category.displayName,
-				})),
-				modifierGroupsCount: i.modifierGroupAssignments.length,
-				updatedAt: i.updatedAt.toISOString(),
-			}
-		}),
+		items: visibleItems,
 	}
 }
 
@@ -421,6 +473,10 @@ function ItemsIndexContent() {
 		defaultLocale,
 		items: allItems,
 		healthFilter,
+		posOwnershipEnabled,
+		overridesFilter,
+		overriddenItemsCount,
+		hasAnyItems,
 		menuBulkEditEnabled,
 		menuHistoryEnabled,
 		autoPopular,
@@ -441,6 +497,11 @@ function ItemsIndexContent() {
 		return allItems.filter((item) => ids.has(item.id))
 	}, [allItems, healthFilter])
 	const [deleteItemId, setDeleteItemId] = useState<string | null>(null)
+	const deletingItem = useMemo(
+		() => allItems.find((item) => item.id === deleteItemId) ?? null,
+		[allItems, deleteItemId],
+	)
+	const deleteLockedProvider = deletingItem?.deleteLockedProvider ?? 'POS'
 	const getFieldValue = useCallback(
 		(item: (typeof items)[number], field: string) => {
 			switch (field) {
@@ -538,7 +599,7 @@ function ItemsIndexContent() {
 				autoPopularCount={autoPopular.autoPopularCount}
 			/>
 
-			{allItems.length === 0 ? (
+			{!hasAnyItems ? (
 				<EmptyState
 					title={_(t`No items yet`)}
 					description={_(
@@ -548,18 +609,40 @@ function ItemsIndexContent() {
 				/>
 			) : (
 				<div className="space-y-4">
-					<Filters
-						fields={ITEM_FILTER_FIELDS}
-						query={filterQuery}
-						onQueryChange={setFilterQuery}
-						showClear
-					/>
+					<div className="flex flex-wrap items-center justify-between gap-2">
+						<div className="min-w-0 flex-1">
+							<Filters
+								fields={ITEM_FILTER_FIELDS}
+								query={filterQuery}
+								onQueryChange={setFilterQuery}
+								showClear
+							/>
+						</div>
+						{posOwnershipEnabled &&
+						(overriddenItemsCount > 0 || overridesFilter) ? (
+							<Button
+								variant={overridesFilter ? 'secondary' : 'outline'}
+								size="sm"
+								render={
+									<Link
+										to={
+											overridesFilter
+												? `/${organization.slug}/menu/items`
+												: `/${organization.slug}/menu/items?overrides=1`
+										}
+									/>
+								}
+							>
+								<Trans>With POS overrides ({overriddenItemsCount})</Trans>
+							</Button>
+						) : null}
+					</div>
 
 					{filteredItems.length === 0 ? (
 						<EmptyState
 							title={_(t`No items match these filters`)}
 							description={_(
-								hasFilters || healthFilter
+								hasFilters || healthFilter || overridesFilter
 									? t`Try adjusting your filters or clear them to see all items.`
 									: t`Create an item to start building your menu.`,
 							)}
@@ -661,6 +744,14 @@ function ItemsIndexContent() {
 																		className="shrink-0 px-1.5 py-0 text-[10px]"
 																	>
 																		<Trans>Not sold everywhere</Trans>
+																	</Badge>
+																) : null}
+																{item.hasPosOverrides ? (
+																	<Badge
+																		variant="outline"
+																		className="shrink-0 px-1.5 py-0 text-[10px]"
+																	>
+																		<Trans>Yours, not from POS</Trans>
 																	</Badge>
 																) : null}
 															</div>
@@ -895,6 +986,21 @@ function ItemsIndexContent() {
 						<AlertDialogTitle>
 							<Trans>Delete item?</Trans>
 						</AlertDialogTitle>
+						{deletingItem?.deleteLocked ? (
+							<p className="text-destructive text-sm">
+								<Trans>
+									This dish is managed in {deleteLockedProvider}. Remove it in{' '}
+									{deleteLockedProvider} or{' '}
+									<Link
+										to={`/${organization.slug}/settings/integrations`}
+										className="underline underline-offset-4"
+									>
+										change ownership
+									</Link>
+									.
+								</Trans>
+							</p>
+						) : null}
 						<MenuDeleteEffects
 							orgSlug={organization.slug}
 							entityType="item"
@@ -906,8 +1012,9 @@ function ItemsIndexContent() {
 							<Trans>Cancel</Trans>
 						</AlertDialogCancel>
 						<AlertDialogAction
+							disabled={Boolean(deletingItem?.deleteLocked)}
 							onClick={() => {
-								if (!deleteItemId) return
+								if (!deleteItemId || deletingItem?.deleteLocked) return
 								void deleteFetcher.submit(
 									{ intent: 'delete-item', itemId: deleteItemId },
 									{ method: 'POST' },

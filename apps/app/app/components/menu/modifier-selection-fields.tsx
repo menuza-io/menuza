@@ -20,11 +20,13 @@ export function ModifierSelectionModeField({
 	idPrefix = 'st',
 	value,
 	onChange,
+	disabled = false,
 }: {
 	/** Keeps radio ids unique when two copies are on one page. */
 	idPrefix?: string
 	value: ModifierSelectionType
 	onChange: (value: ModifierSelectionType) => void
+	disabled?: boolean
 }) {
 	return (
 		<div className="space-y-3">
@@ -32,6 +34,7 @@ export function ModifierSelectionModeField({
 				<Trans>Selection Mode</Trans>
 			</Label>
 			<RadioGroup
+				disabled={disabled}
 				value={value}
 				onValueChange={(next) => onChange(next as ModifierSelectionType)}
 				className="grid grid-cols-1 gap-3 sm:grid-cols-2"
@@ -93,10 +96,12 @@ export function ModifierRequiredSelectionField({
 	id = 'single-choice-required',
 	required,
 	onChange,
+	disabled = false,
 }: {
 	id?: string
 	required: boolean
 	onChange: (required: boolean) => void
+	disabled?: boolean
 }) {
 	return (
 		<>
@@ -115,7 +120,12 @@ export function ModifierRequiredSelectionField({
 					)}
 				</p>
 			</Label>
-			<Switch id={id} checked={required} onCheckedChange={onChange} />
+			<Switch
+				id={id}
+				checked={required}
+				disabled={disabled}
+				onCheckedChange={onChange}
+			/>
 		</>
 	)
 }
@@ -127,6 +137,7 @@ export function ModifierSelectionLimitsFields({
 	maxSelections,
 	onMinChange,
 	onMaxChange,
+	disabled = false,
 }: {
 	idPrefix?: string
 	minSelections: number
@@ -134,6 +145,7 @@ export function ModifierSelectionLimitsFields({
 	maxSelections: string
 	onMinChange: (value: number) => void
 	onMaxChange: (value: string) => void
+	disabled?: boolean
 }) {
 	return (
 		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -145,6 +157,7 @@ export function ModifierSelectionLimitsFields({
 					id={`${idPrefix}_min`}
 					type="number"
 					min="0"
+					disabled={disabled}
 					value={minSelections}
 					onChange={(e) => onMinChange(parseInt(e.target.value, 10) || 0)}
 				/>
@@ -161,6 +174,7 @@ export function ModifierSelectionLimitsFields({
 					id={`${idPrefix}_max`}
 					type="number"
 					min="1"
+					disabled={disabled}
 					placeholder="Leave blank for unlimited"
 					value={maxSelections}
 					onChange={(e) => onMaxChange(e.target.value)}

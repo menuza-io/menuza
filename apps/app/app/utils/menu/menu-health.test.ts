@@ -1243,3 +1243,54 @@ describe('weak_photo (#145)', () => {
 		)
 	})
 })
+
+describe('delivery_menu_differs (#144)', () => {
+	test('is a pure deduction and absent when deliveryMenuDiffs is omitted or all stores match', () => {
+		expect(MENU_HEALTH_DEDUCTION_CHECKS.has('delivery_menu_differs')).toBe(true)
+		expect(menuHealthEntityType('delivery_menu_differs')).toBe('integration')
+
+		const omitted = run()
+		expect(check(omitted, 'delivery_menu_differs')).toBeUndefined()
+		expect(omitted.score).toBe(100)
+
+		const inSync = run({
+			deliveryMenuDiffs: [
+				{
+					integrationId: 'int_uber',
+					providerName: 'ubereats',
+					providerLabel: 'Uber Eats',
+					diffCount: 0,
+				},
+			],
+		})
+		expect(check(inSync, 'delivery_menu_differs')?.count).toBe(0)
+		expect(inSync.score).toBe(100)
+	})
+
+	test('flags delivery integrations with diffCount > 0 and lowers score', () => {
+		const health = run({
+			deliveryMenuDiffs: [
+				{
+					integrationId: 'int_uber',
+					providerName: 'ubereats',
+					providerLabel: 'Uber Eats',
+					diffCount: 3,
+				},
+				{
+					integrationId: 'int_dd',
+					providerName: 'doordash',
+					providerLabel: 'DoorDash',
+					diffCount: 0,
+				},
+			],
+		})
+		expect(check(health, 'delivery_menu_differs')).toMatchObject({
+			count: 1,
+			total: 2,
+			integrationIds: ['int_uber'],
+			severity: 'warning',
+		})
+		expect(health.fixCount).toBe(1)
+		expect(health.score).toBeLessThan(100)
+	})
+})

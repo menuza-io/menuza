@@ -44,12 +44,21 @@ export {
 export {
 	IntegrationManager,
 	integrationManager,
+	pruneOldIntegrationLogs,
 	type IntegrationWithRelations,
 	type ConnectionWithRelations,
 	type CreateIntegrationParams,
 	type CreateConnectionParams,
 	type IntegrationStats,
 } from './integration-manager'
+
+export {
+	DEFAULT_RAW_RESPONSE_MAX_CHARS,
+	redactSecrets,
+	redactSecretsInText,
+	toSafeSyncErrorMessage,
+	trimRawResponse,
+} from './redact.ts'
 
 // Encryption and security utilities
 export {

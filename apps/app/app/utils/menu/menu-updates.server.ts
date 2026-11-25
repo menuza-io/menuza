@@ -11,8 +11,15 @@ import {
 	OrganizationMenuCategory,
 	OrganizationMenuItem,
 } from '@repo/database'
+import { type PosOwnershipField } from '@repo/integrations'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { type MenuTextChange } from './menu-suggestions.ts'
+import { safeEnqueueMenuSync } from './menu-sync.server.ts'
+import {
+	assertNoLockedFieldWrites,
+	localizedStringsEqual,
+	lockedFieldsForOne,
+} from './pos-ownership.server.ts'
 
 /**
  * Small menu writes that do not need the whole edit form: a translated name,
@@ -90,6 +97,7 @@ export async function updateMenuItemText({
 	defaultLocale: string
 	reason: string
 }): Promise<MenuTextChange[]> {
+	const posLock = await lockedFieldsForOne(organization.id, 'item', itemId)
 	const previous = await db.transaction(async (tx) => {
 		const [item] = await tx
 			.select({
@@ -123,12 +131,31 @@ export async function updateMenuItemText({
 		if (!Object.values(name).some((value) => value?.trim())) {
 			throw new MenuUpdateError('name_required')
 		}
-		const nextDescription = serializeLocalizedString(description)
+		const serializedName = serializeLocalizedString(name)
+		const nextDescriptionRaw = serializeLocalizedString(description)
+		const serializedDesc =
+			nextDescriptionRaw === '{}' ? null : nextDescriptionRaw
+
+		if (posLock.isLinked) {
+			const changedPosFields: PosOwnershipField[] = []
+			if (
+				!localizedStringsEqual(item.displayName, serializedName, defaultLocale)
+			) {
+				changedPosFields.push('name')
+			}
+			if (
+				!localizedStringsEqual(item.description, serializedDesc, defaultLocale)
+			) {
+				changedPosFields.push('description')
+			}
+			assertNoLockedFieldWrites(posLock, changedPosFields)
+		}
+
 		await tx
 			.update(OrganizationMenuItem)
 			.set({
-				displayName: serializeLocalizedString(name),
-				description: nextDescription === '{}' ? null : nextDescription,
+				displayName: serializedName,
+				description: serializedDesc,
 				updatedAt: new Date(),
 			})
 			.where(
@@ -152,6 +179,10 @@ export async function updateMenuItemText({
 			reason,
 			changes: changes.map(({ field, locale }) => ({ field, locale })),
 		},
+	})
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
 	})
 	return previous
 }
@@ -206,6 +237,7 @@ export async function setMenuItemAvailability({
 	reason: string
 	restoreUpdatedAt?: string | null
 }): Promise<MenuAvailability & { updatedAt: string }> {
+	const posLock = await lockedFieldsForOne(organization.id, 'item', itemId)
 	const previous = await db.transaction(async (tx) => {
 		const where = and(
 			eq(OrganizationMenuItem.id, itemId),
@@ -221,12 +253,21 @@ export async function setMenuItemAvailability({
 			.where(where)
 			.limit(1)
 		if (!item) throw new MenuUpdateError('not_found')
+		const nextUntil = toUntil(availability)
+		if (
+			posLock.isLinked &&
+			(item.availabilityStatus !== availability.availabilityStatus ||
+				(item.unavailableUntil?.getTime() ?? null) !==
+					(nextUntil?.getTime() ?? null))
+		) {
+			assertNoLockedFieldWrites(posLock, ['available'])
+		}
 		const restored = restoreUpdatedAt ? new Date(restoreUpdatedAt) : null
 		await tx
 			.update(OrganizationMenuItem)
 			.set({
 				availabilityStatus: availability.availabilityStatus,
-				unavailableUntil: toUntil(availability),
+				unavailableUntil: nextUntil,
 				updatedAt:
 					restored && !Number.isNaN(restored.getTime()) ? restored : new Date(),
 			})
@@ -246,6 +287,11 @@ export async function setMenuItemAvailability({
 			from: previous.availabilityStatus,
 			to: availability.availabilityStatus,
 		},
+	})
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'availability',
+		entityType: 'item',
+		entityId: itemId,
 	})
 	return previous
 }
@@ -302,6 +348,10 @@ export async function setMenuCategoryAvailability({
 			from: previous.availabilityStatus,
 			to: availability.availabilityStatus,
 		},
+	})
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
 	})
 	return previous
 }

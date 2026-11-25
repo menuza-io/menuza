@@ -30,6 +30,11 @@ import {
 	type MenuScheduleWorkflowParams,
 } from './menu-schedule-workflow'
 import {
+	MENU_SYNC_JOB_PATH,
+	MenuSyncWorkflow,
+	type MenuSyncWorkflowParams,
+} from './menu-sync-workflow'
+import {
 	OPERATOR_ALERTS_JOB_PATH,
 	OperatorAlertsWorkflow,
 	type OperatorAlertsWorkflowParams,
@@ -74,6 +79,7 @@ export interface Env {
 	PHOTO_QUALITY_WORKFLOW: Workflow<PhotoQualityWorkflowParams>
 	MEDIA_RESTYLE_WORKFLOW: Workflow<MediaRestyleWorkflowParams>
 	OPERATOR_ALERTS_WORKFLOW: Workflow<OperatorAlertsWorkflowParams>
+	MENU_SYNC_WORKFLOW: Workflow<MenuSyncWorkflowParams>
 }
 
 // The Workers free plan allows five cron triggers per Worker, so daily jobs
@@ -82,15 +88,19 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 	// Every 15 minutes: pending custom domains and nameserver moves become live
 	// (and their operators are told), domain registrations progress, renewals and
 	// their reminders run, email forwarding and sending domains are checked
-	// (#139, #283, #183, #276, #103). The App guards each task's own cadence.
+	// (#139, #283, #183, #276, #103), and POS/delivery menu sync outbox rows drain (#74).
+	// The App guards each task's own cadence.
 	'*/15 * * * *': [
 		'/resources/jobs/domain-status',
 		// Batched form response emails that waited out a member's 10-minute
 		// window (#142).
 		'/resources/jobs/form-alerts',
+		// POS and delivery menu/availability outbox sweep (#74).
+		MENU_SYNC_JOB_PATH,
 	],
 	'0 2 * * *': [
 		'/resources/jobs/audit-log-archival',
+		'/resources/jobs/integration-log-prune',
 		'/resources/jobs/menu-snapshot-prune',
 		// Website versions of deleted pages after 30 days, and finished schedules (#85).
 		'/resources/jobs/website-version-prune',
@@ -110,6 +120,10 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 		// Daily branded customer app store health and developer account expiry
 		// alerts (#156); the App reads each app's stores at most once a day.
 		'/resources/jobs/customer-app-health',
+		// Nightly full-menu sync for connected delivery platforms (#74).
+		`${MENU_SYNC_JOB_PATH}?nightly=1`,
+		// Daily check that delivery platform menus match Menuza (#144).
+		'/resources/jobs/menu-check',
 	],
 	'0 4 * * *': [
 		'/resources/jobs/gdpr-erasure',
@@ -156,6 +170,8 @@ const WEBSITE_PUBLISH_MAX_LEAD_MS = 364 * 24 * 60 * 60_000
 const MENU_SCHEDULE_MAX_LEAD_MS = 90 * 24 * 60 * 60_000
 // Quiet hours end within a day, so a wake-up is never further ahead than this.
 const OPERATOR_ALERTS_MAX_LEAD_MS = 3 * 24 * 60 * 60_000
+// Coalesced menu syncs and retries are at most hours ahead; cap at 3 days.
+const MENU_SYNC_MAX_LEAD_MS = 3 * 24 * 60 * 60_000
 // The marketing calendar's daily wake-up (#152) is at most two days ahead.
 const OCCASION_SCHEDULE_MAX_LEAD_MS = 2 * 24 * 60 * 60_000
 // A calendar is read every few hours (#319); a wake-up is never further ahead
@@ -805,6 +821,53 @@ export default {
 		}
 
 		// =========================================================================
+		// Menu Sync Workflow: wake the App when queued POS/delivery outbox rows are
+		// due — POST /workflows/menu-sync/start { runAt } (#74)
+		// =========================================================================
+		if (
+			(pathname === '/workflows/menu-sync/start' ||
+				pathname === '/api/workflows/menu-sync/start') &&
+			request.method === 'POST'
+		) {
+			const unauthorized = await requireInternalAuth(request, env)
+			if (unauthorized) return unauthorized
+
+			const body = ((await request.json().catch(() => ({}))) || {}) as {
+				runAt?: unknown
+			}
+			const runAt =
+				typeof body.runAt === 'string' ? new Date(body.runAt) : new Date('')
+			if (Number.isNaN(runAt.getTime())) {
+				return Response.json({ error: 'runAt is required' }, { status: 400 })
+			}
+			if (runAt.getTime() - Date.now() > MENU_SYNC_MAX_LEAD_MS) {
+				return Response.json(
+					{ error: 'runAt is too far ahead to wait for' },
+					{ status: 400 },
+				)
+			}
+
+			// Bucket per 15-second window so bursts of edits share one wake-up.
+			const instanceId = `menu-sync-${Math.floor(runAt.getTime() / 15_000)}`
+			try {
+				const instance = await env.MENU_SYNC_WORKFLOW.create({
+					id: instanceId,
+					params: { runAt: runAt.toISOString() },
+				})
+				return Response.json({ success: true, instanceId: instance.id })
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err)
+				if (/already[ _]exists/i.test(message)) {
+					return Response.json({ success: true, instanceId })
+				}
+				return Response.json(
+					{ error: 'Failed to start menu sync workflow', message },
+					{ status: 500 },
+				)
+			}
+		}
+
+		// =========================================================================
 		// Menu Schedule Workflow: wake the App when a scheduled menu changeover is
 		// due — POST /workflows/menu-schedule/start { scheduleId, runAt } (#149)
 		// =========================================================================
@@ -1349,4 +1412,5 @@ export {
 	PhotoQualityWorkflow,
 	MediaRestyleWorkflow,
 	OperatorAlertsWorkflow,
+	MenuSyncWorkflow,
 }

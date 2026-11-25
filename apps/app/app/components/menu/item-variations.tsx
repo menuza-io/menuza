@@ -56,6 +56,8 @@ export function ItemVariations({
 	orgSlug,
 	locations = [],
 	initialImageUrls = {},
+	disabled = false,
+	headerControl,
 }: {
 	value: MenuVariations
 	onChange: (next: MenuVariations) => void
@@ -64,6 +66,8 @@ export function ItemVariations({
 	orgSlug: string
 	locations?: LocationItem[]
 	initialImageUrls?: Record<string, string>
+	disabled?: boolean
+	headerControl?: React.ReactNode
 }) {
 	const { _ } = useLingui()
 	const [draftGroups, setDraftGroups] = useState(() =>
@@ -147,282 +151,287 @@ export function ItemVariations({
 						Options like size or color. Price and availability per combination.
 					</Trans>
 				</FrameDescription>
+				{headerControl}
 			</FrameHeader>
-			<FramePanel className="space-y-4 p-5">
-				{draftGroups.length === 0 && (
-					<p className="text-muted-foreground text-sm">
-						<Trans>
-							For example, add Size with Small and Medium, then Color with Black
-							and Blue. The combinations appear automatically.
-						</Trans>
-					</p>
-				)}
-				{draftGroups.map((group) => {
-					const hasValues = group.values.some((option) => option.name.trim())
-					const duplicateGroup = Boolean(
-						nameKey(group.name) &&
-						draftGroups.some(
-							(entry) =>
-								entry.id !== group.id &&
-								nameKey(entry.name) === nameKey(group.name),
-						),
-					)
-					return (
-						<div
-							key={group.id}
-							className="border-border space-y-3 border-b pb-5 last:border-b-0 last:pb-0"
-						>
-							<div className="flex items-end gap-3">
-								<div className="min-w-0 flex-1 space-y-1.5">
-									<Label htmlFor={`variation-group-${group.id}`}>
-										<Trans>Option name</Trans>
+			<fieldset disabled={disabled} className="contents">
+				<FramePanel className="space-y-4 p-5">
+					{draftGroups.length === 0 && (
+						<p className="text-muted-foreground text-sm">
+							<Trans>
+								For example, add Size with Small and Medium, then Color with
+								Black and Blue. The combinations appear automatically.
+							</Trans>
+						</p>
+					)}
+					{draftGroups.map((group) => {
+						const hasValues = group.values.some((option) => option.name.trim())
+						const duplicateGroup = Boolean(
+							nameKey(group.name) &&
+							draftGroups.some(
+								(entry) =>
+									entry.id !== group.id &&
+									nameKey(entry.name) === nameKey(group.name),
+							),
+						)
+						return (
+							<div
+								key={group.id}
+								className="border-border space-y-3 border-b pb-5 last:border-b-0 last:pb-0"
+							>
+								<div className="flex items-end gap-3">
+									<div className="min-w-0 flex-1 space-y-1.5">
+										<Label htmlFor={`variation-group-${group.id}`}>
+											<Trans>Option name</Trans>
+										</Label>
+										<Input
+											id={`variation-group-${group.id}`}
+											value={group.name}
+											placeholder="e.g. Size"
+											maxLength={80}
+											required={hasValues}
+											aria-invalid={duplicateGroup}
+											onChange={(event) =>
+												changeGroupName(group.id, event.target.value)
+											}
+										/>
+										{duplicateGroup && (
+											<p className="text-destructive text-xs">
+												<Trans>Use a different option name.</Trans>
+											</p>
+										)}
+									</div>
+									<Button
+										type="button"
+										variant="ghost"
+										onClick={() => removeGroup(group)}
+									>
+										<Trans>Remove</Trans>
+									</Button>
+								</div>
+								<div className="space-y-2">
+									<Label>
+										<Trans>Values</Trans>
 									</Label>
-									<Input
-										id={`variation-group-${group.id}`}
-										value={group.name}
-										placeholder="e.g. Size"
-										maxLength={80}
-										required={hasValues}
-										aria-invalid={duplicateGroup}
-										onChange={(event) =>
-											changeGroupName(group.id, event.target.value)
-										}
-									/>
-									{duplicateGroup && (
-										<p className="text-destructive text-xs">
-											<Trans>Use a different option name.</Trans>
+									{group.values.map((option, index) => {
+										const trailing = index === group.values.length - 1
+										const duplicate = Boolean(
+											nameKey(option.name) &&
+											group.values.some(
+												(entry) =>
+													entry.id !== option.id &&
+													nameKey(entry.name) === nameKey(option.name),
+											),
+										)
+										return (
+											<div key={option.id} className="space-y-1">
+												<Input
+													id={`variation-value-${option.id}`}
+													aria-label={`${group.name || 'Option'} value ${index + 1}`}
+													value={option.name}
+													placeholder={trailing ? 'Add a value' : undefined}
+													maxLength={80}
+													disabled={
+														trailing &&
+														!canAddVariationValue(draftGroups, group.id)
+													}
+													aria-invalid={duplicate}
+													onChange={(event) =>
+														changeValue(group.id, option.id, event.target.value)
+													}
+													onBlur={() => {
+														const next = discardEmptyDraftValue(
+															draftGroups,
+															group.id,
+															option.id,
+														)
+														if (next !== draftGroups) publish(next)
+													}}
+													onKeyDown={(event) => {
+														if (event.key !== 'Enter') return
+														event.preventDefault()
+														const nextId = group.values[index + 1]?.id
+														if (nextId)
+															document
+																.getElementById(`variation-value-${nextId}`)
+																?.focus()
+													}}
+												/>
+												{duplicate && (
+													<p className="text-destructive text-xs">
+														<Trans>Use a different value.</Trans>
+													</p>
+												)}
+											</div>
+										)
+									})}
+									{!canAddVariationValue(draftGroups, group.id) && (
+										<p className="text-muted-foreground text-xs">
+											<Trans>
+												This item has reached the 100 combination limit.
+											</Trans>
 										</p>
 									)}
 								</div>
-								<Button
-									type="button"
-									variant="ghost"
-									onClick={() => removeGroup(group)}
-								>
-									<Trans>Remove</Trans>
-								</Button>
 							</div>
-							<div className="space-y-2">
-								<Label>
-									<Trans>Values</Trans>
-								</Label>
-								{group.values.map((option, index) => {
-									const trailing = index === group.values.length - 1
-									const duplicate = Boolean(
-										nameKey(option.name) &&
-										group.values.some(
-											(entry) =>
-												entry.id !== option.id &&
-												nameKey(entry.name) === nameKey(option.name),
-										),
-									)
-									return (
-										<div key={option.id} className="space-y-1">
-											<Input
-												id={`variation-value-${option.id}`}
-												aria-label={`${group.name || 'Option'} value ${index + 1}`}
-												value={option.name}
-												placeholder={trailing ? 'Add a value' : undefined}
-												maxLength={80}
-												disabled={
-													trailing &&
-													!canAddVariationValue(draftGroups, group.id)
-												}
-												aria-invalid={duplicate}
-												onChange={(event) =>
-													changeValue(group.id, option.id, event.target.value)
-												}
-												onBlur={() => {
-													const next = discardEmptyDraftValue(
-														draftGroups,
-														group.id,
-														option.id,
-													)
-													if (next !== draftGroups) publish(next)
-												}}
-												onKeyDown={(event) => {
-													if (event.key !== 'Enter') return
-													event.preventDefault()
-													const nextId = group.values[index + 1]?.id
-													if (nextId)
-														document
-															.getElementById(`variation-value-${nextId}`)
-															?.focus()
-												}}
-											/>
-											{duplicate && (
-												<p className="text-destructive text-xs">
-													<Trans>Use a different value.</Trans>
-												</p>
-											)}
-										</div>
-									)
-								})}
-								{!canAddVariationValue(draftGroups, group.id) && (
-									<p className="text-muted-foreground text-xs">
-										<Trans>
-											This item has reached the 100 combination limit.
-										</Trans>
-									</p>
-								)}
-							</div>
-						</div>
-					)
-				})}
-				<Button
-					type="button"
-					variant="secondary"
-					disabled={draftGroups.length >= 3}
-					onClick={() => {
-						const id = crypto.randomUUID()
-						publish([
-							...draftGroups,
-							withTrailingBlank({ id, name: '', values: [] }),
-						])
-					}}
-				>
-					<Trans>Add option</Trans>
-				</Button>
-			</FramePanel>
-			{value.variants.length > 0 && (
-				<FramePanel className="p-0">
-					<div className="flex items-center justify-between gap-3 px-5 py-3">
-						<h3 className="text-sm font-semibold">
-							<Trans>Combinations</Trans>
-						</h3>
-						<span className="text-muted-foreground text-xs tabular-nums">
-							{value.variants.length}
-						</span>
-					</div>
-					<div className="border-border/70 bg-muted/30 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_7rem_11rem] gap-4 border-y px-5 py-2 text-xs font-medium sm:grid">
-						<span>
-							<Trans>Variant</Trans>
-						</span>
-						<span>
-							<Trans>Price ($)</Trans>
-						</span>
-						<span>
-							<Trans>Availability</Trans>
-						</span>
-					</div>
-					<div className="divide-border/70 divide-y border-t sm:border-t-0">
-						{value.variants.map((variant) => {
-							const name = variant.valueIds
-								.map(
-									(id, index) =>
-										value.groups[index]?.values.find(
-											(option) => option.id === id,
-										)?.name || '…',
-								)
-								.join(' / ')
-							const imageUrl = variant.imageKey
-								? (imageUrls[variant.imageKey] ??
-									images.find((image) => image.key === variant.imageKey)?.url)
-								: images[0]?.url
-							return (
-								<div
-									key={variant.id}
-									className="grid gap-3 px-5 py-3 sm:grid-cols-[minmax(0,1fr)_7rem_11rem] sm:items-start sm:gap-4"
-								>
-									<div className="flex min-w-0 items-center gap-3">
-										<button
-											type="button"
-											className={`border-border bg-background hover:bg-muted focus-visible:ring-ring text-muted-foreground flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-none ${imageUrl ? '' : 'border-dashed'}`}
-											aria-label={_(msg`Choose photo for ${name}`)}
-											title={_(msg`Choose photo for ${name}`)}
-											onClick={() => setActiveVariantId(variant.id)}
-										>
-											{imageUrl ? (
-												<img
-													src={imageUrl}
-													alt=""
-													className="size-full object-cover"
-												/>
-											) : (
-												<Icon name="image" className="size-5" />
-											)}
-										</button>
-										<div className="min-w-0 space-y-1">
-											<div className="text-sm font-medium">{name}</div>
-											{variant.imageKey && (
-												<button
-													type="button"
-													className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
-													onClick={() =>
-														updateVariant(variant.id, { imageKey: null })
-													}
-												>
-													{images.length ? (
-														<Trans>Use item photo</Trans>
-													) : (
-														<Trans>Remove photo</Trans>
-													)}
-												</button>
-											)}
-										</div>
-									</div>
-									<div className="space-y-1 sm:space-y-0 sm:pt-2">
-										<Label
-											htmlFor={`variation-price-${variant.id}`}
-											className="text-muted-foreground text-xs sm:sr-only"
-										>
-											<Trans>Price ($)</Trans>
-										</Label>
-										<Input
-											id={`variation-price-${variant.id}`}
-											aria-label={_(msg`Price for ${name}`)}
-											type="number"
-											min="0"
-											step="0.01"
-											required
-											value={variant.price}
-											onFocus={(event) => event.target.select()}
-											onChange={(event) =>
-												updateVariant(variant.id, {
-													price: Number(event.target.value),
-												})
-											}
-										/>
-									</div>
-									<div className="sm:pt-2">
-										<VariationAvailabilityControl
-											variant={variant}
-											name={name}
-											location={primaryLocation}
-											onChange={(changes) => updateVariant(variant.id, changes)}
-										/>
-									</div>
-									<div className="flex items-center gap-2 sm:col-span-3">
-										<Switch
-											id={`variation-discounts-${variant.id}`}
-											aria-label={_(msg`Exclude ${name} from discounts`)}
-											checked={variant.excludeFromDiscounts}
-											onCheckedChange={(checked) =>
-												updateVariant(variant.id, {
-													excludeFromDiscounts: checked,
-												})
-											}
-										/>
-										<Label
-											htmlFor={`variation-discounts-${variant.id}`}
-											className="text-muted-foreground cursor-pointer text-xs font-normal"
-										>
-											<Trans>
-												Exclude from discounts. Never receives a discount, for
-												example gift cards.
-											</Trans>
-										</Label>
-									</div>
-								</div>
-							)
-						})}
-					</div>
+						)
+					})}
+					<Button
+						type="button"
+						variant="secondary"
+						disabled={draftGroups.length >= 3}
+						onClick={() => {
+							const id = crypto.randomUUID()
+							publish([
+								...draftGroups,
+								withTrailingBlank({ id, name: '', values: [] }),
+							])
+						}}
+					>
+						<Trans>Add option</Trans>
+					</Button>
 				</FramePanel>
-			)}
+				{value.variants.length > 0 && (
+					<FramePanel className="p-0">
+						<div className="flex items-center justify-between gap-3 px-5 py-3">
+							<h3 className="text-sm font-semibold">
+								<Trans>Combinations</Trans>
+							</h3>
+							<span className="text-muted-foreground text-xs tabular-nums">
+								{value.variants.length}
+							</span>
+						</div>
+						<div className="border-border/70 bg-muted/30 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_7rem_11rem] gap-4 border-y px-5 py-2 text-xs font-medium sm:grid">
+							<span>
+								<Trans>Variant</Trans>
+							</span>
+							<span>
+								<Trans>Price ($)</Trans>
+							</span>
+							<span>
+								<Trans>Availability</Trans>
+							</span>
+						</div>
+						<div className="divide-border/70 divide-y border-t sm:border-t-0">
+							{value.variants.map((variant) => {
+								const name = variant.valueIds
+									.map(
+										(id, index) =>
+											value.groups[index]?.values.find(
+												(option) => option.id === id,
+											)?.name || '…',
+									)
+									.join(' / ')
+								const imageUrl = variant.imageKey
+									? (imageUrls[variant.imageKey] ??
+										images.find((image) => image.key === variant.imageKey)?.url)
+									: images[0]?.url
+								return (
+									<div
+										key={variant.id}
+										className="grid gap-3 px-5 py-3 sm:grid-cols-[minmax(0,1fr)_7rem_11rem] sm:items-start sm:gap-4"
+									>
+										<div className="flex min-w-0 items-center gap-3">
+											<button
+												type="button"
+												className={`border-border bg-background hover:bg-muted focus-visible:ring-ring text-muted-foreground flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-none ${imageUrl ? '' : 'border-dashed'}`}
+												aria-label={_(msg`Choose photo for ${name}`)}
+												title={_(msg`Choose photo for ${name}`)}
+												onClick={() => setActiveVariantId(variant.id)}
+											>
+												{imageUrl ? (
+													<img
+														src={imageUrl}
+														alt=""
+														className="size-full object-cover"
+													/>
+												) : (
+													<Icon name="image" className="size-5" />
+												)}
+											</button>
+											<div className="min-w-0 space-y-1">
+												<div className="text-sm font-medium">{name}</div>
+												{variant.imageKey && (
+													<button
+														type="button"
+														className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
+														onClick={() =>
+															updateVariant(variant.id, { imageKey: null })
+														}
+													>
+														{images.length ? (
+															<Trans>Use item photo</Trans>
+														) : (
+															<Trans>Remove photo</Trans>
+														)}
+													</button>
+												)}
+											</div>
+										</div>
+										<div className="space-y-1 sm:space-y-0 sm:pt-2">
+											<Label
+												htmlFor={`variation-price-${variant.id}`}
+												className="text-muted-foreground text-xs sm:sr-only"
+											>
+												<Trans>Price ($)</Trans>
+											</Label>
+											<Input
+												id={`variation-price-${variant.id}`}
+												aria-label={_(msg`Price for ${name}`)}
+												type="number"
+												min="0"
+												step="0.01"
+												required
+												value={variant.price}
+												onFocus={(event) => event.target.select()}
+												onChange={(event) =>
+													updateVariant(variant.id, {
+														price: Number(event.target.value),
+													})
+												}
+											/>
+										</div>
+										<div className="sm:pt-2">
+											<VariationAvailabilityControl
+												variant={variant}
+												name={name}
+												location={primaryLocation}
+												onChange={(changes) =>
+													updateVariant(variant.id, changes)
+												}
+											/>
+										</div>
+										<div className="flex items-center gap-2 sm:col-span-3">
+											<Switch
+												id={`variation-discounts-${variant.id}`}
+												aria-label={_(msg`Exclude ${name} from discounts`)}
+												checked={variant.excludeFromDiscounts}
+												onCheckedChange={(checked) =>
+													updateVariant(variant.id, {
+														excludeFromDiscounts: checked,
+													})
+												}
+											/>
+											<Label
+												htmlFor={`variation-discounts-${variant.id}`}
+												className="text-muted-foreground cursor-pointer text-xs font-normal"
+											>
+												<Trans>
+													Exclude from discounts. Never receives a discount, for
+													example gift cards.
+												</Trans>
+											</Label>
+										</div>
+									</div>
+								)
+							})}
+						</div>
+					</FramePanel>
+				)}
+			</fieldset>
 			<MediaLibraryPicker
 				className="hidden"
 				orgSlug={orgSlug}
-				open={activeVariantId !== null}
+				open={!disabled && activeVariantId !== null}
 				onOpenChange={(open) => {
 					if (!open) setActiveVariantId(null)
 				}}

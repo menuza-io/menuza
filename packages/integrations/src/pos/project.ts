@@ -20,6 +20,7 @@ import {
 	OrganizationMenuCategoryAssignment,
 	OrganizationMenuItemCategoryAssignment,
 	OrganizationMenuItemModifierGroupAssignment,
+	OrganizationMenuLocationOverride,
 	OrganizationMenuModifierGroupOptionAssignment,
 	and,
 	asc,
@@ -34,6 +35,17 @@ export type SyncableMenu = {
 	menu: { id: string; name: string }
 	items: RemoteItem[]
 	menus: RemoteMenu[]
+}
+
+export type SyncableMenus = {
+	selectedMenus: Array<{ id: string; name: string }>
+	items: RemoteItem[]
+	menus: RemoteMenu[]
+}
+
+export type LoadMenuForSyncOptions = {
+	locationId?: string | null
+	now?: Date
 }
 
 /** Resolves a localized menu column (`{"en":"…"}`) to a plain string. */
@@ -116,12 +128,17 @@ export async function applyFocalCrops<T extends { imageUrl: string | null }>(
 
 /**
  * Loads a single menu (categories → items → modifier groups → options) as the
- * canonical items a provider would receive.
+ * canonical items a provider would receive, applying per-location overrides
+ * (`OrganizationMenuLocationOverride`) when `options.locationId` is given.
  */
 export async function loadMenuForSync(
 	organizationId: string,
 	menuId: string,
+	options?: LoadMenuForSyncOptions,
 ): Promise<SyncableMenu> {
+	const now = options?.now ?? new Date()
+	const locationId = options?.locationId?.trim() || null
+
 	const menu = await db
 		.select()
 		.from(OrganizationMenu)
@@ -137,12 +154,52 @@ export async function loadMenuForSync(
 	if (!menu) throw new PosError('Menu not found.', 404)
 	const menuName = localizedText(menu.displayName, 'Menu')
 
+	const overrideByKey = new Map<
+		string,
+		typeof OrganizationMenuLocationOverride.$inferSelect
+	>()
+	if (locationId) {
+		const overrideRows = await db
+			.select()
+			.from(OrganizationMenuLocationOverride)
+			.where(
+				and(
+					eq(OrganizationMenuLocationOverride.organizationId, organizationId),
+					eq(OrganizationMenuLocationOverride.locationId, locationId),
+				),
+			)
+		for (const row of overrideRows) {
+			overrideByKey.set(`${row.entityType}:${row.entityId}`, row)
+		}
+	}
+
+	const menuOverride = overrideByKey.get(`menu:${menu.id}`)
+	if (menuOverride?.isEnabled === false) {
+		return {
+			menu: { id: menu.id, name: menuName },
+			items: [],
+			menus: [],
+		}
+	}
+	const menuAvailable = menuOverride?.availabilityStatus
+		? isUnavailableUntilExpired(
+				menuOverride.availabilityStatus,
+				menuOverride.unavailableUntil,
+				now,
+			)
+		: true
+
 	const categoryAssignments = await db
 		.select()
 		.from(OrganizationMenuCategoryAssignment)
 		.where(eq(OrganizationMenuCategoryAssignment.menuId, menuId))
 		.orderBy(asc(OrganizationMenuCategoryAssignment.position))
-	const categoryIds = categoryAssignments.map((row) => row.categoryId)
+	const categoryIds = categoryAssignments
+		.map((row) => row.categoryId)
+		.filter(
+			(categoryId) =>
+				overrideByKey.get(`category:${categoryId}`)?.isEnabled !== false,
+		)
 
 	const itemRows = categoryIds.length
 		? await db.query.OrganizationMenuItemCategoryAssignment.findMany({
@@ -192,27 +249,94 @@ export async function loadMenuForSync(
 		optionsByGroup.set(row.modifierGroupId, list)
 	}
 
-	const items: RemoteItem[] = itemRows.map(({ item, category }) => {
+	const items: RemoteItem[] = itemRows.flatMap(({ item, category }) => {
+		if (!item || item.availabilityStatus === 'hidden') return []
+		if (category?.availabilityStatus === 'hidden') return []
+		const catOverride = category
+			? overrideByKey.get(`category:${category.id}`)
+			: undefined
+		if (catOverride?.isEnabled === false) return []
+		const itemOverride = overrideByKey.get(`item:${item.id}`)
+		if (itemOverride?.isEnabled === false) return []
+
+		const categoryGlobalAvailable = isUnavailableUntilExpired(
+			category?.availabilityStatus,
+			category?.unavailableUntil,
+			now,
+		)
+		const categoryLocAvailable = catOverride?.availabilityStatus
+			? isUnavailableUntilExpired(
+					catOverride.availabilityStatus,
+					catOverride.unavailableUntil,
+					now,
+				)
+			: true
+		const categoryAvailable = categoryGlobalAvailable && categoryLocAvailable
+
 		const groups = (groupsByItem.get(item.id) ?? []).flatMap((assignment) => {
 			const group = assignment.modifierGroup
-			if (!group) return []
-			const options = (optionsByGroup.get(group.id) ?? []).map((optionRow) => ({
-				name: localizedText(optionRow.option?.displayName, 'Option'),
-				price: Math.round(
-					(optionRow.priceOverride ?? optionRow.option?.price ?? 0) * 100,
-				),
-				available: isUnavailableUntilExpired(
-					optionRow.option?.availabilityStatus,
-					optionRow.option?.unavailableUntil,
-				),
-			}))
-			const max = group.maxSelections ?? Math.max(options.length, 1)
+			if (!group || group.availabilityStatus === 'hidden') return []
+			const groupOverride = overrideByKey.get(`modifier_group:${group.id}`)
+			if (groupOverride?.isEnabled === false) return []
+
+			const groupGlobalAvailable = isUnavailableUntilExpired(
+				group.availabilityStatus,
+				group.unavailableUntil,
+				now,
+			)
+			const groupLocAvailable = groupOverride?.availabilityStatus
+				? isUnavailableUntilExpired(
+						groupOverride.availabilityStatus,
+						groupOverride.unavailableUntil,
+						now,
+					)
+				: true
+			const groupAvailable = groupGlobalAvailable && groupLocAvailable
+
+			const mappedOptions = (optionsByGroup.get(group.id) ?? []).flatMap(
+				(optionRow) => {
+					const opt = optionRow.option
+					if (!opt || opt.availabilityStatus === 'hidden') return []
+					const optOverride = overrideByKey.get(`modifier_option:${opt.id}`)
+					if (optOverride?.isEnabled === false) return []
+
+					const baseOptionPrice = optionRow.priceOverride ?? opt.price ?? 0
+					const effectiveOptionPrice =
+						optOverride?.price !== null && optOverride?.price !== undefined
+							? optOverride.price
+							: baseOptionPrice
+
+					const globalOptAvailable = isUnavailableUntilExpired(
+						opt.availabilityStatus,
+						opt.unavailableUntil,
+						now,
+					)
+					const locOptAvailable = optOverride?.availabilityStatus
+						? isUnavailableUntilExpired(
+								optOverride.availabilityStatus,
+								optOverride.unavailableUntil,
+								now,
+							)
+						: true
+
+					return [
+						{
+							name: localizedText(opt.displayName, 'Option'),
+							price: Math.round(effectiveOptionPrice * 100),
+							available:
+								groupAvailable && globalOptAvailable && locOptAvailable,
+						},
+					]
+				},
+			)
+			const max = group.maxSelections ?? Math.max(mappedOptions.length, 1)
+			const min = Math.min(group.minSelections ?? 0, mappedOptions.length)
 			return [
 				{
 					name: localizedText(group.name, 'Options'),
-					min: group.minSelections ?? 0,
+					min,
 					max,
-					options,
+					options: mappedOptions,
 				},
 			]
 		})
@@ -224,46 +348,127 @@ export async function loadMenuForSync(
 		]
 
 		const menuVariations = parseMenuVariations(item.variations)
-		const remoteVariations = projectMenuVariations(menuVariations)
+		const remoteVariations = projectMenuVariations(menuVariations, now)
 		const availableVariants = menuVariations.variants.filter((variant) =>
 			isUnavailableUntilExpired(
 				variant.availabilityStatus,
 				variant.unavailableUntil,
+				now,
 			),
 		)
-		const priceCents = availableVariants.length
+		const basePriceCents = availableVariants.length
 			? Math.round(
 					Math.min(...availableVariants.map((variant) => variant.price)) * 100,
 				)
 			: Math.round(item.price * 100)
+		const priceCents =
+			itemOverride?.price !== null && itemOverride?.price !== undefined
+				? Math.round(itemOverride.price * 100)
+				: basePriceCents
 
-		return {
-			id: item.id,
-			name: localizedText(item.displayName, 'Item'),
-			description: localizedText(item.description),
-			category: localizedText(category?.displayName, 'Uncategorized'),
-			price: priceCents,
-			imageUrl: item.imageUrl ?? null,
-			available:
-				isUnavailableUntilExpired(
-					item.availabilityStatus,
-					item.unavailableUntil,
-				) &&
-				(!menuVariations.variants.length || availableVariants.length > 0),
-			modifierGroups: groups,
-			variations: remoteVariations,
-			menus: [],
-			allergens: [...new Set(allergens)].sort(),
-			alcohol: item.isAlcohol,
-			taxRate: null,
-			version: 1,
-		}
+		const globalItemAvailable =
+			isUnavailableUntilExpired(
+				item.availabilityStatus,
+				item.unavailableUntil,
+				now,
+			) &&
+			(!menuVariations.variants.length || availableVariants.length > 0)
+		const locItemAvailable = itemOverride?.availabilityStatus
+			? isUnavailableUntilExpired(
+					itemOverride.availabilityStatus,
+					itemOverride.unavailableUntil,
+					now,
+				)
+			: true
+
+		return [
+			{
+				id: item.id,
+				name: localizedText(item.displayName, 'Item'),
+				description: localizedText(item.description),
+				category: localizedText(category?.displayName, 'Uncategorized'),
+				price: priceCents,
+				imageUrl: item.imageUrl ?? null,
+				available:
+					menuAvailable &&
+					categoryAvailable &&
+					globalItemAvailable &&
+					locItemAvailable,
+				modifierGroups: groups,
+				variations: remoteVariations,
+				menus: [],
+				allergens: [...new Set(allergens)].sort(),
+				alcohol: item.isAlcohol,
+				taxRate: null,
+				version: 1,
+			},
+		]
 	})
 
 	return {
 		menu: { id: menu.id, name: menuName },
 		items: await applyFocalCrops(organizationId, items),
 		menus: [],
+	}
+}
+
+/**
+ * Loads multiple menus and combines them for delivery-store sync (#96):
+ * merges items by ID while preserving each item's `menus` list of assigned
+ * menu names, applies per-location overrides, and omits disabled/hidden
+ * records.
+ */
+export async function loadMenusForSync(
+	organizationId: string,
+	menuIds: string[],
+	options?: LoadMenuForSyncOptions,
+): Promise<SyncableMenus> {
+	const uniqueMenuIds = [
+		...new Set(menuIds.map((id) => id.trim()).filter(Boolean)),
+	]
+	if (uniqueMenuIds.length === 0) {
+		return { selectedMenus: [], items: [], menus: [] }
+	}
+
+	const loadedMenus = await Promise.all(
+		uniqueMenuIds.map((menuId) =>
+			loadMenuForSync(organizationId, menuId, options),
+		),
+	)
+
+	const selectedMenus: Array<{ id: string; name: string }> = []
+	const byItemId = new Map<string, RemoteItem>()
+	const remoteMenus: RemoteMenu[] = []
+
+	for (const loaded of loadedMenus) {
+		selectedMenus.push(loaded.menu)
+		if (loaded.items.length > 0) {
+			remoteMenus.push({
+				name: loaded.menu.name,
+				days: [0, 1, 2, 3, 4, 5, 6],
+				start: '00:00',
+				end: '23:59',
+			})
+		}
+		for (const item of loaded.items) {
+			const existing = byItemId.get(item.id)
+			if (existing) {
+				if (!existing.menus.includes(loaded.menu.name)) {
+					existing.menus.push(loaded.menu.name)
+				}
+			} else {
+				byItemId.set(item.id, {
+					...item,
+					menus: [loaded.menu.name],
+				})
+			}
+		}
+	}
+
+	return {
+		selectedMenus,
+		items: [...byItemId.values()],
+		menus: remoteMenus,
 	}
 }
 

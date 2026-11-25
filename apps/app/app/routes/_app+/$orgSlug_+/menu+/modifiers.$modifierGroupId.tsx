@@ -19,8 +19,10 @@ import {
 	OrganizationLocation,
 	OrganizationMenuLocationOverride,
 	OrganizationMenuOptionNestedModifierGroupAssignment,
+	inArray,
 	ne,
 } from '@repo/database'
+import { type PosOwnershipField } from '@repo/integrations'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -38,6 +40,7 @@ import {
 	optionLimitLocationIds,
 	optionsCarryingDailyLimit,
 } from '#app/utils/menu/daily-limit-save.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import {
 	checkModifierGraphChange,
 	modifierGraphErrorResponse,
@@ -48,6 +51,15 @@ import {
 	assertModifierGroupIdsInOrganization,
 	assertModifierGroupInOrganization,
 } from '#app/utils/menu/ownership.server.ts'
+import {
+	assertNoLockedFieldWrites,
+	handlePosFieldOverrideIntent,
+	localizedStringsEqual,
+	lockedFieldsFor,
+	lockedFieldsForOne,
+	PosFieldLockedError,
+	type PosEntityLockInfo,
+} from '#app/utils/menu/pos-ownership.server.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
@@ -223,6 +235,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				opt.modifierGroupAssignments[0]?.modifierGroup?.internalName ?? null,
 		}))
 
+	const [dailyLimitsEnabled, posLock] = await Promise.all([
+		isDailyDishLimitsEnabled(organization.id),
+		lockedFieldsForOne(organization.id, 'modifier_group', group.id),
+	])
+
 	return {
 		organization,
 		initialParentOptionIds,
@@ -233,7 +250,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			...option,
 			dailySaleLimit: parseDailySaleLimit(option.dailySaleLimit),
 		})),
-		dailyLimitsEnabled: await isDailyDishLimitsEnabled(organization.id),
+		dailyLimitsEnabled,
+		posLock,
 		group: {
 			id: group.id,
 			name: group.name,
@@ -300,9 +318,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		siteDefaultLocale: true,
 	})
 
-	await requireMenuWrite(request, organization.id)
+	const userId = await requireMenuWrite(request, organization.id)
 
 	const modifierGroupId = params.modifierGroupId
 	if (!modifierGroupId) {
@@ -312,6 +331,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	await assertModifierGroupInOrganization(organization.id, modifierGroupId)
 
 	const formData = await request.formData()
+	const defaultLocale = organization.siteDefaultLocale ?? 'en'
+
+	const overrideResponse = await handlePosFieldOverrideIntent({
+		organization,
+		userId,
+		request,
+		formData,
+		entityType: 'modifier_group',
+		entityId: modifierGroupId,
+		defaultLocale,
+	})
+	if (overrideResponse) return overrideResponse
+
 	const rawData: Record<string, unknown> = {}
 
 	for (const [key, value] of formData.entries()) {
@@ -359,6 +391,111 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			? data.unavailableUntil
 			: null
 	const overrideEntries = Object.values(data.locationOverrides ?? {})
+
+	const posLock = await lockedFieldsForOne(
+		organization.id,
+		'modifier_group',
+		modifierGroupId,
+	)
+	const existingOptionIds = options
+		.map((opt) => opt.id)
+		.filter((id): id is string => Boolean(id))
+	const optionPosLocks =
+		existingOptionIds.length > 0
+			? await lockedFieldsFor(
+					organization.id,
+					'modifier_option',
+					existingOptionIds,
+				)
+			: new Map<string, PosEntityLockInfo>()
+
+	if (
+		posLock.isLinked ||
+		[...optionPosLocks.values()].some((lock) => lock.isLinked)
+	) {
+		const [currentGroup, currentGroupOptRows, currentOptRows] =
+			await Promise.all([
+				db
+					.select()
+					.from(OrganizationMenuModifierGroup)
+					.where(
+						and(
+							eq(OrganizationMenuModifierGroup.id, modifierGroupId),
+							eq(OrganizationMenuModifierGroup.organizationId, organization.id),
+						),
+					)
+					.limit(1)
+					.then((r) => r[0]),
+				db
+					.select({
+						optionId: OrganizationMenuModifierGroupOptionAssignment.optionId,
+					})
+					.from(OrganizationMenuModifierGroupOptionAssignment)
+					.where(
+						eq(
+							OrganizationMenuModifierGroupOptionAssignment.modifierGroupId,
+							modifierGroupId,
+						),
+					)
+					.orderBy(asc(OrganizationMenuModifierGroupOptionAssignment.position)),
+				existingOptionIds.length > 0
+					? db
+							.select()
+							.from(OrganizationMenuOption)
+							.where(
+								and(
+									eq(OrganizationMenuOption.organizationId, organization.id),
+									inArray(OrganizationMenuOption.id, existingOptionIds),
+								),
+							)
+					: Promise.resolve([]),
+			])
+
+		try {
+			if (posLock.isLinked && currentGroup) {
+				const changedGroupFields: PosOwnershipField[] = []
+				if (!localizedStringsEqual(currentGroup.name, name, defaultLocale)) {
+					changedGroupFields.push('name')
+				}
+				const submittedOptIds = options.map((o) => o.id ?? '')
+				const curOptIds = currentGroupOptRows.map((r) => r.optionId)
+				if (
+					currentGroup.selectionType !== selectionType ||
+					currentGroup.minSelections !== minSelections ||
+					(currentGroup.maxSelections ?? null) !== (maxSelections ?? null) ||
+					JSON.stringify(curOptIds) !== JSON.stringify(submittedOptIds)
+				) {
+					changedGroupFields.push('modifiers')
+				}
+				assertNoLockedFieldWrites(posLock, changedGroupFields)
+			}
+
+			const currentOptById = new Map(currentOptRows.map((o) => [o.id, o]))
+			for (const opt of options) {
+				if (!opt.id) continue
+				const optLock = optionPosLocks.get(opt.id)
+				const curOpt = currentOptById.get(opt.id)
+				if (!optLock?.isLinked || !curOpt) continue
+				const changedOptFields: PosOwnershipField[] = []
+				if (
+					!localizedStringsEqual(
+						curOpt.displayName,
+						opt.displayName,
+						defaultLocale,
+					)
+				) {
+					changedOptFields.push('name')
+				}
+				if (Math.abs(curOpt.price - (opt.price || 0)) > 1e-6) {
+					changedOptFields.push('price')
+				}
+				assertNoLockedFieldWrites(optLock, changedOptFields)
+			}
+		} catch (error) {
+			if (error instanceof PosFieldLockedError) return error.toResponse()
+			throw error
+		}
+	}
 
 	// Options without an id are created by this save; give the check a stand-in.
 	const graphOptionIds = options.map((opt, i) => opt.id || `new-option:${i}`)
@@ -582,6 +719,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (graphFailure) return modifierGraphErrorResponse(graphFailure)
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
+	})
 
 	return redirect(`/${organization.slug}/menu/modifiers`)
 }
@@ -593,6 +734,7 @@ export default function EditModifierGroupRoute() {
 		supportedLocales,
 		availableOptions,
 		dailyLimitsEnabled,
+		posLock,
 		availableModifierGroups,
 		initialParentOptionIds,
 		availableParentOptions,
@@ -614,6 +756,7 @@ export default function EditModifierGroupRoute() {
 				supportedLocales={supportedLocales}
 				availableOptions={availableOptions}
 				dailyLimitsEnabled={dailyLimitsEnabled}
+				posLock={posLock}
 				allItems={allItems}
 				allLocations={allLocations}
 				isSubmitting={isSubmitting}

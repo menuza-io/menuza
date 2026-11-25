@@ -14,8 +14,10 @@ import {
 	OrganizationMenuPosLink,
 } from '@repo/database'
 import { posProviders, readFields } from '@repo/integrations/pos/types'
+import { isPosOwnershipEnabled } from '#app/utils/integrations/flags.server.ts'
 import { setAssetParent } from '#app/utils/media/library-organize.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
+import { lockedFieldsFor } from './pos-ownership.server.ts'
 
 /**
  * The one way a dish's main photo changes outside the dish form: bulk apply
@@ -498,6 +500,19 @@ export async function posPhotoOwnedItemIds(organizationId: string) {
 				eq(OrganizationMenuPosLink.entityType, 'item'),
 			),
 		)
+	if (rows.length === 0) return new Set<string>()
+	if (await isPosOwnershipEnabled(organizationId)) {
+		const locks = await lockedFieldsFor(
+			organizationId,
+			'item',
+			rows.map((r) => r.itemId),
+		)
+		return new Set(
+			[...locks.entries()]
+				.filter(([, lock]) => lock.lockedFields.includes('photo'))
+				.map(([id]) => id),
+		)
+	}
 	return new Set(
 		rows
 			.filter((row) => PHOTO_PROVIDERS.has(row.provider))

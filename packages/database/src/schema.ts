@@ -436,6 +436,10 @@ export const IntegrationLog = sqliteTable(
 	(table) => [
 		index('IntegrationLog_createdAt_idx').on(table.createdAt),
 		index('IntegrationLog_integrationId_idx').on(table.integrationId),
+		index('IntegrationLog_integrationId_createdAt_idx').on(
+			table.integrationId,
+			table.createdAt,
+		),
 	],
 )
 
@@ -4291,6 +4295,7 @@ export const OrganizationLocation = sqliteTable(
 		name: text().notNull(),
 		slug: text().notNull(),
 		phone: text(),
+		email: text(),
 		timezone: text().default('America/New_York').notNull(),
 		taxRate: real().default(0).notNull(),
 		/**
@@ -5502,9 +5507,15 @@ export const OrganizationMenuPosLink = sqliteTable(
 				onUpdate: 'cascade',
 			}),
 		providerName: text().notNull(),
-		entityType: text().notNull(), // 'category' | 'item' | 'modifier_group'
+		entityType: text().notNull(), // 'category' | 'item' | 'modifier_group' | 'modifier_option'
 		remoteId: text().notNull(),
 		localId: text().notNull(),
+		lastSyncedHash: text(),
+		lastSyncedAt: integer({ mode: 'timestamp_ms' }),
+		/** Latest remote POS values by field (`#93`) so Restore from POS puts current values back. */
+		posValues: text(),
+		/** JSON `string[]` of field names overridden locally via "Use my own" (`#93`). */
+		overriddenFields: text(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -5518,10 +5529,79 @@ export const OrganizationMenuPosLink = sqliteTable(
 			table.organizationId,
 		),
 		index('OrganizationMenuPosLink_integrationId_idx').on(table.integrationId),
+		index('OrganizationMenuPosLink_org_entity_local_idx').on(
+			table.organizationId,
+			table.entityType,
+			table.localId,
+		),
 		uniqueIndex('OrganizationMenuPosLink_integration_entity_remote_key').on(
 			table.integrationId,
 			table.entityType,
 			table.remoteId,
+		),
+	],
+)
+
+/**
+ * Coalescing outbox for POS and delivery menu/availability/holiday-hour syncs (#74, #96).
+ * Only one queued row per `(integrationId, kind, entityType, entityId)` is kept so
+ * bursts of quick edits coalesce into a single push.
+ */
+export const MenuSyncOutbox = sqliteTable(
+	'MenuSyncOutbox',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		integrationId: text()
+			.notNull()
+			.references(() => Integration.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** 'availability' | 'menu' | 'holiday_hours' */
+		kind: text().notNull(),
+		/** 'item' | 'modifier_option' | 'menu' | 'location' | 'all' */
+		entityType: text().notNull(),
+		/** Empty string when whole-menu/all so SQLite unique index coalesces cleanly. */
+		entityId: text().default('').notNull(),
+		/** Nullable JSON payload (e.g., `{ available }`, `{ menuIds }`). */
+		payload: text(),
+		/** 'queued' | 'sent' | 'failed' */
+		status: text().default('queued').notNull(),
+		attempts: integer().default(0).notNull(),
+		firstFailedAt: integer({ mode: 'timestamp_ms' }),
+		nextAttemptAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		lastError: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('MenuSyncOutbox_queued_coalesce_key')
+			.on(table.integrationId, table.kind, table.entityType, table.entityId)
+			.where(sql`${table.status} = 'queued'`),
+		index('MenuSyncOutbox_status_nextAttemptAt_idx').on(
+			table.status,
+			table.nextAttemptAt,
+		),
+		index('MenuSyncOutbox_organizationId_idx').on(table.organizationId),
+		index('MenuSyncOutbox_integrationId_status_idx').on(
+			table.integrationId,
+			table.status,
 		),
 	],
 )

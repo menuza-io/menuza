@@ -6,10 +6,11 @@
  */
 
 import { createHash } from 'node:crypto'
-import { PosError } from './errors.ts'
+import { parseRetryAfterHeader, PosError } from './errors.ts'
 import {
 	providerWriteMode,
 	type PosProvider,
+	type RemoteHolidayHour,
 	type RemoteItem,
 	type RemoteMenu,
 	type RemoteRead,
@@ -95,10 +96,15 @@ export function createAdapter(provider: PosProvider, config: Transport) {
 				409: 'The menu changed on the provider while syncing. Review the latest changes and try again.',
 				503: 'The provider is temporarily unavailable.',
 			}
+			const retryAfterSeconds =
+				response.status === 429
+					? parseRetryAfterHeader(response.headers.get('retry-after'))
+					: undefined
 			throw new PosError(
 				messages[response.status] ??
 					`The provider returned an error (${response.status}). No changes were marked as synced.`,
 				response.status,
+				retryAfterSeconds !== undefined ? { retryAfterSeconds } : undefined,
 			)
 		}
 		if (response.status === 204) return {} as T
@@ -552,6 +558,24 @@ export function createAdapter(provider: PosProvider, config: Transport) {
 				method: 'POST',
 				body: JSON.stringify({ until }),
 			})
+		},
+		async submitHolidayHours(hours: RemoteHolidayHour[]) {
+			if (provider === 'ubereats') {
+				return void (await request(`${uber}/holiday-hours`, {
+					method: 'POST',
+					body: JSON.stringify({ holiday_hours: hours }),
+				}))
+			}
+			if (provider === 'doordash') {
+				return void (await request(`${doordash}/holiday-hours`, {
+					method: 'PUT',
+					body: JSON.stringify({ holiday_hours: hours }),
+				}))
+			}
+			throw new PosError(
+				`${provider} does not accept holiday hours submissions.`,
+				400,
+			)
 		},
 		async setAvailability(
 			item: RemoteItem,

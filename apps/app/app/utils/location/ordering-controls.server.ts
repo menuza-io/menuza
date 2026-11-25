@@ -7,8 +7,15 @@ import {
 import { prepRowInForce } from '@repo/common/prep-schedule'
 import { and, asc, db, desc, eq, OrganizationLocation } from '@repo/database'
 import { onOrderingControlChangedGbp } from '#app/utils/gbp/sweep.server.ts'
+import {
+	loadLocationDeliveryPauseStatus,
+	pauseDeliveryStores,
+	resumeDeliveryStores,
+} from '#app/utils/integrations/delivery-pause.server.ts'
+import { isDeliveryPauseEnabled } from '#app/utils/integrations/flags.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import {
+	type DeliveryPauseFailure,
 	type LocationOrderingControl,
 	type OrderingControlInput,
 	publicOrderingControls,
@@ -29,29 +36,34 @@ export async function loadOrderingControls(
 	organizationId: string,
 	now: Date = new Date(),
 ): Promise<LocationOrderingControl[]> {
-	const rows = await db
-		.select({
-			id: OrganizationLocation.id,
-			name: OrganizationLocation.name,
-			timezone: OrganizationLocation.timezone,
-			prepTime: OrganizationLocation.prepTime,
-			orderingPausedAt: OrganizationLocation.orderingPausedAt,
-			orderingPausedUntil: OrganizationLocation.orderingPausedUntil,
-			busyExtraPrepMinutes: OrganizationLocation.busyExtraPrepMinutes,
-			busyUntil: OrganizationLocation.busyUntil,
-			prepSchedule: OrganizationLocation.prepSchedule,
-		})
-		.from(OrganizationLocation)
-		.where(
-			and(
-				eq(OrganizationLocation.organizationId, organizationId),
-				eq(OrganizationLocation.isActive, true),
-			),
-		)
-		.orderBy(
-			desc(OrganizationLocation.isDefault),
-			asc(OrganizationLocation.name),
-		)
+	const [rows, deliveryPauseEnabled, deliveryStatusByLocation] =
+		await Promise.all([
+			db
+				.select({
+					id: OrganizationLocation.id,
+					name: OrganizationLocation.name,
+					timezone: OrganizationLocation.timezone,
+					prepTime: OrganizationLocation.prepTime,
+					orderingPausedAt: OrganizationLocation.orderingPausedAt,
+					orderingPausedUntil: OrganizationLocation.orderingPausedUntil,
+					busyExtraPrepMinutes: OrganizationLocation.busyExtraPrepMinutes,
+					busyUntil: OrganizationLocation.busyUntil,
+					prepSchedule: OrganizationLocation.prepSchedule,
+				})
+				.from(OrganizationLocation)
+				.where(
+					and(
+						eq(OrganizationLocation.organizationId, organizationId),
+						eq(OrganizationLocation.isActive, true),
+					),
+				)
+				.orderBy(
+					desc(OrganizationLocation.isDefault),
+					asc(OrganizationLocation.name),
+				),
+			isDeliveryPauseEnabled(organizationId),
+			loadLocationDeliveryPauseStatus(organizationId),
+		])
 	return rows.map((row) => {
 		const { orderingPause, busyMode } = publicOrderingControls(row, now)
 		const timeZone = row.timezone || 'UTC'
@@ -64,6 +76,7 @@ export async function loadOrderingControls(
 		)
 		const hasVariableSchedule = (schedule?.length ?? 0) > 0
 		const variablePrepMinutes = hasVariableSchedule ? inForce.minutes : null
+		const deliveryStatus = deliveryStatusByLocation.get(row.id)
 		return {
 			id: row.id,
 			name: row.name,
@@ -79,12 +92,26 @@ export async function loadOrderingControls(
 			variablePrepUntil: inForce.untilMs
 				? new Date(inForce.untilMs).toISOString()
 				: null,
+			...(deliveryPauseEnabled
+				? {
+						hasDeliveryConnections:
+							deliveryStatus?.hasDeliveryConnections ?? false,
+						...(deliveryStatus && deliveryStatus.failures.length > 0
+							? { deliveryPauseFailures: deliveryStatus.failures }
+							: {}),
+					}
+				: {}),
 		}
 	})
 }
 
 export type ApplyOrderingControlResult =
-	{ ok: true } | { ok: false; status: 404; error: 'location_not_found' }
+	| {
+			ok: true
+			deliveryPauseError?: 'platform_pause_failed'
+			failedDeliveryStores?: DeliveryPauseFailure[]
+	  }
+	| { ok: false; status: 404; error: 'location_not_found' }
 
 /**
  * Pauses or resumes online ordering, or turns busy mode on or off, for one
@@ -138,9 +165,11 @@ export async function applyOrderingControl(input: {
 	let action: AuditAction
 	let details: string
 	let metadata: Record<string, unknown>
+	let resolvedPauseUntil: Date | null = null
 	switch (control.intent) {
 		case 'pause': {
 			const until = resolveControlUntil(control.duration, hours, now)
+			resolvedPauseUntil = until
 			set = { orderingPausedAt: now, orderingPausedUntil: until }
 			action = AuditAction.LOCATION_ORDERING_PAUSED
 			details = 'Online ordering paused'
@@ -211,5 +240,39 @@ export async function applyOrderingControl(input: {
 		actorId: input.userId,
 		now,
 	})
+	if (control.intent === 'pause' && control.alsoPauseDelivery !== false) {
+		const deliveryOutcome = await pauseDeliveryStores(
+			organization.id,
+			location.id,
+			{
+				until: resolvedPauseUntil,
+				openEnded: resolvedPauseUntil === null,
+				now,
+			},
+		)
+		if (deliveryOutcome.failed.length > 0) {
+			return {
+				ok: true,
+				deliveryPauseError: 'platform_pause_failed',
+				failedDeliveryStores: deliveryOutcome.failed,
+			}
+		}
+	} else if (
+		control.intent === 'resume' &&
+		control.alsoPauseDelivery !== false
+	) {
+		const deliveryOutcome = await resumeDeliveryStores(
+			organization.id,
+			location.id,
+			{ now },
+		)
+		if (deliveryOutcome.failed.length > 0) {
+			return {
+				ok: true,
+				deliveryPauseError: 'platform_pause_failed',
+				failedDeliveryStores: deliveryOutcome.failed,
+			}
+		}
+	}
 	return { ok: true }
 }

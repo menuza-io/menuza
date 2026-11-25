@@ -34,6 +34,8 @@ export interface MenuAvailabilityCardProps {
 	name?: string
 	unavailableUntilName?: string
 	className?: string
+	disabled?: boolean
+	headerControl?: React.ReactNode
 }
 
 export function MenuAvailabilityCard({
@@ -45,6 +47,8 @@ export function MenuAvailabilityCard({
 	name = 'availabilityStatus',
 	unavailableUntilName = 'unavailableUntil',
 	className,
+	disabled = false,
+	headerControl,
 }: MenuAvailabilityCardProps) {
 	const { _ } = useLingui()
 
@@ -241,14 +245,19 @@ export function MenuAvailabilityCard({
 				<FrameDescription>
 					<Trans>Control overall ordering availability for guests.</Trans>
 				</FrameDescription>
+				{headerControl}
 			</FrameHeader>
 			<FramePanel className="space-y-4">
+				{disabled ? (
+					<input type="hidden" name={name} value={normalizedStatus} />
+				) : null}
 				<Select
+					disabled={disabled}
 					value={normalizedStatus}
 					onValueChange={(val) => {
 						if (val) handleStatusChange(val)
 					}}
-					name={name}
+					name={disabled ? undefined : name}
 				>
 					<SelectTrigger className="w-full">
 						<SelectValue>

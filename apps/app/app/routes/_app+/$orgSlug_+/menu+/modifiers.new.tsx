@@ -25,6 +25,7 @@ import {
 	requireMenuWrite,
 } from '#app/utils/menu/access.server.ts'
 import { optionsCarryingDailyLimit } from '#app/utils/menu/daily-limit-save.ts'
+import { safeEnqueueMenuSync } from '#app/utils/menu/menu-sync.server.ts'
 import { modifierGraphErrorResponse } from '#app/utils/menu/modifier-graph.server.ts'
 import { createModifierGroup } from '#app/utils/menu/modifier-groups.server.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
@@ -190,6 +191,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (!result.ok) return modifierGraphErrorResponse(result.failure)
 
 	await purgeOrganizationSiteCache(organization.id, organization.slug)
+	await safeEnqueueMenuSync(organization.id, {
+		kind: 'menu',
+		entityType: 'all',
+	})
 
 	return redirect(`/${organization.slug}/menu/modifiers`)
 }
