@@ -40,7 +40,11 @@ type FoodCostValue = {
 	currency: string
 }
 
-const HIDDEN: FoodCostValue = { visible: false, rowFor: () => null, currency: '' }
+const HIDDEN: FoodCostValue = {
+	visible: false,
+	rowFor: () => null,
+	currency: '',
+}
 const FoodCostContext = createContext<FoodCostValue>(HIDDEN)
 
 /** Whether the "Food cost" column is shown (for footer column spans). */
@@ -224,19 +228,29 @@ function localDate(date: Date): string {
  * (`/recipes/profitability`, the cost grant's), made only while that sort is on;
  * `onPeriodMargins` hands the figures to the list, which does the ordering.
  */
-export function FoodCostSortControl({
-	sort,
-	onSortChange,
-	locations,
-	items,
-	onPeriodMargins,
-}: {
+type FoodCostSortControlProps = {
 	sort: FoodCostSort
 	onSortChange: (sort: FoodCostSort) => void
 	locations: ReadonlyArray<{ id: string; label: string }>
 	items: ReadonlyArray<{ id: string; price: number }>
 	onPeriodMargins: (margins: ReadonlyMap<string, number> | null) => void
-}) {
+}
+
+export function FoodCostSortControl(props: FoodCostSortControlProps) {
+	// Without the Food cost column (recipes off, no access) there is no regional
+	// client either: nothing to sort by, so nothing is rendered or asked.
+	const { visible } = useContext(FoodCostContext)
+	if (!visible) return null
+	return <FoodCostSortControlInner {...props} />
+}
+
+function FoodCostSortControlInner({
+	sort,
+	onSortChange,
+	locations,
+	items,
+	onPeriodMargins,
+}: FoodCostSortControlProps) {
 	const { t } = useLingui()
 	const { visible, currency } = useContext(FoodCostContext)
 	const { request } = useInventoryClient()
@@ -283,7 +297,10 @@ export function FoodCostSortControl({
 
 	if (!visible) return null
 	return (
-		<div className="flex flex-wrap items-center gap-2" data-testid="food-cost-sort">
+		<div
+			className="flex flex-wrap items-center gap-2"
+			data-testid="food-cost-sort"
+		>
 			<label className="flex items-center gap-2 text-sm">
 				<span className="text-muted-foreground text-xs">
 					<Trans>Sort by</Trans>
