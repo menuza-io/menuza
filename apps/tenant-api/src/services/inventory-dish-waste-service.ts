@@ -18,6 +18,7 @@ import {
 	invWasteDishes,
 } from '@repo/tenant-db'
 import { eq, inArray } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import {
 	type InventoryIdempotency,
@@ -490,16 +491,14 @@ export async function undoWasteDish(
 			return { id: header.id, entries: originals.length }
 		}
 		if (reversals.length > 0) throw new InventoryError('already_undone', 409)
-		const corrected = await tx
-			.select({ id: invWasteCorrections.id })
-			.from(invWasteCorrections)
-			.where(
-				inArray(
-					invWasteCorrections.wasteId,
-					originals.map((row) => row.id),
-				),
-			)
-			.limit(1)
+		const corrected = await queryInChunks(
+			originals.map((row) => row.id),
+			(chunk) =>
+				tx
+					.select({ id: invWasteCorrections.id })
+					.from(invWasteCorrections)
+					.where(inArray(invWasteCorrections.wasteId, chunk)),
+		)
 		if (corrected.length > 0) throw new InventoryError('already_corrected', 409)
 		if (
 			ctx.now - header.createdAt >

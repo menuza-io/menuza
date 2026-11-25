@@ -235,6 +235,7 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'inv_count_lists.name': inventoryOperatorName,
 	'inv_movements.note': inventoryStockNote,
 	'inv_waste.note': inventoryStockNote,
+	'inv_waste_dishes.note': inventoryStockNote,
 	'inv_orders.note':
 		'operator note on a purchase order to a supplier (e.g. "use the back gate"), not about a customer; frozen with the closed order',
 	'inv_suppliers.name': inventorySupplierContact,
