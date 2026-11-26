@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { defaultGiftCardSettings } from '@repo/common/gift-cards'
 import {
+	cateringQuotes,
 	customerPaymentMethods,
 	customerRefreshTokens,
 	customers,
@@ -1234,5 +1235,142 @@ describe('guest dish photos erasure (#148)', () => {
 		expect(addedRow.orderId).toBeNull()
 		const otherRow = remaining.find((r) => r.id === 'gp_other')!
 		expect(otherRow.customerId).toBe(customerB)
+	})
+
+	it('scrubs catering quotes and catering order notes and burns their capability versions (#124, #361)', async () => {
+		const customerA = await seedPerson(db, {
+			name: NAME,
+			phone: PHONE,
+			email: EMAIL,
+		})
+		const customerB = await seedPerson(db, {
+			name: 'Other Guest',
+			phone: OTHER_PHONE,
+			email: 'other@example.test',
+		})
+		await db.insert(restaurantOrders).values({
+			id: 'ord_cat_erase',
+			orgId: orgA,
+			customerId: customerA,
+			number: 'CAT-9001',
+			status: 'accepted',
+			paymentMethod: 'online',
+			paymentStatus: 'paid',
+			fulfillment: 'delivery',
+			locationId: 'loc_1',
+			locationName: 'Main',
+			contactName: NAME,
+			contactPhone: PHONE,
+			contactEmail: EMAIL,
+			currency: 'USD',
+			subtotalCents: 50_000,
+			taxCents: 0,
+			totalCents: 50_000,
+			isCatering: true,
+			cateringEventAt: new Date(Date.now() + 86_400_000),
+			cateringNotes: 'Deliver to Erin suite 400',
+			balanceVersion: 2,
+			lines: '[]',
+			idempotencyKey: 'idem-cat-erase',
+			requestHash: 'hash-cat-erase',
+			receiptTokenHash: 'rcpt-cat-erase',
+		})
+		await db.insert(cateringQuotes).values([
+			{
+				id: 'qt_by_customer',
+				locationId: 'loc_1',
+				customerId: customerA,
+				status: 'sent',
+				version: 1,
+				currency: 'USD',
+				contactName: NAME,
+				contactPhone: PHONE,
+				contactEmail: EMAIL,
+				delivery: { address: '123 Secret St' },
+				eventNotes: 'Erin party notes',
+				quoteNote: 'For Erin',
+				totalCents: 40_000,
+			},
+			{
+				id: 'qt_by_phone_only',
+				locationId: 'loc_1',
+				customerId: null,
+				status: 'draft',
+				version: 3,
+				currency: 'USD',
+				contactName: NAME,
+				contactPhone: '(555) 000-1111',
+				contactEmail: null,
+				eventNotes: 'Guest phone request',
+				totalCents: 25_000,
+			},
+			{
+				id: 'qt_other',
+				locationId: 'loc_1',
+				customerId: customerB,
+				status: 'sent',
+				version: 1,
+				currency: 'USD',
+				contactName: 'Other Guest',
+				contactPhone: OTHER_PHONE,
+				contactEmail: 'other@example.test',
+				eventNotes: 'Keep this note',
+				totalCents: 30_000,
+			},
+		])
+
+		const result = await erasePerson(
+			db,
+			{ customerId: customerA },
+			{ actorId: 'op_erase' },
+		)
+		expect(result.restaurantOrdersScrubbed).toBe(1)
+		expect(result.cateringQuotesScrubbed).toBe(2)
+		expect(
+			await tablesContaining(db, [
+				PHONE,
+				EMAIL,
+				NAME,
+				'123 Secret St',
+				'Erin party notes',
+				'Deliver to Erin suite 400',
+			]),
+		).toEqual([])
+
+		const [order] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.id, 'ord_cat_erase'))
+		expect(order).toMatchObject({
+			totalCents: 50_000,
+			customerId: null,
+			cateringNotes: null,
+			balanceVersion: 3,
+		})
+
+		const quotes = await db.select().from(cateringQuotes).all()
+		expect(quotes.find((q) => q.id === 'qt_by_customer')).toMatchObject({
+			customerId: null,
+			contactName: '',
+			contactPhone: '',
+			contactEmail: null,
+			delivery: null,
+			eventNotes: null,
+			quoteNote: null,
+			totalCents: 40_000,
+			version: 2,
+		})
+		expect(quotes.find((q) => q.id === 'qt_by_phone_only')).toMatchObject({
+			contactName: '',
+			contactPhone: '',
+			eventNotes: null,
+			version: 4,
+		})
+		expect(quotes.find((q) => q.id === 'qt_other')).toMatchObject({
+			customerId: customerB,
+			contactName: 'Other Guest',
+			eventNotes: 'Keep this note',
+			version: 1,
+		})
 	})
 })
