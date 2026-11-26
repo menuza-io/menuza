@@ -613,6 +613,8 @@ export const MenuItemInputSchema = z.object({
 	kitchenHighlight: kitchenHighlightInput,
 	description: z.string().optional(),
 	price: z.coerce.number().finite().min(0, 'Price must be positive'),
+	/** Optional EAN, UPC or GTIN (#407). Empty clears it. */
+	barcode: z.string().max(32).optional().nullable(),
 	imageKey: z.string().optional().nullable(),
 	imageUrl: z.string().optional().nullable(),
 	imageKeys: z.array(z.string()).max(5).default([]),

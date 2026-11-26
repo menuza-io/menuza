@@ -330,3 +330,21 @@ export function splitCheckByItem(input: {
 		grandTotalWithTipsCents,
 	}
 }
+
+/**
+ * Equal shares of a tab (#389). Rounding leftover goes to the last payer so
+ * the shares add up to `totalCents` exactly.
+ */
+export function splitEqualCents(totalCents: number, parts: number): number[] {
+	if (!Number.isInteger(totalCents) || totalCents < 0) {
+		throw new Error('totalCents must be a non-negative integer')
+	}
+	if (!Number.isInteger(parts) || parts < 1 || parts > 20) {
+		throw new Error('parts must be from 1 to 20')
+	}
+	const base = Math.floor(totalCents / parts)
+	const amounts = Array.from({ length: parts }, () => base)
+	const last = parts - 1
+	amounts[last] = totalCents - base * last
+	return amounts
+}

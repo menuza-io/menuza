@@ -1,4 +1,8 @@
 import {
+	FEW_LEFT_DEFAULT_THRESHOLD,
+	portionsLeft,
+} from '@repo/common/few-left'
+import {
 	AUTO_SOLD_OUT_MAX_COUNT_AGE_MS,
 	type InventoryAvailabilityRequest,
 	type InventoryNotifyEvent,
@@ -11,6 +15,7 @@ import {
 	invItemGroupMembers,
 	invItemPlaces,
 	invItems,
+	invLocationSettings,
 	invMovements,
 	invRecipeLines,
 	invRecipes,
@@ -531,3 +536,73 @@ export async function syncAutoSoldOut(
 	}
 	return total
 }
+
+/**
+ * Dishes with a few portions left (#473). Uses the same on-hand ledger and
+ * the same "counted in the last 7 days" rule as auto sold-out. A dish that
+ * was not counted recently is omitted.
+ */
+export async function listFewLeft(
+	db: TenantDatabase,
+	locationId: string,
+	now = Date.now(),
+): Promise<{
+	threshold: number
+	dishes: Array<{ id: string; left: number }>
+}> {
+	const [settings] = await db
+		.select({ threshold: invLocationSettings.fewLeftThreshold })
+		.from(invLocationSettings)
+		.where(eq(invLocationSettings.locationId, locationId))
+		.limit(1)
+	const threshold = settings?.threshold ?? FEW_LEFT_DEFAULT_THRESHOLD
+	const recipes = await db
+		.select({
+			id: invRecipes.id,
+			ownerId: invRecipes.ownerId,
+		})
+		.from(invRecipes)
+		.where(
+			and(eq(invRecipes.ownerKind, 'menu_item'), isNull(invRecipes.supersededAt)),
+		)
+	if (recipes.length === 0) return { threshold, dishes: [] }
+	const lines = await queryInChunks(
+		recipes.map((recipe) => recipe.id),
+		(chunk) =>
+			db
+				.select({
+					recipeId: invRecipeLines.recipeId,
+					itemId: invRecipeLines.itemId,
+					quantity: invRecipeLines.quantity,
+					mode: invRecipeLines.mode,
+				})
+				.from(invRecipeLines)
+				.where(inArray(invRecipeLines.recipeId, chunk)),
+	)
+	const linesByRecipe = new Map<string, FewLeftLine[]>()
+	for (const line of lines) {
+		if (line.mode !== 'add' || line.quantity <= 0) continue
+		const list = linesByRecipe.get(line.recipeId) ?? []
+		list.push({ itemId: line.itemId, quantity: line.quantity })
+		linesByRecipe.set(line.recipeId, list)
+	}
+	const itemIds = [...new Set(lines.map((line) => line.itemId))]
+	const [onHand, countedAt] = await Promise.all([
+		onHandByItem(db, locationId),
+		lastCountedAt(db, locationId, itemIds),
+	])
+	const dishes: Array<{ id: string; left: number }> = []
+	for (const recipe of recipes) {
+		const left = portionsLeft({
+			lines: linesByRecipe.get(recipe.id) ?? [],
+			onHand,
+			countedAt,
+			now,
+		})
+		if (left == null || left <= 0 || left > threshold) continue
+		dishes.push({ id: recipe.ownerId, left })
+	}
+	return { threshold, dishes }
+}
+
+type FewLeftLine = { itemId: string; quantity: number }

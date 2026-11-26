@@ -184,7 +184,19 @@ the counter. Payment events for tabs already paying are still applied.
 
 - KSA: online orders, QR tabs included, are not ZATCA fiscal documents; only
   Station till sales are. Settle on the till when a fiscal invoice is needed.
-- One kitchen ticket per round; grouping a table's rounds into one ticket, table
-  transfers and split bills are not supported yet.
+- One kitchen ticket per round; grouping a table's rounds into one ticket and
+  table transfers are not supported yet.
+- **Split a tab (#389).** A guest pays an equal share or a chosen amount. The
+  shares are `qr_tab_payments` rows (the same ledger as review payments) and
+  the amounts come from `splitEqualCents` in `@repo/common/pos-split-check`
+  (the leftover cent goes to the last payer). The tab stays open until those
+  payments cover the total. A failed share does not close it. A refund uses
+  the existing per-payment refund book, so it touches only that payment.
+  Operators set a minimum basket, a maximum number of payers and whether
+  payment is required first (`qr_settings`, off until the maximum is at least 1).
+- **Forgotten tabs (#424).** `qr_settings.auto_close_hours` (0 is off) runs on
+  the orders tick. A tab with a payment in progress is skipped. A held card is
+  charged; otherwise the tab is closed and flagged for a manager. The history
+  row names `auto` as what closed it.
 - The customer app (`apps/customer`) does not offer table ordering yet; the
   contract changes are additive.

@@ -134,7 +134,7 @@ describe('POS contract v12: phone delivery (#164), tax-exempt (#166), service ch
 	}
 
 	it('records a phone delivery order (#164), strips address from revisions, and clears it 30 days after close', async () => {
-		expect(POS_CONTRACT_VERSION).toBe(12)
+		expect(POS_CONTRACT_VERSION).toBe(13)
 		const nowIso = new Date().toISOString()
 		const payload = baseOrder({
 			orderType: 'delivery',

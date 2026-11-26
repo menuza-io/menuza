@@ -17,6 +17,7 @@ import {
 	pickLocation,
 	refreshCatalog,
 } from './catalog.ts'
+import { tillCan } from './permissions.ts'
 import {
 	isConfigured,
 	loadSettings,
@@ -169,6 +170,8 @@ export type PosState = {
 	approve: (pin: string) => Promise<ApprovalOutcome>
 	/** Sign-in is on and the person signed in is not a manager: changes need approval. */
 	needsManager: () => boolean
+	/** Whether the signed-in person and this terminal may do this (#230). */
+	can: (permission: import('@repo/common/pos-roles').PosPermission) => boolean
 	/** Locks the till (also "switch user"): the order on screen is kept. */
 	lock: () => void
 	noteUnrecognised: () => void
@@ -1065,6 +1068,16 @@ export const usePos = create<PosState>((set, get) => ({
 	needsManager() {
 		const { settings, session } = get()
 		return settings.signInRequired && session?.role !== 'manager'
+	},
+
+	can(permission) {
+		const { settings, session } = get()
+		return tillCan({
+			signInRequired: settings.signInRequired,
+			session,
+			terminalAllow: settings.permissionAllow ?? null,
+			permission,
+		})
 	},
 
 	lock() {

@@ -347,6 +347,11 @@ export function Checkout({
 				setDone(closed)
 				return
 			}
+			if (!usePos.getState().can('take_payment')) {
+				throw new Error(
+					_(t`This terminal cannot take payment. Ask a manager.`),
+				)
+			}
 			let payment = {
 				method,
 				amountCents: applied,

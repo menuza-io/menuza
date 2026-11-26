@@ -959,7 +959,8 @@ function RefundSheet({
 }) {
 	const { _, i18n } = useLingui()
 	const me = usePos((s) => s.session?.staff ?? null)
-	const needsManager = usePos((s) => s.needsManager)
+	const can = usePos((s) => s.can)
+	const needsManager = () => !can('refund')
 	const approve = usePos((s) => s.approve)
 	const money = moneyFormatter(order.currency, i18n.locale)
 	const available = refundableCents(order)

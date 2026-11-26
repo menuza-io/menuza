@@ -4483,6 +4483,11 @@ export const OrganizationLocation = sqliteTable(
 		 * once, never cleared; whether it is live now is evaluated on read).
 		 */
 		liveAt: integer({ mode: 'timestamp_ms' }),
+		/**
+		 * Portions at or below which the till shows how many are left (#473).
+		 * The online menu never shows the number. Default 5.
+		 */
+		fewLeftThreshold: integer().notNull().default(5),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -5151,6 +5156,8 @@ export const OrganizationMenuItem = sqliteTable(
 		unavailableUntil: integer('unavailableUntil', { mode: 'timestamp_ms' }),
 		/** JSON array of enabled channels (#220): ["web","qr","pos","app"]. */
 		channels: text().default('["web","qr","pos","app"]').notNull(),
+		/** Optional EAN, UPC or GTIN (#407). Null when the dish has none. */
+		barcode: text(),
 		position: integer().default(0).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
@@ -5162,6 +5169,9 @@ export const OrganizationMenuItem = sqliteTable(
 	},
 	(table) => [
 		index('OrganizationMenuItem_organizationId_idx').on(table.organizationId),
+		uniqueIndex('OrganizationMenuItem_org_barcode_key')
+			.on(table.organizationId, table.barcode)
+			.where(sql`${table.barcode} is not null`),
 	],
 )
 
@@ -5316,6 +5326,8 @@ export const OrganizationMenuOption = sqliteTable(
 		kitchenName: text(),
 		/** none | allergy | attention | long_prep. Null uses the removal default. */
 		kitchenHighlight: text(),
+		/** Optional EAN, UPC or GTIN (#407). Null when the option has none. */
+		barcode: text(),
 		nestedModifierGroupIds: text().default('[]').notNull(),
 		position: integer().default(0).notNull(),
 		createdAt: integer({ mode: 'timestamp_ms' })
@@ -5328,6 +5340,9 @@ export const OrganizationMenuOption = sqliteTable(
 	},
 	(table) => [
 		index('OrganizationMenuOption_organizationId_idx').on(table.organizationId),
+		uniqueIndex('OrganizationMenuOption_org_barcode_key')
+			.on(table.organizationId, table.barcode)
+			.where(sql`${table.barcode} is not null`),
 	],
 )
 

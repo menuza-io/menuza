@@ -120,6 +120,10 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 	const closeBtn = q<HTMLButtonElement>('close-item-modal')
 	const media = q<HTMLElement>('modal-item-media')
 	const nameEl = q<HTMLElement>('modal-item-name')
+	const fewLeftEl = document.createElement('p')
+	fewLeftEl.className = 'text-warning text-sm'
+	fewLeftEl.hidden = true
+	nameEl?.insertAdjacentElement('afterend', fewLeftEl)
 	const descEl = q<HTMLElement>('modal-item-desc')
 	const priceEl = q<HTMLElement>('modal-item-price')
 	const variationsEl = q<HTMLElement>('modal-variation-groups')
@@ -1029,6 +1033,9 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 			: next.variations.groups.map((group) => group.values[0]?.id ?? '')
 
 		if (nameEl) nameEl.textContent = next.displayName
+		const showFewLeft = next.fewLeft === true && !/\d/.test(labels.fewLeft)
+		fewLeftEl.hidden = !showFewLeft
+		fewLeftEl.textContent = showFewLeft ? labels.fewLeft : ''
 		if (descEl) {
 			descEl.textContent = next.description ?? ''
 			descEl.classList.toggle('hidden', !next.description)

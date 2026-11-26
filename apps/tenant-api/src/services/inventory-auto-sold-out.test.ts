@@ -31,6 +31,7 @@ import { type InventoryAvailabilityOutcome } from '../lib/inventory-availability
 import { type InventoryNotifyOutcome } from '../lib/inventory-notify.ts'
 import {
 	dependentsOfItems,
+	listFewLeft,
 	syncAutoSoldOut,
 } from './inventory-auto-sold-out.ts'
 import { listSoldOut, undoSoldOut } from './inventory-sold-out-service.ts'
@@ -555,6 +556,18 @@ describe('auto sold out', () => {
 					.filter((alert) => alert.kind === 'inventory_sold_out')
 					.flatMap((alert) => alert.soldOut!.map((entry) => entry.entityId)),
 			).toContain('plain_rice')
+		})
+
+		it('shows 3 left when three portions remain and nothing when the count is older than 7 days (#473)', async () => {
+			await stock({ onHand: 300_000, countedAt: NOW - 1000 })
+			const fresh = await listFewLeft(db, LOC, NOW)
+			expect(fresh.dishes.find((dish) => dish.id === 'burger')?.left).toBe(3)
+			const stale = await listFewLeft(
+				db,
+				LOC,
+				NOW + 8 * 24 * 60 * 60 * 1000,
+			)
+			expect(stale.dishes.find((dish) => dish.id === 'burger')).toBeUndefined()
 		})
 	})
 })

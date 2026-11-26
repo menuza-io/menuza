@@ -64,6 +64,7 @@ export function buildOrderingLabels(i18n: I18n): OrderingLabels {
 	return {
 		addToOrder: i18n._(msg`Add to order`),
 		soldOut: i18n._(msg`Sold out`),
+		fewLeft: i18n._(msg`Only a few left`),
 		from: i18n._(msg`From`),
 		originalPrice: i18n._(msg`Original price`),
 		salePrice: i18n._(msg`Sale price`),

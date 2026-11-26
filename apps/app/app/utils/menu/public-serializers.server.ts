@@ -280,6 +280,8 @@ export type PublicPhotoExtras = {
 			key: string
 		}
 	>
+	/** Dish ids that should say "Only a few left" (#473). Never a count. */
+	fewLeftIds?: ReadonlySet<string>
 }
 
 function focalField(
@@ -519,6 +521,8 @@ export function serializePublicMenuItem(
 		...(variations.variants.length > 0
 			? {}
 			: orderTypePricesField(item.orderTypePrices)),
+		barcode: item.barcode ?? null,
+		fewLeft: extras.fewLeftIds?.has(item.id) === true,
 		excludeFromDiscounts: Boolean(item.excludeFromDiscounts),
 		excludeFromOrderLimits: Boolean(item.excludeFromOrderLimits),
 		allergens: safeJsonParse<string[]>(item.allergens, []),

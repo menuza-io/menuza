@@ -81,6 +81,9 @@ export type OrderingItem = {
 	isVegetarian?: boolean
 	isGlutenFree?: boolean
 	isAlcohol?: boolean
+	/** True when only a few portions remain (#473). Never a count. */
+	fewLeft?: boolean
+	barcode?: string | null
 	/** Dietary tags (#335), unknown values already dropped. */
 	dietaryTags?: string[]
 	allergens?: string[]
@@ -191,6 +194,8 @@ export type PickupSelection = {
 export type OrderingLabels = {
 	addToOrder: string
 	soldOut: string
+	/** Shown instead of a number when a dish is nearly gone (#473). */
+	fewLeft: string
 	from: string
 	/** Screen-reader words before the struck regular price and the sale price. */
 	originalPrice: string

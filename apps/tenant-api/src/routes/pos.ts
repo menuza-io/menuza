@@ -68,6 +68,7 @@ import {
 	peekOrder,
 	prioritizePosReviewReasons,
 	recentTransfersAway,
+	PairingKindMismatch,
 	redeemPairingCode,
 	reviewAgainstMenu,
 	revisionDiscountApplications,
@@ -85,6 +86,9 @@ import {
 	withStaffCheck,
 	type PosReview,
 } from '../services/pos-service.ts'
+import { listFewLeft } from '../services/inventory-auto-sold-out.ts'
+import { withRoleCheck } from '../services/pos-roles-service.ts'
+import { queueShiftReportPrint } from '../services/pos-auto-print.ts'
 import {
 	listRemotelyClosedShiftsForDevice,
 	serializeShift,
@@ -221,11 +225,16 @@ posRoutes.post('/pair', async (c) => {
 			db,
 			parsed.orgId,
 			parsedBody.data.code,
+			Date.now(),
+			parsedBody.data.kind ?? null,
 		)
 		if (!paired) return invalid()
 		return c.json({ deviceSecret: paired.secret, device: paired.device }, 201)
 	} catch (error) {
 		if (isPosHashUnavailable(error)) return posUnavailableResponse()
+		if (error instanceof PairingKindMismatch) {
+			return posError(422, 'kind_mismatch')
+		}
 		console.error(
 			'POS pairing failed',
 			error instanceof Error ? error.message : error,
@@ -295,6 +304,17 @@ posRoutes.get('/me', async (c) => {
 			// lock timeout, kitchen station, menu layout, guest second screen. Only
 			// the ones that were set, so a till keeps its own choice for the rest.
 			...explicitTerminalJsonSettings(device.deviceSettings),
+			terminalKind: device.terminalKind,
+			permissionAllow: (() => {
+				if (!device.permissionAllow) return null
+				try {
+					return JSON.parse(device.permissionAllow) as unknown
+				} catch {
+					return null
+				}
+			})(),
+			printShiftOnClose: device.printShiftOnClose,
+			printClockSlip: device.printClockSlip,
 		},
 		// The profile this terminal inherits from, by name (#373).
 		profile,
@@ -307,6 +327,16 @@ posRoutes.get('/me', async (c) => {
 		// When active, the till fetches its signing key and certificate from /pos/zatca.
 		zatca,
 	})
+})
+
+/** Portions still makeable (#473). Empty when nothing was counted recently. */
+posRoutes.get('/few-left', async (c) => {
+	const auth = await authenticatePosDevice(c)
+	if ('error' in auth) return auth.error
+	const locationId = auth.pos.device.locationId
+	if (!locationId) return c.json({ threshold: 5, dishes: [] })
+	const body = await listFewLeft(auth.pos.db, locationId)
+	return c.json(body, 200, { 'Cache-Control': 'private, no-store' })
 })
 
 /**
@@ -582,6 +612,7 @@ posRoutes.post('/orders', async (c) => {
 			// The cash-payment discount (#375): where it is allowed, that it is
 			// the only one, that the bill was paid in cash and its size.
 			withCashDiscountCheck(cleanReview, order, getNodeRegion()).reviewReason,
+			(await withRoleCheck(pos.db, pos.device, order, cleanReview)).reviewReason,
 			checkDiscountRules
 				? withDiscountRuleCheck(cleanReview, order, tillRules).reviewReason
 				: null,
@@ -925,6 +956,26 @@ posRoutes.post('/shifts', async (c) => {
 		if (!result.ok) return hold(result.error, result.message ?? null)
 		await touchDevice(pos.db, pos.device)
 		const { kind, shift, movements } = result.value
+		if (kind !== 'replay' && shift.status === 'closed') {
+			await queueShiftReportPrint(pos.db, {
+				deviceId: pos.device.id,
+				locationId: pos.device.locationId,
+				enabled: pos.device.printShiftOnClose,
+				shiftId: shift.id,
+				businessDate: shift.businessDate,
+				terminal: pos.device.label,
+				lines: [
+					{
+						label: 'Counted',
+						value: String(shift.countedCashCents ?? 0),
+					},
+					{
+						label: 'Expected',
+						value: String(shift.expectedCashCents ?? 0),
+					},
+				],
+			}).catch(() => {})
+		}
 		return c.json(
 			{ shift: serializeShift(shift, movements), result: kind },
 			kind === 'created' ? 201 : 200,

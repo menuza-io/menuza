@@ -11,7 +11,9 @@ import {
 	storedKitchenHighlight,
 	storedKitchenName,
 } from '@repo/common/menu-types'
+import { normalizeBarcode } from '@repo/common/pos-barcode'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
+import { barcodeConflict } from '#app/utils/menu/barcodes.server.ts'
 import {
 	db,
 	eq,
@@ -610,6 +612,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			),
 	])
 
+	const barcodeMessage = await barcodeConflict({
+		organizationId: organization.id,
+		barcode: normalizeBarcode(data.barcode ?? null),
+		self: { kind: 'item', id: itemId },
+	})
+	if (barcodeMessage) {
+		return Response.json(
+			{ error: { barcode: [barcodeMessage] } },
+			{ status: 400 },
+		)
+	}
+
 	await db.transaction(async (tx) => {
 		await assertMediaKeysInOrganization(
 			organization.id,
@@ -685,6 +699,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				kitchenName: storedKitchenName(data.kitchenName),
 				kitchenHighlight: storedKitchenHighlight(data.kitchenHighlight),
 				description: data.description || null,
+				barcode: normalizeBarcode(data.barcode ?? null),
 				price: nextPrice,
 				variations: JSON.stringify(data.variations),
 				imageKey: primaryImageKey,

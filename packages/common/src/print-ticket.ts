@@ -760,4 +760,72 @@ export function docMentionsPhone(doc: TicketDoc): boolean {
 	return /(?:\+?\d[\d\s().-]{6,}\d)/.test(text)
 }
 
+const PAY_RATE = /pay\s*rate|wage|salary|hourly/i
+
+/** A clock slip (#278). First name, action, time and the shift length. Never a pay rate. */
+export function buildClockSlipDoc(input: {
+	firstName: string
+	action: 'in' | 'out'
+	atLabel: string
+	/** Hours and minutes worked, only on clock out. */
+	shiftTotalLabel?: string | null
+}): TicketDoc {
+	const blocks: TicketBlock[] = [
+		{ t: 'text', text: 'Time clock', align: 'center', bold: true },
+		{ t: 'rule' },
+		{ t: 'row', left: 'Name', right: input.firstName },
+		{
+			t: 'row',
+			left: 'Action',
+			right: input.action === 'in' ? 'Clock in' : 'Clock out',
+		},
+		{ t: 'row', left: 'Time', right: input.atLabel },
+	]
+	if (input.action === 'out' && input.shiftTotalLabel) {
+		blocks.push({ t: 'row', left: 'Shift', right: input.shiftTotalLabel })
+	}
+	blocks.push({ t: 'feed', lines: 2 })
+	const doc: TicketDoc = {
+		v: TICKET_DOC_VERSION,
+		kind: 'receipt',
+		widthMm: 80,
+		copies: 1,
+		blocks,
+		cut: true,
+	}
+	if (PAY_RATE.test(JSON.stringify(doc))) {
+		throw new Error('A clock slip must not carry a pay rate')
+	}
+	return doc
+}
+
+/** The Z report as a ticket (#278). Money totals only. */
+export function buildShiftReportDoc(input: {
+	businessDate: string
+	terminal: string
+	lines: ReadonlyArray<{ label: string; value: string }>
+}): TicketDoc {
+	const blocks: TicketBlock[] = [
+		{ t: 'text', text: 'Shift report', align: 'center', bold: true },
+		{ t: 'row', left: input.terminal, right: input.businessDate },
+		{ t: 'rule' },
+		...input.lines.map(
+			(line): TicketBlock => ({
+				t: 'row',
+				left: line.label,
+				right: line.value,
+			}),
+		),
+		{ t: 'feed', lines: 2 },
+	]
+	return {
+		v: TICKET_DOC_VERSION,
+		kind: 'receipt',
+		widthMm: 80,
+		copies: 1,
+		blocks,
+		cut: true,
+	}
+}
+
 export type { TicketType }

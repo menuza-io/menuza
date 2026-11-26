@@ -70,7 +70,7 @@ msgstr "{count} kcal"
 msgid "{count} guests"
 msgstr "{count} Gäste"
 
-#: src/lib/ordering-labels.ts:108
+#: src/lib/ordering-labels.ts:109
 msgid "{count} items"
 msgstr "{count} Artikel"
 
@@ -78,7 +78,7 @@ msgstr "{count} Artikel"
 msgid "{count} items are no longer available and were left out."
 msgstr "{count} Artikel sind nicht mehr verfügbar und wurden weggelassen."
 
-#: src/lib/ordering-labels.ts:172
+#: src/lib/ordering-labels.ts:173
 msgid "{count} min"
 msgstr "{count} Min."
 
@@ -94,7 +94,7 @@ msgstr "{credited} abgeschlossen, {pending} ausstehend, {points} verdient"
 msgid "{date} at {time}"
 msgstr "{date} um {time}"
 
-#: src/lib/ordering-labels.ts:249
+#: src/lib/ordering-labels.ts:250
 msgid "{distance} away"
 msgstr "{distance} entfernt"
 
@@ -112,7 +112,7 @@ msgstr "{min} bis {max} Gäste"
 msgid "{min}–{max} Cal"
 msgstr "{min}–{max} kcal"
 
-#: src/lib/ordering-labels.ts:171
+#: src/lib/ordering-labels.ts:172
 #: src/pages/menu.astro.ts:3
 msgid "{min}–{max} min"
 msgstr "{min}–{max} Min."
@@ -337,26 +337,26 @@ msgstr "Konto"
 msgid "Account settings"
 msgstr "Kontoeinstellungen"
 
-#: src/lib/ordering-labels.ts:126
+#: src/lib/ordering-labels.ts:127
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add"
 msgstr "Hinzufügen"
 
-#: src/lib/ordering-labels.ts:135
+#: src/lib/ordering-labels.ts:136
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add {amount} more and delivery is {fee}"
 msgstr "Noch {amount} hinzufügen, dann kostet die Lieferung {fee}"
 
-#: src/lib/ordering-labels.ts:130
+#: src/lib/ordering-labels.ts:131
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add {amount} more for free delivery"
 msgstr "Noch {amount} hinzufügen für kostenlose Lieferung"
 
-#: src/lib/ordering-labels.ts:225
+#: src/lib/ordering-labels.ts:226
 msgid "Add {amount} more to reach the {minimum} delivery minimum."
 msgstr "Füge noch {amount} hinzu, um den Liefermindestwert von {minimum} zu erreichen."
 
-#: src/lib/ordering-labels.ts:127
+#: src/lib/ordering-labels.ts:128
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add {name}"
 msgstr "{name} hinzufügen"
@@ -369,7 +369,7 @@ msgstr "Karte hinzufügen"
 msgid "Add a coupon code"
 msgstr "Gutscheincode hinzufügen"
 
-#: src/lib/ordering-labels.ts:221
+#: src/lib/ordering-labels.ts:222
 msgid "Add a delivery address we deliver to before placing your order."
 msgstr "Gib eine Lieferadresse in unserem Liefergebiet an, bevor du bestellst."
 
@@ -389,7 +389,7 @@ msgstr "Fügen Sie zuerst eine E-Mail-Adresse hinzu"
 msgid "Add card"
 msgstr "Karte hinzufügen"
 
-#: src/lib/ordering-labels.ts:215
+#: src/lib/ordering-labels.ts:216
 msgid "Add delivery address"
 msgstr "Lieferadresse hinzufügen"
 
@@ -420,7 +420,7 @@ msgstr "Zum Kalender hinzufügen"
 msgid "Add to order"
 msgstr "Zur Bestellung hinzufügen"
 
-#: src/lib/ordering-labels.ts:153
+#: src/lib/ordering-labels.ts:154
 msgid "Address suggestions"
 msgstr "Adressvorschläge"
 
@@ -432,7 +432,7 @@ msgstr "Angepasst"
 msgid "Adjusted by staff"
 msgstr "Vom Team angepasst"
 
-#: src/lib/ordering-labels.ts:229
+#: src/lib/ordering-labels.ts:230
 msgid "After address"
 msgstr "Nach Adresseingabe"
 
@@ -554,7 +554,7 @@ msgstr "{reward} bestätigen"
 msgid "Approved: {reward}."
 msgstr "Bestätigt: {reward}."
 
-#: src/lib/ordering-labels.ts:162
+#: src/lib/ordering-labels.ts:163
 msgid "Apt, suite or floor"
 msgstr "Wohnung, Suite oder Etage"
 
@@ -562,7 +562,7 @@ msgstr "Wohnung, Suite oder Etage"
 msgid "Arrived"
 msgstr "Eingetroffen"
 
-#: src/lib/ordering-labels.ts:200
+#: src/lib/ordering-labels.ts:201
 msgid "Arrives in {min}–{max} min"
 msgstr "Ankunft in {min}–{max} Min."
 
@@ -574,7 +574,7 @@ msgstr "Ankunft {range}"
 msgid "Arriving around {time}"
 msgstr "Ankunft gegen {time}"
 
-#: src/lib/ordering-labels.ts:197
+#: src/lib/ordering-labels.ts:198
 msgid "ASAP"
 msgstr "So bald wie möglich"
 
@@ -632,7 +632,7 @@ msgstr "Guthaben: {amount}"
 msgid "Be first when the next drop opens"
 msgstr "Sei dabei, wenn die nächste Aktion startet"
 
-#: src/lib/ordering-labels.ts:110
+#: src/lib/ordering-labels.ts:111
 msgid "Before discounts"
 msgstr "Vor Rabatten"
 
@@ -824,7 +824,7 @@ msgstr "Catering ist nur zur Abholung möglich."
 msgid "Catering orders are not available right now."
 msgstr "Catering-Bestellungen sind derzeit nicht verfügbar."
 
-#: src/lib/ordering-labels.ts:214
+#: src/lib/ordering-labels.ts:215
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Change"
@@ -877,15 +877,15 @@ msgstr "Prüfen Sie die Auswahl Ihrer Gerichte."
 msgid "Check the menu for what we are serving today."
 msgstr "Schau in die Speisekarte, was wir heute servieren."
 
-#: src/lib/ordering-labels.ts:157
+#: src/lib/ordering-labels.ts:158
 msgid "Check the spelling, or try just the street number and name."
 msgstr "Prüfe die Schreibweise oder gib nur Hausnummer und Straße ein."
 
-#: src/lib/ordering-labels.ts:183
+#: src/lib/ordering-labels.ts:184
 msgid "Check the street number and spelling, or choose a suggestion from the list."
 msgstr "Prüfe Hausnummer und Schreibweise oder wähle einen Vorschlag aus der Liste."
 
-#: src/lib/ordering-labels.ts:188
+#: src/lib/ordering-labels.ts:189
 msgid "Check your connection and try again."
 msgstr "Prüfe deine Verbindung und versuche es erneut."
 
@@ -902,7 +902,7 @@ msgstr "Bestätigen Sie in Ihrem Posteingang"
 msgid "Check your phone"
 msgstr "Prüfen Sie Ihr Telefon"
 
-#: src/lib/ordering-labels.ts:164
+#: src/lib/ordering-labels.ts:165
 msgid "Checking delivery to this address…"
 msgstr "Lieferung an diese Adresse wird geprüft …"
 
@@ -935,20 +935,20 @@ msgstr "Die Zahlung wurde abgebrochen. Es wurde nichts abgebucht."
 msgid "Choose"
 msgstr "Auswählen"
 
-#: src/lib/ordering-labels.ts:74
+#: src/lib/ordering-labels.ts:75
 msgid "Choose {count}"
 msgstr "Wähle {count}"
 
-#: src/lib/ordering-labels.ts:76
+#: src/lib/ordering-labels.ts:77
 msgid "Choose {min}–{max}"
 msgstr "Wähle {min}–{max}"
 
-#: src/lib/ordering-labels.ts:73
+#: src/lib/ordering-labels.ts:74
 msgid "Choose 1"
 msgstr "Wähle 1"
 
 #: src/components/drops/PickupPicker.astro.ts:3
-#: src/lib/ordering-labels.ts:207
+#: src/lib/ordering-labels.ts:208
 msgid "Choose a day"
 msgstr "Wähle einen Tag"
 
@@ -980,12 +980,12 @@ msgid "Choose a real month and day."
 msgstr "Wähle einen gültigen Monat und Tag."
 
 #: src/components/drops/PickupPicker.astro.ts:3
-#: src/lib/ordering-labels.ts:208
+#: src/lib/ordering-labels.ts:209
 #: src/lib/reservations/labels.ts:33
 msgid "Choose a time"
 msgstr "Wähle eine Uhrzeit"
 
-#: src/lib/ordering-labels.ts:213
+#: src/lib/ordering-labels.ts:214
 msgid "Choose a time to continue."
 msgstr "Wähle eine Uhrzeit, um fortzufahren."
 
@@ -997,15 +997,15 @@ msgstr "Wählen Sie einen Betrag zwischen {min} und {max}."
 msgid "Choose an option"
 msgstr "Option wählen"
 
-#: src/lib/ordering-labels.ts:75
+#: src/lib/ordering-labels.ts:76
 msgid "Choose at least {count}"
 msgstr "Wähle mindestens {count}"
 
-#: src/lib/ordering-labels.ts:81
+#: src/lib/ordering-labels.ts:82
 msgid "Choose at least {count} options"
 msgstr "Wähle mindestens {count} Optionen"
 
-#: src/lib/ordering-labels.ts:78
+#: src/lib/ordering-labels.ts:79
 msgid "Choose at least 1 option"
 msgstr "Wähle mindestens 1 Option"
 
@@ -1050,7 +1050,7 @@ msgstr "Stadt"
 msgid "Classic"
 msgstr "Klassisch"
 
-#: src/lib/ordering-labels.ts:152
+#: src/lib/ordering-labels.ts:153
 msgid "Clear address"
 msgstr "Adresse löschen"
 
@@ -1060,13 +1060,13 @@ msgstr "Suche löschen"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/components/SitePopup.astro.ts:3
-#: src/lib/ordering-labels.ts:106
-#: src/lib/ordering-labels.ts:146
+#: src/lib/ordering-labels.ts:107
+#: src/lib/ordering-labels.ts:147
 msgid "Close"
 msgstr "Schließen"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
-#: src/lib/ordering-labels.ts:192
+#: src/lib/ordering-labels.ts:193
 #: src/pages/locations/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 msgid "Closed"
@@ -1076,7 +1076,7 @@ msgstr "Geschlossen"
 msgid "Closed · opens {time}"
 msgstr "Geschlossen · öffnet {time}"
 
-#: src/lib/ordering-labels.ts:201
+#: src/lib/ordering-labels.ts:202
 msgid "Closed now. Schedule your order for later."
 msgstr "Gerade geschlossen. Plane deine Bestellung für später."
 
@@ -1088,11 +1088,11 @@ msgstr "Schließt"
 msgid "Code {code} applied. You save {amount}. Total {total}."
 msgstr "Code {code} angewendet. Sie sparen {amount}. Summe {total}."
 
-#: src/lib/ordering-labels.ts:114
+#: src/lib/ordering-labels.ts:115
 msgid "Code {code} could not be applied."
 msgstr "Der Code {code} konnte nicht angewendet werden."
 
-#: src/lib/ordering-labels.ts:121
+#: src/lib/ordering-labels.ts:122
 msgid "Code {code} is saved. Add what you like and it is applied at checkout."
 msgstr "Der Code {code} ist gespeichert. Wählen Sie aus, er wird an der Kasse angewendet."
 
@@ -1237,7 +1237,7 @@ msgstr "Eigener Betrag"
 msgid "Custom tip amount"
 msgstr "Eigener Trinkgeldbetrag"
 
-#: src/lib/ordering-labels.ts:107
+#: src/lib/ordering-labels.ts:108
 msgid "Customize item"
 msgstr "Artikel anpassen"
 
@@ -1280,11 +1280,11 @@ msgstr "Abgelehnt"
 msgid "Declined: {reward}."
 msgstr "Abgelehnt: {reward}."
 
-#: src/lib/ordering-labels.ts:93
+#: src/lib/ordering-labels.ts:94
 msgid "Decrease quantity"
 msgstr "Menge verringern"
 
-#: src/lib/ordering-labels.ts:211
+#: src/lib/ordering-labels.ts:212
 msgid "Deliver here"
 msgstr "Hierhin liefern"
 
@@ -1304,20 +1304,20 @@ msgstr "Liefern an"
 msgid "Deliver to: {address}"
 msgstr "Liefern an: {address}"
 
-#: src/lib/ordering-labels.ts:237
+#: src/lib/ordering-labels.ts:238
 #: src/pages/delivery/[area].astro.ts:3
 msgid "Delivered from {location}"
 msgstr "Geliefert von {location}"
 
 #: src/lib/catering/labels.ts:36
-#: src/lib/ordering-labels.ts:149
+#: src/lib/ordering-labels.ts:150
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery"
 msgstr "Lieferung"
 
 #: src/lib/catering/labels.ts:38
-#: src/lib/ordering-labels.ts:150
+#: src/lib/ordering-labels.ts:151
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Delivery address"
 msgstr "Lieferadresse"
@@ -1326,7 +1326,7 @@ msgstr "Lieferadresse"
 msgid "Delivery discount"
 msgstr "Lieferrabatt"
 
-#: src/lib/ordering-labels.ts:166
+#: src/lib/ordering-labels.ts:167
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
@@ -1341,7 +1341,7 @@ msgstr "Liefergebühr"
 msgid "Delivery fee {amount}"
 msgstr "Liefergebühr {amount}"
 
-#: src/lib/ordering-labels.ts:111
+#: src/lib/ordering-labels.ts:112
 msgid "Delivery fee and discounts at checkout"
 msgstr "Liefergebühr und Rabatte an der Kasse"
 
@@ -1357,7 +1357,7 @@ msgstr "Lieferhinweise"
 msgid "Delivery is not available for this order."
 msgstr "Lieferung ist für diese Bestellung nicht verfügbar."
 
-#: src/lib/ordering-labels.ts:185
+#: src/lib/ordering-labels.ts:186
 msgid "Delivery isn't available right now"
 msgstr "Lieferung ist gerade nicht verfügbar"
 
@@ -1408,7 +1408,7 @@ msgstr "Route"
 msgid "Discount"
 msgstr "Rabatt"
 
-#: src/lib/ordering-labels.ts:109
+#: src/lib/ordering-labels.ts:110
 msgid "Discounts"
 msgstr "Rabatte"
 
@@ -1444,7 +1444,7 @@ msgstr "Bieten Sie Aufbau- und Servicepersonal an?"
 msgid "Do you provide plates, napkins and cutlery?"
 msgstr "Stellen Sie Teller, Servietten und Besteck zur Verfügung?"
 
-#: src/lib/ordering-labels.ts:72
+#: src/lib/ordering-labels.ts:73
 msgid "Done"
 msgstr "Fertig"
 
@@ -1538,7 +1538,7 @@ msgstr "Guten Appetit."
 msgid "Enter a coupon code."
 msgstr "Geben Sie einen Gutscheincode ein."
 
-#: src/lib/ordering-labels.ts:212
+#: src/lib/ordering-labels.ts:213
 msgid "Enter a delivery address to continue."
 msgstr "Gib eine Lieferadresse ein, um fortzufahren."
 
@@ -1614,7 +1614,7 @@ msgstr "Geschätzte Steuer"
 msgid "Estimated Tax"
 msgstr "Geschätzte Steuer"
 
-#: src/lib/ordering-labels.ts:170
+#: src/lib/ordering-labels.ts:171
 #: src/pages/menu/success.astro.ts:3
 msgid "Estimated time"
 msgstr "Voraussichtliche Zeit"
@@ -1677,12 +1677,12 @@ msgstr "Läuft ab in {time}"
 msgid "Expiry"
 msgstr "Ablaufdatum"
 
-#: src/lib/ordering-labels.ts:124
+#: src/lib/ordering-labels.ts:125
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Explore menu"
 msgstr "Speisekarte ansehen"
 
-#: src/lib/ordering-labels.ts:105
+#: src/lib/ordering-labels.ts:106
 msgid "Explore our menu and add your favorite dishes."
 msgstr "Entdecken Sie unser Menü und fügen Sie Ihre Lieblingsgerichte hinzu."
 
@@ -1732,7 +1732,7 @@ msgstr "Vorname"
 msgid "For a larger party, please contact the restaurant directly."
 msgstr "Für größere Gruppen wenden Sie sich bitte direkt an das Restaurant."
 
-#: src/lib/ordering-labels.ts:169
+#: src/lib/ordering-labels.ts:170
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Free"
 msgstr "Kostenlos"
@@ -1767,7 +1767,7 @@ msgid "from"
 msgstr "ab"
 
 #: src/lib/gift-cards/labels.ts:29
-#: src/lib/ordering-labels.ts:67
+#: src/lib/ordering-labels.ts:68
 msgid "From"
 msgstr "Ab"
 
@@ -1877,7 +1877,7 @@ msgstr "Zur Startseite"
 msgid "Go to the home page"
 msgstr "Zur Startseite"
 
-#: src/lib/ordering-labels.ts:125
+#: src/lib/ordering-labels.ts:126
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Goes well with"
 msgstr "Passt dazu"
@@ -2002,7 +2002,7 @@ msgstr "Inkl. Steuern"
 msgid "Includes VAT"
 msgstr "Inkl. MwSt."
 
-#: src/lib/ordering-labels.ts:92
+#: src/lib/ordering-labels.ts:93
 msgid "Increase quantity"
 msgstr "Menge erhöhen"
 
@@ -2030,7 +2030,7 @@ msgstr "Eine Online-Stornierung ist nicht mehr möglich. Bitte rufen Sie das Res
 msgid "It is too late to change this online. Please call the restaurant."
 msgstr "Eine Änderung online ist nicht mehr möglich. Bitte rufen Sie das Restaurant an."
 
-#: src/lib/ordering-labels.ts:176
+#: src/lib/ordering-labels.ts:177
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "Sie liegt außerhalb des Liefergebiets von {location}. Du kannst trotzdem zur Abholung bestellen."
 
@@ -2094,7 +2094,7 @@ msgstr "Lassen Sie diese Seite geöffnet. Sie aktualisiert sich selbst, und wir 
 msgid "Keep this page's link. Anyone who has it can see your place in line and remove you from it."
 msgstr "Bewahren Sie den Link dieser Seite auf. Wer ihn hat, kann Ihren Platz in der Schlange sehen und Sie daraus entfernen."
 
-#: src/lib/ordering-labels.ts:154
+#: src/lib/ordering-labels.ts:155
 msgid "Keep typing to see matching addresses."
 msgstr "Tippe weiter, um passende Adressen zu sehen."
 
@@ -2135,7 +2135,7 @@ msgstr "Diesen Tisch verlassen"
 msgid "Leaving removes this tab from this phone. The tab stays open until it is paid."
 msgstr "Beim Verlassen verschwindet diese Rechnung von diesem Handy. Sie bleibt offen, bis sie bezahlt ist."
 
-#: src/lib/ordering-labels.ts:88
+#: src/lib/ordering-labels.ts:89
 msgid "Left"
 msgstr "Links"
 
@@ -2148,11 +2148,11 @@ msgstr "weniger als eine Minute"
 msgid "limit {count} per order"
 msgstr "max. {count} pro Bestellung"
 
-#: src/lib/ordering-labels.ts:102
+#: src/lib/ordering-labels.ts:103
 msgid "Limit {count} per order"
 msgstr "Maximal {count} pro Bestellung"
 
-#: src/lib/ordering-labels.ts:103
+#: src/lib/ordering-labels.ts:104
 msgid "Limit reached"
 msgstr "Limit erreicht"
 
@@ -2261,7 +2261,7 @@ msgstr "Menü bald verfügbar"
 msgid "Messages from {org}"
 msgstr "Nachrichten von {org}"
 
-#: src/lib/ordering-labels.ts:167
+#: src/lib/ordering-labels.ts:168
 msgid "Minimum order"
 msgstr "Mindestbestellwert"
 
@@ -2315,7 +2315,7 @@ msgstr "name@beispiel.de"
 msgid "National Day"
 msgstr "Nationalfeiertag"
 
-#: src/lib/ordering-labels.ts:244
+#: src/lib/ordering-labels.ts:245
 msgid "Nearest to you"
 msgstr "In Ihrer Nähe"
 
@@ -2371,11 +2371,11 @@ msgstr "Derzeit keine Erlebnisse"
 msgid "No longer available"
 msgstr "Nicht mehr verfügbar"
 
-#: src/lib/ordering-labels.ts:155
+#: src/lib/ordering-labels.ts:156
 msgid "No matching addresses"
 msgstr "Keine passenden Adressen"
 
-#: src/lib/ordering-labels.ts:168
+#: src/lib/ordering-labels.ts:169
 msgid "No minimum"
 msgstr "Kein Mindestwert"
 
@@ -2425,7 +2425,7 @@ msgstr "Noch keine Prämien verfügbar."
 msgid "No saved payment methods yet."
 msgstr "Noch keine gespeicherten Zahlungsmethoden."
 
-#: src/lib/ordering-labels.ts:209
+#: src/lib/ordering-labels.ts:210
 msgid "No scheduled times are available right now."
 msgstr "Derzeit sind keine Zeiten zur Vorbestellung verfügbar."
 
@@ -2433,7 +2433,7 @@ msgstr "Derzeit sind keine Zeiten zur Vorbestellung verfügbar."
 msgid "No seatings are available on this date."
 msgstr "An diesem Datum sind keine Termine verfügbar."
 
-#: src/lib/ordering-labels.ts:239
+#: src/lib/ordering-labels.ts:240
 msgid "No store delivers here yet"
 msgstr "Noch keine Filiale liefert hierher"
 
@@ -2466,11 +2466,11 @@ msgstr "Nicht erschienen"
 msgid "No-show fee: {amount}."
 msgstr "Gebühr bei Nichterscheinen: {amount}."
 
-#: src/lib/ordering-labels.ts:90
+#: src/lib/ordering-labels.ts:91
 msgid "None"
 msgstr "Keine"
 
-#: src/lib/ordering-labels.ts:241
+#: src/lib/ordering-labels.ts:242
 msgid "None of our stores delivers to this address yet. You can still order for pickup."
 msgstr "Keine unserer Filialen liefert bisher an diese Adresse. Sie können weiterhin zur Abholung bestellen."
 
@@ -2478,7 +2478,7 @@ msgstr "Keine unserer Filialen liefert bisher an diese Adresse. Sie können weit
 msgid "Not available for this order"
 msgstr "Für diese Bestellung nicht verfügbar"
 
-#: src/lib/ordering-labels.ts:233
+#: src/lib/ordering-labels.ts:234
 msgid "Not available right now"
 msgstr "Gerade nicht verfügbar"
 
@@ -2598,7 +2598,7 @@ msgstr "Online-Bestellungen sind gerade pausiert."
 msgid "Online ordering is paused right now. Please try again a little later."
 msgstr "Online-Bestellungen sind gerade pausiert. Bitte versuchen Sie es etwas später erneut."
 
-#: src/lib/ordering-labels.ts:203
+#: src/lib/ordering-labels.ts:204
 msgid "Online ordering is paused right now. Schedule your order for later."
 msgstr "Online-Bestellungen sind gerade pausiert. Planen Sie Ihre Bestellung für später."
 
@@ -2615,11 +2615,11 @@ msgstr "Online-Zahlung ist nicht verfügbar"
 msgid "Online payment is not available right now. Please call the restaurant."
 msgstr "Online-Zahlung ist derzeit nicht verfügbar. Bitte rufen Sie das Restaurant an."
 
-#: src/lib/ordering-labels.ts:95
+#: src/lib/ordering-labels.ts:96
 msgid "Only {count} left"
 msgstr "Nur noch {count} übrig"
 
-#: src/lib/ordering-labels.ts:98
+#: src/lib/ordering-labels.ts:99
 msgid "Only {count} left in {category}"
 msgstr "Nur noch {count} in {category} übrig"
 
@@ -2632,6 +2632,10 @@ msgstr "Heute nur noch {count} übrig"
 msgid "Only {count} of {name} left today. Please go back to the menu to lower the quantity."
 msgstr "Heute sind nur noch {count} von {name} übrig. Bitte gehen Sie zurück zur Speisekarte und verringern Sie die Menge."
 
+#: src/lib/ordering-labels.ts:67
+msgid "Only a few left"
+msgstr "Nur noch wenige übrig"
+
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
 msgstr "Für Bestellungen geöffnet"
@@ -2641,7 +2645,7 @@ msgid "Open in a new tab"
 msgstr "In neuem Tab öffnen"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
-#: src/lib/ordering-labels.ts:190
+#: src/lib/ordering-labels.ts:191
 msgid "Open now"
 msgstr "Jetzt geöffnet"
 
@@ -2653,7 +2657,7 @@ msgstr "Offene Stellen bei {name}"
 msgid "Open the link from your confirmation to manage a reservation."
 msgstr "Öffnen Sie den Link aus Ihrer Bestätigung, um eine Reservierung zu verwalten."
 
-#: src/lib/ordering-labels.ts:191
+#: src/lib/ordering-labels.ts:192
 #: src/pages/menu.astro.ts:3
 msgid "Open until {time}"
 msgstr "Geöffnet bis {time}"
@@ -2666,7 +2670,7 @@ msgstr "Sichere Zahlung wird geöffnet…"
 msgid "Opens"
 msgstr "Öffnet"
 
-#: src/lib/ordering-labels.ts:194
+#: src/lib/ordering-labels.ts:195
 msgid "Opens {time}"
 msgstr "Öffnet {time}"
 
@@ -2675,8 +2679,8 @@ msgid "Opens {when}"
 msgstr "Öffnet {when}"
 
 #: src/components/ordering/TableTab.astro.ts:3
-#: src/lib/ordering-labels.ts:71
-#: src/lib/ordering-labels.ts:163
+#: src/lib/ordering-labels.ts:72
+#: src/lib/ordering-labels.ts:164
 msgid "Optional"
 msgstr "Optional"
 
@@ -2708,7 +2712,7 @@ msgstr "Bestellung bestätigt"
 msgid "Order delivery"
 msgstr "Lieferung bestellen"
 
-#: src/lib/ordering-labels.ts:145
+#: src/lib/ordering-labels.ts:146
 msgid "Order details"
 msgstr "Bestelldetails"
 
@@ -2755,7 +2759,7 @@ msgstr "Bestellübersicht"
 msgid "Order total"
 msgstr "Bestellsumme"
 
-#: src/lib/ordering-labels.ts:147
+#: src/lib/ordering-labels.ts:148
 msgid "Order type"
 msgstr "Bestellart"
 
@@ -2784,7 +2788,7 @@ msgstr "Bestellungen sind pausiert"
 msgid "Ordering now"
 msgstr "Jetzt bestellen"
 
-#: src/lib/ordering-labels.ts:193
+#: src/lib/ordering-labels.ts:194
 #: src/pages/menu.astro.ts:3
 msgid "Ordering paused"
 msgstr "Bestellungen pausiert"
@@ -2838,7 +2842,7 @@ msgstr "Bestellungen offen: {title}"
 msgid "Orders you place while signed in will show up here."
 msgstr "Bestellungen, die du angemeldet aufgibst, erscheinen hier."
 
-#: src/lib/ordering-labels.ts:68
+#: src/lib/ordering-labels.ts:69
 msgid "Original price"
 msgstr "Ursprünglicher Preis"
 
@@ -2854,7 +2858,7 @@ msgstr "Weitere Termine mit freien Tischen"
 msgid "Other dietary needs"
 msgstr "Weitere Ernährungsbedürfnisse"
 
-#: src/lib/ordering-labels.ts:238
+#: src/lib/ordering-labels.ts:239
 msgid "Other stores that deliver here"
 msgstr "Weitere Filialen, die hierher liefern"
 
@@ -3063,12 +3067,12 @@ msgstr "Foto von {name}"
 msgid "Photos can only be shared for dishes you ordered within 14 days."
 msgstr "Fotos können nur für Gerichte geteilt werden, die du innerhalb von 14 Tagen bestellt hast."
 
-#: src/lib/ordering-labels.ts:189
+#: src/lib/ordering-labels.ts:190
 msgid "Pick up from"
 msgstr "Abholen bei"
 
 #: src/lib/catering/labels.ts:35
-#: src/lib/ordering-labels.ts:148
+#: src/lib/ordering-labels.ts:149
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -3306,7 +3310,7 @@ msgid "QR code for {title}"
 msgstr "QR-Code für {title}"
 
 #: src/lib/catering/labels.ts:24
-#: src/lib/ordering-labels.ts:91
+#: src/lib/ordering-labels.ts:92
 msgid "Quantity"
 msgstr "Menge"
 
@@ -3332,8 +3336,8 @@ msgstr "Bereit"
 msgid "Ready around {time}"
 msgstr "Fertig gegen {time}"
 
-#: src/lib/ordering-labels.ts:195
-#: src/lib/ordering-labels.ts:199
+#: src/lib/ordering-labels.ts:196
+#: src/lib/ordering-labels.ts:200
 msgid "Ready in about {count} min"
 msgstr "In etwa {count} Min. fertig"
 
@@ -3403,13 +3407,13 @@ msgid "Reject non-essential"
 msgstr "Nicht notwendige ablehnen"
 
 #: src/lib/gift-cards/labels.ts:89
-#: src/lib/ordering-labels.ts:94
-#: src/lib/ordering-labels.ts:117
+#: src/lib/ordering-labels.ts:95
+#: src/lib/ordering-labels.ts:118
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Remove"
 msgstr "Entfernen"
 
-#: src/lib/ordering-labels.ts:118
+#: src/lib/ordering-labels.ts:119
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Remove code {code}"
 msgstr "Code {code} entfernen"
@@ -3431,7 +3435,7 @@ msgid "Requests to use your rewards"
 msgstr "Anfragen zur Nutzung Ihrer Prämien"
 
 #: src/lib/catering/labels.ts:27
-#: src/lib/ordering-labels.ts:70
+#: src/lib/ordering-labels.ts:71
 msgid "Required"
 msgstr "Erforderlich"
 
@@ -3505,7 +3509,7 @@ msgstr "Prämien sind vorübergehend nicht verfügbar. Bitte versuchen Sie es sp
 msgid "Rewards cannot be used right now."
 msgstr "Prämien können derzeit nicht eingelöst werden."
 
-#: src/lib/ordering-labels.ts:89
+#: src/lib/ordering-labels.ts:90
 msgid "Right"
 msgstr "Rechts"
 
@@ -3513,11 +3517,11 @@ msgstr "Rechts"
 msgid "Round {number}"
 msgstr "Runde {number}"
 
-#: src/lib/ordering-labels.ts:69
+#: src/lib/ordering-labels.ts:70
 msgid "Sale price"
 msgstr "Angebotspreis"
 
-#: src/lib/ordering-labels.ts:210
+#: src/lib/ordering-labels.ts:211
 msgid "Save"
 msgstr "Speichern"
 
@@ -3546,15 +3550,15 @@ msgstr "Scannen und App laden"
 msgid "Scan to open this job on your phone."
 msgstr "Scannen, um diese Stelle auf dem Handy zu öffnen."
 
-#: src/lib/ordering-labels.ts:198
+#: src/lib/ordering-labels.ts:199
 msgid "Schedule"
 msgstr "Vorbestellen"
 
-#: src/lib/ordering-labels.ts:250
+#: src/lib/ordering-labels.ts:251
 msgid "Scheduled orders only"
 msgstr "Nur vorbestellte Bestellungen"
 
-#: src/lib/ordering-labels.ts:151
+#: src/lib/ordering-labels.ts:152
 msgid "Search street address"
 msgstr "Adresse suchen"
 
@@ -3873,7 +3877,7 @@ msgstr "Wird gesendet..."
 msgid "Subtotal"
 msgstr "Zwischensumme"
 
-#: src/lib/ordering-labels.ts:179
+#: src/lib/ordering-labels.ts:180
 msgid "Switch to pickup"
 msgstr "Zur Abholung wechseln"
 
@@ -4102,7 +4106,7 @@ msgstr "Das Guthaben der Karte reicht nicht aus."
 msgid "The delivery fee changed. Please review your total and place your order again."
 msgstr "Die Liefergebühr hat sich geändert. Bitte prüfen Sie den Gesamtbetrag und bestellen Sie erneut."
 
-#: src/lib/ordering-labels.ts:243
+#: src/lib/ordering-labels.ts:244
 msgid "The fee goes down as your order grows."
 msgstr "Die Gebühr sinkt, je größer Ihre Bestellung wird."
 
@@ -4373,7 +4377,7 @@ msgstr "Dieser Code ist zu dieser Zeit nicht verfügbar."
 msgid "This code works once and stops working in a few minutes. It is not your card number."
 msgstr "Dieser Code funktioniert nur einmal und läuft in wenigen Minuten ab. Er ist nicht Ihre Kartennummer."
 
-#: src/lib/ordering-labels.ts:85
+#: src/lib/ordering-labels.ts:86
 msgid "This combination is sold out. Choose another combination."
 msgstr "Diese Kombination ist ausverkauft. Wähle eine andere Kombination."
 
@@ -4608,12 +4612,12 @@ msgstr "An (Name)"
 msgid "To your door"
 msgstr "Bis an Ihre Tür"
 
-#: src/lib/ordering-labels.ts:205
+#: src/lib/ordering-labels.ts:206
 #: src/pages/locations/[slug].astro.ts:3
 msgid "Today"
 msgstr "Heute"
 
-#: src/lib/ordering-labels.ts:206
+#: src/lib/ordering-labels.ts:207
 msgid "Tomorrow"
 msgstr "Morgen"
 
@@ -4671,7 +4675,7 @@ msgstr "Diese Bestellung in der App verfolgen"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/loyalty/labels.ts:75
-#: src/lib/ordering-labels.ts:161
+#: src/lib/ordering-labels.ts:162
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
@@ -4679,7 +4683,7 @@ msgstr "Diese Bestellung in der App verfolgen"
 msgid "Try again"
 msgstr "Erneut versuchen"
 
-#: src/lib/ordering-labels.ts:180
+#: src/lib/ordering-labels.ts:181
 msgid "Try another address"
 msgstr "Andere Adresse versuchen"
 
@@ -4719,7 +4723,7 @@ msgstr "Bis zu {amount} Rabatt"
 msgid "Up to {amount} off per order"
 msgstr "Bis zu {amount} Rabatt pro Bestellung"
 
-#: src/lib/ordering-labels.ts:77
+#: src/lib/ordering-labels.ts:78
 msgid "Up to {count}"
 msgstr "Bis zu {count}"
 
@@ -4746,7 +4750,7 @@ msgstr "Ihre Summe wird aktualisiert…"
 msgid "Uploading…"
 msgstr "Wird hochgeladen…"
 
-#: src/lib/ordering-labels.ts:159
+#: src/lib/ordering-labels.ts:160
 msgid "Use “{query}”"
 msgstr "„{query}“ verwenden"
 
@@ -4770,7 +4774,7 @@ msgstr "Gespeicherte Karte verwenden"
 msgid "Use code {code}"
 msgstr "Code {code} verwenden"
 
-#: src/lib/ordering-labels.ts:245
+#: src/lib/ordering-labels.ts:246
 msgid "Use my location"
 msgstr "Meinen Standort verwenden"
 
@@ -5000,7 +5004,7 @@ msgstr "Wir konnten Ihren Gutscheincode nicht anwenden. Prüfen Sie ihn und vers
 msgid "We couldn't cancel the order. Please try again."
 msgstr "Die Bestellung konnte nicht storniert werden. Bitte versuchen Sie es erneut."
 
-#: src/lib/ordering-labels.ts:187
+#: src/lib/ordering-labels.ts:188
 msgid "We couldn't check this address"
 msgstr "Wir konnten diese Adresse nicht prüfen"
 
@@ -5012,7 +5016,7 @@ msgstr "Wir konnten Ihren Code gerade nicht prüfen. Versuchen Sie es erneut."
 msgid "We couldn't confirm your total. Please try again."
 msgstr "Wir konnten Ihre Summe nicht bestätigen. Versuchen Sie es erneut."
 
-#: src/lib/ordering-labels.ts:181
+#: src/lib/ordering-labels.ts:182
 msgid "We couldn't find that address"
 msgstr "Wir konnten diese Adresse nicht finden"
 
@@ -5020,11 +5024,11 @@ msgstr "Wir konnten diese Adresse nicht finden"
 msgid "We couldn't find this order"
 msgstr "Wir konnten diese Bestellung nicht finden"
 
-#: src/lib/ordering-labels.ts:247
+#: src/lib/ordering-labels.ts:248
 msgid "We couldn't get your location. Enter an address to sort by distance."
 msgstr "Wir konnten Ihren Standort nicht ermitteln. Geben Sie eine Adresse ein, um nach Entfernung zu sortieren."
 
-#: src/lib/ordering-labels.ts:160
+#: src/lib/ordering-labels.ts:161
 msgid "We couldn't load address suggestions."
 msgstr "Adressvorschläge konnten nicht geladen werden."
 
@@ -5072,7 +5076,7 @@ msgstr "Wir liefern Catering-Bestellungen nach {where}."
 msgid "We deliver catering orders."
 msgstr "Wir liefern Catering-Bestellungen."
 
-#: src/lib/ordering-labels.ts:165
+#: src/lib/ordering-labels.ts:166
 msgid "We deliver here"
 msgstr "Wir liefern hierhin"
 
@@ -5080,7 +5084,7 @@ msgstr "Wir liefern hierhin"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "Wir haben nicht rechtzeitig von Ihnen gehört. Sie können sich erneut auf die Warteliste setzen."
 
-#: src/lib/ordering-labels.ts:173
+#: src/lib/ordering-labels.ts:174
 msgid "We don't deliver to this address yet"
 msgstr "An diese Adresse liefern wir noch nicht"
 
@@ -5152,7 +5156,7 @@ msgstr "Wir nutzen notwendigen Speicher, um diese Website zu betreiben. Mit Ihre
 msgid "We will let you know"
 msgstr "Wir sagen Ihnen Bescheid"
 
-#: src/lib/ordering-labels.ts:218
+#: src/lib/ordering-labels.ts:219
 msgid "We'll check that your address is in our delivery area before you order."
 msgstr "Wir prüfen vor der Bestellung, ob deine Adresse in unserem Liefergebiet liegt."
 
@@ -5223,7 +5227,7 @@ msgstr "Was bei {name} ansteht"
 msgid "What's your name?"
 msgstr "Wie heißen Sie?"
 
-#: src/lib/ordering-labels.ts:196
+#: src/lib/ordering-labels.ts:197
 #: src/lib/reservations/labels.ts:158
 msgid "When"
 msgstr "Wann"
@@ -5245,7 +5249,7 @@ msgstr "Wenn Sie etwas im Shop kaufen, werden Ihre Quittungen hier angezeigt."
 msgid "Where"
 msgstr "Wo"
 
-#: src/lib/ordering-labels.ts:216
+#: src/lib/ordering-labels.ts:217
 msgid "Where should we deliver?"
 msgstr "Wohin sollen wir liefern?"
 
@@ -5257,7 +5261,7 @@ msgstr "Wo möchtest du arbeiten?"
 msgid "Which dietary needs can you meet?"
 msgstr "Welche Ernährungswünsche können Sie erfüllen?"
 
-#: src/lib/ordering-labels.ts:87
+#: src/lib/ordering-labels.ts:88
 msgid "Whole"
 msgstr "Ganz"
 
@@ -5309,7 +5313,7 @@ msgstr "Sie können bis {time} stornieren."
 msgid "You can join again at any time."
 msgstr "Sie können sich jederzeit erneut eintragen."
 
-#: src/lib/ordering-labels.ts:186
+#: src/lib/ordering-labels.ts:187
 msgid "You can still order for pickup."
 msgstr "Du kannst trotzdem zur Abholung bestellen."
 
@@ -5426,7 +5430,7 @@ msgstr "Ihre Karte wird zur Sicherung der Buchung hinterlegt. Es wird jetzt nich
 msgid "Your card was declined or needed extra verification. Try again or use another card."
 msgstr "Ihre Karte wurde abgelehnt oder erforderte eine zusätzliche Verifizierung. Versuchen Sie es erneut oder nutzen Sie eine andere Karte."
 
-#: src/lib/ordering-labels.ts:104
+#: src/lib/ordering-labels.ts:105
 msgid "Your cart is empty"
 msgstr "Ihr Warenkorb ist leer"
 
@@ -5440,7 +5444,7 @@ msgstr "Ihr Catering-Angebot"
 msgid "Your code"
 msgstr "Ihr Code"
 
-#: src/lib/ordering-labels.ts:235
+#: src/lib/ordering-labels.ts:236
 msgid "Your delivery check expired. Confirm your address again."
 msgstr "Die Lieferprüfung ist abgelaufen. Bestätige deine Adresse erneut."
 
@@ -5599,7 +5603,7 @@ msgstr "Ihr Prämienkonto ist pausiert. Bitte wenden Sie sich an das Unternehmen
 msgid "Your savings cover the whole order."
 msgstr "Ihre Ersparnis deckt die ganze Bestellung."
 
-#: src/lib/ordering-labels.ts:231
+#: src/lib/ordering-labels.ts:232
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "Deine geplante Zeit ist nicht mehr verfügbar. Wähle eine neue Zeit."
 
