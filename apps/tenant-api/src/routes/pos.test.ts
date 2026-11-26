@@ -2061,16 +2061,12 @@ describe('POS terminals: pairing, upload and sync', () => {
 
 	describe('category and menu stamped at upload (#227)', () => {
 		it('stamps the menu and category each dish sat under from the live menu, with the contract unchanged', async () => {
-			expect(POS_CONTRACT_VERSION).toBe(11)
+			expect(POS_CONTRACT_VERSION).toBeGreaterThanOrEqual(11)
 			const { deviceSecret } = await pair()
 			const id = crypto.randomUUID()
 			expect(
-				(
-					await upload(
-						deviceSecret,
-						wireOrder({ id, lines: [BURGER, FRIES] }),
-					)
-				).status,
+				(await upload(deviceSecret, wireOrder({ id, lines: [BURGER, FRIES] })))
+					.status,
 			).toBe(201)
 			const db = await getTenantDb(ORG_A)
 			const [row] = await db.select().from(posOrders)

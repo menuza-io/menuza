@@ -6,7 +6,7 @@ import {
 import { formatCateringMoney } from '@repo/common/catering'
 import { startPayment } from '~/lib/catering/client'
 import { browserLocale } from '~/lib/locale'
-import { getTenantApiBase } from '~/lib/tenant-api'
+import { getBrowserTenantApiUrl } from '~/lib/client-auth'
 
 /**
  * Guest pay-what-you-owe page (`/menu/pay`, #163).
@@ -64,7 +64,7 @@ if (root) {
 	if (!token) {
 		showMessage(labels.invalid ?? 'This payment link is not valid.')
 	} else {
-		const apiBase = getTenantApiBase()
+		const apiBase = getBrowserTenantApiUrl()
 		const query = slug
 			? `slug=${encodeURIComponent(slug)}`
 			: `host=${encodeURIComponent(location.host)}`

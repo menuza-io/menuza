@@ -348,7 +348,14 @@ export async function createOperatorOrderPayLink(input: {
 		order.locale,
 		token,
 	)
-	const finalUrl = url ?? `/menu/pay#p=${encodeURIComponent(token)}`
+	const finalUrl =
+		url ??
+		buildLink(
+			'order_pay',
+			{ pay: token },
+			{ origin: 'https://pay.local' },
+		)?.slice('https://pay.local'.length) ??
+		''
 	const delivery = await deliverPayLink({
 		orgId: input.orgId,
 		channel: input.channel,
@@ -440,7 +447,14 @@ export async function createPosOrderPayLink(input: {
 		'en',
 		token,
 	)
-	const finalUrl = url ?? `/menu/pay#p=${encodeURIComponent(token)}`
+	const finalUrl =
+		url ??
+		buildLink(
+			'order_pay',
+			{ pay: token },
+			{ origin: 'https://pay.local' },
+		)?.slice('https://pay.local'.length) ??
+		''
 	const delivery = await deliverPayLink({
 		orgId: input.orgId,
 		channel: input.channel,
