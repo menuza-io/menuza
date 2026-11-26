@@ -173,6 +173,7 @@ export async function queryOrderHistory(input: {
 
 	const conditions: SQL[] = []
 	if (allowedLocations !== null) {
+		// bounded: the token's locations mirror the control plane's (well under 100).
 		conditions.push(inArray(restaurantOrders.locationId, allowedLocations))
 	}
 	if (query.status) {

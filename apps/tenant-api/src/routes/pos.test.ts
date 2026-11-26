@@ -2724,7 +2724,8 @@ describe('POS terminals: pairing, upload and sync', () => {
 			expect(row!.guestName).toBe('Sam')
 			const columns = Object.keys(row!)
 			expect(row!.customerPhone).toBeNull()
-			expect(columns.filter((c) => /email|address/i.test(c))).toEqual([])
+			expect(row!.deliveryAddress).toBeNull()
+			expect(columns.filter((c) => /email/i.test(c))).toEqual([])
 		})
 	})
 

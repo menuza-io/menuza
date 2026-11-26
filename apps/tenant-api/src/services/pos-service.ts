@@ -3774,6 +3774,14 @@ export async function erasePosStaffNames(
 		.set({ voidApprovedByStaffName: replacement })
 		.where(eq(posOrders.voidApprovedByStaffId, staffId))
 	await tx
+		.update(posOrders)
+		.set({ deliveryMinOverrideByStaffName: replacement })
+		.where(eq(posOrders.deliveryMinOverrideByStaffId, staffId))
+	await tx
+		.update(posOrders)
+		.set({ serviceChargeRemovedByStaffName: replacement })
+		.where(eq(posOrders.serviceChargeRemovedByStaffId, staffId))
+	await tx
 		.update(posPayments)
 		.set({ staffName: replacement })
 		.where(eq(posPayments.staffId, staffId))
