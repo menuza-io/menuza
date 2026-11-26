@@ -475,6 +475,10 @@ msgstr "所有时间均为餐厅所在时区：{zone}。"
 msgid "Amount"
 msgstr "金额"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Amount due"
+msgstr "应付金额"
+
 #: src/lib/reservations/labels.ts:378
 msgid "Amount due now"
 msgstr "现需支付金额"
@@ -812,7 +816,7 @@ msgstr "招聘"
 msgid "Catering"
 msgstr "餐饮外烩"
 
-#: src/lib/catering/labels.ts:180
+#: src/lib/catering/labels.ts:184
 msgid "Catering is for pickup only."
 msgstr "外烩仅支持自取。"
 
@@ -1206,6 +1210,10 @@ msgstr "复制链接"
 msgid "Cost"
 msgstr "所需"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Could not start payment. Please try again."
+msgstr "无法发起支付，请重试。"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Coupon code"
@@ -1337,7 +1345,7 @@ msgstr "配送费 {amount}"
 msgid "Delivery fee and discounts at checkout"
 msgstr "配送费和优惠将在结账时计算"
 
-#: src/lib/catering/labels.ts:188
+#: src/lib/catering/labels.ts:191
 msgid "Delivery from {feeText}."
 msgstr "配送费 {feeText} 起。"
 
@@ -2538,6 +2546,7 @@ msgstr "限一件。付费附加项仍需付款。"
 #: src/pages/catering/balance.astro.ts:3
 #: src/pages/catering/quote.astro.ts:3
 #: src/pages/gift-cards/index.astro.ts:3
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/profile/gift-cards.astro.ts:3
 msgid "One moment…"
 msgstr "请稍候…"
@@ -2673,6 +2682,7 @@ msgstr "可选"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Order"
 msgstr "点餐"
@@ -2740,6 +2750,10 @@ msgstr "已收到订单"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Order summary"
 msgstr "订单摘要"
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "Order total"
+msgstr "订单总额"
 
 #: src/lib/ordering-labels.ts:147
 msgid "Order type"
@@ -2873,6 +2887,10 @@ msgstr "已付款"
 msgid "Paid in full. Thank you."
 msgstr "已全额付款,谢谢。"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Paid so far"
+msgstr "已付金额"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Paid. Thank you!"
 msgstr "已支付。谢谢！"
@@ -2921,8 +2939,13 @@ msgstr "付款并发送"
 msgid "Pay at pickup"
 msgstr "取餐时付款"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Pay for your order"
+msgstr "支付订单"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/catering/labels.ts:52
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "立即支付"
@@ -3001,6 +3024,10 @@ msgstr "已收到付款,谢谢:您的外烩订单已确认。"
 msgid "Payment under review"
 msgstr "付款审核中"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Payment was cancelled. You can try again below."
+msgstr "支付已取消，可在下方重试。"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Payment was not finished. Nothing was charged."
 msgstr "支付未完成，未收取任何费用。"
@@ -3057,7 +3084,7 @@ msgstr "自取 {when}"
 msgid "Pickup instructions"
 msgstr "自取说明"
 
-#: src/lib/catering/labels.ts:189
+#: src/lib/catering/labels.ts:192
 msgid "Pickup is available too."
 msgstr "也可自取。"
 
@@ -3954,6 +3981,10 @@ msgstr "感谢您的订单！"
 msgid "Thank you for your purchase!"
 msgstr "感谢您的购买！"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Thank you! Your payment has been received."
+msgstr "感谢您！我们已收到您的付款。"
+
 #: src/components/SitePopup.astro.ts:3
 msgid "Thank you."
 msgstr "谢谢。"
@@ -4107,7 +4138,7 @@ msgstr "厨房暂时停止接收新订单。请咨询工作人员。"
 msgid "The kitchen is closed right now."
 msgstr "厨房目前已关闭。"
 
-#: src/lib/catering/labels.ts:167
+#: src/lib/catering/labels.ts:171
 msgid "The largest order we take online is {maxText}."
 msgstr "线上订单的最高金额为 {maxText}。"
 
@@ -4123,7 +4154,7 @@ msgstr "链接可能不完整或已过期。"
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "链接可能不完整。您可以从菜单开始新的订单。"
 
-#: src/lib/catering/labels.ts:162
+#: src/lib/catering/labels.ts:166
 msgid "The minimum catering order is {minText}."
 msgstr "外烩订单最低金额为 {minText}。"
 
@@ -4231,6 +4262,10 @@ msgstr "候位名单暂不可用。请致电餐厅。"
 #: src/lib/reservations/labels.ts:474
 msgid "There are no upcoming seatings to book right now."
 msgstr "目前没有可预订的即将开始的场次。"
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "There is nothing due on this order."
+msgstr "此订单无需支付任何款项。"
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -4416,6 +4451,10 @@ msgstr "该门店暂不支持下单。"
 msgid "This order can't be cancelled here."
 msgstr "此订单无法在此取消。"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "This order is already paid in full."
+msgstr "此订单已全额支付。"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "此订单未达到配送起送金额。"
@@ -4442,6 +4481,10 @@ msgstr "此订单链接已过期。您仍可从菜单中点餐。"
 msgid "This order was cancelled"
 msgstr "此订单已取消"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "This order was cancelled."
+msgstr "此订单已取消。"
+
 #: src/components/GonePage.astro.ts:3
 msgid "This page is no longer available."
 msgstr "此页面已不可用。"
@@ -4449,6 +4492,14 @@ msgstr "此页面已不可用。"
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
 msgstr "此付款已不再有效"
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "This payment link has expired. Ask the restaurant for a new one."
+msgstr "此支付链接已过期，请向餐厅索取新链接。"
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "This payment link is not valid. Ask the restaurant for a new one."
+msgstr "此支付链接无效，请向餐厅索取新链接。"
 
 #: src/lib/reservations/labels.ts:503
 msgid "This phone number already has a reservation at that time."
@@ -4870,7 +4921,7 @@ msgstr "我们仍在确认您的付款。请一分钟后再查看账单。"
 msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 msgstr "无法完成此次购买。请尝试较小的金额或联系餐厅。"
 
-#: src/lib/catering/labels.ts:174
+#: src/lib/catering/labels.ts:178
 msgid "We cater for up to {maxGuests} guests."
 msgstr "我们最多可接待 {maxGuests} 位宾客。"
 
@@ -5013,11 +5064,11 @@ msgstr "我们无法自动发送您的退款。请致电餐厅。"
 msgid "We couldn't start payment. Please try again."
 msgstr "无法发起支付。请重试。"
 
-#: src/lib/catering/labels.ts:184
+#: src/lib/catering/labels.ts:188
 msgid "We deliver catering orders to {where}."
 msgstr "我们为 {where} 配送外烩订单。"
 
-#: src/lib/catering/labels.ts:185
+#: src/lib/catering/labels.ts:189
 msgid "We deliver catering orders."
 msgstr "我们提供外烩配送。"
 
@@ -5053,7 +5104,7 @@ msgstr "我们知道您正在赶来"
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "我们已载入您通话中的订单。请核对后结账。"
 
-#: src/lib/catering/labels.ts:157
+#: src/lib/catering/labels.ts:161
 msgid "We need at least {hours} hours of notice."
 msgstr "需要至少提前 {hours} 小时下单。"
 
@@ -5077,7 +5128,7 @@ msgstr "我们已向您的邮箱或手机发送了确认信息。"
 msgid "We sent a link to confirm your email"
 msgstr "我们已发送确认邮箱的链接"
 
-#: src/lib/catering/labels.ts:196
+#: src/lib/catering/labels.ts:198
 msgid "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
 msgstr "下单时收取 {percent}% 定金,余款须在活动前 {balanceDueDays} 天付清。"
 

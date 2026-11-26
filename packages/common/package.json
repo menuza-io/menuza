@@ -8,6 +8,9 @@
   "types": "./index.ts",
   "exports": {
     "./order-receipt": "./src/order-receipt.ts",
+    "./order-pay-links": "./src/order-pay-links.ts",
+    "./order-edits": "./src/order-edits.ts",
+    "./pos-split-check": "./src/pos-split-check.ts",
     "./mailbox": "./src/mailbox.ts",
     "./phone": "./src/phone.ts",
     "./ascii-digits": "./src/ascii-digits.ts",

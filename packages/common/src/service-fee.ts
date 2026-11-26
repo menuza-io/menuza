@@ -31,8 +31,49 @@ export type ServiceFeeFulfillment = (typeof SERVICE_FEE_FULFILLMENTS)[number]
 export const DEFAULT_SERVICE_FEE_LABEL = 'Service fee'
 export const SERVICE_FEE_LABEL_MAX_LENGTH = 40
 export const SERVICE_FEE_EXPLANATION_MAX_LENGTH = 200
-/** Percentage at most 10 %, in basis points. */
+/** Percentage at most 10 %, in basis points (online fee). */
 export const SERVICE_FEE_MAX_PERCENT_BP = 1000
+/** Station service charge / auto-gratuity percentage at most 30 %, in basis points (#397). */
+export const POS_SERVICE_CHARGE_MAX_PERCENT_BP = 3000
+export const POS_SERVICE_CHARGE_FLAG_KEY = 'ordering.pos_service_charge'
+export const DEFAULT_POS_SERVICE_CHARGE_LABEL = 'Service charge'
+
+export const POS_SERVICE_CHARGE_ORDER_TYPES = [
+	'dine_in',
+	'takeaway',
+	'delivery',
+] as const
+export type PosServiceChargeOrderType =
+	(typeof POS_SERVICE_CHARGE_ORDER_TYPES)[number]
+
+export const posServiceChargeRuleSchema = z.strictObject({
+	/** Percentage in basis points (1200 = 12%). 0 means disabled for this order type. */
+	percentBp: z.number().int().min(0).max(POS_SERVICE_CHARGE_MAX_PERCENT_BP),
+	/** When set (e.g. 6), applies only when partySize >= minPartySize (auto-gratuity). */
+	minPartySize: z.number().int().min(2).max(500).nullable().default(null),
+})
+export type PosServiceChargeRule = z.infer<typeof posServiceChargeRuleSchema>
+
+export const posServiceChargeSettingsSchema = z.strictObject({
+	enabled: z.boolean().default(false),
+	label: z
+		.string()
+		.trim()
+		.min(1)
+		.max(SERVICE_FEE_LABEL_MAX_LENGTH)
+		.default(DEFAULT_POS_SERVICE_CHARGE_LABEL),
+	taxable: z.boolean().default(false),
+	byOrderType: z
+		.strictObject({
+			dine_in: posServiceChargeRuleSchema.optional(),
+			takeaway: posServiceChargeRuleSchema.optional(),
+			delivery: posServiceChargeRuleSchema.optional(),
+		})
+		.default({}),
+})
+export type PosServiceChargeSettings = z.infer<
+	typeof posServiceChargeSettingsSchema
+>
 
 /**
  * The largest fixed amount (fixed fee, small-order fee, cap), in major units
@@ -77,12 +118,20 @@ export const serviceFeeSettingsSchema = z
 			.max(SERVICE_FEE_EXPLANATION_MAX_LENGTH)
 			.nullable(),
 		taxable: z.boolean(),
+		/**
+		 * Station automatic service charge & large-party gratuity (#397).
+		 * Reuses the location's serviceFee JSON column rather than adding a second setting.
+		 */
+		pos: posServiceChargeSettingsSchema.optional(),
 	})
 	.superRefine((value, context) => {
 		const issue = (path: string, message: string) =>
 			context.addIssue({ code: 'custom', path: [path], message })
 		if (value.capMinor === 0) issue('capMinor', 'A cap of 0 is not allowed')
-		if ((value.smallOrderBelowMinor === null) !== (value.smallOrderFeeMinor === null)) {
+		if (
+			(value.smallOrderBelowMinor === null) !==
+			(value.smallOrderFeeMinor === null)
+		) {
 			issue(
 				'smallOrderFeeMinor',
 				'Set both the small order limit and its fee, or neither',
@@ -207,6 +256,82 @@ export function serviceFeeChargeCents(
 	taxInclusive: boolean,
 ): number {
 	return result.feeCents + (taxInclusive ? 0 : result.taxCents)
+}
+
+// ---------------------------------------------------------------------------
+// Station automatic service charge & large-party gratuity (#397)
+// ---------------------------------------------------------------------------
+
+export type PosServiceChargeInput = {
+	settings: PosServiceChargeSettings | null | undefined
+	orderType: PosServiceChargeOrderType | 'drive_through'
+	/** Subtotal after discounts, before tax and tip, minor units. */
+	baseCents: number
+	partySize?: number | null
+	taxRatePercent: number
+	taxInclusive: boolean
+	taxExempt?: boolean
+	/** Never apply twice to a QR tab that already carries a service fee (#397). */
+	alreadyChargedOnQrTab?: boolean
+	/** Cashier removed it with a reason. */
+	removed?: boolean
+}
+
+export type PosServiceChargeResult = {
+	applied: boolean
+	autoGratuity: boolean
+	label: string
+	percentBp: number
+	amountCents: number
+	taxCents: number
+	taxable: boolean
+}
+
+export function computePosServiceCharge(
+	input: PosServiceChargeInput,
+): PosServiceChargeResult {
+	const cfg = input.settings
+	const label = cfg?.label || DEFAULT_POS_SERVICE_CHARGE_LABEL
+	const none: PosServiceChargeResult = {
+		applied: false,
+		autoGratuity: false,
+		label,
+		percentBp: 0,
+		amountCents: 0,
+		taxCents: 0,
+		taxable: Boolean(cfg?.taxable),
+	}
+	if (!cfg || !cfg.enabled) return none
+	if (input.alreadyChargedOnQrTab || input.removed) return none
+	if (input.orderType === 'drive_through') return none
+	const rule = cfg.byOrderType[input.orderType]
+	if (!rule || rule.percentBp <= 0) return none
+	const autoGratuity = rule.minPartySize !== null
+	if (
+		rule.minPartySize !== null &&
+		(input.partySize == null || input.partySize < rule.minPartySize)
+	) {
+		return none
+	}
+	const base = Math.trunc(input.baseCents)
+	if (!Number.isFinite(base) || base <= 0) return none
+	const amountCents = Math.round((base * rule.percentBp) / 10_000)
+	if (amountCents <= 0) return none
+	const taxable = cfg.taxable && !input.taxExempt
+	const taxCents = !taxable
+		? 0
+		: input.taxInclusive
+			? includedTaxCents(amountCents, input.taxRatePercent)
+			: Math.round((amountCents * Math.max(0, input.taxRatePercent || 0)) / 100)
+	return {
+		applied: true,
+		autoGratuity,
+		label,
+		percentBp: rule.percentBp,
+		amountCents,
+		taxCents,
+		taxable,
+	}
 }
 
 // ---------------------------------------------------------------------------

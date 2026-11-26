@@ -113,7 +113,7 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * and holds that upload, which is how an old region fails safe; an old
  * terminal never sends it. Deploy tenant-api before Station.
  */
-export const POS_CONTRACT_VERSION = 11
+export const POS_CONTRACT_VERSION = 12
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -133,6 +133,7 @@ export const POS_ORDER_TYPE_VALUES = [
 	'dine_in',
 	'takeaway',
 	'drive_through',
+	'delivery',
 ] as const
 export const POS_ORDER_SOURCE_VALUES = ['counter', 'phone'] as const
 export type PosOrderSource = (typeof POS_ORDER_SOURCE_VALUES)[number]
@@ -277,6 +278,15 @@ export const posStaffSchema = z.strictObject({
 })
 export type PosStaff = z.infer<typeof posStaffSchema>
 
+/** One line's fraction assigned to a split check payment (contract 12, #289). */
+export const posPaymentLineShareSchema = z.strictObject({
+	lineId: z.string().min(1).max(100),
+	shareNum: z.number().int().min(1).max(100),
+	shareDen: z.number().int().min(1).max(100),
+	amountCents: cents.optional(),
+})
+export type PosPaymentLineShare = z.infer<typeof posPaymentLineShareSchema>
+
 export const posPaymentSchema = z.strictObject({
 	id: uuid,
 	method: z.enum(POS_PAYMENT_METHOD_VALUES),
@@ -289,7 +299,60 @@ export const posPaymentSchema = z.strictObject({
 	reference: tenderReference,
 	/** The cash drawer shift it was taken in (terminals that track shifts). */
 	shiftId: uuid.nullable().default(null),
+	/** Contract 12 (#289): lines (and fractions) paid by this split check. */
+	lineShares: z.array(posPaymentLineShareSchema).max(100).optional(),
+	/** Contract 12 (#289): 1-based check number for split-by-item receipts. */
+	checkNumber: z.number().int().min(1).max(50).optional(),
+	/** Contract 12 (#289): per-check tip amount in minor units. */
+	tipCents: cents.optional(),
+	/** Contract 12 (#289): per-check loyalty customer id. */
+	loyaltyCustomerId: z.string().min(1).max(100).nullable().optional(),
 })
+
+/** Contract 12 (#164): phone delivery details attached to a Station phone order. */
+export const posOrderDeliverySchema = z.strictObject({
+	/** Signed quote token from `POST /pos/delivery/quote` (verified by tenant-api). */
+	quoteToken: z.string().min(1).max(2000).optional(),
+	/** Street address; stripped from revisions and held uploads, cleared 30 days after close. */
+	address: z.string().trim().max(300).nullable().default(null),
+	unit: z.string().trim().max(80).nullable().default(null),
+	notes: z.string().trim().max(280).nullable().default(null),
+	zoneId: z.string().trim().max(100).nullable().default(null),
+	zoneName: z.string().trim().max(120).nullable().default(null),
+	feeCents: cents.default(0),
+	lat: z.number().min(-90).max(90).nullable().default(null),
+	lng: z.number().min(-180).max(180).nullable().default(null),
+	postalCode: z.string().trim().max(20).nullable().default(null),
+	/** Manager who approved overriding the delivery zone minimum. */
+	minOverrideApprovedBy: posStaffSchema.nullable().default(null),
+})
+export type PosOrderDelivery = z.infer<typeof posOrderDeliverySchema>
+
+/** Contract 12 (#166): tax exemption certificate (non-SAR locations only). */
+export const posTaxExemptSchema = z.strictObject({
+	ref: z.string().trim().min(1).max(40),
+	org: z.string().trim().min(1).max(120),
+})
+export type PosTaxExempt = z.infer<typeof posTaxExemptSchema>
+
+/** Contract 12 (#397): automatic service charge or large-party gratuity on Station. */
+export const posServiceChargeSchema = z.strictObject({
+	label: z.string().trim().min(1).max(40),
+	percentBp: z.number().int().min(0).max(5000),
+	amountCents: cents,
+	taxCents: cents.default(0),
+	taxable: z.boolean().default(false),
+	autoGratuity: z.boolean().default(false),
+	removed: z
+		.strictObject({
+			by: posStaffSchema.nullable(),
+			reason: z.string().trim().min(1).max(200),
+			at: instant,
+		})
+		.nullable()
+		.default(null),
+})
+export type PosServiceCharge = z.infer<typeof posServiceChargeSchema>
 
 /**
  * Something taken off an order after it was saved (an item removed from a tab,
@@ -547,6 +610,14 @@ export const posOrderRequestSchema = z
 		 * sale: loyalty never stands between a paid sale and the server.
 		 */
 		loyalty: posOrderLoyaltySchema.nullable().default(null).catch(null),
+		/** Contract 12 (#164): phone delivery details (quote token, address, fee). */
+		delivery: posOrderDeliverySchema.nullable().optional(),
+		/** Contract 12 (#166): tax exemption certificate (non-SAR only). */
+		taxExempt: posTaxExemptSchema.nullable().optional(),
+		/** Contract 12 (#397): party size for large-party auto-gratuity. */
+		partySize: z.number().int().min(1).max(500).nullable().optional(),
+		/** Contract 12 (#397): automatic service charge or large-party gratuity. */
+		serviceCharge: posServiceChargeSchema.nullable().optional(),
 	})
 	.superRefine((order, ctx) => {
 		const issue = (message: string, path: (string | number)[] = []) =>
@@ -556,8 +627,11 @@ export const posOrderRequestSchema = z
 		if (order.orderType !== 'drive_through' && order.driveThroughNote)
 			issue('a lane note belongs to drive-through', ['driveThroughNote'])
 		if (order.orderSource === 'phone') {
-			if (order.orderType !== 'takeaway' || order.tableLabel)
-				issue('phone orders are pickup only', ['orderType'])
+			if (
+				(order.orderType !== 'takeaway' && order.orderType !== 'delivery') ||
+				order.tableLabel
+			)
+				issue('phone orders are pickup or delivery only', ['orderType'])
 			// Both may be null after regional contact erasure; a transferred tab
 			// must still be payable without collecting the person's details again.
 			if (Boolean(order.customerName) !== Boolean(order.customerPhone))
@@ -570,6 +644,20 @@ export const posOrderRequestSchema = z
 				])
 		} else if (order.pickupAt || order.pickupTimeZone) {
 			issue('pickup contact details belong to phone orders', ['orderSource'])
+		}
+		if (order.orderType === 'delivery' && !order.delivery) {
+			issue('delivery orders require delivery details', ['delivery'])
+		}
+		if (order.orderType !== 'delivery' && order.delivery) {
+			issue('delivery details belong to delivery orders', ['delivery'])
+		}
+		if (order.taxExempt) {
+			if (order.currency.toUpperCase() === 'SAR') {
+				issue('tax exemption is not available for SAR locations', ['taxExempt'])
+			}
+			if (order.totals.taxCents !== 0) {
+				issue('tax-exempt orders must have zero tax', ['totals', 'taxCents'])
+			}
 		}
 		if (order.orderSource !== 'phone' && order.readyTextOptIn)
 			issue('only phone orders agree to a text on their callback number', [
@@ -610,9 +698,16 @@ export const posOrderRequestSchema = z
 			])
 		}
 		// Inclusive tax is already inside the subtotal; exclusive tax is added to it.
+		const deliveryFeeCents = order.delivery?.feeCents ?? 0
+		const serviceChargeCents =
+			order.serviceCharge && !order.serviceCharge.removed
+				? order.serviceCharge.amountCents
+				: 0
 		const total =
 			order.totals.subtotalCents -
 			order.totals.adjustmentCents +
+			deliveryFeeCents +
+			serviceChargeCents +
 			(order.taxInclusive ? 0 : order.totals.taxCents) +
 			order.totals.tipCents
 		if (total !== order.totals.totalCents) {

@@ -22,6 +22,14 @@ const COVERED: Record<string, string> = {
 		'scrubbed by normalised phone (ready_text_sent_at and the status stay); omitted from revision history and held records, also expires after 30 days',
 	'pos_orders.customer_phone':
 		'scrubbed by normalised phone; omitted from revision history and held records, also expires after 30 days',
+	'pos_orders.delivery_address':
+		'scrubbed by normalised phone (#164); omitted from revision history and held records, also expires after 30 days',
+	'pos_orders.delivery_postal_code':
+		'scrubbed by normalised phone (#164); omitted from revision history and held records, also expires after 30 days',
+	'pos_orders.delivery_lat':
+		'scrubbed by normalised phone (#164); omitted from revision history and held records, also expires after 30 days',
+	'pos_orders.delivery_lng':
+		'scrubbed by normalised phone (#164); omitted from revision history and held records, also expires after 30 days',
 	'customers.name': 'row deleted',
 	'customers.email': 'row deleted',
 	'customers.phone': 'row deleted',
@@ -226,6 +234,8 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 		'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased (revision history keeps ids only)',
 	'pos_orders.void_approved_by_staff_name':
 		'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased (revision history keeps ids only)',
+	'pos_orders.delivery_min_override_by_staff_name': staffAtTheTill,
+	'pos_orders.service_charge_removed_by_staff_name': staffAtTheTill,
 	'pos_payments.staff_name':
 		'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased (revision history keeps ids only)',
 	'pos_payments.approved_by_staff_name':

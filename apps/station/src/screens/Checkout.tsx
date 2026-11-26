@@ -1,12 +1,23 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { isTaxExemptSupportedForCurrency } from '@repo/common/order-edits'
+import {
+	type PosServiceCharge,
+	type PosTaxExempt,
+} from '@repo/common/pos-orders'
+import { type SplitCheckResult } from '@repo/common/pos-split-check'
+import {
+	computePosServiceCharge,
+	type PosServiceChargeSettings,
+} from '@repo/common/service-fee'
 import { printAllowed } from '@repo/common/ticket-config'
 import { Icon } from '@repo/ui/icon'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { giftCardErrorMessage, LabeledInput } from './GiftCardSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
+import { SplitByItemSheet } from './SplitByItemSheet.tsx'
 import { blockLock } from '~/lib/activity.ts'
 import {
 	cashDiscountAdjustment,
@@ -75,6 +86,7 @@ export function Checkout({
 	staff,
 	vatNumber = null,
 	cashDiscountBp = null,
+	serviceChargeSettings = null,
 	onSaved,
 	onClose,
 }: {
@@ -93,6 +105,8 @@ export function Checkout({
 	 * applies when the whole bill is taken in cash, in one payment.
 	 */
 	cashDiscountBp?: number | null
+	/** Automatic service charge & large-party gratuity settings (#397). */
+	serviceChargeSettings?: PosServiceChargeSettings | null
 	/** Called each time a payment is safely stored, so it can start sending at once. */
 	onSaved: () => void
 	/** `finished` is true when the bill was fully paid. */
@@ -122,6 +136,33 @@ export function Checkout({
 	const [done, setDone] = useState<PosOrder | null>(null)
 	/** Change owed for the payment just taken while the bill is still open. */
 	const [giveChange, setGiveChange] = useState<number | null>(null)
+	/** Tax exemption (#166), hidden for SAR locations. */
+	const taxExemptAllowed = isTaxExemptSupportedForCurrency(draft.currency)
+	const [taxExempt, setTaxExempt] = useState<PosTaxExempt | null>(
+		existing?.taxExempt ?? null,
+	)
+	const [taxExemptOpen, setTaxExemptOpen] = useState(false)
+	const [taxExemptRefInput, setTaxExemptRefInput] = useState(
+		existing?.taxExempt?.ref ?? '',
+	)
+	const [taxExemptOrgInput, setTaxExemptOrgInput] = useState(
+		existing?.taxExempt?.org ?? '',
+	)
+	/** Service charge / auto-gratuity (#397). */
+	const [partySize, setPartySize] = useState<number>(existing?.partySize ?? 1)
+	const [serviceChargeRemoved, setServiceChargeRemoved] = useState<
+		PosServiceCharge['removed']
+	>(existing?.serviceCharge?.removed ?? null)
+	const [removeChargeOpen, setRemoveChargeOpen] = useState(false)
+	const [removeChargeReason, setRemoveChargeReason] = useState('')
+	/** Split check by item (#289). */
+	const [splitByItemOpen, setSplitByItemOpen] = useState(false)
+	const [activeCheck, setActiveCheck] = useState<SplitCheckResult | null>(null)
+	const [paidCheckNumbers, setPaidCheckNumbers] = useState<number[]>(() =>
+		(existing?.payments ?? [])
+			.map((p) => p.checkNumber)
+			.filter((n): n is number => typeof n === 'number'),
+	)
 
 	const hasPayments = (current?.payments.length ?? 0) > 0
 	// The cash discount (#375): offered while the cashier is set to take the
@@ -146,6 +187,42 @@ export function Checkout({
 				: withoutCashDiscount(draft.adjustments),
 		[draft.adjustments, cashAdjustment],
 	)
+	const rawSubtotalCents = useMemo(
+		() => draft.lines.reduce((s, l) => s + lineTotalCents(l), 0),
+		[draft.lines],
+	)
+	const rawAdjustmentCents = useMemo(
+		() =>
+			Math.min(
+				rawSubtotalCents,
+				billAdjustments.reduce((s, a) => s + a.amountCents, 0),
+			),
+		[rawSubtotalCents, billAdjustments],
+	)
+	const computedServiceCharge = useMemo(
+		() =>
+			computePosServiceCharge({
+				settings: serviceChargeSettings,
+				orderType: draft.orderType,
+				baseCents: Math.max(0, rawSubtotalCents - rawAdjustmentCents),
+				partySize,
+				taxRatePercent: draft.taxRatePercent,
+				taxInclusive: draft.taxInclusive ?? false,
+				taxExempt: Boolean(taxExempt),
+				removed: Boolean(serviceChargeRemoved),
+			}),
+		[
+			serviceChargeSettings,
+			draft.orderType,
+			rawSubtotalCents,
+			rawAdjustmentCents,
+			partySize,
+			draft.taxRatePercent,
+			draft.taxInclusive,
+			taxExempt,
+			serviceChargeRemoved,
+		],
+	)
 	// Once a payment exists the bill is frozen at what it was. Before that, the
 	// totals follow the tip being chosen, including for a saved tab being paid.
 	const totals = useMemo(
@@ -156,10 +233,21 @@ export function Checkout({
 						lines: draft.lines,
 						taxRatePercent: draft.taxRatePercent,
 						taxInclusive: draft.taxInclusive,
+						taxExempt: Boolean(taxExempt),
 						tipPercent,
 						adjustments: billAdjustments,
+						serviceChargeCents: computedServiceCharge.amountCents,
+						serviceChargeTaxCents: computedServiceCharge.taxCents,
 					}),
-		[current, hasPayments, draft, tipPercent, billAdjustments],
+		[
+			current,
+			hasPayments,
+			draft,
+			taxExempt,
+			tipPercent,
+			billAdjustments,
+			computedServiceCharge,
+		],
 	)
 	// Tips are chosen once, before the first payment, so shares never drift.
 	const tipLocked = hasPayments
@@ -619,7 +707,190 @@ export function Checkout({
 							>
 								<Trans>Amount</Trans>
 							</Chip>
+							<Chip
+								look="outlined"
+								selected={Boolean(activeCheck)}
+								aria-pressed={Boolean(activeCheck)}
+								className="px-4"
+								onClick={() => setSplitByItemOpen(true)}
+							>
+								<Trans>Split by item</Trans>
+							</Chip>
 						</div>
+						{!hasPayments ? (
+							<div className="mt-3 flex flex-wrap items-center gap-2">
+								{taxExemptAllowed ? (
+									<Button
+										type="button"
+										size="md"
+										variant={taxExempt ? 'primary' : 'outline'}
+										onClick={() => setTaxExemptOpen(true)}
+										data-tax-exempt-btn
+									>
+										{taxExempt ? (
+											<Trans>Tax exempt ({taxExempt.ref})</Trans>
+										) : (
+											<Trans>Tax exempt</Trans>
+										)}
+									</Button>
+								) : null}
+								{serviceChargeSettings?.enabled &&
+								draft.orderType === 'dine_in' ? (
+									<label className="flex items-center gap-1.5 text-xs font-medium">
+										<Trans>Party size</Trans>
+										<Input
+											type="number"
+											min={1}
+											max={500}
+											className="h-8 w-16"
+											value={String(partySize)}
+											onChange={(e) =>
+												setPartySize(Math.max(1, Number(e.target.value) || 1))
+											}
+										/>
+									</label>
+								) : null}
+								{computedServiceCharge.applied ? (
+									<Button
+										type="button"
+										size="md"
+										variant="outline"
+										onClick={() => setRemoveChargeOpen(true)}
+									>
+										<Trans>
+											Remove {computedServiceCharge.label} (
+											{money(computedServiceCharge.amountCents)})
+										</Trans>
+									</Button>
+								) : null}
+							</div>
+						) : null}
+						{taxExemptOpen ? (
+							<div
+								className="mt-3 space-y-2 rounded-lg border p-3"
+								data-tax-exempt-dialog
+							>
+								<p className="text-sm font-semibold">
+									<Trans>Tax-exempt certificate</Trans>
+								</p>
+								<Input
+									placeholder={_(t`Certificate number (up to 40 chars)`)}
+									maxLength={40}
+									value={taxExemptRefInput}
+									onChange={(e) => setTaxExemptRefInput(e.target.value)}
+								/>
+								<Input
+									placeholder={_(t`Organization name`)}
+									maxLength={120}
+									value={taxExemptOrgInput}
+									onChange={(e) => setTaxExemptOrgInput(e.target.value)}
+								/>
+								<div className="flex gap-2">
+									<Button
+										type="button"
+										size="md"
+										variant="primary"
+										disabled={
+											!taxExemptRefInput.trim() || !taxExemptOrgInput.trim()
+										}
+										onClick={() => {
+											setTaxExempt({
+												ref: taxExemptRefInput.trim().slice(0, 40),
+												org: taxExemptOrgInput.trim().slice(0, 120),
+											})
+											setTaxExemptOpen(false)
+										}}
+									>
+										<Trans>Apply</Trans>
+									</Button>
+									{taxExempt ? (
+										<Button
+											type="button"
+											size="md"
+											variant="outline"
+											onClick={() => {
+												setTaxExempt(null)
+												setTaxExemptOpen(false)
+											}}
+										>
+											<Trans>Clear</Trans>
+										</Button>
+									) : null}
+									<Button
+										type="button"
+										size="md"
+										variant="outline"
+										onClick={() => setTaxExemptOpen(false)}
+									>
+										<Trans>Cancel</Trans>
+									</Button>
+								</div>
+							</div>
+						) : null}
+						{removeChargeOpen ? (
+							<div className="mt-3 space-y-2 rounded-lg border p-3">
+								<p className="text-sm font-semibold">
+									<Trans>Remove service charge</Trans>
+								</p>
+								<Input
+									placeholder={_(t`Reason for removal`)}
+									maxLength={200}
+									value={removeChargeReason}
+									onChange={(e) => setRemoveChargeReason(e.target.value)}
+								/>
+								<div className="flex gap-2">
+									<Button
+										type="button"
+										size="md"
+										variant="primary"
+										disabled={!removeChargeReason.trim()}
+										onClick={() => {
+											setServiceChargeRemoved({
+												by: staff,
+												reason: removeChargeReason.trim(),
+												at: new Date().toISOString(),
+											})
+											setRemoveChargeOpen(false)
+										}}
+									>
+										<Trans>Confirm removal</Trans>
+									</Button>
+									<Button
+										type="button"
+										size="md"
+										variant="outline"
+										onClick={() => setRemoveChargeOpen(false)}
+									>
+										<Trans>Cancel</Trans>
+									</Button>
+								</div>
+							</div>
+						) : null}
+						{splitByItemOpen ? (
+							<SplitByItemSheet
+								lines={draft.lines}
+								orderDiscountCents={rawAdjustmentCents}
+								taxRatePercent={draft.taxRatePercent}
+								taxInclusive={draft.taxInclusive ?? false}
+								taxExempt={Boolean(taxExempt)}
+								serviceChargeCents={computedServiceCharge.amountCents}
+								serviceChargeTaxCents={computedServiceCharge.taxCents}
+								paidCheckNumbers={paidCheckNumbers}
+								money={money}
+								onPayCheck={(check) => {
+									setActiveCheck(check)
+									setMode({ kind: 'custom' })
+									setCustomDigits(String(check.totalCents))
+									setPaidCheckNumbers((prev) =>
+										prev.includes(check.checkNumber)
+											? prev
+											: [...prev, check.checkNumber],
+									)
+									setSplitByItemOpen(false)
+								}}
+								onClose={() => setSplitByItemOpen(false)}
+							/>
+						) : null}
 						<Reveal open={mode.kind === 'split'}>
 							<p className="tnum text-muted-foreground pt-2 text-sm">
 								<Trans>

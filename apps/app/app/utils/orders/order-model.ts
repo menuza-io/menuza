@@ -11,6 +11,18 @@ export const orderSchema = z.object({
 	paymentStatus: z.string(),
 	paymentMethod: z.enum(['handoff', 'online']),
 	paymentProcessor: z.string().nullable().optional(),
+	revision: z.number().int().optional().catch(1),
+	timeChangeCount: z.number().int().optional().catch(0),
+	paidCents: z.number().int().optional().catch(undefined),
+	amountDueCents: z.number().int().optional().catch(undefined),
+	taxExempt: z
+		.object({
+			ref: z.string(),
+			org: z.string(),
+		})
+		.nullable()
+		.optional()
+		.catch(null),
 	subtotalCents: z.number().int().optional(),
 	taxCents: z.number().int().optional(),
 	deliveryFeeCents: z.number().int().optional(),
@@ -133,6 +145,8 @@ export const orderSchema = z.object({
 	lines: z.array(
 		z.object({
 			kind: z.enum(['catalog', 'custom']).optional().catch(undefined),
+			itemId: z.string().optional().catch(undefined),
+			variantId: z.string().nullable().optional().catch(undefined),
 			itemName: z.string(),
 			quantity: z.number(),
 			unitPriceCents: z.number(),
@@ -142,6 +156,8 @@ export const orderSchema = z.object({
 			variantNames: z.array(z.string()).optional(),
 			options: z.array(
 				z.object({
+					groupId: z.string().optional().catch(undefined),
+					optionId: z.string().optional().catch(undefined),
 					optionName: z.string(),
 					quantity: z.number(),
 				}),

@@ -148,6 +148,8 @@ export function linkReceiptOrder(
 		currency: full.currency,
 		subtotalCents: full.subtotalCents,
 		taxCents: full.taxCents,
+		// Tax-exemption status and certificate ref belong on the receipt (#166).
+		taxExempt: full.taxExempt,
 		deliveryFeeCents: full.deliveryFeeCents,
 		tipCents: full.tipCents,
 		serviceFeeCents: full.serviceFeeCents,

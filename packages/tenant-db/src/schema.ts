@@ -24,9 +24,7 @@ import {
 	RESTAURANT_ORDER_STATUS_VALUES,
 	RESTAURANT_PAYMENT_STATUS_VALUES,
 } from '@repo/common/restaurant-orders'
-import {
-	CATERING_QUOTE_STATUSES,
-} from '@repo/common/catering'
+import { CATERING_QUOTE_STATUSES } from '@repo/common/catering'
 import {
 	QR_ORDER_SOURCE_VALUES,
 	QR_TAB_PAYMENT_STATUS_VALUES,
@@ -1352,6 +1350,14 @@ export const restaurantOrders = sqliteTable(
 		cateringConfirmedAt: integer('catering_confirmed_at', {
 			mode: 'timestamp',
 		}),
+		// Order editing (#162) and tax-exempt (#166), migration 0072.
+		// `revision` starts at 1 and increments on every operator edit;
+		// `time_change_count` tracks scheduled/ready time changes (max 1 without
+		// manager override). `tax_exempt_*` holds the certificate ref and org name.
+		revision: integer('revision').notNull().default(1),
+		timeChangeCount: integer('time_change_count').notNull().default(0),
+		taxExemptRef: text('tax_exempt_ref'),
+		taxExemptOrg: text('tax_exempt_org'),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),
@@ -1401,6 +1407,60 @@ export const restaurantOrders = sqliteTable(
 		index('idx_restaurant_orders_tab').on(table.tabId),
 		index('idx_restaurant_orders_table_created').on(
 			table.tableId,
+			table.createdAt,
+		),
+		// Order history filters (#224).
+		index('idx_restaurant_orders_created_at').on(table.createdAt),
+		index('idx_restaurant_orders_fulfillment_created').on(
+			table.fulfillment,
+			table.createdAt,
+		),
+		index('idx_restaurant_orders_payment_method_created').on(
+			table.paymentMethod,
+			table.createdAt,
+		),
+		index('idx_restaurant_orders_tax_exempt')
+			.on(table.taxExemptRef)
+			.where(sql`${table.taxExemptRef} is not null`),
+	],
+)
+
+/**
+ * Append-only revision history for operator edits on online orders (#162).
+ * Each edit writes one row with the new revision number, snapshot of lines and
+ * totals, editor id/name, and reason.
+ */
+export const restaurantOrderRevisions = sqliteTable(
+	'restaurant_order_revisions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
+		revision: integer('revision').notNull(),
+		lines: text('lines', { mode: 'json' }).notNull(),
+		totals: text('totals', { mode: 'json' }).notNull(),
+		changes: text('changes', { mode: 'json' }),
+		reason: text('reason'),
+		actorId: text('actor_id').notNull(),
+		actorName: text('actor_name'),
+		idempotencyKey: text('idempotency_key'),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		uniqueIndex('restaurant_order_revisions_order_rev_unique').on(
+			table.orderId,
+			table.revision,
+		),
+		uniqueIndex('restaurant_order_revisions_idempotency_unique')
+			.on(table.orderId, table.idempotencyKey)
+			.where(sql`${table.idempotencyKey} is not null`),
+		index('idx_restaurant_order_revisions_order').on(
+			table.orderId,
 			table.createdAt,
 		),
 	],
@@ -1641,7 +1701,7 @@ export const cateringPayments = sqliteTable(
 		orderId: text('order_id')
 			.notNull()
 			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
-		kind: text('kind', { enum: ['balance'] })
+		kind: text('kind', { enum: ['balance', 'pay_link'] })
 			.notNull()
 			.default('balance'),
 		amountCents: integer('amount_cents').notNull(),
@@ -3085,7 +3145,7 @@ export const posOrders = sqliteTable(
 		revision: integer('revision').notNull(),
 		status: text('status', { enum: [...POS_ORDER_STATUSES] }).notNull(),
 		orderType: text('order_type', {
-			enum: ['dine_in', 'takeaway', 'drive_through'],
+			enum: ['dine_in', 'takeaway', 'drive_through', 'delivery'],
 		}).notNull(),
 		/** Lane or vehicle for a drive-through order (#404). Not a guest name. */
 		driveThroughNote: text('drive_through_note'),
@@ -3155,6 +3215,34 @@ export const posOrders = sqliteTable(
 		rungUpAt: integer('rung_up_at').notNull(),
 		receivedAt: integer('received_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
+		// Tax-exempt (#166), phone delivery (#164), service charge (#397) and
+		// pay-link balance version (#163), migration 0072.
+		taxExemptRef: text('tax_exempt_ref'),
+		taxExemptOrg: text('tax_exempt_org'),
+		deliveryAddress: text('delivery_address'),
+		deliveryUnit: text('delivery_unit'),
+		deliveryNotes: text('delivery_notes'),
+		deliveryZoneId: text('delivery_zone_id'),
+		deliveryZoneName: text('delivery_zone_name'),
+		deliveryFeeCents: integer('delivery_fee_cents').notNull().default(0),
+		deliveryLat: real('delivery_lat'),
+		deliveryLng: real('delivery_lng'),
+		deliveryPostalCode: text('delivery_postal_code'),
+		deliveryMinOverrideByStaffId: text('delivery_min_override_by_staff_id'),
+		deliveryMinOverrideByStaffName: text('delivery_min_override_by_staff_name'),
+		partySize: integer('party_size'),
+		serviceChargeCents: integer('service_charge_cents').notNull().default(0),
+		serviceChargeTaxCents: integer('service_charge_tax_cents')
+			.notNull()
+			.default(0),
+		serviceChargeLabel: text('service_charge_label'),
+		serviceChargeRemovedByStaffId: text('service_charge_removed_by_staff_id'),
+		serviceChargeRemovedByStaffName: text(
+			'service_charge_removed_by_staff_name',
+		),
+		serviceChargeRemovedReason: text('service_charge_removed_reason'),
+		serviceChargeRemovedAt: integer('service_charge_removed_at'),
+		balanceVersion: integer('balance_version').notNull().default(1),
 		paidAt: integer('paid_at'),
 		voidedAt: integer('voided_at'),
 		refundedAt: integer('refunded_at'),
@@ -3179,6 +3267,10 @@ export const posOrders = sqliteTable(
 		index('idx_pos_orders_guest_name')
 			.on(table.updatedAt)
 			.where(sql`${table.guestName} is not null`),
+		// Phone delivery addresses are cleared 30 days after close (#164).
+		index('idx_pos_orders_delivery_address')
+			.on(table.updatedAt)
+			.where(sql`${table.deliveryAddress} is not null`),
 	],
 )
 
@@ -3211,6 +3303,12 @@ export const posPayments = sqliteTable(
 		reference: text('reference'),
 		// The drawer shift the money moved in (a tab may be paid in a later shift).
 		shiftId: text('shift_id'),
+		// Split check by item (#289): which lines (and fractions) this payment covered,
+		// its check number, per-check tip, and per-check loyalty customer.
+		lineShares: text('line_shares', { mode: 'json' }),
+		checkNumber: integer('check_number'),
+		tipCents: integer('tip_cents').notNull().default(0),
+		loyaltyCustomerId: text('loyalty_customer_id'),
 		paidAt: integer('paid_at').notNull(),
 		receivedAt: integer('received_at').notNull().default(nowMs),
 	},
@@ -8089,6 +8187,10 @@ export type WebsiteFormSubmission = typeof websiteFormSubmissions.$inferSelect
 
 export type RestaurantOrder = typeof restaurantOrders.$inferSelect
 export type NewRestaurantOrder = typeof restaurantOrders.$inferInsert
+export type RestaurantOrderRevision =
+	typeof restaurantOrderRevisions.$inferSelect
+export type NewRestaurantOrderRevision =
+	typeof restaurantOrderRevisions.$inferInsert
 export type RestaurantOrderRefund = typeof restaurantOrderRefunds.$inferSelect
 export type CateringQuote = typeof cateringQuotes.$inferSelect
 export type NewCateringQuote = typeof cateringQuotes.$inferInsert
@@ -10935,7 +11037,9 @@ export const invTransferLines = sqliteTable(
 		// transfer was sent (#526) and never changed after. Null: no price was
 		// set for the item, so the receiver is charged the cost above.
 		priceMicro: integer('price_micro'),
-		priceSource: text('price_source', { enum: INV_TRANSFER_PRICE_SOURCE_VALUES }),
+		priceSource: text('price_source', {
+			enum: INV_TRANSFER_PRICE_SOURCE_VALUES,
+		}),
 		sortOrder: integer('sort_order').notNull().default(0),
 	},
 	(table) => [
@@ -11889,9 +11993,15 @@ export const restaurantOrderSteps = sqliteTable(
 		offline: integer('offline', { mode: 'boolean' }).notNull().default(false),
 	},
 	(table) => [
-		index('idx_restaurant_order_steps_order').on(table.orderId, table.recordedAt),
+		index('idx_restaurant_order_steps_order').on(
+			table.orderId,
+			table.recordedAt,
+		),
 		index('idx_restaurant_order_steps_step_at').on(table.step, table.at),
-		check('chk_restaurant_order_steps_step', oneOf(table.step, ORDER_STEP_VALUES)),
+		check(
+			'chk_restaurant_order_steps_step',
+			oneOf(table.step, ORDER_STEP_VALUES),
+		),
 		check(
 			'chk_restaurant_order_steps_event',
 			oneOf(table.event, ORDER_STEP_EVENT_VALUES),
@@ -11899,7 +12009,6 @@ export const restaurantOrderSteps = sqliteTable(
 	],
 )
 export type RestaurantOrderStepRecord = typeof restaurantOrderSteps.$inferSelect
-
 
 // ---------------------------------------------------------------------------
 // Cloud printers (#117, #426)
@@ -12012,7 +12121,6 @@ export const printJobs = sqliteTable(
 export type PrintDevice = typeof printDevices.$inferSelect
 export type PrintJob = typeof printJobs.$inferSelect
 
-
 // ---------------------------------------------------------------------------
 // Own-driver deliveries (#287, #324). The restaurant's own drivers take ready
 // delivery orders as a run. Regional data only: a run names a driver (a staff
@@ -12102,7 +12210,10 @@ export const deliveryRuns = sqliteTable(
 			table.status,
 			table.createdAt,
 		),
-		check('chk_delivery_runs_status', oneOf(table.status, DELIVERY_RUN_STATUS_VALUES)),
+		check(
+			'chk_delivery_runs_status',
+			oneOf(table.status, DELIVERY_RUN_STATUS_VALUES),
+		),
 		check(
 			'chk_delivery_runs_actor',
 			oneOf(table.createdByKind, DELIVERY_ACTOR_KIND_VALUES),
@@ -12152,7 +12263,10 @@ export const deliveryRunStops = sqliteTable(
 		uniqueIndex('uniq_delivery_stops_run_no').on(table.runId, table.stopNo),
 		index('idx_delivery_stops_run').on(table.runId),
 		index('idx_delivery_stops_order').on(table.orderId),
-		check('chk_delivery_stops_status', oneOf(table.status, DELIVERY_STOP_STATUS_VALUES)),
+		check(
+			'chk_delivery_stops_status',
+			oneOf(table.status, DELIVERY_STOP_STATUS_VALUES),
+		),
 		check(
 			'chk_delivery_stops_problem',
 			sql`${table.problemKind} is null or ${table.problemKind} in ('not_home', 'wrong_address', 'refused', 'cannot_reach', 'other')`,
@@ -12201,7 +12315,10 @@ export const deliveryDriverNotices = sqliteTable(
 	},
 	(table) => [
 		index('idx_delivery_notices_staff').on(table.staffId, table.readAt),
-		check('chk_delivery_notices_kind', oneOf(table.kind, DELIVERY_NOTICE_KIND_VALUES)),
+		check(
+			'chk_delivery_notices_kind',
+			oneOf(table.kind, DELIVERY_NOTICE_KIND_VALUES),
+		),
 	],
 )
 

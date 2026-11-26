@@ -100,6 +100,9 @@ export type Totals = {
 	taxCents: number
 	tipCents: number
 	totalCents: number
+	deliveryFeeCents?: number
+	serviceChargeCents?: number
+	serviceChargeTaxCents?: number
 }
 
 export const lineUnitCents = (line: CartLine): number =>
@@ -122,9 +125,16 @@ export function computeTotals(input: {
 	taxRatePercent: number
 	/** Prices already include the tax: it is shown, not added. */
 	taxInclusive?: boolean
+	/** Tax-exempt order (#166): removes all tax. */
+	taxExempt?: boolean
 	tipPercent?: number
 	tipCents?: number
 	adjustments?: Adjustment[]
+	/** Phone delivery fee (#164). */
+	deliveryFeeCents?: number
+	/** Automatic service charge or large-party gratuity (#397). */
+	serviceChargeCents?: number
+	serviceChargeTaxCents?: number
 }): Totals {
 	const subtotalCents = input.lines.reduce((s, l) => s + lineTotalCents(l), 0)
 	const adjustments = input.adjustments ?? []
@@ -132,14 +142,6 @@ export function computeTotals(input: {
 		subtotalCents,
 		adjustments.reduce((s, a) => s + a.amountCents, 0),
 	)
-	// A discount that says which line took what shrinks that line's taxable
-	// amount, the way the server does it online: taxed and untaxed parts of a line
-	// lose the discount in proportion, and a discount on a line with nothing
-	// taxable never lowers the tax. Discounts without line amounts (a loyalty
-	// reward, a sale loaded from another terminal) shrink what is left in
-	// proportion to the whole bill.
-	// The shared calculation (`@repo/common/pos-discount-base`) is also what the
-	// ZATCA invoice uses, so its VAT is this VAT.
 	const perLine = sumLineAmounts(adjustments)
 	const { taxableAfterCents: taxBase } = discountedTaxableCents({
 		lines: input.lines.map((line) => ({
@@ -151,10 +153,18 @@ export function computeTotals(input: {
 	})
 	const rate = Math.max(0, Math.min(100, input.taxRatePercent || 0))
 	const inclusive = input.taxInclusive === true
+	const deliveryFeeCents = Math.max(0, input.deliveryFeeCents ?? 0)
+	const serviceChargeCents = Math.max(0, input.serviceChargeCents ?? 0)
+	const serviceChargeTaxCents = input.taxExempt
+		? 0
+		: Math.max(0, input.serviceChargeTaxCents ?? 0)
 	// Inclusive: the part of the price that is tax, as the engine computes it.
-	const taxCents = inclusive
-		? Math.round((taxBase * rate) / (100 + rate))
-		: Math.round((taxBase * rate) / 100)
+	const lineTaxCents = input.taxExempt
+		? 0
+		: inclusive
+			? Math.round((taxBase * rate) / (100 + rate))
+			: Math.round((taxBase * rate) / 100)
+	const taxCents = lineTaxCents + serviceChargeTaxCents
 	// A tip is a percentage of the subtotal before discounts.
 	const tipCents =
 		input.tipCents ??
@@ -164,8 +174,17 @@ export function computeTotals(input: {
 		adjustmentCents,
 		taxCents,
 		tipCents,
+		...(deliveryFeeCents > 0 ? { deliveryFeeCents } : {}),
+		...(serviceChargeCents > 0
+			? { serviceChargeCents, serviceChargeTaxCents }
+			: {}),
 		totalCents:
-			subtotalCents - adjustmentCents + (inclusive ? 0 : taxCents) + tipCents,
+			subtotalCents -
+			adjustmentCents +
+			deliveryFeeCents +
+			serviceChargeCents +
+			(inclusive ? 0 : taxCents) +
+			tipCents,
 	}
 }
 

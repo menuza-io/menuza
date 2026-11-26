@@ -37,6 +37,12 @@ import {
 } from '../services/order-service.ts'
 import { inventorySaleQueue } from '../services/inventory-sales-service.ts'
 import { printTillSale } from '../services/print-hooks.ts'
+import { sendOrderPayLinkRequestSchema } from '@repo/common/order-pay-links'
+import {
+	autocompleteDeliveryPlacesForLocation,
+	quoteDeliveryForPosLocation,
+} from './delivery.ts'
+import { createPosOrderPayLink } from '../services/order-pay-links.ts'
 import { queueOrderPrint } from '../services/print-service.ts'
 import { listKdsStations } from '../services/kds-service.ts'
 import { scheduleOrderJourneys } from '../services/order-journeys.ts'
@@ -679,6 +685,114 @@ posRoutes.post('/orders', async (c) => {
 	}
 })
 
+/**
+ * `POST /pos/orders/:id/pay-link` (#163): create (and optionally send) a
+ * pay-what-you-owe capability link for a Station phone order.
+ */
+posRoutes.post('/orders/:id/pay-link', async (c) => {
+	const auth = await authenticatePosDevice(c)
+	if ('error' in auth) return auth.error
+	const locationId = auth.pos.device.locationId
+	if (!locationId) return posError(400, 'location_required')
+	const body = await readBody(c)
+	if ('error' in body) return body.error
+	const parsed = sendOrderPayLinkRequestSchema.safeParse(body.raw ?? {})
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const result = await createPosOrderPayLink({
+		orgId: auth.pos.orgId,
+		orderId: c.req.param('id'),
+		locationId,
+		channel: parsed.data.channel,
+		recipient: parsed.data.recipient,
+	})
+	if (!result.ok) {
+		return c.json(
+			{ error: result.failure.code, message: result.failure.message },
+			result.failure.status as 403 | 404 | 409 | 422,
+			{ 'Cache-Control': 'private, no-store' },
+		)
+	}
+	return c.json(result.data, 200, { 'Cache-Control': 'private, no-store' })
+})
+
+const posDeliveryPlacesSchema = z.strictObject({
+	q: z.string().max(200),
+	sessionToken: z.string().trim().min(1).max(100).optional(),
+	locale: z.string().max(20).optional(),
+})
+
+const posDeliveryQuoteSchema = z
+	.strictObject({
+		placeId: z.string().trim().min(1).max(512).optional(),
+		address: z.string().trim().min(3).max(300).optional(),
+		unit: z.string().trim().max(50).optional(),
+		sessionToken: z.string().trim().min(1).max(100).optional(),
+		locale: z.string().max(20).optional(),
+		subtotal: z.number().min(0).max(1_000_000).optional(),
+	})
+	.refine((value) => Boolean(value.placeId || value.address), {
+		message: 'Choose an address',
+		path: ['address'],
+	})
+
+/**
+ * `POST /pos/delivery/places` (#164): address suggestions for Station phone
+ * delivery, bound to the terminal's own location.
+ */
+posRoutes.post('/delivery/places', async (c) => {
+	const auth = await authenticatePosDevice(c)
+	if ('error' in auth) return auth.error
+	const locationId = auth.pos.device.locationId
+	if (!locationId) return posError(400, 'location_required')
+	const body = await readBody(c)
+	if ('error' in body) return body.error
+	const parsed = posDeliveryPlacesSchema.safeParse(body.raw)
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const result = await autocompleteDeliveryPlacesForLocation(
+		auth.pos.orgId,
+		locationId,
+		parsed.data,
+	)
+	if (!result.ok) {
+		return c.json(
+			{ error: result.failure.code, message: result.failure.message },
+			result.failure.status as 404 | 422 | 503,
+			{ 'Cache-Control': 'private, no-store' },
+		)
+	}
+	return c.json({ suggestions: result.suggestions }, 200, {
+		'Cache-Control': 'private, no-store',
+	})
+})
+
+/**
+ * `POST /pos/delivery/quote` (#164): geocode, zone check, fee, minimum, and
+ * signed quote token bound strictly to the terminal's location.
+ */
+posRoutes.post('/delivery/quote', async (c) => {
+	const auth = await authenticatePosDevice(c)
+	if ('error' in auth) return auth.error
+	const locationId = auth.pos.device.locationId
+	if (!locationId) return posError(400, 'location_required')
+	const body = await readBody(c)
+	if ('error' in body) return body.error
+	const parsed = posDeliveryQuoteSchema.safeParse(body.raw)
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const result = await quoteDeliveryForPosLocation(
+		auth.pos.orgId,
+		locationId,
+		parsed.data,
+	)
+	if (!result.ok) {
+		return c.json(
+			{ error: result.failure.code, message: result.failure.message },
+			result.failure.status as 404 | 422 | 503,
+			{ 'Cache-Control': 'private, no-store' },
+		)
+	}
+	return c.json(result.body, 200, { 'Cache-Control': 'private, no-store' })
+})
+
 const reprintSchema = z.strictObject({
 	orderId: z.string().uuid(),
 	kind: z.enum(['kitchen', 'receipt']),
@@ -700,7 +814,9 @@ posRoutes.post('/print/reprint', async (c) => {
 	if (!parsed.success) return posError(400, 'invalid_request')
 	const locationId = auth.pos.device.locationId
 	if (!locationId) {
-		return c.json({ cloudPrinted: false }, 200, { 'Cache-Control': 'private, no-store' })
+		return c.json({ cloudPrinted: false }, 200, {
+			'Cache-Control': 'private, no-store',
+		})
 	}
 	const result = await queueOrderPrint(auth.pos.db, {
 		orgId: auth.pos.orgId,

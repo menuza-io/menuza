@@ -475,6 +475,10 @@ msgstr "All times are in the restaurant's time zone: {zone}."
 msgid "Amount"
 msgstr "Amount"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Amount due"
+msgstr "Amount due"
+
 #: src/lib/reservations/labels.ts:378
 msgid "Amount due now"
 msgstr "Amount due now"
@@ -812,7 +816,7 @@ msgstr "Careers"
 msgid "Catering"
 msgstr "Catering"
 
-#: src/lib/catering/labels.ts:180
+#: src/lib/catering/labels.ts:184
 msgid "Catering is for pickup only."
 msgstr "Catering is for pickup only."
 
@@ -1206,6 +1210,10 @@ msgstr "Copy link"
 msgid "Cost"
 msgstr "Cost"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Could not start payment. Please try again."
+msgstr "Could not start payment. Please try again."
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Coupon code"
@@ -1337,7 +1345,7 @@ msgstr "Delivery fee {amount}"
 msgid "Delivery fee and discounts at checkout"
 msgstr "Delivery fee and discounts at checkout"
 
-#: src/lib/catering/labels.ts:188
+#: src/lib/catering/labels.ts:191
 msgid "Delivery from {feeText}."
 msgstr "Delivery from {feeText}."
 
@@ -2538,6 +2546,7 @@ msgstr "One item. Paid extras are still charged."
 #: src/pages/catering/balance.astro.ts:3
 #: src/pages/catering/quote.astro.ts:3
 #: src/pages/gift-cards/index.astro.ts:3
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/profile/gift-cards.astro.ts:3
 msgid "One moment…"
 msgstr "One moment…"
@@ -2673,6 +2682,7 @@ msgstr "Optional"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Order"
 msgstr "Order"
@@ -2740,6 +2750,10 @@ msgstr "Order received"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Order summary"
 msgstr "Order summary"
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "Order total"
+msgstr "Order total"
 
 #: src/lib/ordering-labels.ts:147
 msgid "Order type"
@@ -2873,6 +2887,10 @@ msgstr "Paid"
 msgid "Paid in full. Thank you."
 msgstr "Paid in full. Thank you."
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Paid so far"
+msgstr "Paid so far"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Paid. Thank you!"
 msgstr "Paid. Thank you!"
@@ -2921,8 +2939,13 @@ msgstr "Pay and send"
 msgid "Pay at pickup"
 msgstr "Pay at pickup"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Pay for your order"
+msgstr "Pay for your order"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/catering/labels.ts:52
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "Pay now"
@@ -3001,6 +3024,10 @@ msgstr "Payment received. Thank you: your catering order is confirmed."
 msgid "Payment under review"
 msgstr "Payment under review"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Payment was cancelled. You can try again below."
+msgstr "Payment was cancelled. You can try again below."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Payment was not finished. Nothing was charged."
 msgstr "Payment was not finished. Nothing was charged."
@@ -3057,7 +3084,7 @@ msgstr "Pickup {when}"
 msgid "Pickup instructions"
 msgstr "Pickup instructions"
 
-#: src/lib/catering/labels.ts:189
+#: src/lib/catering/labels.ts:192
 msgid "Pickup is available too."
 msgstr "Pickup is available too."
 
@@ -3954,6 +3981,10 @@ msgstr "Thank you for your order!"
 msgid "Thank you for your purchase!"
 msgstr "Thank you for your purchase!"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Thank you! Your payment has been received."
+msgstr "Thank you! Your payment has been received."
+
 #: src/components/SitePopup.astro.ts:3
 msgid "Thank you."
 msgstr "Thank you."
@@ -4107,7 +4138,7 @@ msgstr "The kitchen has paused new orders for a moment. Please ask a team member
 msgid "The kitchen is closed right now."
 msgstr "The kitchen is closed right now."
 
-#: src/lib/catering/labels.ts:167
+#: src/lib/catering/labels.ts:171
 msgid "The largest order we take online is {maxText}."
 msgstr "The largest order we take online is {maxText}."
 
@@ -4123,7 +4154,7 @@ msgstr "The link may be incomplete or may have expired."
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "The link may be incomplete. You can start a new order from the menu."
 
-#: src/lib/catering/labels.ts:162
+#: src/lib/catering/labels.ts:166
 msgid "The minimum catering order is {minText}."
 msgstr "The minimum catering order is {minText}."
 
@@ -4231,6 +4262,10 @@ msgstr "The waitlist is not available right now. Please call the restaurant."
 #: src/lib/reservations/labels.ts:474
 msgid "There are no upcoming seatings to book right now."
 msgstr "There are no upcoming seatings to book right now."
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "There is nothing due on this order."
+msgstr "There is nothing due on this order."
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -4416,6 +4451,10 @@ msgstr "This location is not available for ordering."
 msgid "This order can't be cancelled here."
 msgstr "This order can't be cancelled here."
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "This order is already paid in full."
+msgstr "This order is already paid in full."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "This order is below the minimum for delivery."
@@ -4442,6 +4481,10 @@ msgstr "This order link has expired. You can still order from the menu."
 msgid "This order was cancelled"
 msgstr "This order was cancelled"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "This order was cancelled."
+msgstr "This order was cancelled."
+
 #: src/components/GonePage.astro.ts:3
 msgid "This page is no longer available."
 msgstr "This page is no longer available."
@@ -4449,6 +4492,14 @@ msgstr "This page is no longer available."
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
 msgstr "This payment is no longer open"
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "This payment link has expired. Ask the restaurant for a new one."
+msgstr "This payment link has expired. Ask the restaurant for a new one."
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "This payment link is not valid. Ask the restaurant for a new one."
+msgstr "This payment link is not valid. Ask the restaurant for a new one."
 
 #: src/lib/reservations/labels.ts:503
 msgid "This phone number already has a reservation at that time."
@@ -4870,7 +4921,7 @@ msgstr "We are still confirming your payment. Check your tab again in a minute."
 msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 msgstr "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 
-#: src/lib/catering/labels.ts:174
+#: src/lib/catering/labels.ts:178
 msgid "We cater for up to {maxGuests} guests."
 msgstr "We cater for up to {maxGuests} guests."
 
@@ -5013,11 +5064,11 @@ msgstr "We couldn't send your refund automatically. Please call the restaurant."
 msgid "We couldn't start payment. Please try again."
 msgstr "We couldn't start payment. Please try again."
 
-#: src/lib/catering/labels.ts:184
+#: src/lib/catering/labels.ts:188
 msgid "We deliver catering orders to {where}."
 msgstr "We deliver catering orders to {where}."
 
-#: src/lib/catering/labels.ts:185
+#: src/lib/catering/labels.ts:189
 msgid "We deliver catering orders."
 msgstr "We deliver catering orders."
 
@@ -5053,7 +5104,7 @@ msgstr "We know you are on your way"
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "We loaded your order from your call. Review it and check out."
 
-#: src/lib/catering/labels.ts:157
+#: src/lib/catering/labels.ts:161
 msgid "We need at least {hours} hours of notice."
 msgstr "We need at least {hours} hours of notice."
 
@@ -5077,7 +5128,7 @@ msgstr "We sent a confirmation to your email or phone."
 msgid "We sent a link to confirm your email"
 msgstr "We sent a link to confirm your email"
 
-#: src/lib/catering/labels.ts:196
+#: src/lib/catering/labels.ts:198
 msgid "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
 msgstr "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
 

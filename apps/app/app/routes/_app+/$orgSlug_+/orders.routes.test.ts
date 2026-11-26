@@ -97,6 +97,10 @@ describe('orders routes', () => {
 			canViewCustomers: true,
 			// Cloud printers (#117) are off unless the organization has the flag.
 			printersEnabled: false,
+			// Pay links (#163) and order edits (#162) are off unless enabled.
+			payLinksEnabled: false,
+			orderEditsEnabled: false,
+			isUsNode: true,
 		})
 	})
 

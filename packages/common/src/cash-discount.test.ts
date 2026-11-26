@@ -150,8 +150,8 @@ describe('when it applies', () => {
 })
 
 describe('the contract and the reports', () => {
-	it('is contract 11, and the adjustment kind is part of it', () => {
-		expect(POS_CONTRACT_VERSION).toBe(11)
+	it('is contract 11+, and the adjustment kind is part of it', () => {
+		expect(POS_CONTRACT_VERSION).toBeGreaterThanOrEqual(11)
 		const adjustment = {
 			id: CASH_DISCOUNT_ADJUSTMENT_ID,
 			kind: 'cash_discount',

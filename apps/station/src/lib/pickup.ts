@@ -47,6 +47,8 @@ export function formatPickupAt(
 	}).format(at)
 }
 
+import { type PosOrderDelivery } from '@repo/common/pos-orders'
+
 export type PhonePickup = {
 	customerName: string
 	customerPhone: string
@@ -54,4 +56,8 @@ export type PhonePickup = {
 	pickupTimeZone: string
 	/** The guest agreed to one text on this number when the order is ready. */
 	readyTextOptIn?: boolean
+	/** Phone order fulfillment (#164): pickup (default) or delivery. */
+	fulfillment?: 'pickup' | 'delivery'
+	/** Verified delivery quote & address when fulfillment === 'delivery'. */
+	delivery?: PosOrderDelivery | null
 }

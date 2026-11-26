@@ -52,6 +52,18 @@ import {
 	getOperatorSlotLimitsToday,
 	resetOperatorSlotLimits,
 } from '../services/order-slot-limits-service.ts'
+import { reviseOrderRequestSchema } from '@repo/common/order-edits'
+import { sendOrderPayLinkRequestSchema } from '@repo/common/order-pay-links'
+import { createOperatorOrderPayLink } from '../services/order-pay-links.ts'
+import {
+	listOrderRevisions,
+	reviseOperatorOrder,
+} from '../services/order-revise-service.ts'
+import {
+	exportOrderHistoryCsv,
+	orderHistoryQuerySchema,
+	queryOrderHistory,
+} from '../services/order-history-service.ts'
 import {
 	resolveOrderCustomerKeys,
 	type OrderLinkAccess,
@@ -383,7 +395,65 @@ operatorOrderRoutes.get('/', async (c) => {
 	const denied = await assertOperatorOrg(auth.auth.orgId)
 	if (denied) return denied.error
 
-	const parsed = listQuerySchema.safeParse(c.req.query())
+	const rawQuery = c.req.query()
+	const hasHistoryParams = Boolean(
+		rawQuery.from ||
+		rawQuery.to ||
+		rawQuery.q ||
+		rawQuery.fulfillment ||
+		rawQuery.channel ||
+		rawQuery.paymentMethod ||
+		rawQuery.taxExempt ||
+		rawQuery.locationId ||
+		rawQuery.sort ||
+		rawQuery.cursor,
+	)
+
+	if (hasHistoryParams) {
+		const parsed = orderHistoryQuerySchema.safeParse(rawQuery)
+		if (!parsed.success) {
+			return c.json({ error: 'Invalid query' }, 400, noStoreHeaders())
+		}
+		if (parsed.data.status && !orderStatus(parsed.data.status)) {
+			return c.json({ error: 'Invalid status filter' }, 400, noStoreHeaders())
+		}
+		try {
+			const history = await queryOrderHistory({
+				orgId: auth.auth.orgId,
+				locationIds: auth.auth.locationIds,
+				query: parsed.data,
+			})
+			if (!history.ok) {
+				return c.json(
+					{ error: history.failure.code, message: history.failure.message },
+					history.failure.status as 400 | 422,
+					noStoreHeaders(),
+				)
+			}
+			return c.json(
+				{
+					orders: await withCustomerKeys(auth.auth, history.data.orders),
+					nextCursor: history.data.nextCursor,
+					totalCount: history.data.totalCount,
+					serverNow: Date.now(),
+				},
+				200,
+				noStoreHeaders(),
+			)
+		} catch (error) {
+			console.error(
+				`Failed to query order history for org ${auth.auth.orgId}:`,
+				error instanceof Error ? error.message : error,
+			)
+			return c.json(
+				{ error: 'Tenant Database unavailable' },
+				500,
+				noStoreHeaders(),
+			)
+		}
+	}
+
+	const parsed = listQuerySchema.safeParse(rawQuery)
 	if (!parsed.success) {
 		return c.json({ error: 'Invalid query' }, 400, noStoreHeaders())
 	}
@@ -422,14 +492,68 @@ operatorOrderRoutes.get('/', async (c) => {
 	}
 })
 
-const deliveryCheckBodySchema = z
-	.strictObject({
-		locationId: z.string().trim().min(1).max(100),
-		address: z.string().trim().min(3).max(300),
-		/** An items subtotal in major units, to see the fee for that cart. */
-		subtotal: z.number().min(0).max(1_000_000).optional(),
-		locale: z.string().max(20).optional(),
-	})
+/**
+ * `GET /operator/orders/export` (#224): formula-safe CSV export of the
+ * filtered order history, omitting guest name/phone unless the member holds
+ * the customer read grant (`link.customers`).
+ */
+operatorOrderRoutes.get('/export', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:read')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+
+	const parsed = orderHistoryQuerySchema.safeParse(c.req.query())
+	if (!parsed.success) {
+		return c.json({ error: 'Invalid query' }, 400, noStoreHeaders())
+	}
+	if (parsed.data.status && !orderStatus(parsed.data.status)) {
+		return c.json({ error: 'Invalid status filter' }, 400, noStoreHeaders())
+	}
+	try {
+		const result = await exportOrderHistoryCsv({
+			orgId: auth.auth.orgId,
+			locationIds: auth.auth.locationIds,
+			query: parsed.data,
+			includeCustomerPii: auth.auth.link.linkCustomers === true,
+		})
+		if (!result.ok) {
+			return c.json(
+				{ error: result.failure.code, message: result.failure.message },
+				result.failure.status as 400 | 422,
+				noStoreHeaders(),
+			)
+		}
+		return new Response(result.data.csv, {
+			status: 200,
+			headers: {
+				...noStoreHeaders(),
+				'Content-Type': 'text/csv; charset=utf-8',
+				'Content-Disposition': 'attachment; filename="orders-history.csv"',
+				'X-Export-Row-Count': String(result.data.rowCount),
+				'X-Export-Truncated': result.data.truncated ? 'true' : 'false',
+			},
+		})
+	} catch (error) {
+		console.error(
+			`Failed to export order history for org ${auth.auth.orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+const deliveryCheckBodySchema = z.strictObject({
+	locationId: z.string().trim().min(1).max(100),
+	address: z.string().trim().min(3).max(300),
+	/** An items subtotal in major units, to see the fee for that cart. */
+	subtotal: z.number().min(0).max(1_000_000).optional(),
+	locale: z.string().max(20).optional(),
+})
 
 /**
  * The operator's Address check on the delivery zones screen (#266): which zone
@@ -937,4 +1061,142 @@ operatorOrderRoutes.post('/:id/refunds', async (c) => {
 			noStoreHeaders(),
 		)
 	}
+})
+
+/**
+ * `POST /operator/orders/:id/pay-link` (#163): create (and optionally send by
+ * SMS on US nodes or email everywhere) a capability link for the outstanding
+ * balance on an online order.
+ */
+operatorOrderRoutes.post('/:id/pay-link', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:write')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+
+	let body: unknown = {}
+	const rawText = await c.req.text()
+	if (rawText.trim()) {
+		try {
+			body = JSON.parse(rawText)
+		} catch {
+			return c.json({ error: 'invalid_json' }, 400, noStoreHeaders())
+		}
+	}
+	const parsed = sendOrderPayLinkRequestSchema.safeParse(body)
+	if (!parsed.success) {
+		return c.json(
+			{ error: 'invalid_request', message: 'Invalid pay link request.' },
+			400,
+			noStoreHeaders(),
+		)
+	}
+	const result = await createOperatorOrderPayLink({
+		orgId: auth.auth.orgId,
+		orderId: c.req.param('id'),
+		scope: {
+			locationIds: auth.auth.locationIds,
+			userId: auth.auth.userId,
+		},
+		channel: parsed.data.channel,
+		recipient: parsed.data.recipient,
+	})
+	if (!result.ok) {
+		return c.json(
+			{
+				error: result.failure.code,
+				message: result.failure.message,
+			},
+			result.failure.status as 403 | 404 | 409 | 422,
+			noStoreHeaders(),
+		)
+	}
+	return c.json(result.data, 200, noStoreHeaders())
+})
+
+/**
+ * `POST /operator/orders/:id/revise` (#162, #166): edit a placed online order
+ * (items, quantities, comp, time, pickup/delivery, tax-exempt) with optimistic
+ * locking (`expectedRevision`) and idempotency (`Idempotency-Key`).
+ */
+operatorOrderRoutes.post('/:id/revise', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:write')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+
+	let body: unknown
+	try {
+		body = await c.req.json()
+	} catch {
+		return c.json({ error: 'invalid_json' }, 400, noStoreHeaders())
+	}
+	const parsed = reviseOrderRequestSchema.safeParse(body)
+	if (!parsed.success) {
+		return c.json(
+			{
+				error: 'invalid_request',
+				message: parsed.error.issues[0]?.message ?? 'Invalid revision request.',
+			},
+			400,
+			noStoreHeaders(),
+		)
+	}
+	const idempotencyKey = readIdempotencyKey(c)
+	const result = await reviseOperatorOrder({
+		orgId: auth.auth.orgId,
+		orderId: c.req.param('id'),
+		scope: {
+			locationIds: auth.auth.locationIds,
+			userId: auth.auth.userId,
+			operatorName: auth.auth.operatorName,
+			refundProvider: auth.auth.refundProvider,
+		},
+		request: parsed.data,
+		idempotencyKey: idempotencyKey ?? null,
+	})
+	if (!result.ok) {
+		return c.json(
+			{
+				error: result.failure.code,
+				message: result.failure.message,
+				...result.failure.details,
+			},
+			result.failure.status as 403 | 404 | 409 | 422,
+			noStoreHeaders(),
+		)
+	}
+	const [order] = await withCustomerKeys(auth.auth, [result.data.order])
+	return c.json(
+		{
+			order,
+			revision: result.data.revision,
+			replayed: result.data.replayed,
+			dryRun: result.data.dryRun,
+			previousTotalCents: result.data.previousTotalCents,
+			newTotalCents: result.data.newTotalCents,
+			deltaCents: result.data.deltaCents,
+			amountDueCents: result.data.amountDueCents,
+			refundAvailableCents: result.data.refundAvailableCents,
+			suggestedAction: result.data.suggestedAction,
+			removedDiscounts: result.data.removedDiscounts,
+			kdsUpdated: result.data.kdsUpdated,
+			receiptSent: result.data.receiptSent,
+		},
+		200,
+		noStoreHeaders(),
+	)
+})
+
+operatorOrderRoutes.get('/:id/revisions', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:read')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const current = await getOperatorOrder(auth.auth.orgId, c.req.param('id'))
+	if (!current.ok || !orderVisible(auth.auth, current.data.locationId)) {
+		return c.json(ORDER_NOT_FOUND, 404, noStoreHeaders())
+	}
+	const revisions = await listOrderRevisions(auth.auth.orgId, c.req.param('id'))
+	return c.json({ revisions }, 200, noStoreHeaders())
 })

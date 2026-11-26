@@ -95,6 +95,11 @@ import {
 	recordCartSnapshot,
 	toSnapshotLines,
 } from '../services/cart-reminders.ts'
+import { ORDER_PAY_LINK_HEADER } from '@repo/common/order-pay-links'
+import {
+	getPublicPayLinkSummary,
+	startPublicPayLinkPayment,
+} from '../services/order-pay-links.ts'
 import { authenticateCustomer } from './auth.ts'
 
 export const publicOrderRoutes = new Hono()
@@ -1129,6 +1134,64 @@ async function guestReceiptResponse(
 		)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Order pay links (#163): capability token in X-Pay-Link-Token header only.
+// ---------------------------------------------------------------------------
+
+publicOrderRoutes.get('/pay', async (c) => {
+	const identitySchema = z.object({
+		slug: z.string().trim().min(1).max(100).optional(),
+		host: z.string().trim().min(1).max(253).optional(),
+	})
+	const identity = identitySchema.safeParse(c.req.query())
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const token = c.req.header(ORDER_PAY_LINK_HEADER)?.trim() ?? ''
+	if (!token) {
+		return c.json(
+			{ error: 'invalid_pay_link', message: 'Missing payment link token.' },
+			403,
+			noStoreHeaders(),
+		)
+	}
+	const result = await getPublicPayLinkSummary({
+		orgId: organization.organization.id,
+		token,
+	})
+	if (!result.ok) return orderFailureResponse(result.failure)
+	return c.json(result.data, 200, noStoreHeaders())
+})
+
+publicOrderRoutes.post('/pay', async (c) => {
+	const identitySchema = z.object({
+		slug: z.string().trim().min(1).max(100).optional(),
+		host: z.string().trim().min(1).max(253).optional(),
+	})
+	const identity = identitySchema.safeParse(c.req.query())
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const token = c.req.header(ORDER_PAY_LINK_HEADER)?.trim() ?? ''
+	if (!token) {
+		return c.json(
+			{ error: 'invalid_pay_link', message: 'Missing payment link token.' },
+			403,
+			noStoreHeaders(),
+		)
+	}
+	const result = await startPublicPayLinkPayment({
+		orgId: organization.organization.id,
+		token,
+	})
+	if (!result.ok) return orderFailureResponse(result.failure)
+	return c.json(result.data, 200, noStoreHeaders())
+})
 
 publicOrderRoutes.get('/:id', async (c) => {
 	const identitySchema = z.object({
