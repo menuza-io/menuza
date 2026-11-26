@@ -30,8 +30,9 @@ import {
 	type InventoryReader,
 	withInventoryWrite,
 } from '../lib/inventory-write.ts'
-import { recordBatch } from './inventory-batch-service.ts'
+import { addDemand, cateringCommittedForDate } from './catering-demand.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
+import { recordBatch } from './inventory-batch-service.ts'
 import {
 	assertLocationAllowed,
 	assertVersion,
@@ -175,12 +176,18 @@ async function toPlan(
 		)
 		.limit(1)
 		.get()
+	// Branch requests, and what confirmed catering orders of this day will use (#513).
+	const committed = addDemand(
+		await committedFromLocation(db, input.locationId),
+		await cateringCommittedForDate(db, input.locationId, input.date),
+	)
 	const withLevels = new Set(levelRows.map((row) => row.itemId))
 	const canGenerate = made.some(
 		(row) =>
 			row.item.archivedAt === null &&
 			(withLevels.has(row.item.id) ||
-				(row.place?.fillUpToQuantity ?? null) !== null),
+				(row.place?.fillUpToQuantity ?? null) !== null ||
+				(committed.get(row.item.id) ?? 0) > 0),
 	)
 	const byItem = new Map(made.map((row) => [row.item.id, row]))
 	const versions = await loadVersionsAt(
@@ -192,7 +199,6 @@ async function toPlan(
 	const batchByItem = new Map(
 		versions.map((version) => [version.ownerId, version.makesQuantity]),
 	)
-	const committed = await committedFromLocation(db, input.locationId)
 	const tasks: PrepTask[] = []
 	for (const row of rows as TaskRow[]) {
 		const stock = byItem.get(row.itemId)
@@ -349,12 +355,18 @@ export async function generatePrep(
 			versions.map((version) => [version.ownerId, version.makesQuantity]),
 		)
 		// A central kitchen also makes what its branches have asked for.
-		const committed = await committedFromLocation(tx, locationId)
+		const committed = addDemand(
+			await committedFromLocation(tx, locationId),
+			await cateringCommittedForDate(tx, locationId, date),
+		)
 
 		let changed = 0
 		for (const row of active) {
+			// A made item with no level still gets made for confirmed catering (#513).
 			const fillUp =
-				levelOf.get(row.item.id) ?? row.place?.fillUpToQuantity ?? null
+				levelOf.get(row.item.id) ??
+				row.place?.fillUpToQuantity ??
+				((committed.get(row.item.id) ?? 0) > 0 ? 0 : null)
 			const task = taskOf.get(row.item.id)
 			// A made item that is not counted in batches is never made ahead:
 			// its sales use its ingredients directly, so a batch would take the

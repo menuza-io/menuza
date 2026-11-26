@@ -391,6 +391,11 @@ export default function InventoryTodayRoute() {
 						<WorkspacePanel title={<Trans>This week</Trans>}>
 							<WeekList week={data.week} />
 						</WorkspacePanel>
+						{data.catering && data.catering.length > 0 ? (
+							<WorkspacePanel title={<Trans>Catering</Trans>}>
+								<CateringList catering={data.catering} />
+							</WorkspacePanel>
+						) : null}
 						<WorkspacePanel
 							title={<Trans>Waste by reason</Trans>}
 							action={
@@ -1374,6 +1379,78 @@ function WeekList({ week }: { week: Today['week'] }) {
 								<Trans>Delivery</Trans>
 							)}
 						</span>
+					</li>
+				)
+			})}
+		</ul>
+	)
+}
+
+/**
+ * Confirmed catering orders and what they need (#513): "Catering Saturday: 3
+ * items short" with what to order. Dishes with no recipe are named, not counted.
+ */
+function CateringList({
+	catering,
+}: {
+	catering: NonNullable<Today['catering']>
+}) {
+	const { i18n } = useLingui()
+	const quantity = useQuantityFormat()
+	return (
+		<ul
+			className="flex flex-col divide-y rounded-xl border"
+			data-testid="today-catering"
+		>
+			{catering.map((entry) => {
+				const day = new Intl.DateTimeFormat(i18n.locale, {
+					weekday: 'long',
+					day: 'numeric',
+					month: 'short',
+				}).format(localDate(entry.date))
+				const shortCount = entry.short.length
+				const noRecipeText = entry.noRecipe.join(', ')
+				return (
+					<li
+						key={entry.date}
+						className="flex flex-col gap-1 p-3 text-sm"
+						data-testid="today-catering-day"
+					>
+						<span className="font-medium">
+							<bdi>{day}</bdi>
+						</span>
+						{shortCount === 0 ? (
+							<span className="text-muted-foreground">
+								<Trans>Everything for catering is on hand.</Trans>
+							</span>
+						) : (
+							<>
+								<span>
+									<Plural
+										value={shortCount}
+										one="# item short"
+										other="# items short"
+									/>
+								</span>
+								<ul className="text-muted-foreground flex flex-col gap-0.5">
+									{entry.short.map((item) => (
+										<li key={item.itemId}>
+											<span className="wrap-anywhere">{item.itemName}</span>{' '}
+											<bdi dir="ltr" className="tabular-nums">
+												{quantity.format(item.short, {
+													baseUnit: item.baseUnit,
+												})}
+											</bdi>
+										</li>
+									))}
+								</ul>
+							</>
+						)}
+						{entry.noRecipe.length > 0 ? (
+							<span className="text-muted-foreground">
+								<Trans>No recipe, not counted: {noRecipeText}</Trans>
+							</span>
+						) : null}
 					</li>
 				)
 			})}
