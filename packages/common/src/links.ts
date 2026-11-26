@@ -243,6 +243,16 @@ export const GUEST_LINK_TYPES = {
 		since: 1,
 		appRoute: null,
 	},
+	order_pay: {
+		audience: 'guest',
+		// Pay-what-you-owe link for an order (#163): capability token in fragment.
+		path: '/menu/pay',
+		params: { pay: f('p', true) },
+		platforms: ['web'],
+		needs: 'capability_token',
+		since: 1,
+		appRoute: null,
+	},
 	get_app: {
 		audience: 'guest',
 		// The site's own store redirect (#196): it counts the tap per placement and

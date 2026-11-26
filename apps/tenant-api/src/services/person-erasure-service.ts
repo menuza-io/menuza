@@ -1006,7 +1006,16 @@ export async function erasePerson(
 						? (
 								await tx
 									.update(posOrders)
-									.set({ customerPhone: null, guestName: null })
+									.set({
+										customerPhone: null,
+										guestName: null,
+										deliveryAddress: null,
+										deliveryUnit: null,
+										deliveryNotes: null,
+										deliveryLat: null,
+										deliveryLng: null,
+										deliveryPostalCode: null,
+									})
 									.where(
 										inJsonList(digitsOnly(posOrders.customerPhone), phoneForms),
 									)

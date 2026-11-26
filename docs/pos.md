@@ -77,7 +77,16 @@ already took money for.
   only item ids. The region stamps the menu and category each dish sat under
   from the live menu it already reads at upload (`pos_orders.line_catalog`), so
   `POS_CONTRACT_VERSION` stays 11. See `docs/sales-insights.md`.
-- **Contract 11.** `POS_CONTRACT_VERSION` is 11. An adjustment may be
+- **Contract 12.** `POS_CONTRACT_VERSION` is 12. Adds optional phone delivery
+  (`orderType: 'delivery'` + `delivery` payload with signed quote token, fee,
+  zone, and address cleared after 30 days and stripped from revisions/held
+  uploads, #164), optional `taxExempt` certificate (non-SAR only, #166),
+  optional `serviceCharge` / `partySize` automatic service charge and
+  large-party gratuity with removal audit (#397), and optional payment
+  `lineShares`, `checkNumber`, `tipCents`, and `loyaltyCustomerId` for split
+  checks by item (#289). Every new field is optional so contract 1..11 uploads
+  still parse. Deploy order: App, tenant-api, Sites, Station.
+- **Contract 11.** `POS_CONTRACT_VERSION` was 11. An adjustment may be
   `kind: 'cash_discount'` (#375): the percentage a location takes off a bill
   paid entirely in cash, as its own line. An older node cannot read the kind and
   holds that upload, and an older terminal never sends it, so deploy tenant-api
@@ -1122,35 +1131,34 @@ Print paths in Station today: the **guest receipt** (till and online orders) and
 the **kitchen station ticket** (online orders, reprint; till orders for changes
 and cancellations) through the browser print dialog, and, where a location has
 cloud printers, through them (see "Cloud printers" below). The **assembly
-ticket** and **item label** have settings and a preview only: label printers
-are out of scope.
-The kitchen ticket's paid/unpaid line, modifier group names and order-type
-colour stay in Kitchen setup (#420). "Adjusted" means a till tab sent to the
-kitchen in more than one round (online orders cannot be edited after they are
-placed). "Dine-in left out" skips kitchen tickets and automatic prints; a guest
-can still get a receipt by hand.
+ticket** and **item label** have settings and a preview only: label printers are
+out of scope. The kitchen ticket's paid/unpaid line, modifier group names and
+order-type colour stay in Kitchen setup (#420). "Adjusted" means a till tab sent
+to the kitchen in more than one round (online orders cannot be edited after they
+are placed). "Dine-in left out" skips kitchen tickets and automatic prints; a
+guest can still get a receipt by hand.
 
 ### Cloud printers (#117, #426)
 
-Flag `kitchen.printers` (organization, default off, only a literal `true`),
-read by tenant-api from App's `GET /resources/pos/flags?orgId=` (`printers`,
-cached 5 minutes, off when App cannot be reached). Node kill switch
-`PRINTING_ENABLED=false`. Printers are regional (`print_devices`,
-`print_jobs`, tenant-db `0069`) and poll the regional node directly; nothing
-about a guest crosses to the US control plane.
+Flag `kitchen.printers` (organization, default off, only a literal `true`), read
+by tenant-api from App's `GET /resources/pos/flags?orgId=` (`printers`, cached 5
+minutes, off when App cannot be reached). Node kill switch
+`PRINTING_ENABLED=false`. Printers are regional (`print_devices`, `print_jobs`,
+tenant-db `0069`) and poll the regional node directly; nothing about a guest
+crosses to the US control plane.
 
 - **Setup.** Settings, Terminals, Printers: a printer belongs to one location,
   with a name, a protocol (Star CloudPRNT or Epson Server Direct Print), paper
-  width (58 or 80 mm), copies and what it prints: all kitchen tickets, only
-  some stations, receipts, and whether it is the default for stations with no
-  printer. The screen shows the address to enter in the printer's cloud
-  settings (`<tenant-api>/print/<orgId>.<printerId>/poll`) and a 32-character
-  password, once. Only an HMAC of the password is stored. A printer cannot
-  hold a staff session or a long secret, so it is addressed by that public ref
-  and proves itself with the password (HTTP Basic, any user name, or Bearer).
-  An unknown printer, a wrong password and another organization's address all
-  answer the same `invalid_printer`; a removed printer answers
-  `printer_revoked` at once and its waiting jobs are cancelled.
+  width (58 or 80 mm), copies and what it prints: all kitchen tickets, only some
+  stations, receipts, and whether it is the default for stations with no
+  printer. The screen shows the address to enter in the printer's cloud settings
+  (`<tenant-api>/print/<orgId>.<printerId>/poll`) and a 32-character password,
+  once. Only an HMAC of the password is stored. A printer cannot hold a staff
+  session or a long secret, so it is addressed by that public ref and proves
+  itself with the password (HTTP Basic, any user name, or Bearer). An unknown
+  printer, a wrong password and another organization's address all answer the
+  same `invalid_printer`; a removed printer answers `printer_revoked` at once
+  and its waiting jobs are cancelled.
 - **Protocols.** Star: `POST` the status JSON to the address, answer
   `{jobReady, mediaTypes, jobToken}`; the printer `GET`s the job on the same
   address (`?token=`) and acknowledges with `DELETE ?token=&code=`. The same
@@ -1160,22 +1168,21 @@ about a guest crosses to the US control plane.
   (`@repo/common/print-protocols`) and covered by byte-level tests; no test
   reaches a printer maker's host. Real hardware is certified model by model.
 - **One path.** `@repo/common/print-ticket` builds a ticket document (kitchen
-  ticket, guest receipt, test ticket, drawer pulse) from the same field
-  registry (`ticket-config.ts`), highlight rules (`kitchen-ticket.ts`) and
-  receipt-extras decision (`receipt-extras.ts`) as the Station screens and the
-  App's preview. A kitchen ticket is built from the Kitchen's own projection
-  (`projectTicketForPrint` in `kds-service.ts`), never a second feed, and
-  split over printers by the existing station routing
-  (`routeKitchenTicket`): each item to its station's printer, items of a
-  station with no printer to the default printer, never to another location's
-  printer.
-- **When.** Online orders print when accepted (placing a pay-at-pickup order,
-  a payment landing, a person accepting a waiting order: the hooks that feed
-  the Kitchen and guest messages, after the commit); a scheduled order waits
-  for its Kitchen fire time (the orders tick queues it and wakes the alarm).
-  Station sales print a kitchen ticket when a round is sent and a receipt on
-  payment. A job is unique per printer, order, kind and trigger, so a hook that
-  runs twice queues once.
+  ticket, guest receipt, test ticket, drawer pulse) from the same field registry
+  (`ticket-config.ts`), highlight rules (`kitchen-ticket.ts`) and receipt-extras
+  decision (`receipt-extras.ts`) as the Station screens and the App's preview. A
+  kitchen ticket is built from the Kitchen's own projection
+  (`projectTicketForPrint` in `kds-service.ts`), never a second feed, and split
+  over printers by the existing station routing (`routeKitchenTicket`): each
+  item to its station's printer, items of a station with no printer to the
+  default printer, never to another location's printer.
+- **When.** Online orders print when accepted (placing a pay-at-pickup order, a
+  payment landing, a person accepting a waiting order: the hooks that feed the
+  Kitchen and guest messages, after the commit); a scheduled order waits for its
+  Kitchen fire time (the orders tick queues it and wakes the alarm). Station
+  sales print a kitchen ticket when a round is sent and a receipt on payment. A
+  job is unique per printer, order, kind and trigger, so a hook that runs twice
+  queues once.
 - **Once.** A job is offered, the printer acknowledges, the job is printed and
   is never offered again (a second acknowledgement changes nothing). Without an
   acknowledgement it is offered again after 30 seconds, at most 5 offers, then
@@ -1183,45 +1190,45 @@ about a guest crosses to the US control plane.
   not printed late.
 - **Reprint.** App order detail and Station (Orders app, till orders) send a
   reprint to the location's printers (`POST /operator/pos/printers/reprint`,
-  `POST /pos/online-orders/:id/command reprint`, `POST /pos/print/reprint`);
-  one press is one request id. With no cloud printer the tablet prints through
-  its own dialog as before, and with one it prints nothing automatically
-  itself (`cloudPrinters` on the order).
+  `POST /pos/online-orders/:id/command reprint`, `POST /pos/print/reprint`); one
+  press is one request id. With no cloud printer the tablet prints through its
+  own dialog as before, and with one it prints nothing automatically itself
+  (`cloudPrinters` on the order).
 - **Test print and drawer (#426).** Per printer: "Print a test ticket" (marked
   TEST PRINT and "THIS IS NOT A SALE", no totals) and "Open drawer" go through
   the same queue. A printer that is disconnected, never connected, out of paper
   or has its cover open answers with the reason at once and queues nothing; a
   printer that refuses the job reports it (`unsupported`). The last successful
   test time is kept.
-- **What is on paper.** Kitchen tickets carry order number, time, table or
-  first name, items, options and notes, never a phone number, email address or
-  payment detail (phone-like text a guest typed into a note or name is taken
-  out); a delivery address only when that printer has it on. Receipts follow
-  Station's receipt rules: the callback number masked, the ZATCA code first.
+- **What is on paper.** Kitchen tickets carry order number, time, table or first
+  name, items, options and notes, never a phone number, email address or payment
+  detail (phone-like text a guest typed into a note or name is taken out); a
+  delivery address only when that printer has it on. Receipts follow Station's
+  receipt rules: the callback number masked, the ZATCA code first.
 - **Arabic.** A printer with no Arabic font gets each Arabic line as a picture
   while the codes and Latin lines stay native (`print-raster.ts`). Pictures are
   drawn with `sharp` on the Node nodes (the Docker image carries
   `fonts-noto-core`); the Workers runtime has no image library, so there the
   ticket prints as text and the printer should be set to "has an Arabic font"
   only if it really has one. The picture maker is an adapter, tests inject one.
-- **Receipt codes (#263).** The location's ticket settings (`stationSettings.tickets.extras`,
-  no migration) switch the logo, a review code and an app or rewards code on
-  the guest receipt, each with an editable caption, with a live preview in
-  Settings, Terminals, Tickets. The review code opens the location's Google
-  review link (control-plane `googleReviewUrl`, https Google hosts only); the
-  app code opens the site's `/get-app?p=print` store redirect when the app is
-  live in a store, else the rewards page when loyalty is on, else it is not
-  offered. Both targets reach Station and the region with the menu
-  (`location.receiptCodes`). One decision (`planReceiptExtras`) serves Station's
-  receipt, the preview and cloud printers: the ZATCA code stays first and
-  unchanged, marketing codes print below it, smaller, with their caption; a 58
-  mm roll with a fiscal code drops them; refund and void slips never carry
-  them. The logo is converted to one colour and capped at about 15 mm. The
-  emailed receipt (#79) shows the same switched-on review and app codes as
-  tappable links with their captions (an email cannot print a scannable code).
-  Scans
-  are not counted through short links: those serve own-site paths only, and the
-  store redirect already counts its own.
+- **Receipt codes (#263).** The location's ticket settings
+  (`stationSettings.tickets.extras`, no migration) switch the logo, a review
+  code and an app or rewards code on the guest receipt, each with an editable
+  caption, with a live preview in Settings, Terminals, Tickets. The review code
+  opens the location's Google review link (control-plane `googleReviewUrl`,
+  https Google hosts only); the app code opens the site's `/get-app?p=print`
+  store redirect when the app is live in a store, else the rewards page when
+  loyalty is on, else it is not offered. Both targets reach Station and the
+  region with the menu (`location.receiptCodes`). One decision
+  (`planReceiptExtras`) serves Station's receipt, the preview and cloud
+  printers: the ZATCA code stays first and unchanged, marketing codes print
+  below it, smaller, with their caption; a 58 mm roll with a fiscal code drops
+  them; refund and void slips never carry them. The logo is converted to one
+  colour and capped at about 15 mm. The emailed receipt (#79) shows the same
+  switched-on review and app codes as tappable links with their captions (an
+  email cannot print a scannable code). Scans are not counted through short
+  links: those serve own-site paths only, and the store redirect already counts
+  its own.
 
 ## Personal data
 
@@ -1249,7 +1256,7 @@ defaults to Arabic when the restaurant's default language is Arabic. Catalogs:
 | `POS_URL`                  | App                   | Origin of the POS web app, for pairing links and QR codes. When empty in development, defaults to `https://pos.<brand-slug>.test:2999`; no fallback in production. |
 | `POS_ORIGINS`              | every tenant-api node | Origins allowed to call `/pos/*` from a browser. Read live from the environment. Outside an explicit `NODE_ENV=development\|test`, only listed origins count.      |
 | `POS_ENABLED`              | tenant-api            | Kill switch. `false` answers 503 on `/pos/*` and refuses new pairing codes; revoking a terminal always works. Revoke terminals first, then flip it.                |
-| `PRINTING_ENABLED`         | tenant-api            | Kill switch for cloud printers (#117). `false` queues nothing and answers every printer's poll with "no job"; removing a printer always works.                      |
+| `PRINTING_ENABLED`         | tenant-api            | Kill switch for cloud printers (#117). `false` queues nothing and answers every printer's poll with "no job"; removing a printer always works.                     |
 | `ZATCA_SEAL_KEY`           | tenant-api            | Required in production, 64 hex characters (`openssl rand -hex 32`). Seals ZATCA keys and CSID secrets. Rotate only through `ZATCA_SEAL_KEY_PREVIOUS`.              |
 | `ZATCA_SEAL_KEY_PREVIOUS`  | tenant-api            | Rotation only: previous seal keys, comma separated. Still opened, and re-sealed by the hourly tick. Remove once every organization's tick has run.                 |
 | `VITE_POS_ALLOWED_ORIGINS` | Station build         | App and tenant-api origins the till may talk to. Required in production builds: when empty, the till refuses every server. Also sets the CSP `connect-src`.        |

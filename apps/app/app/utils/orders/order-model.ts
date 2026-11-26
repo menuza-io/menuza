@@ -11,6 +11,18 @@ export const orderSchema = z.object({
 	paymentStatus: z.string(),
 	paymentMethod: z.enum(['handoff', 'online']),
 	paymentProcessor: z.string().nullable().optional(),
+	revision: z.number().int().optional().catch(1),
+	timeChangeCount: z.number().int().optional().catch(0),
+	paidCents: z.number().int().optional().catch(undefined),
+	amountDueCents: z.number().int().optional().catch(undefined),
+	taxExempt: z
+		.object({
+			ref: z.string(),
+			org: z.string(),
+		})
+		.nullable()
+		.optional()
+		.catch(null),
 	subtotalCents: z.number().int().optional(),
 	taxCents: z.number().int().optional(),
 	deliveryFeeCents: z.number().int().optional(),

@@ -14,11 +14,13 @@ import {
 	redirect,
 	useLoaderData,
 	useNavigate,
+	useSearchParams,
 } from 'react-router'
 import { z } from 'zod'
 import { DailyLimitsPanel } from '#app/components/orders/daily-limits-panel.tsx'
 import { DeliveriesPanel } from '#app/components/orders/deliveries-panel.tsx'
 import { NewOrderBanner } from '#app/components/orders/new-order-banner.tsx'
+import { OrderHistoryTab } from '#app/components/orders/order-history-tab.tsx'
 import {
 	OrderStatusLabel,
 	PaymentStatusLabel,
@@ -144,6 +146,8 @@ export default function OrdersInbox() {
 		tenantApiUrl,
 	} = useLoaderData<typeof loader>()
 	const [refreshKey, setRefreshKey] = useState(0)
+	const [searchParams, setSearchParams] = useSearchParams()
+	const activeTab = searchParams.get('tab') === 'history' ? 'history' : 'live'
 	const navigate = useNavigate()
 	const { _, i18n } = useLingui()
 	const request = useOrdersClient(orgSlug)
@@ -239,208 +243,251 @@ export default function OrdersInbox() {
 					<OrdersBell alerts={alerts} />
 				</div>
 			</div>
-			<NewOrderBanner
-				orgSlug={orgSlug}
-				items={alerts.items}
-				timeZoneOf={timeZoneOf}
-				onOpen={alerts.dismiss}
-			/>
-			{error ? (
-				<p role="alert" className="text-destructive text-sm">
-					{error}
-				</p>
-			) : null}
-			<WaitingLane
-				orgSlug={orgSlug}
-				orders={waiting}
-				canWrite={canWrite}
-				request={request}
-				onChanged={() => void refresh()}
-			/>
-			<PrepScheduleBanner locations={orderingControls} />
-			<OrderingControls
-				orgSlug={orgSlug}
-				locations={orderingControls}
-				canWrite={canWrite}
-				tenantApiUrl={tenantApiUrl}
-			/>
-			{slotLimitLocations.length > 0 ? (
-				<SlotLimitsPanel
-					orgSlug={orgSlug}
-					locations={slotLimitLocations}
-					canWrite={canWrite}
-					request={request}
-				/>
-			) : null}
-			{deliveryLocations.length > 0 ? (
-				<DeliveriesPanel
-					orgSlug={orgSlug}
-					locations={deliveryLocations}
-					canWrite={canWrite}
-				/>
-			) : null}
-			{dailyLimitLocations.length > 0 ? (
-				<DailyLimitsPanel
-					orgSlug={orgSlug}
-					locations={dailyLimitLocations}
-					canWrite={canWrite}
-					request={request}
-				/>
-			) : null}
-			{showTabs ? (
-				<OpenTabs
-					orgSlug={orgSlug}
-					canWrite={canWrite}
-					refreshKey={refreshKey}
-					loyaltyEnabled={loyaltyEnabled}
-				/>
-			) : null}
-			{loading ? (
-				<p role="status">
-					<Trans>Loading orders…</Trans>
-				</p>
-			) : orders.length === 0 && !error ? (
-				<div className="rounded-lg border p-8 text-center">
-					<h3 className="font-medium">
-						<Trans>No orders yet</Trans>
-					</h3>
-					<p className="text-muted-foreground mt-2 text-sm">
-						<Trans>Submitted orders will appear here.</Trans>
-					</p>
-				</div>
-			) : others.length === 0 ? null : (
-				<ul
-					className="divide-border divide-y rounded-lg border"
-					data-testid="orders-list"
+			<div className="border-border flex gap-2 border-b pb-2" role="tablist">
+				<Button
+					type="button"
+					role="tab"
+					aria-selected={activeTab === 'live'}
+					variant={activeTab === 'live' ? 'default' : 'ghost'}
+					size="sm"
+					onClick={() => {
+						const next = new URLSearchParams()
+						setSearchParams(next, { replace: true })
+					}}
 				>
-					{others.map((order) => {
-						const ago = relativeTime(order.createdAt, i18n.locale)
-						const href = ordersHref(orgSlug, { orderId: order.id })
-						return (
-							<li
-								key={order.id}
-								className={cn('hover:bg-muted/60 relative cursor-pointer')}
-								data-testid="order-row"
-								onClick={() => {
-									alerts.dismiss(order.id)
-									void navigate(href)
-								}}
-							>
-								<div className="flex flex-col gap-2 p-4">
-									<div className="flex items-baseline justify-between gap-3">
-										<Link
-											to={href}
-											className="focus-visible:ring-ring rounded-sm font-medium tabular-nums outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-2"
-											data-testid="order-row-link"
-											onClick={(event) => {
-												event.stopPropagation()
-												alerts.dismiss(order.id)
-											}}
-										>
-											<bdi dir="ltr">{order.number}</bdi>
-										</Link>
-										{order.largeOrder ? (
-											<Badge
-												variant="secondary"
-												className="ms-2"
-												data-testid="order-row-large"
-											>
-												<Trans>Large order</Trans>
-											</Badge>
-										) : null}
-										<span className="font-medium tabular-nums">
-											<bdi>{money(order.totalCents, order.currency)}</bdi>
-										</span>
-									</div>
-									<div className="flex items-center justify-between gap-3 text-sm">
-										<span className="flex min-w-0 items-center gap-2">
-											{canViewCustomers && order.customerKey ? (
+					<Trans>Live</Trans>
+				</Button>
+				<Button
+					type="button"
+					role="tab"
+					aria-selected={activeTab === 'history'}
+					variant={activeTab === 'history' ? 'default' : 'ghost'}
+					size="sm"
+					onClick={() => {
+						const next = new URLSearchParams(searchParams)
+						next.set('tab', 'history')
+						setSearchParams(next, { replace: true })
+					}}
+					data-testid="orders-history-tab-btn"
+				>
+					<Trans>History</Trans>
+				</Button>
+			</div>
+			{activeTab === 'history' ? (
+				<OrderHistoryTab
+					orgSlug={orgSlug}
+					locations={orderingControls.map((l) => ({ id: l.id, name: l.name }))}
+					request={request}
+					tenantApiUrl={tenantApiUrl}
+				/>
+			) : (
+				<>
+					<NewOrderBanner
+						orgSlug={orgSlug}
+						items={alerts.items}
+						timeZoneOf={timeZoneOf}
+						onOpen={alerts.dismiss}
+					/>
+					{error ? (
+						<p role="alert" className="text-destructive text-sm">
+							{error}
+						</p>
+					) : null}
+					<WaitingLane
+						orgSlug={orgSlug}
+						orders={waiting}
+						canWrite={canWrite}
+						request={request}
+						onChanged={() => void refresh()}
+					/>
+					<PrepScheduleBanner locations={orderingControls} />
+					<OrderingControls
+						orgSlug={orgSlug}
+						locations={orderingControls}
+						canWrite={canWrite}
+						tenantApiUrl={tenantApiUrl}
+					/>
+					{slotLimitLocations.length > 0 ? (
+						<SlotLimitsPanel
+							orgSlug={orgSlug}
+							locations={slotLimitLocations}
+							canWrite={canWrite}
+							request={request}
+						/>
+					) : null}
+					{deliveryLocations.length > 0 ? (
+						<DeliveriesPanel
+							orgSlug={orgSlug}
+							locations={deliveryLocations}
+							canWrite={canWrite}
+						/>
+					) : null}
+					{dailyLimitLocations.length > 0 ? (
+						<DailyLimitsPanel
+							orgSlug={orgSlug}
+							locations={dailyLimitLocations}
+							canWrite={canWrite}
+							request={request}
+						/>
+					) : null}
+					{showTabs ? (
+						<OpenTabs
+							orgSlug={orgSlug}
+							canWrite={canWrite}
+							refreshKey={refreshKey}
+							loyaltyEnabled={loyaltyEnabled}
+						/>
+					) : null}
+					{loading ? (
+						<p role="status">
+							<Trans>Loading orders…</Trans>
+						</p>
+					) : orders.length === 0 && !error ? (
+						<div className="rounded-lg border p-8 text-center">
+							<h3 className="font-medium">
+								<Trans>No orders yet</Trans>
+							</h3>
+							<p className="text-muted-foreground mt-2 text-sm">
+								<Trans>Submitted orders will appear here.</Trans>
+							</p>
+						</div>
+					) : others.length === 0 ? null : (
+						<ul
+							className="divide-border divide-y rounded-lg border"
+							data-testid="orders-list"
+						>
+							{others.map((order) => {
+								const ago = relativeTime(order.createdAt, i18n.locale)
+								const href = ordersHref(orgSlug, { orderId: order.id })
+								return (
+									<li
+										key={order.id}
+										className={cn('hover:bg-muted/60 relative cursor-pointer')}
+										data-testid="order-row"
+										onClick={() => {
+											alerts.dismiss(order.id)
+											void navigate(href)
+										}}
+									>
+										<div className="flex flex-col gap-2 p-4">
+											<div className="flex items-baseline justify-between gap-3">
 												<Link
-													to={customersHref(orgSlug, {
-														personKey: order.customerKey,
-													})}
-													className="focus-visible:ring-ring relative z-10 truncate rounded-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:outline-none"
-													data-testid="order-row-customer-link"
-													onClick={(event) => event.stopPropagation()}
+													to={href}
+													className="focus-visible:ring-ring rounded-sm font-medium tabular-nums outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-2"
+													data-testid="order-row-link"
+													onClick={(event) => {
+														event.stopPropagation()
+														alerts.dismiss(order.id)
+													}}
 												>
-													{order.contact.name}
+													<bdi dir="ltr">{order.number}</bdi>
 												</Link>
-											) : (
-												<span className="truncate">
-													{order.contact.name ||
-														(order.table
-															? (() => {
-																	const label = order.table.label
-																	return <bdi>{_(msg`Table ${label}`)}</bdi>
-																})()
-															: _(msg`Guest`))}
+												{order.largeOrder ? (
+													<Badge
+														variant="secondary"
+														className="ms-2"
+														data-testid="order-row-large"
+													>
+														<Trans>Large order</Trans>
+													</Badge>
+												) : null}
+												<span className="font-medium tabular-nums">
+													<bdi>{money(order.totalCents, order.currency)}</bdi>
 												</span>
-											)}
-											{canViewCustomers ? (
-												<Badge
-													variant="outline"
-													data-testid="order-customer-kind"
-												>
-													{order.customerKey
-														? _(msg`Customer`)
-														: _(msg`Guest checkout`)}
-												</Badge>
-											) : null}
-										</span>
-										<span className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
-											<Icon
-												name={
-													order.fulfillment === 'delivery'
-														? 'route'
+											</div>
+											<div className="flex items-center justify-between gap-3 text-sm">
+												<span className="flex min-w-0 items-center gap-2">
+													{canViewCustomers && order.customerKey ? (
+														<Link
+															to={customersHref(orgSlug, {
+																personKey: order.customerKey,
+															})}
+															className="focus-visible:ring-ring relative z-10 truncate rounded-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:outline-none"
+															data-testid="order-row-customer-link"
+															onClick={(event) => event.stopPropagation()}
+														>
+															{order.contact.name}
+														</Link>
+													) : (
+														<span className="truncate">
+															{order.contact.name ||
+																(order.table
+																	? (() => {
+																			const label = order.table.label
+																			return <bdi>{_(msg`Table ${label}`)}</bdi>
+																		})()
+																	: _(msg`Guest`))}
+														</span>
+													)}
+													{canViewCustomers ? (
+														<Badge
+															variant="outline"
+															data-testid="order-customer-kind"
+														>
+															{order.customerKey
+																? _(msg`Customer`)
+																: _(msg`Guest checkout`)}
+														</Badge>
+													) : null}
+												</span>
+												<span className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
+													<Icon
+														name={
+															order.fulfillment === 'delivery'
+																? 'route'
+																: order.fulfillment === 'dine_in'
+																	? 'utensils'
+																	: 'building'
+														}
+														className="size-3.5"
+													/>
+													{order.fulfillment === 'delivery'
+														? _(msg`Delivery`)
 														: order.fulfillment === 'dine_in'
-															? 'utensils'
-															: 'building'
-												}
-												className="size-3.5"
-											/>
-											{order.fulfillment === 'delivery'
-												? _(msg`Delivery`)
-												: order.fulfillment === 'dine_in'
-													? order.table
-														? (() => {
-																const label = order.table.label
-																return <bdi>{_(msg`Table ${label}`)}</bdi>
-															})()
-														: _(msg`At the table`)
-													: _(msg`Pickup`)}
-										</span>
-									</div>
-									<div className="flex items-center justify-between gap-3">
-										<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-											<OrderStatusLabel status={order.status} />
-											<PaymentStatusLabel
-												status={paymentDisplayStatus(order)}
-											/>
-											{order.disputed ? (
-												<Badge
-													variant="destructive"
-													data-testid="order-row-disputed"
-												>
-													<Trans>Disputed</Trans>
-												</Badge>
-											) : null}
-											{order.refundStatus === 'pending' ? (
-												<span className="text-warning text-xs">
-													<Trans>Refund pending</Trans>
+															? order.table
+																? (() => {
+																		const label = order.table.label
+																		return <bdi>{_(msg`Table ${label}`)}</bdi>
+																	})()
+																: _(msg`At the table`)
+															: _(msg`Pickup`)}
 												</span>
-											) : order.refundStatus === 'failed' ? (
-												<span className="text-destructive text-xs">
-													<Trans>Refund failed</Trans>
+											</div>
+											<div className="flex items-center justify-between gap-3">
+												<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+													<OrderStatusLabel status={order.status} />
+													<PaymentStatusLabel
+														status={paymentDisplayStatus(order)}
+													/>
+													{order.disputed ? (
+														<Badge
+															variant="destructive"
+															data-testid="order-row-disputed"
+														>
+															<Trans>Disputed</Trans>
+														</Badge>
+													) : null}
+													{order.refundStatus === 'pending' ? (
+														<span className="text-warning text-xs">
+															<Trans>Refund pending</Trans>
+														</span>
+													) : order.refundStatus === 'failed' ? (
+														<span className="text-destructive text-xs">
+															<Trans>Refund failed</Trans>
+														</span>
+													) : null}
 												</span>
-											) : null}
-										</span>
-										<span className="text-muted-foreground text-xs">{ago}</span>
-									</div>
-								</div>
-							</li>
-						)
-					})}
-				</ul>
+												<span className="text-muted-foreground text-xs">
+													{ago}
+												</span>
+											</div>
+										</div>
+									</li>
+								)
+							})}
+						</ul>
+					)}
+				</>
 			)}
 		</div>
 	)

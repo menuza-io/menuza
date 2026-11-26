@@ -39,7 +39,7 @@ export function slugFilename(title: string, extension: string): string {
 /** A plain (possibly negative) number or percentage stays numeric. */
 const PLAIN_NUMBER = /^-?\d+(\.\d+)?%?$/
 
-function csvCell(raw: string): string {
+export function csvCell(raw: string): string {
 	// Cells hold lower-trust text (customer names, emails): one starting with
 	// `=`, `+`, `-`, `@`, tab or CR would run as a formula in a spreadsheet.
 	const value = PLAIN_NUMBER.test(raw) ? raw : neutralizeCsvCell(raw)
@@ -49,7 +49,7 @@ function csvCell(raw: string): string {
 	return value
 }
 
-function csvLines(rows: string[][]): string {
+export function csvLines(rows: string[][]): string {
 	return `${rows.map((row) => row.map(csvCell).join(',')).join('\n')}\n`
 }
 

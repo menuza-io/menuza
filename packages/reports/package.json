@@ -12,6 +12,11 @@
       "import": "./index.ts",
       "default": "./index.ts"
     },
+    "./export": {
+      "types": "./src/export.ts",
+      "import": "./src/export.ts",
+      "default": "./src/export.ts"
+    },
     "./ui": {
       "types": "./src/ui/index.ts",
       "import": "./src/ui/index.ts",

@@ -1,5 +1,11 @@
 import { type PosFiscalDocument } from '@repo/common/pos-fiscal'
-import { type PosOrderSource } from '@repo/common/pos-orders'
+import {
+	type PosOrderDelivery,
+	type PosOrderSource,
+	type PosPaymentLineShare,
+	type PosServiceCharge,
+	type PosTaxExempt,
+} from '@repo/common/pos-orders'
 import { type StationOutboxItem } from '@repo/inventory'
 import Dexie, { type EntityTable } from 'dexie'
 import { type SaleLoyalty } from './loyalty.ts'
@@ -7,7 +13,7 @@ import { type Adjustment, type CartLine, type Totals } from './pricing.ts'
 import { isTrainingMode, TRAINING_DB_NAME } from './training-flag.ts'
 import { type CatalogSnapshot } from './types.ts'
 
-export type OrderType = 'dine_in' | 'takeaway' | 'drive_through'
+export type OrderType = 'dine_in' | 'takeaway' | 'drive_through' | 'delivery'
 export type TenderMethod = 'cash' | 'card' | 'other' | 'gift_card'
 export type SyncState = 'pending' | 'syncing' | 'synced' | 'rejected'
 
@@ -42,6 +48,11 @@ export type Payment = {
 	reference?: string | null
 	/** The cash drawer shift it was taken in, when one was open. */
 	shiftId?: string | null
+	/** Split check by item (#289): lines (and fractions) covered by this check. */
+	lineShares?: PosPaymentLineShare[]
+	checkNumber?: number
+	tipCents?: number
+	loyaltyCustomerId?: string | null
 }
 
 /** Money given back against one payment, in the same tender. Never edited or removed. */
@@ -173,6 +184,14 @@ export type PosOrder = {
 	origin?: string
 	/** The number first shown, when a collision forced a new one. */
 	renumberedFrom?: string | null
+	/** Phone delivery details (#164). */
+	delivery?: PosOrderDelivery | null
+	/** Tax exemption certificate (#166, non-SAR only). */
+	taxExempt?: PosTaxExempt | null
+	/** Party size for large-party auto-gratuity (#397). */
+	partySize?: number | null
+	/** Automatic service charge or large-party gratuity (#397). */
+	serviceCharge?: PosServiceCharge | null
 }
 
 /** Cash put into or taken out of the drawer outside a sale. Never edited or removed. */

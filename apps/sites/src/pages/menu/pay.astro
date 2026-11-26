@@ -1,0 +1,57 @@
+---
+import { msg } from '@lingui/core/macro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer, siteSection } from '~/lib/media'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const title = i18n._(msg`Pay for your order`)
+const loading = i18n._(msg`One moment…`)
+const labels = {
+	invalid: i18n._(msg`This payment link is not valid. Ask the restaurant for a new one.`),
+	expired: i18n._(msg`This payment link has expired. Ask the restaurant for a new one.`),
+	cancelled: i18n._(msg`This order was cancelled.`),
+	paid: i18n._(msg`This order is already paid in full.`),
+	paidThanks: i18n._(msg`Thank you! Your payment has been received.`),
+	nothingDue: i18n._(msg`There is nothing due on this order.`),
+	paymentCancelled: i18n._(msg`Payment was cancelled. You can try again below.`),
+	orderNumber: i18n._(msg`Order`),
+	total: i18n._(msg`Order total`),
+	paidSoFar: i18n._(msg`Paid so far`),
+	amountDue: i18n._(msg`Amount due`),
+	payNow: i18n._(msg`Pay now`),
+	errGeneric: i18n._(msg`Could not start payment. Please try again.`),
+}
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'order-pay', title, slug: 'menu/pay', isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+>
+	<section class={siteSection}>
+		<div class={`${siteContainer} flex max-w-xl flex-col gap-4`}>
+			<h1 class="text-3xl font-semibold">{title}</h1>
+			<script
+				is:inline
+				id="order-pay-labels"
+				type="application/json"
+				set:html={JSON.stringify(labels)}
+			/>
+			<div id="order-pay-root" data-org-slug={organization.slug}>
+				<p role="status" data-op-status class="text-sm text-muted-foreground">{loading}</p>
+				<div data-op-body class="flex flex-col gap-4"></div>
+				<p role="alert" data-op-error class="text-sm text-destructive"></p>
+			</div>
+		</div>
+	</section>
+
+	<script>
+		import '../../scripts/order-pay.ts'
+	</script>
+</SitePage>

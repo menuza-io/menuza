@@ -1,4 +1,6 @@
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import { ORDER_EDITS_FLAG_KEY } from '@repo/common/order-edits'
+import { ORDER_PAY_LINKS_FLAG_KEY } from '@repo/common/order-pay-links'
 import { PRINTING_FLAG_KEY } from '@repo/common/print-devices'
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
@@ -20,6 +22,7 @@ import {
 	type CancelOptions,
 	OrderDetail,
 } from '#app/components/orders/order-detail.tsx'
+import { OrderActionsPanels } from '#app/components/orders/order-actions-panels.tsx'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import {
@@ -50,6 +53,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const orgSlug = params.orgSlug || ''
 	const organization = await requireUserOrganization(request, orgSlug, {
 		id: true,
+		dataRegion: true,
 	})
 	const userId = await requireMenuRead(request, organization.id)
 	const canWrite = await userHasOrganizationPermission(
@@ -94,6 +98,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				(await getFeatureFlag(PRINTING_FLAG_KEY, {
 					organizationId: organization.id,
 				})) === true,
+			payLinksEnabled:
+				(await getFeatureFlag(ORDER_PAY_LINKS_FLAG_KEY, {
+					organizationId: organization.id,
+				})) === true,
+			orderEditsEnabled:
+				(await getFeatureFlag(ORDER_EDITS_FLAG_KEY, {
+					organizationId: organization.id,
+				})) === true,
+			isUsNode: (organization.dataRegion ?? 'us') === 'us',
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
@@ -110,6 +123,9 @@ export default function OrderPage() {
 		canViewCustomers,
 		memberNames,
 		printersEnabled,
+		payLinksEnabled,
+		orderEditsEnabled,
+		isUsNode,
 	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const request = useOrdersClient(orgSlug)
@@ -359,6 +375,18 @@ export default function OrderPage() {
 				onReload={() => void load()}
 				backHref={backHref}
 			/>
+			<div className="mt-6">
+				<OrderActionsPanels
+					order={order}
+					request={request}
+					canWrite={canWrite}
+					canRefund={canRefund}
+					payLinksEnabled={payLinksEnabled}
+					orderEditsEnabled={orderEditsEnabled}
+					isUsNode={isUsNode}
+					onUpdated={() => void load()}
+				/>
+			</div>
 		</div>
 	)
 }

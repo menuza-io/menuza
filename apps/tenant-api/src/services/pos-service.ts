@@ -1350,13 +1350,24 @@ export async function purgePosGuestNames(
 	const abandoned = now - POS_ABANDONED_TAB_RETENTION_DAYS * day
 	const cleared = await db
 		.update(posOrders)
-		.set({ guestName: null, customerPhone: null, readyTextPhone: null })
+		.set({
+			guestName: null,
+			customerPhone: null,
+			readyTextPhone: null,
+			deliveryAddress: null,
+			deliveryUnit: null,
+			deliveryNotes: null,
+			deliveryLat: null,
+			deliveryLng: null,
+			deliveryPostalCode: null,
+		})
 		.where(
 			and(
 				or(
 					isNotNull(posOrders.guestName),
 					isNotNull(posOrders.customerPhone),
 					isNotNull(posOrders.readyTextPhone),
+					isNotNull(posOrders.deliveryAddress),
 				),
 				or(isNull(posOrders.pickupAt), lt(posOrders.pickupAt, cutoff)),
 				or(
@@ -2179,6 +2190,26 @@ export function revisionSnapshot(order: PosOrderRequest) {
 		customerPhone: null,
 		readyTextPhone: null,
 		loyalty: order.loyalty ? { ...order.loyalty, binding: null } : null,
+		// Phone delivery addresses & quote tokens never enter revision history (#164).
+		delivery: order.delivery
+			? {
+					zoneId: order.delivery.zoneId,
+					zoneName: order.delivery.zoneName,
+					feeCents: order.delivery.feeCents,
+					minOverrideApprovedBy: ref(order.delivery.minOverrideApprovedBy),
+				}
+			: null,
+		serviceCharge: order.serviceCharge
+			? {
+					...order.serviceCharge,
+					removed: order.serviceCharge.removed
+						? {
+								...order.serviceCharge.removed,
+								by: ref(order.serviceCharge.removed.by),
+							}
+						: null,
+				}
+			: null,
 		staff: ref(order.staff),
 		voidedBy: ref(order.voidedBy),
 		voidApprovedBy: ref(order.voidApprovedBy),
@@ -2826,13 +2857,58 @@ export async function upsertPosOrder(
 							review.serverTotalCents ?? existing?.serverTotalCents ?? null,
 						reviewReason,
 						lines: order.lines,
-						...(options.lineCatalog ? { lineCatalog: options.lineCatalog } : {}),
+						...(options.lineCatalog
+							? { lineCatalog: options.lineCatalog }
+							: {}),
 						lineVoids: order.lineVoids,
 						adjustments: order.adjustments,
 						catalogFetchedAt: order.catalogFetchedAt
 							? Date.parse(order.catalogFetchedAt)
 							: null,
 						shiftId: order.shiftId,
+						// Contract 12 (#166, #164, #397): tax-exempt, phone delivery, service charge.
+						taxExemptRef: order.taxExempt?.ref ?? null,
+						taxExemptOrg: order.taxExempt?.org ?? null,
+						deliveryAddress: contactRedacted
+							? null
+							: (order.delivery?.address ?? null),
+						deliveryUnit: contactRedacted
+							? null
+							: (order.delivery?.unit ?? null),
+						deliveryNotes: contactRedacted
+							? null
+							: (order.delivery?.notes ?? null),
+						deliveryZoneId: order.delivery?.zoneId ?? null,
+						deliveryZoneName: order.delivery?.zoneName ?? null,
+						deliveryFeeCents: order.delivery?.feeCents ?? 0,
+						deliveryLat: contactRedacted ? null : (order.delivery?.lat ?? null),
+						deliveryLng: contactRedacted ? null : (order.delivery?.lng ?? null),
+						deliveryPostalCode: contactRedacted
+							? null
+							: (order.delivery?.postalCode ?? null),
+						deliveryMinOverrideByStaffId:
+							order.delivery?.minOverrideApprovedBy?.id ?? null,
+						deliveryMinOverrideByStaffName:
+							order.delivery?.minOverrideApprovedBy?.name ?? null,
+						partySize: order.partySize ?? null,
+						serviceChargeCents:
+							order.serviceCharge && !order.serviceCharge.removed
+								? order.serviceCharge.amountCents
+								: 0,
+						serviceChargeTaxCents:
+							order.serviceCharge && !order.serviceCharge.removed
+								? order.serviceCharge.taxCents
+								: 0,
+						serviceChargeLabel: order.serviceCharge?.label ?? null,
+						serviceChargeRemovedByStaffId:
+							order.serviceCharge?.removed?.by?.id ?? null,
+						serviceChargeRemovedByStaffName:
+							order.serviceCharge?.removed?.by?.name ?? null,
+						serviceChargeRemovedReason:
+							order.serviceCharge?.removed?.reason ?? null,
+						serviceChargeRemovedAt: order.serviceCharge?.removed?.at
+							? Date.parse(order.serviceCharge.removed.at)
+							: null,
 						updatedAt: now,
 						paidAt:
 							order.status === 'paid' || order.status === 'refunded'
@@ -2891,6 +2967,10 @@ export async function upsertPosOrder(
 								tenderedCents: p.tenderedCents,
 								reference: p.reference ?? null,
 								shiftId: p.shiftId ?? null,
+								lineShares: p.lineShares ?? null,
+								checkNumber: p.checkNumber ?? null,
+								tipCents: p.tipCents ?? 0,
+								loyaltyCustomerId: p.loyaltyCustomerId ?? null,
 								paidAt: Date.parse(p.at),
 								receivedAt: now,
 							})),
@@ -3373,6 +3453,11 @@ const HELD_GUEST_KEYS = new Set([
 	'guestName',
 	'tableLabel',
 	'binding',
+	'address',
+	'unit',
+	'notes',
+	'postalCode',
+	'quoteToken',
 ])
 
 function stripPeople(value: unknown): unknown {

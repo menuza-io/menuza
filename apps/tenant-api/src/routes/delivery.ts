@@ -392,7 +392,9 @@ export async function evaluateDelivery(
 	}
 	if (!options.sign) return { status: 'deliverable', quote: quoteBase }
 
-	const expiresAt = new Date((options.now ?? new Date()).getTime() + DELIVERY_QUOTE_TTL_MS)
+	const expiresAt = new Date(
+		(options.now ?? new Date()).getTime() + DELIVERY_QUOTE_TTL_MS,
+	)
 	const token = await signDeliveryQuote({
 		orgId,
 		locationId: location.id,
@@ -473,7 +475,8 @@ export async function checkDeliveryAddress(
 	if (!loaded.ok) return { ok: false, failure: loaded.error }
 	const { location } = loaded
 	const offered = deliveryOffered(location)
-	if (offered) return { ok: true, body: { status: 'unavailable', reason: offered } }
+	if (offered)
+		return { ok: true, body: { status: 'unavailable', reason: offered } }
 	const geocoded = await geocodeRequest(
 		orgId,
 		body,
@@ -494,6 +497,122 @@ export async function checkDeliveryAddress(
 		sign: false,
 	})
 	return { ok: true, body: outcome }
+}
+
+/**
+ * Station phone-order address autocomplete (#164): bound strictly to the
+ * terminal's location, sending the address directly from Station to the
+ * regional node to the geocoder only.
+ */
+export async function autocompleteDeliveryPlacesForLocation(
+	orgId: string,
+	locationId: string,
+	input: { q: string; sessionToken?: string; locale?: string },
+): Promise<
+	| { ok: true; suggestions: unknown[] }
+	| { ok: false; failure: { status: number; code: string; message: string } }
+> {
+	const trimmed = input.q.trim()
+	if (trimmed.length < 3) return { ok: true, suggestions: [] }
+	const cacheKey = `${orgId}:${locationId}`
+	let info = locationGeoCache.get(cacheKey)
+	if (!info) {
+		const loaded = await loadLocation(orgId, locationId)
+		if (!loaded.ok) return { ok: false, failure: loaded.error }
+		info = geoInfoFor(loaded.location)
+		locationGeoCache.set(cacheKey, info)
+	}
+	if (!info.deliveryEnabled) {
+		return {
+			ok: false,
+			failure: {
+				status: 422,
+				code: 'delivery_disabled',
+				message: 'Delivery is not enabled at this location.',
+			},
+		}
+	}
+	try {
+		const geocoder = getGeocoder()
+		if (!geocoder) {
+			return {
+				ok: false,
+				failure: {
+					status: 503,
+					code: 'geocoding_unavailable',
+					message: 'Address lookup is not configured.',
+				},
+			}
+		}
+		const suggestions = await geocoder.autocomplete(trimmed, {
+			country: info.country,
+			bias: info.bias ?? undefined,
+			language: languageFrom(input.locale),
+			sessionToken: input.sessionToken,
+		})
+		return { ok: true, suggestions }
+	} catch (error) {
+		if (error instanceof GeocoderError) {
+			return {
+				ok: false,
+				failure: {
+					status: 503,
+					code: 'geocoding_unavailable',
+					message: 'Address lookup is temporarily unavailable.',
+				},
+			}
+		}
+		throw error
+	}
+}
+
+/**
+ * Station phone-order delivery quote (#164): uses the exact same zones,
+ * minimum, hours, and signed quote token as online delivery, bound to the
+ * terminal's location only.
+ */
+export async function quoteDeliveryForPosLocation(
+	orgId: string,
+	locationId: string,
+	body: {
+		placeId?: string
+		address?: string
+		unit?: string
+		sessionToken?: string
+		locale?: string
+		subtotal?: number
+	},
+): Promise<
+	| { ok: true; body: Record<string, unknown> }
+	| { ok: false; failure: { status: number; code: string; message: string } }
+> {
+	const loaded = await loadLocation(orgId, locationId)
+	if (!loaded.ok) return { ok: false, failure: loaded.error }
+	const { location } = loaded
+	const offered = deliveryOffered(location)
+	if (offered) {
+		return { ok: true, body: { status: 'unavailable', reason: offered } }
+	}
+	const geocoded = await geocodeRequest(
+		orgId,
+		body,
+		location,
+		languageFrom(body.locale),
+	)
+	if (!geocoded.ok) {
+		return geocoded.status === 'not_found'
+			? { ok: true, body: { status: 'not_found' } }
+			: {
+					ok: true,
+					body: { status: 'unavailable', reason: 'geocoding_unavailable' },
+				}
+	}
+	const outcome = await evaluateDelivery(orgId, location, geocoded.place, {
+		unit: body.unit ?? null,
+		subtotal: body.subtotal ?? null,
+		sign: true,
+	})
+	return { ok: true, body: outcome as Record<string, unknown> }
 }
 
 // ---------------------------------------------------------------------------

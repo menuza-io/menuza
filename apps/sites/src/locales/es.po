@@ -475,6 +475,10 @@ msgstr "Todas las horas están en la zona horaria del restaurante: {zone}."
 msgid "Amount"
 msgstr "Importe"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Amount due"
+msgstr "Importe pendiente"
+
 #: src/lib/reservations/labels.ts:378
 msgid "Amount due now"
 msgstr "Importe a pagar ahora"
@@ -812,7 +816,7 @@ msgstr "Empleo"
 msgid "Catering"
 msgstr "Catering"
 
-#: src/lib/catering/labels.ts:180
+#: src/lib/catering/labels.ts:184
 msgid "Catering is for pickup only."
 msgstr "El catering es solo para recoger."
 
@@ -1206,6 +1210,10 @@ msgstr "Copiar enlace"
 msgid "Cost"
 msgstr "Coste"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Could not start payment. Please try again."
+msgstr "No se pudo iniciar el pago. Inténtalo de nuevo."
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Coupon code"
@@ -1337,7 +1345,7 @@ msgstr "Envío {amount}"
 msgid "Delivery fee and discounts at checkout"
 msgstr "Tarifa de envío y descuentos al finalizar la compra"
 
-#: src/lib/catering/labels.ts:188
+#: src/lib/catering/labels.ts:191
 msgid "Delivery from {feeText}."
 msgstr "Envío desde {feeText}."
 
@@ -2538,6 +2546,7 @@ msgstr "Un artículo. Los extras de pago se cobran igualmente."
 #: src/pages/catering/balance.astro.ts:3
 #: src/pages/catering/quote.astro.ts:3
 #: src/pages/gift-cards/index.astro.ts:3
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/profile/gift-cards.astro.ts:3
 msgid "One moment…"
 msgstr "Un momento…"
@@ -2673,6 +2682,7 @@ msgstr "Opcional"
 
 #: src/components/blocks/LocationsBlock.astro.ts:3
 #: src/components/blocks/MenuHighlightsBlock.astro.ts:3
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Order"
 msgstr "Pedir"
@@ -2740,6 +2750,10 @@ msgstr "Pedido recibido"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Order summary"
 msgstr "Resumen del pedido"
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "Order total"
+msgstr "Total del pedido"
 
 #: src/lib/ordering-labels.ts:147
 msgid "Order type"
@@ -2873,6 +2887,10 @@ msgstr "Pagado"
 msgid "Paid in full. Thank you."
 msgstr "Pagado por completo. Gracias."
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Paid so far"
+msgstr "Pagado hasta ahora"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Paid. Thank you!"
 msgstr "Pagado. ¡Gracias!"
@@ -2921,8 +2939,13 @@ msgstr "Pagar y enviar"
 msgid "Pay at pickup"
 msgstr "Pagar al recoger"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Pay for your order"
+msgstr "Paga tu pedido"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/catering/labels.ts:52
+#: src/pages/menu/pay.astro.ts:3
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "Pagar ahora"
@@ -3001,6 +3024,10 @@ msgstr "Pago recibido. Gracias: tu pedido de catering está confirmado."
 msgid "Payment under review"
 msgstr "Pago en revisión"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Payment was cancelled. You can try again below."
+msgstr "El pago fue cancelado. Puedes intentarlo de nuevo abajo."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Payment was not finished. Nothing was charged."
 msgstr "El pago no se completó. No se ha cobrado nada."
@@ -3057,7 +3084,7 @@ msgstr "Recogida {when}"
 msgid "Pickup instructions"
 msgstr "Instrucciones de recogida"
 
-#: src/lib/catering/labels.ts:189
+#: src/lib/catering/labels.ts:192
 msgid "Pickup is available too."
 msgstr "También se puede recoger."
 
@@ -3954,6 +3981,10 @@ msgstr "¡Gracias por tu pedido!"
 msgid "Thank you for your purchase!"
 msgstr "¡Gracias por tu compra!"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "Thank you! Your payment has been received."
+msgstr "¡Gracias! Hemos recibido tu pago."
+
 #: src/components/SitePopup.astro.ts:3
 msgid "Thank you."
 msgstr "Gracias."
@@ -4107,7 +4138,7 @@ msgstr "La cocina ha pausado los pedidos nuevos por un momento. Pregunta a algui
 msgid "The kitchen is closed right now."
 msgstr "La cocina está cerrada en este momento."
 
-#: src/lib/catering/labels.ts:167
+#: src/lib/catering/labels.ts:171
 msgid "The largest order we take online is {maxText}."
 msgstr "El pedido más grande que aceptamos en línea es de {maxText}."
 
@@ -4123,7 +4154,7 @@ msgstr "Puede que el enlace esté incompleto o haya caducado."
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "El enlace puede estar incompleto. Puedes iniciar un nuevo pedido desde el menú."
 
-#: src/lib/catering/labels.ts:162
+#: src/lib/catering/labels.ts:166
 msgid "The minimum catering order is {minText}."
 msgstr "El pedido mínimo de catering es de {minText}."
 
@@ -4231,6 +4262,10 @@ msgstr "La lista de espera no está disponible ahora. Llama al restaurante."
 #: src/lib/reservations/labels.ts:474
 msgid "There are no upcoming seatings to book right now."
 msgstr "Ahora mismo no hay turnos próximos para reservar."
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "There is nothing due on this order."
+msgstr "No hay nada pendiente en este pedido."
 
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
@@ -4416,6 +4451,10 @@ msgstr "Esta ubicación no está disponible para pedidos."
 msgid "This order can't be cancelled here."
 msgstr "Este pedido no se puede cancelar aquí."
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "This order is already paid in full."
+msgstr "Este pedido ya está pagado en su totalidad."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This order is below the minimum for delivery."
 msgstr "Este pedido está por debajo del mínimo para entrega a domicilio."
@@ -4442,6 +4481,10 @@ msgstr "Este enlace de pedido ha caducado. Aún puede ordenar desde el menú."
 msgid "This order was cancelled"
 msgstr "Este pedido fue cancelado"
 
+#: src/pages/menu/pay.astro.ts:3
+msgid "This order was cancelled."
+msgstr "Este pedido fue cancelado."
+
 #: src/components/GonePage.astro.ts:3
 msgid "This page is no longer available."
 msgstr "Esta página ya no está disponible."
@@ -4449,6 +4492,14 @@ msgstr "Esta página ya no está disponible."
 #: src/lib/reservations/labels.ts:412
 msgid "This payment is no longer open"
 msgstr "Este pago ya no está abierto"
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "This payment link has expired. Ask the restaurant for a new one."
+msgstr "Este enlace de pago ha caducado. Pide uno nuevo al restaurante."
+
+#: src/pages/menu/pay.astro.ts:3
+msgid "This payment link is not valid. Ask the restaurant for a new one."
+msgstr "Este enlace de pago no es válido. Pide uno nuevo al restaurante."
 
 #: src/lib/reservations/labels.ts:503
 msgid "This phone number already has a reservation at that time."
@@ -4870,7 +4921,7 @@ msgstr "Seguimos confirmando tu pago. Vuelve a mirar tu cuenta en un minuto."
 msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 msgstr "No podemos completar esta compra. Prueba con un importe menor o contacta con el restaurante."
 
-#: src/lib/catering/labels.ts:174
+#: src/lib/catering/labels.ts:178
 msgid "We cater for up to {maxGuests} guests."
 msgstr "Atendemos hasta {maxGuests} invitados."
 
@@ -5013,11 +5064,11 @@ msgstr "No pudimos enviar tu reembolso automáticamente. Llama al restaurante."
 msgid "We couldn't start payment. Please try again."
 msgstr "No pudimos iniciar el pago. Inténtalo de nuevo."
 
-#: src/lib/catering/labels.ts:184
+#: src/lib/catering/labels.ts:188
 msgid "We deliver catering orders to {where}."
 msgstr "Entregamos pedidos de catering en {where}."
 
-#: src/lib/catering/labels.ts:185
+#: src/lib/catering/labels.ts:189
 msgid "We deliver catering orders."
 msgstr "Entregamos pedidos de catering."
 
@@ -5053,7 +5104,7 @@ msgstr "Sabemos que vas en camino"
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "Cargamos su pedido de la llamada. Revíselo y complete la compra."
 
-#: src/lib/catering/labels.ts:157
+#: src/lib/catering/labels.ts:161
 msgid "We need at least {hours} hours of notice."
 msgstr "Necesitamos al menos {hours} horas de antelación."
 
@@ -5077,7 +5128,7 @@ msgstr "Hemos enviado una confirmación a tu correo o teléfono."
 msgid "We sent a link to confirm your email"
 msgstr "Te enviamos un enlace para confirmar tu correo"
 
-#: src/lib/catering/labels.ts:196
+#: src/lib/catering/labels.ts:198
 msgid "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
 msgstr "Pedimos un depósito del {percent}% al hacer el pedido. El resto vence {balanceDueDays} días antes del evento."
 

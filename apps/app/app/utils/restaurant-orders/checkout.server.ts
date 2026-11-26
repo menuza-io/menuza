@@ -175,6 +175,7 @@ function buildSitePaymentUrls(
 	organization: RestaurantOrderOrganization,
 	locale: string,
 	orderId: string,
+	payPage?: 'catering' | 'order',
 ): { successUrl: string; cancelUrl: string } {
 	const siteBase = getSiteBaseUrl(organization)
 	const defaultLocale =
@@ -202,7 +203,9 @@ function buildSitePaymentUrls(
 	const cateringPage = parseQuoteOrderRef(orderId)
 		? '/catering/quote'
 		: parseBalanceOrderRef(orderId)
-			? '/catering/balance'
+			? payPage === 'order'
+				? '/menu/pay'
+				: '/catering/balance'
 			: null
 	if (cateringPage) {
 		const pagePath = getLocaleHref(cateringPage, locale, locale, defaultLocale)
@@ -451,6 +454,7 @@ export async function createRestaurantOrderHostedCheckout(options: {
 		organization,
 		locale,
 		options.orderId,
+		quote.payPage,
 	)
 	const currency = quote.currency.toLowerCase()
 	// Checkout.com payments and webhooks echo this reference (a hosted page id

@@ -1925,7 +1925,7 @@ export async function placeOrder(input: {
 										? sha256Hex(paymentToken)
 										: null,
 									holdExpiresAt,
-									...(cateringColumns ?? {}),
+									...cateringColumns,
 									createdAt: now,
 									updatedAt: now,
 								})
@@ -3889,6 +3889,12 @@ export function receiptOrder(
 					zoneId: order.deliveryZoneId,
 				}
 			: null,
+		taxExempt: order.taxExemptRef
+			? {
+					ref: order.taxExemptRef,
+					org: order.taxExemptOrg ?? '',
+				}
+			: null,
 	}
 }
 
@@ -3921,6 +3927,18 @@ export function operatorOrder(
 		paymentMethod: order.paymentMethod,
 		paymentProcessor: order.paymentProcessor,
 		paymentSessionId: order.paymentSessionId,
+		revision: order.revision ?? 1,
+		timeChangeCount: order.timeChangeCount ?? 0,
+		paidCents:
+			order.paidCents ??
+			(order.paymentStatus === 'paid' ? order.totalCents : 0),
+		amountDueCents: Math.max(
+			0,
+			order.totalCents -
+				(order.paidCents ??
+					(order.paymentStatus === 'paid' ? order.totalCents : 0)) -
+				order.giftCardCents,
+		),
 		/**
 		 * Over the location's large-order alert threshold at placement (#300): the
 		 * Orders list badges it. Operators only, never the guest's receipt.

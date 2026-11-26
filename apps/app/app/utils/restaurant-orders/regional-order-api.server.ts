@@ -66,6 +66,7 @@ const quoteResponseSchema = z.object({
 	sessionId: z.string().optional(),
 	processor: z.string().optional(),
 	paymentStatus: z.string().optional(),
+	payPage: z.enum(['catering', 'order']).optional(),
 })
 
 export type RestaurantOrderQuote = {
@@ -83,6 +84,8 @@ export type RestaurantOrderQuote = {
 	paymentStatus: 'paid' | 'pending' | 'failed' | 'not_required' | 'unknown'
 	/** Provider session already bound to this order, if any. */
 	boundSession: { sessionId: string; processor: 'connect' | 'checkout' } | null
+	/** For `bal:<id>` refs, distinguishes general order pay links (`/menu/pay`) from catering (`/catering/balance`). */
+	payPage?: 'catering' | 'order'
 }
 
 function getCommandToken() {
@@ -243,6 +246,7 @@ export async function fetchRestaurantOrderQuote(options: {
 		status: parsed.data.status,
 		paymentStatus,
 		boundSession,
+		...(parsed.data.payPage ? { payPage: parsed.data.payPage } : {}),
 	}
 }
 

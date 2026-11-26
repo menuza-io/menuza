@@ -227,6 +227,7 @@ const webSaleColumns = {
 	giftCardCents: restaurantOrders.giftCardCents,
 	refundedCents: restaurantOrders.refundedCents,
 	refundReversedCents: restaurantOrders.refundReversedCents,
+	taxExemptRef: restaurantOrders.taxExemptRef,
 }
 
 type WebSaleRow = Pick<
@@ -254,6 +255,8 @@ const posSaleColumns = {
 	tipCents: posOrders.tipCents,
 	totalCents: posOrders.totalCents,
 	adjustments: posOrders.adjustments,
+	serviceChargeCents: posOrders.serviceChargeCents,
+	taxExemptRef: posOrders.taxExemptRef,
 	rungUpAt: posOrders.rungUpAt,
 }
 
@@ -284,6 +287,8 @@ const ZERO_MONEY = {
 	cashDiscounts: 0,
 	tax: 0,
 	tips: 0,
+	serviceCharges: 0,
+	taxExemptSales: 0,
 	refunds: 0,
 	netSales: 0,
 	collected: 0,
@@ -301,6 +306,7 @@ function saleRows(
 	base: ReportRecord,
 	money: SaleMoney,
 	tenders: ReadonlyArray<{ tender: SalesTender; amountMinor: number }>,
+	serviceChargeMinor = 0,
 ): ReportRecord[] {
 	const parts = tenders.filter((part) => part.amountMinor > 0)
 	if (parts.length === 0) parts.push({ tender: 'none', amountMinor: 0 })
@@ -312,6 +318,7 @@ function saleRows(
 	const cashDiscount = share(money.cashDiscountMinor)
 	const tax = share(money.taxMinor)
 	const tip = share(money.tipMinor)
+	const serviceCharges = share(serviceChargeMinor)
 	const net = share(money.netMinor)
 	const total = share(money.totalMinor)
 	const largest = weights.indexOf(Math.max(...weights))
@@ -326,6 +333,8 @@ function saleRows(
 		cashDiscounts: major(cashDiscount[index] ?? 0),
 		tax: major(tax[index] ?? 0),
 		tips: major(tip[index] ?? 0),
+		serviceCharges: major(serviceCharges[index] ?? 0),
+		taxExemptSales: base.taxExempt ? major(net[index] ?? 0) : 0,
 		netSales: major(net[index] ?? 0),
 		collected: major(total[index] ?? 0),
 		saleCount: index === largest ? 1 : 0,
@@ -378,6 +387,7 @@ function webBase(
 		status:
 			row.totalCents > 0 && refunded >= row.totalCents ? 'refunded' : 'paid',
 		orderNumber: row.number,
+		taxExempt: Boolean(row.taxExemptRef),
 		// Orders store lower-case codes; everything else is upper case.
 		currency: row.currency.toUpperCase(),
 		...(customerType ? { customerType } : {}),
@@ -401,6 +411,7 @@ function posBase(row: PosSaleRow, zones: ZoneBook): ReportRecord {
 					? 'refunded'
 					: 'paid',
 		orderNumber: row.number,
+		taxExempt: Boolean(row.taxExemptRef),
 		currency: row.currency.toUpperCase(),
 		customerType: 'station',
 	}
@@ -689,11 +700,14 @@ export async function loadSalesRecords(
 	const records: ReportRecord[] = []
 	for (const row of web.rows) {
 		const money = moneyOf(row)
+		const serviceChargeMinor =
+			(row.serviceFeeCents ?? 0) + (tabServiceFees.get(row.id) ?? 0)
 		records.push(
 			...saleRows(
 				webBase(row, zones, customerTypeOf(row)),
 				money,
 				webTenders(row, money),
+				serviceChargeMinor,
 			),
 		)
 	}
@@ -717,6 +731,7 @@ export async function loadSalesRecords(
 				base,
 				money,
 				tenders.map(([tender, amountMinor]) => ({ tender, amountMinor })),
+				row.serviceChargeCents ?? 0,
 			),
 		)
 	}

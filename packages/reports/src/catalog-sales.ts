@@ -266,6 +266,31 @@ const salesFields: ReportField[] = [
 		averageLabel: false,
 	},
 	{
+		id: 'serviceCharges',
+		label: 'Service charges',
+		type: 'currency',
+		sumLabel: 'Service charges',
+		averageLabel: false,
+		description:
+			'Automatic service charges, large-party gratuities, and guest service fees, reported apart from tips.',
+	},
+	{
+		id: 'taxExempt',
+		label: 'Tax exempt',
+		type: 'boolean',
+		filterable: true,
+		groupable: true,
+		description: 'Whether the order was marked tax-exempt with a certificate.',
+	},
+	{
+		id: 'taxExemptSales',
+		label: 'Tax-exempt sales',
+		type: 'currency',
+		sumLabel: 'Tax-exempt sales',
+		averageLabel: false,
+		description: 'Net sales on orders marked tax-exempt.',
+	},
+	{
 		id: 'refunds',
 		label: 'Refunds',
 		type: 'currency',

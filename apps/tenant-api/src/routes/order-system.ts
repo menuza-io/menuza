@@ -34,6 +34,11 @@ import {
 	getBalanceQuote,
 } from '../services/catering-balance.ts'
 import {
+	applyOrderPayLinkPaymentEvent,
+	bindOrderPayLinkSession,
+	getOrderPayLinkQuote,
+} from '../services/order-pay-links.ts'
+import {
 	applyQuoteRefPaymentEvent,
 	bindQuoteRefSession,
 	getQuoteRefQuote,
@@ -172,10 +177,11 @@ orderSystemRoutes.post('/quote', async (c) => {
 	if (giftCardId && isGiftCardsKillSwitchOn()) {
 		return c.json({ error: 'unavailable' }, 503)
 	}
-	// A catering quote or balance payment starts new money: the kill switch stops it.
+	// A catering quote starts new money: the kill switch stops it.
+	// `bal:<orderId>` serves both catering balances and general order pay links (#163).
 	const quoteId = parseQuoteOrderRef(parsed.data.orderId)
 	const balanceOrderId = parseBalanceOrderRef(parsed.data.orderId)
-	if ((quoteId || balanceOrderId) && isCateringPublicDisabled()) {
+	if (quoteId && isCateringPublicDisabled()) {
 		return c.json({ error: 'catering_unavailable' }, 503)
 	}
 
@@ -187,11 +193,32 @@ orderSystemRoutes.post('/quote', async (c) => {
 					parsed.data.paymentToken,
 				)
 			: balanceOrderId
-				? await getBalanceQuote(
-						parsed.data.orgId,
-						balanceOrderId,
-						parsed.data.paymentToken,
-					)
+				? await (async () => {
+						const catering = await getBalanceQuote(
+							parsed.data.orgId,
+							balanceOrderId,
+							parsed.data.paymentToken,
+						)
+						if (catering.ok) {
+							if (isCateringPublicDisabled()) {
+								return {
+									ok: false as const,
+									failure: {
+										status: 503,
+										code: 'catering_unavailable',
+										message: 'Catering is temporarily unavailable.',
+									},
+								}
+							}
+							return catering
+						}
+						if (catering.failure.code !== 'order_not_found') return catering
+						return getOrderPayLinkQuote(
+							parsed.data.orgId,
+							balanceOrderId,
+							parsed.data.paymentToken,
+						)
+					})()
 				: giftCardId
 					? await getGiftCardQuote(
 							parsed.data.orgId,
@@ -248,7 +275,7 @@ orderSystemRoutes.post('/payment-session', async (c) => {
 	}
 	const quoteId = parseQuoteOrderRef(parsed.data.orderId)
 	const balanceOrderId = parseBalanceOrderRef(parsed.data.orderId)
-	if ((quoteId || balanceOrderId) && isCateringPublicDisabled()) {
+	if (quoteId && isCateringPublicDisabled()) {
 		return c.json({ error: 'catering_unavailable' }, 503)
 	}
 
@@ -261,12 +288,34 @@ orderSystemRoutes.post('/payment-session', async (c) => {
 					processor: parsed.data.processor,
 				})
 			: balanceOrderId
-				? await bindBalancePaymentSession({
-						orgId: parsed.data.orgId,
-						orderId: balanceOrderId,
-						sessionId: parsed.data.sessionId,
-						processor: parsed.data.processor,
-					})
+				? await (async () => {
+						const catering = await bindBalancePaymentSession({
+							orgId: parsed.data.orgId,
+							orderId: balanceOrderId,
+							sessionId: parsed.data.sessionId,
+							processor: parsed.data.processor,
+						})
+						if (catering.ok) {
+							if (isCateringPublicDisabled()) {
+								return {
+									ok: false as const,
+									failure: {
+										status: 503,
+										code: 'catering_unavailable',
+										message: 'Catering is temporarily unavailable.',
+									},
+								}
+							}
+							return catering
+						}
+						if (catering.failure.code !== 'order_not_found') return catering
+						return bindOrderPayLinkSession({
+							orgId: parsed.data.orgId,
+							orderId: balanceOrderId,
+							sessionId: parsed.data.sessionId,
+							processor: parsed.data.processor,
+						})
+					})()
 				: giftCardId
 					? await bindGiftCardPaymentSession({
 							orgId: parsed.data.orgId,
@@ -337,16 +386,31 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 					paymentId: parsed.data.paymentId,
 				})
 			: balanceOrderId
-				? await applyBalancePaymentEvent({
-						orgId: parsed.data.orgId,
-						orderId: balanceOrderId,
-						sessionId: parsed.data.sessionId,
-						processor: parsed.data.processor,
-						status: parsed.data.status,
-						amountCents: parsed.data.amountCents,
-						currency: parsed.data.currency,
-						paymentId: parsed.data.paymentId,
-					})
+				? await (async () => {
+						const catering = await applyBalancePaymentEvent({
+							orgId: parsed.data.orgId,
+							orderId: balanceOrderId,
+							sessionId: parsed.data.sessionId,
+							processor: parsed.data.processor,
+							status: parsed.data.status,
+							amountCents: parsed.data.amountCents,
+							currency: parsed.data.currency,
+							paymentId: parsed.data.paymentId,
+						})
+						if (catering.ok || catering.failure.code !== 'order_not_found') {
+							return catering
+						}
+						return applyOrderPayLinkPaymentEvent({
+							orgId: parsed.data.orgId,
+							orderId: balanceOrderId,
+							sessionId: parsed.data.sessionId,
+							processor: parsed.data.processor,
+							status: parsed.data.status,
+							amountCents: parsed.data.amountCents,
+							currency: parsed.data.currency,
+							paymentId: parsed.data.paymentId,
+						})
+					})()
 				: giftCardId
 					? await applyGiftCardPaymentEvent({
 							orgId: parsed.data.orgId,
