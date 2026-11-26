@@ -145,6 +145,8 @@ export const orderSchema = z.object({
 	lines: z.array(
 		z.object({
 			kind: z.enum(['catalog', 'custom']).optional().catch(undefined),
+			itemId: z.string().optional().catch(undefined),
+			variantId: z.string().nullable().optional().catch(undefined),
 			itemName: z.string(),
 			quantity: z.number(),
 			unitPriceCents: z.number(),
@@ -154,6 +156,8 @@ export const orderSchema = z.object({
 			variantNames: z.array(z.string()).optional(),
 			options: z.array(
 				z.object({
+					groupId: z.string().optional().catch(undefined),
+					optionId: z.string().optional().catch(undefined),
 					optionName: z.string(),
 					quantity: z.number(),
 				}),

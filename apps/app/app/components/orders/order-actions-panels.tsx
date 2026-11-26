@@ -68,17 +68,19 @@ export function OrderActionsPanels({
 	)
 	const [editLines, setEditLines] = useState(() =>
 		order.lines.map((l) => ({
-			itemId: l.itemId,
+			itemId: l.itemId ?? '',
 			variantId: l.variantId ?? null,
 			name: l.itemName,
 			quantity: l.quantity,
 			comped: false,
 			compReason: '',
-			options: (l.options ?? []).map((o) => ({
-				groupId: o.groupId,
-				optionId: o.optionId,
-				quantity: o.quantity,
-			})),
+			options: (l.options ?? [])
+				.filter((o) => Boolean(o.groupId && o.optionId))
+				.map((o) => ({
+					groupId: o.groupId ?? '',
+					optionId: o.optionId ?? '',
+					quantity: o.quantity,
+				})),
 		})),
 	)
 	const [editBusy, setEditBusy] = useState(false)
