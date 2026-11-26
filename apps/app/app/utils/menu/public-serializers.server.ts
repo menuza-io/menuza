@@ -161,6 +161,8 @@ export interface PublicMenuItemData {
 	price: number
 	/** EAN, UPC or GTIN (#407). Absent on a menu published before it. */
 	barcode?: string | null
+	/** True when only a few portions remain (#473). Never a count. */
+	fewLeft?: boolean
 	imageKey: string | null
 	imageUrl: string | null
 	imageKeys: string[]
