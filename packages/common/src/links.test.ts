@@ -43,6 +43,14 @@ const SAMPLES: Array<{ type: GuestLinkType; params: Record<string, string> }> =
 			type: 'reservation_pay',
 			params: { reservation: 'r_1', token: 'tok-ABCDEFGH' },
 		},
+		{
+			type: 'catering_quote',
+			params: { quote: '0b2f4c5e-1a3d-4e6f-8a9b-1c2d3e4f5a6b.2.' + HEX },
+		},
+		{
+			type: 'catering_balance',
+			params: { balance: '0b2f4c5e-1a3d-4e6f-8a9b-1c2d3e4f5a6b.1.' + HEX },
+		},
 		{ type: 'loyalty', params: {} },
 		{ type: 'gift_cards', params: {} },
 	]
@@ -224,7 +232,13 @@ describe('who owns a link', () => {
 	})
 
 	it('web-only types stay on the website (cart, table, payment)', () => {
-		for (const type of ['cart', 'table', 'reservation_pay'] as const) {
+		for (const type of [
+			'cart',
+			'table',
+			'reservation_pay',
+			'catering_quote',
+			'catering_balance',
+		] as const) {
 			const sample = SAMPLES.find((s) => s.type === type)!
 			const link = buildLink(type, sample.params, { origin: ORIGIN })!
 			expect(resolveLink(link, own)).toMatchObject({

@@ -25,6 +25,9 @@ import {
 	RESTAURANT_PAYMENT_STATUS_VALUES,
 } from '@repo/common/restaurant-orders'
 import {
+	CATERING_QUOTE_STATUSES,
+} from '@repo/common/catering'
+import {
 	QR_ORDER_SOURCE_VALUES,
 	QR_TAB_PAYMENT_STATUS_VALUES,
 	QR_TAB_STATUS_VALUES,
@@ -1314,6 +1317,41 @@ export const restaurantOrders = sqliteTable(
 		disputeStatus: text('dispute_status', {
 			enum: [...ORDER_DISPUTE_STATUSES],
 		}),
+		// Catering (#124, #361; migration 0071). `is_catering` marks an order
+		// placed through the catering page or paid from a quote; the event time
+		// and head count are what the guest chose, the notes are the guest's own
+		// words (personal data, regional only). `deposit_*` and `balance_*` say how
+		// the total is collected: the order's own payment is the deposit (or the
+		// whole total when none), the balance is paid later through its own link
+		// (`catering_payments`). `paid_cents` is what was really captured so far
+		// (null for every other order: the total once paid). The balance link is a
+		// capability of `balance_version`, burned by bumping it.
+		isCatering: integer('is_catering', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		cateringEventAt: integer('catering_event_at', { mode: 'timestamp' }),
+		guestCount: integer('guest_count'),
+		cateringNotes: text('catering_notes'),
+		cateringQuoteId: text('catering_quote_id'),
+		paidCents: integer('paid_cents'),
+		depositPercent: integer('deposit_percent'),
+		depositCents: integer('deposit_cents'),
+		balanceDueAt: integer('balance_due_at', { mode: 'timestamp' }),
+		balanceState: text('balance_state', { enum: ['due', 'paid', 'void'] }),
+		balancePaidCents: integer('balance_paid_cents').notNull().default(0),
+		balanceVersion: integer('balance_version').notNull().default(1),
+		balanceBeforeDueSentAt: integer('balance_before_due_sent_at', {
+			mode: 'timestamp',
+		}),
+		balanceOverdueSentAt: integer('balance_overdue_sent_at', {
+			mode: 'timestamp',
+		}),
+		eventAlertSentAt: integer('event_alert_sent_at', { mode: 'timestamp' }),
+		// The deposit (or the whole total) cleared and the guest and the alert
+		// members were told, once: claimed by a compare-and-set on this column.
+		cateringConfirmedAt: integer('catering_confirmed_at', {
+			mode: 'timestamp',
+		}),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),
@@ -1323,6 +1361,10 @@ export const restaurantOrders = sqliteTable(
 	},
 	(table) => [
 		index('idx_restaurant_orders_number').on(table.number),
+		// The catering tab, the day-before alert and the balance reminders.
+		index('idx_restaurant_orders_catering_event')
+			.on(table.cateringEventAt)
+			.where(sql`${table.isCatering} = 1`),
 		// The acceptance tick's scan: orders waiting, by deadline.
 		index('idx_restaurant_orders_acceptance_deadline')
 			.on(table.acceptanceDeadlineAt)
@@ -1460,6 +1502,10 @@ export const restaurantOrderRefunds = sqliteTable(
 		// operator ticked "include service fee". Lets the next refund see how much
 		// of the fee is already back. Zero for every row from before 0045.
 		serviceFeeCents: integer('service_fee_cents').notNull().default(0),
+		// The provider's id of the payment this refund returns, when it is not the
+		// order's own (a catering balance paid through its own session, 0071).
+		// Null means `restaurant_orders.payment_id`.
+		paymentId: text('payment_id'),
 	},
 	(table) => [
 		uniqueIndex('restaurant_order_refunds_idempotency_unique').on(
@@ -1483,6 +1529,147 @@ export const restaurantOrderRefunds = sqliteTable(
 		),
 		index('idx_restaurant_order_refunds_created').on(table.createdAt),
 		check('chk_restaurant_order_refunds_amount', sql`${table.amountCents} > 0`),
+	],
+)
+
+/**
+ * Catering quotes (#124): a guest's request or a quote an operator wrote, and
+ * the lines, charges and total the guest pays. Everything here is regional:
+ * the guest's contact, the event notes and the delivery address are personal
+ * data and never leave the region (the App and Sites see ids and amounts only).
+ * `version` counts edits of a sent quote; the guest's link is an HMAC of the id
+ * and version carried in the URL fragment, never stored, so a new version
+ * burns the old link. A paid quote becomes a catering order (`paid_order_id`).
+ */
+export const cateringQuotes = sqliteTable(
+	'catering_quotes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		customerId: text('customer_id').references(() => customers.id, {
+			onDelete: 'set null',
+		}),
+		status: text('status', { enum: [...CATERING_QUOTE_STATUSES] })
+			.notNull()
+			.default('draft'),
+		version: integer('version').notNull().default(1),
+		// `guest` for a request from the catering page, `operator` for a quote an
+		// operator started (a phone enquiry).
+		source: text('source', { enum: ['guest', 'operator'] })
+			.notNull()
+			.default('operator'),
+		locale: text('locale').notNull().default('en'),
+		currency: text('currency').notNull(),
+		fulfillment: text('fulfillment', { enum: ['pickup', 'delivery'] })
+			.notNull()
+			.default('pickup'),
+		eventAt: integer('event_at'),
+		guestCount: integer('guest_count'),
+		contactName: text('contact_name').notNull().default(''),
+		contactPhone: text('contact_phone').notNull().default(''),
+		contactEmail: text('contact_email'),
+		delivery: text('delivery', { mode: 'json' }),
+		// What the guest wrote with the request (personal data).
+		eventNotes: text('event_notes'),
+		// What the operator tells the guest on the quote.
+		quoteNote: text('quote_note'),
+		lines: text('lines', { mode: 'json' }).notNull().default([]),
+		charges: text('charges', { mode: 'json' }).notNull().default([]),
+		subtotalCents: integer('subtotal_cents').notNull().default(0),
+		taxCents: integer('tax_cents').notNull().default(0),
+		totalCents: integer('total_cents').notNull().default(0),
+		taxRateBp: integer('tax_rate_bp').notNull().default(0),
+		taxInclusive: integer('tax_inclusive', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// The location's deposit percent is used unless this overrides it.
+		depositPercent: integer('deposit_percent'),
+		validDays: integer('valid_days'),
+		expiresAt: integer('expires_at'),
+		createdBy: text('created_by'),
+		sentAt: integer('sent_at'),
+		paidAt: integer('paid_at'),
+		paidOrderId: text('paid_order_id'),
+		// The hosted payment the guest started (the `quote:<id>` bridge): one
+		// session at a time, unbound when it fails or expires.
+		paymentSessionId: text('payment_session_id'),
+		paymentProcessor: text('payment_processor', {
+			enum: [...ORDER_PAYMENT_PROCESSORS],
+		}),
+		paymentId: text('payment_id'),
+		paymentEventAt: integer('payment_event_at'),
+		// Guest requests: a retried submit returns the same request.
+		idempotencyKey: text('idempotency_key'),
+		requestHash: text('request_hash'),
+		createdAt: integer('created_at')
+			.notNull()
+			.default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+		updatedAt: integer('updated_at')
+			.notNull()
+			.default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+	},
+	(table) => [
+		uniqueIndex('catering_quotes_idempotency_unique')
+			.on(table.idempotencyKey)
+			.where(sql`${table.idempotencyKey} is not null`),
+		uniqueIndex('catering_quotes_payment_session_unique')
+			.on(table.paymentSessionId)
+			.where(sql`${table.paymentSessionId} is not null`),
+		index('idx_catering_quotes_status').on(table.status, table.updatedAt),
+		index('idx_catering_quotes_location').on(table.locationId, table.createdAt),
+		check(
+			'chk_catering_quotes_status',
+			sql`${table.status} in ('draft', 'sent', 'accepted', 'paid', 'expired', 'cancelled')`,
+		),
+	],
+)
+
+/**
+ * One payment toward a catering order's balance (#361): a hosted session the
+ * guest starts from the balance link (`bal:<orderId>`). The deposit (or the
+ * whole total) is the order's own payment, so only later payments live here.
+ * `paid` rows add to `restaurant_orders.balance_paid_cents` and `paid_cents`.
+ */
+export const cateringPayments = sqliteTable(
+	'catering_payments',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: ['balance'] })
+			.notNull()
+			.default('balance'),
+		amountCents: integer('amount_cents').notNull(),
+		currency: text('currency').notNull(),
+		status: text('status', {
+			enum: ['pending', 'paid', 'failed', 'expired', 'review'],
+		})
+			.notNull()
+			.default('pending'),
+		processor: text('processor', { enum: [...ORDER_PAYMENT_PROCESSORS] }),
+		sessionId: text('session_id'),
+		paymentId: text('payment_id'),
+		// The order's balance version this payment was started for.
+		balanceVersion: integer('balance_version').notNull().default(1),
+		createdAt: integer('created_at')
+			.notNull()
+			.default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+		paidAt: integer('paid_at'),
+		updatedAt: integer('updated_at')
+			.notNull()
+			.default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+	},
+	(table) => [
+		uniqueIndex('catering_payments_session_unique')
+			.on(table.sessionId)
+			.where(sql`${table.sessionId} is not null`),
+		index('idx_catering_payments_order').on(table.orderId, table.createdAt),
+		check('chk_catering_payments_amount', sql`${table.amountCents} > 0`),
 	],
 )
 
@@ -7903,6 +8090,9 @@ export type WebsiteFormSubmission = typeof websiteFormSubmissions.$inferSelect
 export type RestaurantOrder = typeof restaurantOrders.$inferSelect
 export type NewRestaurantOrder = typeof restaurantOrders.$inferInsert
 export type RestaurantOrderRefund = typeof restaurantOrderRefunds.$inferSelect
+export type CateringQuote = typeof cateringQuotes.$inferSelect
+export type NewCateringQuote = typeof cateringQuotes.$inferInsert
+export type CateringPayment = typeof cateringPayments.$inferSelect
 export type QrTabRefund = typeof qrTabRefunds.$inferSelect
 export type RestaurantOrderReservation =
 	typeof restaurantOrderReservations.$inferSelect

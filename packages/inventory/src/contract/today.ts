@@ -199,6 +199,30 @@ export const todaySchema = z.object({
 			orderId: z.string().nullable().optional(),
 		}),
 	),
+	/**
+	 * Confirmed catering orders in the next two weeks and what they need (#513),
+	 * per event date, against what is on hand (earlier events use stock first).
+	 * Only with `inventory.recipes` on. Dishes with no recipe are listed, not
+	 * counted.
+	 */
+	catering: z
+		.array(
+			z.object({
+				date: isoDateSchema,
+				orders: z.number().int(),
+				short: z.array(
+					z.object({
+						itemId: z.string(),
+						itemName: z.string(),
+						baseUnit: z.enum(['g', 'ml', 'piece']),
+						needed: z.number().int(),
+						short: z.number().int(),
+					}),
+				),
+				noRecipe: z.array(z.string()),
+			}),
+		)
+		.optional(),
 	/** Setup checklist facts (as `GET /status`). */
 	setup: z.object({
 		items: z.number().int(),

@@ -90,6 +90,7 @@ import {
 	withInventoryWrite,
 } from '../lib/inventory-write.ts'
 import { canSendTenantEmail, sendTenantEmail } from '../lib/tenant-email.ts'
+import { cateringNeedByItem } from './catering-demand.ts'
 import { recordInventoryAudit } from './inventory-audit.ts'
 import {
 	assertLocationAllowed,
@@ -373,6 +374,9 @@ function maskExplanationForCost(
 			fillUpToQuantity: explanation.fillUpToQuantity,
 			expectedUseUntilDeliveryQuantity:
 				explanation.expectedUseUntilDeliveryQuantity,
+			...(explanation.cateringQuantity !== undefined
+				? { cateringQuantity: explanation.cateringQuantity }
+				: {}),
 			neededQuantity: explanation.neededQuantity,
 			packName: explanation.packName,
 			packBaseQuantity: explanation.packBaseQuantity,
@@ -1168,7 +1172,7 @@ async function draftBySupplier(
  */
 export async function buildSuggestedOrders(
 	db: InventoryReader,
-	input: { locationId: string; cost: boolean; now: number },
+	input: { locationId: string; cost: boolean; now: number; recipes?: boolean },
 ): Promise<SuggestedOrders> {
 	const { locationId, cost } = input
 	const clock = await locationClock(db, locationId, input.now)
@@ -1214,15 +1218,30 @@ export async function buildSuggestedOrders(
 			),
 		}),
 	)
+	// Confirmed catering orders in the next two weeks add their ingredients on top
+	// of the usual levels, so the order before the delivery that arrives in time
+	// includes them (#513). A cancelled order is not confirmed: its need is gone.
+	const cateringNeed =
+		input.recipes === false
+			? new Map<string, number>()
+			: await cateringNeedByItem(db, locationId, input.now)
 	const cards = new Map<string, SuggestedSupplierOrder>()
 	const supplierById = new Map<string, SupplierRow>()
 	const priceByLineKey = new Map<string, number | null>()
 	const unsourced: SuggestedOrders['unsourced'] = []
 	for (const row of stock) {
 		const place = row.place
-		if (!place) continue
-		const orderBelow = place.orderBelowQuantity
-		const fillUpTo = place.fillUpToQuantity
+		const catering = cateringNeed.get(row.item.id) ?? 0
+		if (!place && catering <= 0) continue
+		// Catering is stock on top of the usual levels (a level may be unset).
+		const orderBelow =
+			catering > 0
+				? (place?.orderBelowQuantity ?? 0) + catering
+				: (place?.orderBelowQuantity ?? null)
+		const fillUpTo =
+			catering > 0
+				? (place?.fillUpToQuantity ?? place?.orderBelowQuantity ?? 0) + catering
+				: (place?.fillUpToQuantity ?? null)
 		const pending = onOrder.get(row.item.id) ?? 0
 		if (
 			!needsOrder({
@@ -1234,7 +1253,7 @@ export async function buildSuggestedOrders(
 		) {
 			continue
 		}
-		const countUnit = place.countUnit ? wireUnit(place.countUnit) : null
+		const countUnit = place?.countUnit ? wireUnit(place.countUnit) : null
 		const choice = chooseSupplierProduct(choices.get(row.item.id) ?? [])
 		if (!choice) {
 			unsourced.push({
@@ -1291,6 +1310,7 @@ export async function buildSuggestedOrders(
 			fillUpToQuantity: fillUpTo,
 			expectedUseUntilDeliveryQuantity: expectedUse,
 			neededQuantity: suggestion.needed,
+			...(catering > 0 ? { cateringQuantity: catering } : {}),
 			packName: product.packName,
 			packBaseQuantity: product.packBaseQuantity,
 			rawPacksMilli: suggestion.rawPacksMilli,

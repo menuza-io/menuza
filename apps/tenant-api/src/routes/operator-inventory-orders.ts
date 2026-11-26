@@ -88,6 +88,7 @@ operatorInventoryOrdersRoutes.get('/orders/suggested', reads(), async (c) => {
 				locationId: location.locationId,
 				cost: inventoryCaller(ctx).cost,
 				now: Date.now(),
+				recipes: ctx.features.recipes,
 			}),
 		)
 	} catch (error) {

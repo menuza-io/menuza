@@ -56,6 +56,12 @@ const COVERED: Record<string, string> = {
 	'restaurant_orders.receipt_token_hash':
 		'replaced by a random value, so the old receipt link stops working',
 	'restaurant_orders.payment_token_hash': 'nulled with the order contact',
+	'catering_quotes.contact_name':
+		'scrubbed by customer id, paid order, normalised phone or case-insensitive email; version bumped to burn quote link',
+	'catering_quotes.contact_phone':
+		'scrubbed by customer id, paid order, normalised phone or case-insensitive email; version bumped to burn quote link',
+	'catering_quotes.contact_email':
+		'scrubbed by customer id, paid order, normalised phone or case-insensitive email; version bumped to burn quote link',
 	'website_form_submissions.values':
 		'redacted when a field holds the erased phone or email as a whole token (best effort, free text)',
 	'voice_calls.caller_phone': 'call deleted by phone or customer id',
@@ -325,6 +331,7 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 		// A table with a customer_id column holds a person's rows. It must be one
 		// the erasure deletes from or unlinks (listed here), so a new one fails.
 		const handled = new Set([
+			'catering_quotes',
 			'customer_refresh_tokens',
 			// Guest push (#105): devices, switches and the send log.
 			'customer_push_devices',

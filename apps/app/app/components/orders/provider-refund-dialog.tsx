@@ -76,11 +76,14 @@ export function ProviderRefundDialog({
 	onDone,
 	onRefresh,
 	finalFocus,
+	prefill,
 }: {
 	order: {
 		id: string
 		currency: string
 		totalCents: number
+		/** What a catering order captured so far (deposit plus balance); null is the total. */
+		paidCents?: number | null
 		refundedCents: number
 		refundPendingCents?: number
 		refundableCents?: number
@@ -100,9 +103,11 @@ export function ProviderRefundDialog({
 	onRefresh: () => void
 	/** Where focus goes on close; see `useSettledFocus`. */
 	finalFocus?: () => HTMLElement | boolean
+	/** Starts a partial refund with an amount and a note (the lines a catering refund picked). */
+	prefill?: { amountCents: number; note: string }
 }) {
 	const { t, i18n } = useLingui()
-	const [kind, setKind] = useState<RefundKind>('full')
+	const [kind, setKind] = useState<RefundKind>(prefill ? 'partial' : 'full')
 	// A partial refund gives back the service fee only when this is ticked.
 	const [includeFee, setIncludeFee] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
@@ -200,7 +205,13 @@ export function ProviderRefundDialog({
 
 	const [form, fields] = useForm({
 		id: 'provider-refund-form',
-		defaultValue: { kind: 'full', amount: '', note: '' },
+		defaultValue: {
+			kind: prefill ? 'partial' : 'full',
+			amount: prefill
+				? minorToMajorText(prefill.amountCents, order.currency)
+				: '',
+			note: prefill?.note ?? '',
+		},
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema })
 		},
@@ -328,7 +339,7 @@ export function ProviderRefundDialog({
 								<Trans>Paid</Trans>
 							</dt>
 							<dd className="tabular-nums" data-testid="provider-refund-paid">
-								<bdi>{money(order.totalCents)}</bdi>
+								<bdi>{money(order.paidCents ?? order.totalCents)}</bdi>
 							</dd>
 						</div>
 						<div className="flex flex-col gap-0.5">
@@ -370,7 +381,11 @@ export function ProviderRefundDialog({
 							label={<Trans>Amount to return</Trans>}
 							id="provider-refund-amount"
 							name={fields.amount.name}
-							defaultValue=""
+							defaultValue={
+								prefill
+									? minorToMajorText(prefill.amountCents, order.currency)
+									: ''
+							}
 							error={fields.amount.errors?.[0] ?? null}
 							inputMode="decimal"
 							placeholder={minorToMajorText(450, order.currency)}
@@ -399,7 +414,7 @@ export function ProviderRefundDialog({
 						hint={t`Saved with the refund, along with who issued it.`}
 						id="provider-refund-note"
 						name={fields.note.name}
-						defaultValue=""
+						defaultValue={prefill?.note ?? ''}
 						error={fields.note.errors?.[0] ?? null}
 						rows={3}
 						maxLength={280}

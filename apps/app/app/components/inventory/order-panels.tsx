@@ -196,6 +196,10 @@ export function OrderLineExplanationPopover({
 		explanation.expectedUseUntilDeliveryQuantity !== null
 			? quantity.format(explanation.expectedUseUntilDeliveryQuantity, unitOpts)
 			: null
+	const cateringText =
+		explanation.cateringQuantity && explanation.cateringQuantity > 0
+			? quantity.format(explanation.cateringQuantity, unitOpts)
+			: null
 	const packSizeText = quantity.format(explanation.packBaseQuantity, {
 		baseUnit,
 	})
@@ -311,6 +315,18 @@ export function OrderLineExplanationPopover({
 							)}
 						</dd>
 					</div>
+					{cateringText ? (
+						<div className="flex justify-between gap-3">
+							<dt className="text-muted-foreground">
+								<Trans>Needed for catering orders</Trans>
+							</dt>
+							<dd>
+								<bdi dir="ltr" className="tabular-nums">
+									{cateringText}
+								</bdi>
+							</dd>
+						</div>
+					) : null}
 					<div className="flex justify-between gap-3 border-t pt-1.5">
 						<dt className="text-muted-foreground">
 							<Trans>Pack size</Trans>

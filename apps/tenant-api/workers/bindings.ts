@@ -21,6 +21,7 @@ export interface TenantApiWorkerEnv {
 	STAFFING_EMAIL_ENABLED?: string
 	RESERVATIONS_PUBLIC_ENABLED?: string
 	QR_DINE_IN_ENABLED?: string
+	CATERING_PUBLIC_ENABLED?: string
 	LOYALTY_ENABLED?: string
 	DISCOUNTS_ENABLED?: string
 	INVENTORY_ENABLED?: string

@@ -1,4 +1,5 @@
 import {
+	cateringQuotes,
 	customerCarts,
 	customerPushDevices,
 	customerPushPreferences,
@@ -149,6 +150,8 @@ export type ErasePersonResult = {
 	formSubmissionsRedacted: number
 	/** Present only when a restaurant order was scrubbed. */
 	restaurantOrdersScrubbed?: number
+	/** Present only when a catering quote was scrubbed. */
+	cateringQuotesScrubbed?: number
 	/** Present only when a QR table tab was scrubbed. */
 	qrTabsScrubbed?: number
 	posOrdersScrubbed?: number
@@ -1067,6 +1070,8 @@ export async function erasePerson(
 								deliveryPostalCode: null,
 								deliveryLat: null,
 								deliveryLng: null,
+								cateringNotes: null,
+								balanceVersion: sql`${restaurantOrders.balanceVersion} + 1`,
 								receiptTokenHash: crypto.randomUUID(),
 								paymentTokenHash: null,
 							})
@@ -1087,6 +1092,67 @@ export async function erasePerson(
 						),
 				)
 				const restaurantOrdersScrubbed = restaurantOrderIds.size
+
+				// Catering quotes hold contact, delivery and event notes in the region:
+				// scrub by customer id, paid order, normalised phone or email, keeping
+				// totals for the books and bumping `version` to burn the guest link.
+				const cateringQuoteIds = new Set<string>()
+				const quotesByCustomer = await queryInChunks(customerIds, (chunk) =>
+					tx
+						.select({ id: cateringQuotes.id })
+						.from(cateringQuotes)
+						.where(inArray(cateringQuotes.customerId, chunk)),
+				)
+				for (const row of quotesByCustomer) cateringQuoteIds.add(row.id)
+				const quotesByOrder = await queryInChunks(
+					[...restaurantOrderIds],
+					(chunk) =>
+						tx
+							.select({ id: cateringQuotes.id })
+							.from(cateringQuotes)
+							.where(inArray(cateringQuotes.paidOrderId, chunk)),
+				)
+				for (const row of quotesByOrder) cateringQuoteIds.add(row.id)
+				if (phoneForms.length > 0) {
+					const quotesByPhone = await tx
+						.select({ id: cateringQuotes.id })
+						.from(cateringQuotes)
+						.where(
+							inJsonList(digitsOnly(cateringQuotes.contactPhone), phoneForms),
+						)
+					for (const row of quotesByPhone) cateringQuoteIds.add(row.id)
+				}
+				if (emailForms.length > 0) {
+					const quotesByEmail = await tx
+						.select({ id: cateringQuotes.id })
+						.from(cateringQuotes)
+						.where(
+							inJsonList(
+								sql`lower(trim(${cateringQuotes.contactEmail}))`,
+								emailForms,
+							),
+						)
+					for (const row of quotesByEmail) cateringQuoteIds.add(row.id)
+				}
+				await forEachInChunks(
+					[...cateringQuoteIds],
+					(chunk) =>
+						tx
+							.update(cateringQuotes)
+							.set({
+								customerId: null,
+								contactName: '',
+								contactPhone: '',
+								contactEmail: null,
+								delivery: null,
+								eventNotes: null,
+								quoteNote: null,
+								version: sql`${cateringQuotes.version} + 1`,
+							})
+							.where(inArray(cateringQuotes.id, chunk)),
+					HEAVY_SET_CHUNK,
+				)
+				const cateringQuotesScrubbed = cateringQuoteIds.size
 
 				// QR table tabs keep the guest's name and phone for the table: a
 				// tab goes with its scrubbed rounds, or on its own when its phone
@@ -1300,6 +1366,7 @@ export async function erasePerson(
 					newlyErasedGuests.length > 0 ||
 					existing.length > 0 ||
 					restaurantOrdersScrubbed > 0 ||
+					cateringQuotesScrubbed > 0 ||
 					qrTabsScrubbed > 0 ||
 					giftCardErasure.cardsErased > 0 ||
 					guestPhotosDeleted > 0 ||
@@ -1327,6 +1394,7 @@ export async function erasePerson(
 						...(restaurantOrdersScrubbed > 0
 							? { restaurantOrdersScrubbed }
 							: {}),
+						...(cateringQuotesScrubbed > 0 ? { cateringQuotesScrubbed } : {}),
 						...(qrTabsScrubbed > 0 ? { qrTabsScrubbed } : {}),
 						...(posOrdersScrubbed > 0 ? { posOrdersScrubbed } : {}),
 						...(loyalty.membersErased > 0
@@ -1394,6 +1462,7 @@ export async function erasePerson(
 					ordersUnlinked: linkedOrders.length,
 					formSubmissionsRedacted,
 					...(restaurantOrdersScrubbed > 0 ? { restaurantOrdersScrubbed } : {}),
+					...(cateringQuotesScrubbed > 0 ? { cateringQuotesScrubbed } : {}),
 					...(qrTabsScrubbed > 0 ? { qrTabsScrubbed } : {}),
 					...(loyalty.membersErased > 0
 						? { loyaltyMembersErased: loyalty.membersErased }

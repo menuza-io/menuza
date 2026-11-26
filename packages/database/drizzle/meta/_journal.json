@@ -554,6 +554,13 @@
 			"when": 1795750000000,
 			"tag": "0078_alcohol_review_link",
 			"breakpoints": true
+		},
+		{
+			"idx": 79,
+			"version": "6",
+			"when": 1795860000000,
+			"tag": "0079_catering",
+			"breakpoints": true
 		}
 	]
 }

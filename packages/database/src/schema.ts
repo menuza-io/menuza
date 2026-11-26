@@ -4375,6 +4375,14 @@ export const OrganizationLocation = sqliteTable(
 		 */
 		googleReviewUrl: text(),
 		/**
+		 * Catering settings (#124, #255, #361, #325): JSON `CateringSettings` in
+		 * `@repo/common/catering` (notice, window, limits, quote mode, alert
+		 * members, order-by cutoffs, deposit and the "Good to know" answers).
+		 * Business settings only, no guest data. Gated by the org flags
+		 * `catering.enabled` and `catering.quotes`. Null is off.
+		 */
+		catering: text(),
+		/**
 		 * Table-service courses (#290). JSON `{ enabled, autoFireMinutes, courses }`.
 		 * Null is off. Course names are operator text, not guest data.
 		 */

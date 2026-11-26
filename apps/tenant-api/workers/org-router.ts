@@ -530,6 +530,16 @@ export async function resolveOrgId(
 		return orgIdFromOrderIdentity(request, url)
 	}
 
+	// Public catering routes (#124, #361): a customer access token is a valid
+	// signal (the handler re-checks it against the origin-bound org); otherwise
+	// resolve origin + slug/host, never a client-supplied orgId. The quote and
+	// balance links are capabilities checked inside the handler.
+	if (pathname === '/catering' || pathname.startsWith('/catering/')) {
+		const fromJwt = await orgIdFromCustomerJwt(request, env)
+		if (fromJwt) return fromJwt
+		return orgIdFromOrderIdentity(request, url)
+	}
+
 	// Customer loyalty routes: a customer access token is a valid signal (the
 	// handler re-checks it against the origin-bound org); otherwise resolve
 	// origin + slug/host, never a client-supplied orgId.

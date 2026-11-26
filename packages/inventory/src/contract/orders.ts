@@ -77,6 +77,8 @@ export const orderLineExplanationSchema = z.object({
 	orderBelowQuantity: z.number().int().nullable(),
 	fillUpToQuantity: z.number().int().nullable(),
 	expectedUseUntilDeliveryQuantity: z.number().int().nullable(),
+	/** What confirmed catering orders in the next two weeks will use (#513), added to the usual levels. Absent when none. */
+	cateringQuantity: z.number().int().optional(),
 	neededQuantity: z.number().int(),
 	packName: z.string(),
 	packBaseQuantity: z.number().int(),

@@ -1,0 +1,42 @@
+---
+import { msg } from '@lingui/core/macro'
+import CateringLabels from '~/components/catering/CateringLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer, siteSection } from '~/lib/media'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const title = i18n._(msg`Your catering quote`)
+const loading = i18n._(msg`One moment…`)
+// The page renders nothing about any quote or person: it is built by the
+// browser from the regional tenant-api with the guest's own link
+// (docs/tenant-data-residency.md). The link's token stays out of every request
+// to this server: it rides in the URL fragment.
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'catering-quote', title, slug: 'catering/quote', isHomePage: false, sections: [] }}
+	title={`${title} - ${organization.name}`}
+>
+	<section class={siteSection}>
+		<div class={`${siteContainer} flex max-w-xl flex-col gap-4`}>
+			<h1 class="text-3xl font-semibold">{title}</h1>
+			<CateringLabels />
+			<div id="catering-quote-root">
+				<p role="status" data-ct-status class="text-sm text-muted-foreground">{loading}</p>
+				<div data-ct-body class="flex flex-col gap-3"></div>
+				<p role="alert" data-ct-error class="text-sm text-destructive"></p>
+			</div>
+		</div>
+	</section>
+
+	<script>
+		import '../../scripts/catering-quote.ts'
+	</script>
+</SitePage>

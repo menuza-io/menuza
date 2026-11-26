@@ -95,6 +95,8 @@ import { reservationsPaymentsInternalRoutes } from './routes/reservations-paymen
 import { reservationsPublicRoutes } from './routes/reservations-public.ts'
 import { inventoryTickRoutes } from './routes/inventory-tick.ts'
 import { orderMessagesTickRoutes } from './routes/order-messages-tick.ts'
+import { cateringRoutes } from './routes/catering.ts'
+import { operatorCateringRoutes } from './routes/operator-catering.ts'
 import { giftCardRoutes } from './routes/gift-cards.ts'
 import { giftCardTickRoutes } from './routes/gift-cards-tick.ts'
 import { loyaltyTickRoutes } from './routes/loyalty-tick.ts'
@@ -325,7 +327,10 @@ export function createTenantApiApp() {
 	)
 	app.use('/pos/*', rateLimit('pos', { windowMs: 60 * 1000, maxRequests: 600 }))
 	// Printers poll every few seconds; a wrong password is refused before any work.
-	app.use('/print/*', rateLimit('print', { windowMs: 60 * 1000, maxRequests: 600 }))
+	app.use(
+		'/print/*',
+		rateLimit('print', { windowMs: 60 * 1000, maxRequests: 600 }),
+	)
 
 	// The public application form: a person applies a few times at most. The
 	// organization also enforces durable per-address and per-organization limits
@@ -413,6 +418,23 @@ export function createTenantApiApp() {
 			: giftCardReadRateLimit(c, next),
 	)
 
+	// Catering (#124, #361): quote and balance links are 256-bit capabilities, so
+	// the limits only stop abuse of the guest routes (a quote request is the
+	// write; Turnstile guards it too).
+	const cateringWriteRateLimit = rateLimit('catering-writes', {
+		windowMs: 60 * 1000,
+		maxRequests: 20,
+	})
+	const cateringReadRateLimit = rateLimit('catering-reads', {
+		windowMs: 60 * 1000,
+		maxRequests: 240,
+	})
+	app.use('/catering/*', (c, next) =>
+		c.req.method === 'POST'
+			? cateringWriteRateLimit(c, next)
+			: cateringReadRateLimit(c, next),
+	)
+
 	app.get('/health', healthHandler)
 	app.get('/api/health', healthHandler)
 
@@ -495,6 +517,8 @@ export function createTenantApiApp() {
 	app.route('/operator/inventory', operatorInventoryRoutes)
 	app.route('/pos/loyalty', posLoyaltyRoutes)
 	app.route('/gift-cards', giftCardRoutes)
+	app.route('/catering', cateringRoutes)
+	app.route('/operator/catering', operatorCateringRoutes)
 	app.route('/operator/gift-cards', operatorGiftCardRoutes)
 	app.route('/pos/gift-cards', posGiftCardRoutes)
 	app.route('/api/voice/actions', reservationsVoiceActionRoutes)

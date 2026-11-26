@@ -1,0 +1,16 @@
+---
+import { buildCateringLabels } from '~/lib/catering/labels'
+
+/**
+ * Emits the translated interface strings for the catering page scripts. Read
+ * with `readCateringLabels()` from `~/lib/catering/read-labels`.
+ */
+const labels = buildCateringLabels(Astro.locals.i18n)
+---
+
+<script
+	id="catering-labels"
+	type="application/json"
+	is:inline
+	set:html={JSON.stringify(labels).replace(/</g, '\\u003c')}
+/>

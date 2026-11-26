@@ -24,6 +24,9 @@ export function isOrderMessagesActivityPath(pathname: string): boolean {
 	return (
 		pathname === '/orders' ||
 		pathname === '/api/orders/payment-status' ||
+		// A balance voided, reopened, charged or given a new date changes when the
+		// next reminder falls due (#361).
+		/^\/operator\/catering\/orders\/[^/]+\/(balance|charges)$/.test(pathname) ||
 		/^\/orders\/[^/]+\/cancel$/.test(pathname) ||
 		/^\/operator\/orders\/[^/]+$/.test(pathname) ||
 		/^\/pos\/online-orders\/[^/]+\/command$/.test(pathname) ||

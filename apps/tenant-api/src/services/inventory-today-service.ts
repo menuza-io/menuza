@@ -30,6 +30,10 @@ import {
 } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { type InventoryReader } from '../lib/inventory-write.ts'
+import {
+	CATERING_ORDER_HORIZON_DAYS,
+	cateringNeeds,
+} from './catering-demand.ts'
 import { locationClock, wireUnit } from './inventory-common.ts'
 import { loadDaysLeft } from './inventory-days-left.ts'
 import { computeFoodCost } from './inventory-food-cost.ts'
@@ -279,7 +283,7 @@ export async function getToday(
 		candidates.push({ item, money, priority: KIND_PRIORITY[item.kind] })
 
 	const suggestion = purchasing
-		? await buildSuggestedOrders(db, { locationId, cost, now })
+		? await buildSuggestedOrders(db, { locationId, cost, now, recipes })
 		: null
 	if (suggestion) {
 		metrics.toOrderItems = suggestion.toOrderItems
@@ -669,12 +673,64 @@ export async function getToday(
 		}
 	}
 
+	// Confirmed catering orders of the next two weeks (#513): what each event date
+	// needs against what is on hand, earlier dates using the stock first.
+	let catering: Today['catering']
+	if (recipes) {
+		const needs = await cateringNeeds(db, {
+			locationId,
+			fromMs: now,
+			toMs: now + CATERING_ORDER_HORIZON_DAYS * 86_400_000,
+		})
+		if (needs.length > 0) {
+			const remaining = new Map(
+				stock.map((row) => [row.item.id, Math.max(0, row.onHand)]),
+			)
+			const itemOf = new Map(stock.map((row) => [row.item.id, row.item]))
+			const dates = [...new Set(needs.map((need) => need.date))].sort()
+			catering = dates.map((day) => {
+				const todays = needs.filter((need) => need.date === day)
+				const total = new Map<string, number>()
+				for (const need of todays) {
+					for (const [itemId, quantity] of need.usage) {
+						total.set(itemId, (total.get(itemId) ?? 0) + quantity)
+					}
+				}
+				const short: NonNullable<Today['catering']>[number]['short'] = []
+				for (const [itemId, needed] of total) {
+					const item = itemOf.get(itemId)
+					if (!item) continue
+					const have = remaining.get(itemId) ?? 0
+					const used = Math.min(have, needed)
+					remaining.set(itemId, have - used)
+					if (needed - used > 0) {
+						short.push({
+							itemId,
+							itemName: item.name,
+							baseUnit: item.baseUnit,
+							needed,
+							short: needed - used,
+						})
+					}
+				}
+				short.sort((a, b) => a.itemName.localeCompare(b.itemName))
+				return {
+					date: day,
+					orders: todays.length,
+					short,
+					noRecipe: [...new Set(todays.flatMap((need) => need.noRecipe))],
+				}
+			})
+		}
+	}
+
 	return {
 		locationId,
 		date,
 		metrics,
 		attention: candidates.slice(0, 5).map((entry) => entry.item),
 		week,
+		...(catering ? { catering } : {}),
 		setup: {
 			items: status.items,
 			storageAreas: status.storageAreas,

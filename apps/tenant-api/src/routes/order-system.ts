@@ -4,6 +4,7 @@ import {
 	giftCardOrderRef as giftCardOrderRefOf,
 	parseGiftCardOrderRef,
 } from '@repo/common/gift-cards'
+import { parseBalanceOrderRef, parseQuoteOrderRef } from '@repo/common/catering'
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
 	orderDisputeStatusRequestSchema,
@@ -16,6 +17,7 @@ import {
 } from '@repo/common/restaurant-orders'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 
+import { isCateringPublicDisabled } from '../lib/catering-switches.ts'
 import { getGiftCardFlagState } from '../lib/gift-card-context.ts'
 import { isGiftCardsKillSwitchOn } from '../lib/gift-card-switches.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
@@ -26,6 +28,16 @@ import {
 	getInternalCommandToken,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
+import {
+	applyBalancePaymentEvent,
+	bindBalancePaymentSession,
+	getBalanceQuote,
+} from '../services/catering-balance.ts'
+import {
+	applyQuoteRefPaymentEvent,
+	bindQuoteRefSession,
+	getQuoteRefQuote,
+} from '../services/catering-quotes.ts'
 import {
 	applyDisputeStatus,
 	applyProviderRefundStatus,
@@ -160,25 +172,43 @@ orderSystemRoutes.post('/quote', async (c) => {
 	if (giftCardId && isGiftCardsKillSwitchOn()) {
 		return c.json({ error: 'unavailable' }, 503)
 	}
+	// A catering quote or balance payment starts new money: the kill switch stops it.
+	const quoteId = parseQuoteOrderRef(parsed.data.orderId)
+	const balanceOrderId = parseBalanceOrderRef(parsed.data.orderId)
+	if ((quoteId || balanceOrderId) && isCateringPublicDisabled()) {
+		return c.json({ error: 'catering_unavailable' }, 503)
+	}
 
 	try {
-		const result = giftCardId
-			? await getGiftCardQuote(
+		const result = quoteId
+			? await getQuoteRefQuote(
 					parsed.data.orgId,
-					giftCardId,
+					quoteId,
 					parsed.data.paymentToken,
 				)
-			: tab.tabId
-				? await getTabQuote(
+			: balanceOrderId
+				? await getBalanceQuote(
 						parsed.data.orgId,
-						tab.tabId,
+						balanceOrderId,
 						parsed.data.paymentToken,
 					)
-				: await getOrderQuote(
-						parsed.data.orgId,
-						parsed.data.orderId,
-						parsed.data.paymentToken,
-					)
+				: giftCardId
+					? await getGiftCardQuote(
+							parsed.data.orgId,
+							giftCardId,
+							parsed.data.paymentToken,
+						)
+					: tab.tabId
+						? await getTabQuote(
+								parsed.data.orgId,
+								tab.tabId,
+								parsed.data.paymentToken,
+							)
+						: await getOrderQuote(
+								parsed.data.orgId,
+								parsed.data.orderId,
+								parsed.data.paymentToken,
+							)
 		if (!result.ok) return failureResponse(c, result.failure)
 		// Only non-PII fields per contract: amounts, currency, hold, status.
 		return c.json(result.data)
@@ -216,28 +246,47 @@ orderSystemRoutes.post('/payment-session', async (c) => {
 	if (giftCardId && isGiftCardsKillSwitchOn()) {
 		return c.json({ error: 'unavailable' }, 503)
 	}
+	const quoteId = parseQuoteOrderRef(parsed.data.orderId)
+	const balanceOrderId = parseBalanceOrderRef(parsed.data.orderId)
+	if ((quoteId || balanceOrderId) && isCateringPublicDisabled()) {
+		return c.json({ error: 'catering_unavailable' }, 503)
+	}
 
 	try {
-		const result = giftCardId
-			? await bindGiftCardPaymentSession({
+		const result = quoteId
+			? await bindQuoteRefSession({
 					orgId: parsed.data.orgId,
-					cardId: giftCardId,
+					quoteId,
 					sessionId: parsed.data.sessionId,
 					processor: parsed.data.processor,
 				})
-			: tab.tabId
-				? await bindTabPaymentSession({
+			: balanceOrderId
+				? await bindBalancePaymentSession({
 						orgId: parsed.data.orgId,
-						tabId: tab.tabId,
+						orderId: balanceOrderId,
 						sessionId: parsed.data.sessionId,
 						processor: parsed.data.processor,
 					})
-				: await bindPaymentSession({
-						orgId: parsed.data.orgId,
-						orderId: parsed.data.orderId,
-						sessionId: parsed.data.sessionId,
-						processor: parsed.data.processor,
-					})
+				: giftCardId
+					? await bindGiftCardPaymentSession({
+							orgId: parsed.data.orgId,
+							cardId: giftCardId,
+							sessionId: parsed.data.sessionId,
+							processor: parsed.data.processor,
+						})
+					: tab.tabId
+						? await bindTabPaymentSession({
+								orgId: parsed.data.orgId,
+								tabId: tab.tabId,
+								sessionId: parsed.data.sessionId,
+								processor: parsed.data.processor,
+							})
+						: await bindPaymentSession({
+								orgId: parsed.data.orgId,
+								orderId: parsed.data.orderId,
+								sessionId: parsed.data.sessionId,
+								processor: parsed.data.processor,
+							})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json(result.data)
 	} catch (error) {
@@ -272,25 +321,25 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 	// moved must still settle (or land in review).
 	const tabId = parseTabOrderRef(parsed.data.orderId)
 	const giftCardId = parseGiftCardOrderRef(parsed.data.orderId)
+	const quoteId = parseQuoteOrderRef(parsed.data.orderId)
+	const balanceOrderId = parseBalanceOrderRef(parsed.data.orderId)
 
 	try {
-		const result = giftCardId
-			? await applyGiftCardPaymentEvent({
+		const result = quoteId
+			? await applyQuoteRefPaymentEvent({
 					orgId: parsed.data.orgId,
-					cardId: giftCardId,
+					quoteId,
 					sessionId: parsed.data.sessionId,
 					processor: parsed.data.processor,
 					status: parsed.data.status,
 					amountCents: parsed.data.amountCents,
 					currency: parsed.data.currency,
 					paymentId: parsed.data.paymentId,
-					risk: parsed.data.risk,
-					settings: (await getGiftCardFlagState(parsed.data.orgId)).settings,
 				})
-			: tabId
-				? await applyTabPaymentEvent({
+			: balanceOrderId
+				? await applyBalancePaymentEvent({
 						orgId: parsed.data.orgId,
-						tabId,
+						orderId: balanceOrderId,
 						sessionId: parsed.data.sessionId,
 						processor: parsed.data.processor,
 						status: parsed.data.status,
@@ -298,16 +347,41 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 						currency: parsed.data.currency,
 						paymentId: parsed.data.paymentId,
 					})
-				: await applyPaymentEvent({
-						orgId: parsed.data.orgId,
-						orderId: parsed.data.orderId,
-						sessionId: parsed.data.sessionId,
-						processor: parsed.data.processor,
-						status: parsed.data.status,
-						amountCents: parsed.data.amountCents,
-						currency: parsed.data.currency,
-						paymentId: parsed.data.paymentId,
-					})
+				: giftCardId
+					? await applyGiftCardPaymentEvent({
+							orgId: parsed.data.orgId,
+							cardId: giftCardId,
+							sessionId: parsed.data.sessionId,
+							processor: parsed.data.processor,
+							status: parsed.data.status,
+							amountCents: parsed.data.amountCents,
+							currency: parsed.data.currency,
+							paymentId: parsed.data.paymentId,
+							risk: parsed.data.risk,
+							settings: (await getGiftCardFlagState(parsed.data.orgId))
+								.settings,
+						})
+					: tabId
+						? await applyTabPaymentEvent({
+								orgId: parsed.data.orgId,
+								tabId,
+								sessionId: parsed.data.sessionId,
+								processor: parsed.data.processor,
+								status: parsed.data.status,
+								amountCents: parsed.data.amountCents,
+								currency: parsed.data.currency,
+								paymentId: parsed.data.paymentId,
+							})
+						: await applyPaymentEvent({
+								orgId: parsed.data.orgId,
+								orderId: parsed.data.orderId,
+								sessionId: parsed.data.sessionId,
+								processor: parsed.data.processor,
+								status: parsed.data.status,
+								amountCents: parsed.data.amountCents,
+								currency: parsed.data.currency,
+								paymentId: parsed.data.paymentId,
+							})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json({
 			orgId: result.data.orgId,

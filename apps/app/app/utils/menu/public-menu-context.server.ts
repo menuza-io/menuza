@@ -81,6 +81,10 @@ import {
 	buildPublicMenuDiscounts,
 	type PublicMenuPromotion,
 } from '#app/utils/discounts/order-context.server.ts'
+import {
+	buildPublicCatering,
+	type PublicCatering,
+} from '#app/utils/catering/public-catering.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
@@ -191,6 +195,12 @@ export interface PublicSiteMenuPayload {
 		/** `qr_ordering.*` flags (#220): aligns poster channel gating with `tenant-api`. */
 		qrOrdering?: QrOrderingFeatures
 	}
+	/**
+	 * Catering (#124, #325): the settings the catering page shows and the facts
+	 * its answers read, per location that turned catering on. Absent while the
+	 * organization's `catering.enabled` flag is off.
+	 */
+	catering?: PublicCatering
 	/**
 	 * Not part of the public response. Till rules are loaded by a paired
 	 * terminal. The field stays so an older snapshot still type-checks.
@@ -785,6 +795,14 @@ export async function buildPublicSiteMenuPayload(
 		locations[0]
 
 	const menuDiscounts = await buildPublicMenuDiscounts(org.id)
+	const publicCatering = await buildPublicCatering(
+		org.id,
+		locations.map((location) => ({
+			id: location.id,
+			currency: location.currency,
+			deliveryZones: location.deliveryZones ?? [],
+		})),
+	)
 	const pricingRules = await loadPublishedPricingRules(org.id, now)
 	const payload: PublicSiteMenuPayload = {
 		organization: {
@@ -803,6 +821,7 @@ export async function buildPublicSiteMenuPayload(
 		locationOverrides: locationOverridesMap,
 		promotions: menuDiscounts.promotions,
 		...(pricingRules.length > 0 ? { pricingRules } : {}),
+		...(publicCatering ? { catering: publicCatering } : {}),
 		features: {
 			upsell: await isUpsellEnabled(org.id),
 			slotLimits: await isSlotLimitsEnabled(org.id),

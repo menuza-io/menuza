@@ -13,6 +13,7 @@
  */
 
 import { type AlcoholContext } from '@repo/common/alcohol-rules'
+import { type CateringContext } from '@repo/common/catering'
 import { type DailyDishLimitsContext } from '@repo/common/daily-dish-limits'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import { type LargeOrderAlertRule } from '@repo/common/operator-alerts'
@@ -31,6 +32,7 @@ import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { buildLargeOrderAlertContext } from '#app/utils/alerts/large-order.server.ts'
+import { buildCateringContext } from '#app/utils/catering/catering-context.server.ts'
 import { buildOrderContextDiscounts } from '#app/utils/discounts/order-context.server.ts'
 import {
 	buildGuestMessagesContext,
@@ -134,6 +136,12 @@ export type OrderContextResponse = {
 	utensils: Awaited<ReturnType<typeof buildUtensilsContext>>
 	slotLimits: SlotLimitsContext
 	dailyDishLimits: DailyDishLimitsContext
+	/**
+	 * Catering settings per location id (`catering.enabled`, #124): only while
+	 * the flag is on, only locations that turned catering on. Absent while the
+	 * flag is off, which the region reads as off.
+	 */
+	catering?: CateringContext
 }
 
 async function readQrOrderingFeatures(
@@ -230,6 +238,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		parsed.data.locationId ?? null,
 	)
 
+	const cateringContext = await buildCateringContext(
+		org.id,
+		parsed.data.locationId ?? null,
+	)
+
 	const response: OrderContextResponse = {
 		orgId: org.id,
 		dataRegion,
@@ -276,6 +289,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		),
 		slotLimits: await buildSlotLimitsContext(org.id),
 		dailyDishLimits: await buildDailyDishLimitsContext(org.id),
+		...(cateringContext ? { catering: cateringContext } : {}),
 	}
 
 	return Response.json(response, {

@@ -18,6 +18,7 @@
  *   locale path; the receipt capability stays in browser sessionStorage.
  */
 
+import { parseBalanceOrderRef, parseQuoteOrderRef } from '@repo/common/catering'
 import { parseGiftCardOrderRef } from '@repo/common/gift-cards'
 import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
@@ -194,6 +195,20 @@ function buildSitePaymentUrls(
 		return {
 			successUrl: `${siteBase}${giftPath}?paid=1`,
 			cancelUrl: `${siteBase}${giftPath}?cancelled=1`,
+		}
+	}
+	// A catering quote or balance returns to its own page; the guest's link
+	// (a capability) is kept in the browser's session storage, never in the URL.
+	const cateringPage = parseQuoteOrderRef(orderId)
+		? '/catering/quote'
+		: parseBalanceOrderRef(orderId)
+			? '/catering/balance'
+			: null
+	if (cateringPage) {
+		const pagePath = getLocaleHref(cateringPage, locale, locale, defaultLocale)
+		return {
+			successUrl: `${siteBase}${pagePath}?paid=1`,
+			cancelUrl: `${siteBase}${pagePath}?cancelled=1`,
 		}
 	}
 	if (parseTabOrderRef(orderId)) {
