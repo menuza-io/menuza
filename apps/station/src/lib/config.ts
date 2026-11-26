@@ -63,6 +63,12 @@ export type PosSettings = {
 	managed?: Partial<TerminalJsonSettings>
 	/** The terminal profile this terminal follows, by name. */
 	profileName?: string | null
+	/** Permission keys this terminal allows (#230). Null means no extra limit. */
+	permissionAllow?: string[] | null
+	/** Print the shift report when a drawer closes (#278). */
+	printShiftOnClose?: boolean
+	/** Print a slip on clock in and clock out (#278). */
+	printClockSlip?: boolean
 }
 
 /** The apps a Station tablet can show: the till, the time clock, the host stand, the kitchen, Stock, Orders. */

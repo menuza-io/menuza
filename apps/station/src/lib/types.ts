@@ -39,6 +39,8 @@ export type MenuOption = {
 	applySalesTax: boolean
 	availabilityStatus: string
 	position: number
+	/** EAN, UPC or GTIN (#407). Absent on a menu published before it. */
+	barcode?: string | null
 	nestedModifierGroups?: ModifierGroup[]
 }
 
@@ -76,6 +78,10 @@ export type MenuItem = {
 	defaultCourseId?: string | null
 	description: string | null
 	price: number
+	/** EAN, UPC or GTIN (#407). Absent on a menu published before it. */
+	barcode?: string | null
+	/** Portions still makeable (#473). Absent when nothing should be shown. */
+	fewLeft?: number | null
 	imageUrl: string | null
 	/** Focal point of the photo (#394); absent or null is the centre crop. */
 	imageFocal?: { x: number; y: number } | null

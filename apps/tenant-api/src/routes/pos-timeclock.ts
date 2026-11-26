@@ -1,3 +1,4 @@
+import { desc, eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import {
 	announcementReadSchema,
@@ -5,6 +6,7 @@ import {
 	kioskPunchSchema,
 	type KioskIdentifyResult,
 } from '@repo/staffing'
+import { timeEntries } from '@repo/tenant-db'
 import { z } from 'zod'
 import {
 	authenticatePosDevice,
@@ -17,6 +19,7 @@ import { runExclusive } from '../lib/concurrency.ts'
 import { getScopeFacts, getStaffingFeatures } from '../lib/scope-context.ts'
 import { json, readJsonBody } from '../lib/staff-http.ts'
 import { resolvePolicy } from '../services/labor-policy-service.ts'
+import { queueClockSlipPrint } from '../services/pos-auto-print.ts'
 import { timeclockGate } from '../services/pos-apps-service.ts'
 import { touchDevice, verifyPosPin } from '../services/pos-service.ts'
 import {
@@ -242,7 +245,35 @@ posTimeclockRoutes.post(
 				request,
 				posTimeclockDeps.punch,
 			)
-			if (outcome.ok) return json(outcome.result)
+			if (outcome.ok) {
+				if (request.kind === 'clock_in' || request.kind === 'clock_out') {
+					const [entry] = await pos.db
+						.select({
+							id: timeEntries.id,
+							paidMinutes: timeEntries.paidMinutes,
+						})
+						.from(timeEntries)
+						.where(eq(timeEntries.staffId, verified.member.id))
+						.orderBy(desc(timeEntries.clockInAt))
+						.limit(1)
+					if (entry) {
+						const minutes = entry.paidMinutes ?? 0
+						await queueClockSlipPrint(pos.db, {
+							deviceId: pos.device.id,
+							enabled: pos.device.printClockSlip,
+							entryId: entry.id,
+							firstName: verified.member.firstName,
+							action: request.kind === 'clock_in' ? 'in' : 'out',
+							atLabel: new Date(outcome.result.at).toISOString(),
+							shiftTotalLabel:
+								request.kind === 'clock_out'
+									? `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+									: null,
+						}).catch(() => {})
+					}
+				}
+				return json(outcome.result)
+			}
 			return posError(outcome.status, outcome.code, outcome.extra ?? {})
 		})
 	}),

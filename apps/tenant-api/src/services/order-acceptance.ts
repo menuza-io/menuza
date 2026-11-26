@@ -201,6 +201,14 @@ export async function runOrdersTickForOrg(
 			return { booked: 0 }
 		},
 	)
+	const { closeForgottenTabs } = await import('./qr-tab-lifecycle.ts')
+	const { expireStaleAutoPrints } = await import('./pos-auto-print.ts')
+	await closeForgottenTabs(db, { now }).catch((error: unknown) => {
+		console.error('Forgotten tab close failed', orgId, errorLogFields(error))
+	})
+	await expireStaleAutoPrints(db, now).catch((error: unknown) => {
+		console.error('Auto-print expiry failed', orgId, errorLogFields(error))
+	})
 	const messages = await runOrderMessagesTickForOrg(orgId, { now, db })
 	// Manager alerts about waiting orders, payments to review, large orders and
 	// Station tablets (#131, #300, #190). Ids and numbers only; a failure never

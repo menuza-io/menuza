@@ -25,6 +25,8 @@ import { ticketsConfigSchema } from './ticket-config.ts'
 export const POS_PAIRING_CODE_PREFIX = 'ppc1'
 export const POS_DEVICE_SECRET_PREFIX = 'pdv1'
 export const POS_PAIRING_CODE_TTL_MS = 10 * 60 * 1000
+/** A replacement code (#173) lasts 15 minutes. */
+export const POS_REPLACE_CODE_TTL_MS = 15 * 60 * 1000
 export const POS_RANDOM_BYTES = 32
 
 const ORG_ID = '[A-Za-z0-9_-]{1,64}'
@@ -112,8 +114,12 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * paid entirely in cash, as its own line. An older node cannot read the kind
  * and holds that upload, which is how an old region fails safe; an old
  * terminal never sends it. Deploy tenant-api before Station.
+ * Version 13 adds optional till roles, terminal permission limits, barcodes
+ * on the catalog and automatic print settings (#230, #278, #407). Every new
+ * field is optional. A role the till does not know fails closed to the two
+ * built-in roles. An older terminal never sends `performedActions`.
  */
-export const POS_CONTRACT_VERSION = 12
+export const POS_CONTRACT_VERSION = 13
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -618,6 +624,12 @@ export const posOrderRequestSchema = z
 		partySize: z.number().int().min(1).max(500).nullable().optional(),
 		/** Contract 12 (#397): automatic service charge or large-party gratuity. */
 		serviceCharge: posServiceChargeSchema.nullable().optional(),
+		/**
+		 * Contract 13 (#230). Actions this sale claims. Missing means the server
+		 * infers them from payments, refunds, voids and discounts, so an older
+		 * till still parses.
+		 */
+		performedActions: z.array(z.string().max(40)).max(24).optional(),
 	})
 	.superRefine((order, ctx) => {
 		const issue = (message: string, path: (string | number)[] = []) =>
@@ -922,6 +934,8 @@ export type PosShiftRequest = z.infer<typeof posShiftRequestSchema>
 
 export const posPairRequestSchema = z.strictObject({
 	code: z.string().min(1).max(160),
+	/** Replacement tablets name their kind. Omit it to accept the old terminal's kind. */
+	kind: z.enum(['till', 'kitchen', 'time_clock']).optional(),
 })
 
 // ---------------------------------------------------------------------------

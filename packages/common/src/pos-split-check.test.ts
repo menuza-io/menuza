@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computePosServiceCharge } from './service-fee.ts'
-import { splitCheckByItem } from './pos-split-check.ts'
+import { splitCheckByItem, splitEqualCents } from './pos-split-check.ts'
 
 describe('Station service charge and auto-gratuity (#397)', () => {
 	const settings = {
@@ -177,5 +177,13 @@ describe('Station split check by item (#289)', () => {
 		expect(plan.grandTotalWithTipsCents).toBe(
 			plan.orderTotalWithoutTipCents + 900,
 		)
+	})
+})
+
+describe('QR tab equal split (#389)', () => {
+	it('splits 100 cents in three and the shares add up exactly', () => {
+		const shares = splitEqualCents(100, 3)
+		expect(shares).toEqual([33, 33, 34])
+		expect(shares.reduce((sum, share) => sum + share, 0)).toBe(100)
 	})
 })

@@ -1,5 +1,6 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { stationFewLeftLabel } from '@repo/common/few-left'
 import { focalObjectPosition } from '@repo/common/image-focal'
 import {
 	Empty,
@@ -426,6 +427,11 @@ function ItemCard({
 							)}
 						>
 							{item.displayName}
+							{stationFewLeftLabel(item.fewLeft ?? null) ? (
+								<span className="text-warning ms-2 text-sm font-medium">
+									{_(t`${item.fewLeft ?? 0} left`)}
+								</span>
+							) : null}
 						</span>
 						{item.isVegetarian ? (
 							<Icon

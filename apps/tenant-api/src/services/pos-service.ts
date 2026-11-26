@@ -49,6 +49,7 @@ import {
 	posStaffDisplayName,
 	type PosStaff,
 	POS_PAIRING_CODE_TTL_MS,
+	POS_REPLACE_CODE_TTL_MS,
 	posPairingCodeHashMessage,
 	randomPosToken,
 	type PosOrderRequest,
@@ -399,6 +400,68 @@ export async function createPairingCode(
 	})
 }
 
+/** The tablet named a different kind than the terminal being replaced (#173). */
+export class PairingKindMismatch extends Error {
+	constructor() {
+		super('kind_mismatch')
+	}
+}
+
+/**
+ * A 15-minute code that copies one terminal onto a new tablet and revokes the
+ * old one. Unsent held uploads cannot move; the count is a warning only.
+ */
+export async function createReplacementCode(
+	db: TenantDatabase,
+	input: { orgId: string; deviceId: string; createdBy: string },
+	now = Date.now(),
+) {
+	const [device] = await db
+		.select()
+		.from(posDevices)
+		.where(eq(posDevices.id, input.deviceId))
+		.limit(1)
+	if (!device || device.revokedAt !== null) return null
+	const [held] = await db
+		.select({ n: sql<number>`count(*)` })
+		.from(posHeldUploads)
+		.where(
+			and(
+				eq(posHeldUploads.deviceId, device.id),
+				isNull(posHeldUploads.resolvedAt),
+			),
+		)
+	const code = formatPosPairingCode(input.orgId, randomPosToken())
+	const id = crypto.randomUUID()
+	const expiresAt = now + POS_REPLACE_CODE_TTL_MS
+	await db.insert(posPairingCodes).values({
+		id,
+		codeHash: hashPairingCode(code),
+		label: device.label,
+		terminalCode: device.terminalCode,
+		locationId: device.locationId,
+		scopeId: device.scopeId,
+		signInRequired: device.signInRequired,
+		dayStartMinutes: device.dayStartMinutes,
+		shiftsRequired: device.shiftsRequired,
+		timeclockEnabled: device.timeclockEnabled,
+		reservationsEnabled: device.reservationsEnabled,
+		inventoryEnabled: device.inventoryEnabled,
+		profileId: device.profileId,
+		replacesDeviceId: device.id,
+		createdBy: input.createdBy,
+		expiresAt,
+		createdAt: now,
+	})
+	return {
+		id,
+		code,
+		expiresAt,
+		heldUploads: Number(held?.n ?? 0),
+		kind: device.terminalKind,
+	}
+}
+
 const REDEEM_FAILED = new Error('pairing code invalid')
 
 export type RedeemedTerminal = {
@@ -428,6 +491,7 @@ export async function redeemPairingCode(
 	orgId: string,
 	code: string,
 	now = Date.now(),
+	expectedKind?: string | null,
 ): Promise<RedeemedTerminal | null> {
 	const codeHash = hashPairingCode(code)
 	const deviceId = crypto.randomUUID()
@@ -442,6 +506,19 @@ export async function redeemPairingCode(
 					.limit(1)
 				if (!row || row.usedAt !== null || row.expiresAt <= now)
 					throw REDEEM_FAILED
+				let replacing: PosDevice | null = null
+				if (row.replacesDeviceId) {
+					const [old] = await tx
+						.select()
+						.from(posDevices)
+						.where(eq(posDevices.id, row.replacesDeviceId))
+						.limit(1)
+					if (!old || old.revokedAt !== null) throw REDEEM_FAILED
+					if (expectedKind && expectedKind !== old.terminalKind) {
+						throw new PairingKindMismatch()
+					}
+					replacing = old
+				}
 				const spent = await tx
 					.update(posPairingCodes)
 					.set({ usedAt: now, deviceId })
@@ -454,6 +531,66 @@ export async function redeemPairingCode(
 					)
 					.returning({ id: posPairingCodes.id })
 				if (spent.length !== 1) throw REDEEM_FAILED
+				if (replacing) {
+					// Revoke first so the terminal code is free, then copy settings.
+					// The ZATCA unit stays on the old device and is closed, not reused.
+					await tx
+						.update(posDevices)
+						.set({ revokedAt: now, revokedBy: row.createdBy })
+						.where(
+							and(
+								eq(posDevices.id, replacing.id),
+								isNull(posDevices.revokedAt),
+							),
+						)
+					await revokeZatcaUnitsForDevice(tx, replacing.id, now)
+					await tx.insert(posDevices).values({
+						id: deviceId,
+						label: replacing.label,
+						terminalCode: replacing.terminalCode,
+						locationId: replacing.locationId,
+						scopeId: replacing.scopeId,
+						signInRequired: replacing.signInRequired,
+						signInRequiredSince: replacing.signInRequiredSince,
+						dayStartMinutes: replacing.dayStartMinutes,
+						shiftsRequired: replacing.shiftsRequired,
+						timeclockEnabled: replacing.timeclockEnabled,
+						timeclockDisabledAt: replacing.timeclockDisabledAt,
+						locationBoundAt: replacing.locationBoundAt,
+						reservationsEnabled: replacing.reservationsEnabled,
+						inventoryEnabled: replacing.inventoryEnabled,
+						inventoryDisabledAt: replacing.inventoryDisabledAt,
+						ordersEnabled: replacing.ordersEnabled,
+						profileId: replacing.profileId,
+						profileOverrides: replacing.profileOverrides,
+						deviceSettings: replacing.deviceSettings,
+						terminalKind: replacing.terminalKind,
+						permissionAllow: replacing.permissionAllow,
+						printShiftOnClose: replacing.printShiftOnClose,
+						printClockSlip: replacing.printClockSlip,
+						secretHash: hashPosSecret(secret),
+						pairedBy: row.createdBy,
+						pairedAt: now,
+						lastSeenAt: now,
+						createdAt: now,
+					})
+					return {
+						secret,
+						device: {
+							id: deviceId,
+							label: replacing.label,
+							terminalCode: replacing.terminalCode,
+							locationId: replacing.locationId,
+							scopeId: posStaffScopeId(replacing),
+							signInRequired: replacing.signInRequired,
+							dayStartMinutes: replacing.dayStartMinutes,
+							shiftsRequired: replacing.shiftsRequired,
+							timeclockEnabled: replacing.timeclockEnabled,
+							reservationsEnabled: replacing.reservationsEnabled,
+							inventoryEnabled: replacing.inventoryEnabled,
+						},
+					}
+				}
 				// A code made for a profile starts the terminal on the profile as it is
 				// now (it may have changed since the code was made). A profile deleted
 				// in between cannot happen (it is in use), but is read as none.
@@ -536,6 +673,7 @@ export async function redeemPairingCode(
 		)
 	} catch (error) {
 		if (error === REDEEM_FAILED) return null
+		if (error instanceof PairingKindMismatch) throw error
 		// A terminal code claimed by another tablet between code and pairing.
 		if (/UNIQUE/i.test(errorChain(error))) return null
 		throw error
@@ -1740,6 +1878,7 @@ export const POS_HOLDING_REVIEW_REASONS: readonly string[] = [
 	'unknown_staff',
 	'inactive_staff',
 	'approver_not_manager',
+	'role_not_permitted',
 ]
 
 /**

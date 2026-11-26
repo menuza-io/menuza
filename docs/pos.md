@@ -77,7 +77,13 @@ already took money for.
   only item ids. The region stamps the menu and category each dish sat under
   from the live menu it already reads at upload (`pos_orders.line_catalog`), so
   `POS_CONTRACT_VERSION` stays 11. See `docs/sales-insights.md`.
-- **Contract 12.** `POS_CONTRACT_VERSION` is 12. Adds optional phone delivery
+- **Contract 13.** `POS_CONTRACT_VERSION` is 13. Optional `performedActions`
+  on an upload (#230). Roles, a terminal's permission limit and the two print
+  switches ride on `/pos/me` and the staff session. Barcodes ride on the
+  catalog (#407). Every new field is optional. A till that does not send roles
+  fails closed to the built-in cashier or manager. Deploy App, then tenant-api
+  (`0073`), then Sites, then Station.
+- **Contract 12.** `POS_CONTRACT_VERSION` was 12. Adds optional phone delivery
   (`orderType: 'delivery'` + `delivery` payload with signed quote token, fee,
   zone, and address cleared after 30 days and stripped from revisions/held
   uploads, #164), optional `taxExempt` certificate (non-SAR only, #166),

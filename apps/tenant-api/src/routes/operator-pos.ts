@@ -21,6 +21,7 @@ import {
 import {
 	countHeldUploads,
 	createPairingCode,
+	createReplacementCode,
 	fiscalChainGaps,
 	listDevices,
 	listHeldUploads,
@@ -55,6 +56,14 @@ import {
 } from '../services/pos-profiles-service.ts'
 import { getStaffingFeatures, hasScope } from '../lib/scope-context.ts'
 import { writeOperatorAudit } from '../services/staff-audit.ts'
+import {
+	createRole,
+	deleteRole,
+	listRoles,
+	setTerminalPermissions,
+	updateRole,
+	assignStaffRole,
+} from '../services/pos-roles-service.ts'
 import {
 	closeShiftRemotely,
 	dayReport,
@@ -127,6 +136,113 @@ operatorPosRoutes.get('/terminals', async (c) => {
 		countHeldUploads(g.db),
 	])
 	return c.json({ devices, pendingCodes, heldUploads }, 200, noStore)
+})
+
+const roleBody = z.strictObject({
+	name: z.string().trim().min(1).max(40),
+	permissions: z.array(z.string().max(40)).max(40),
+})
+
+operatorPosRoutes.get('/roles', async (c) => {
+	const g = await guard(c, 'orders:read', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	return c.json({ roles: await listRoles(g.db) }, 200, noStore)
+})
+
+operatorPosRoutes.post('/roles', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	const parsed = roleBody.safeParse(await c.req.json().catch(() => null))
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const created = await createRole(g.db, {
+		...parsed.data,
+		createdBy: g.auth.userId,
+	})
+	if (!created.ok) return posError(409, created.error)
+	return c.json(created, 201, noStore)
+})
+
+operatorPosRoutes.patch('/roles/:id', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	const parsed = roleBody.safeParse(await c.req.json().catch(() => null))
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const updated = await updateRole(g.db, {
+		id: c.req.param('id'),
+		...parsed.data,
+		updatedBy: g.auth.userId,
+	})
+	if (!updated.ok) {
+		const status = updated.error === 'not_found' ? 404 : 409
+		return posError(status, updated.error)
+	}
+	return c.json({ ok: true }, 200, noStore)
+})
+
+operatorPosRoutes.delete('/roles/:id', async (c) => {
+	const g = await guard(c, 'orders:write', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	const removed = await deleteRole(g.db, {
+		id: c.req.param('id'),
+		deletedBy: g.auth.userId,
+	})
+	if (!removed.ok) {
+		const status = removed.error === 'not_found' ? 404 : 409
+		return posError(status, removed.error)
+	}
+	return c.json({ ok: true }, 200, noStore)
+})
+
+operatorPosRoutes.post('/terminals/:id/replace', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	const created = await createReplacementCode(g.db, {
+		orgId: g.auth.orgId,
+		deviceId: c.req.param('id'),
+		createdBy: g.auth.userId,
+	})
+	if (!created) return posError(404, 'not_found')
+	await writeOperatorAudit(g.db, g.auth.userId, null, {
+		action: 'pos.terminal.replace_code',
+		entityType: 'pos_device',
+		entityId: c.req.param('id'),
+		changes: { heldUploads: created.heldUploads, kind: created.kind },
+	})
+	return c.json(created, 201, noStore)
+})
+
+operatorPosRoutes.put('/terminals/:id/permissions', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	const parsed = z
+		.strictObject({
+			allow: z.array(z.string().max(40)).max(40).nullable(),
+		})
+		.safeParse(await c.req.json().catch(() => null))
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const saved = await setTerminalPermissions(g.db, {
+		deviceId: c.req.param('id'),
+		allow: parsed.data.allow,
+		updatedBy: g.auth.userId,
+	})
+	if (!saved.ok) return posError(404, 'not_found')
+	return c.json({ ok: true }, 200, noStore)
+})
+
+operatorPosRoutes.put('/staff/:id/role', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	const parsed = z
+		.strictObject({ roleId: z.string().min(1).max(80) })
+		.safeParse(await c.req.json().catch(() => null))
+	if (!parsed.success) return posError(400, 'invalid_request')
+	const saved = await assignStaffRole(g.db, {
+		staffId: c.req.param('id'),
+		roleId: parsed.data.roleId,
+		assignedBy: g.auth.userId,
+	})
+	if (!saved.ok) return posError(404, 'not_found')
+	return c.json({ ok: true }, 200, noStore)
 })
 
 operatorPosRoutes.post('/pairing-codes', async (c) => {

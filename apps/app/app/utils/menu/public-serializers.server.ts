@@ -114,6 +114,8 @@ export interface PublicMenuOptionData {
 	/** Focal point of the photo (#394); absent or null means the centre. */
 	imageFocal?: FocalPoint | null
 	price: number
+	/** EAN, UPC or GTIN (#407). Absent on a menu published before it. */
+	barcode?: string | null
 	priceWhole: number | null
 	priceLeft: number | null
 	priceRight: number | null
@@ -157,6 +159,10 @@ export interface PublicMenuItemData {
 	kitchenHighlight?: string | null
 	description: string | null
 	price: number
+	/** EAN, UPC or GTIN (#407). Absent on a menu published before it. */
+	barcode?: string | null
+	/** True when only a few portions remain (#473). Never a count. */
+	fewLeft?: boolean
 	imageKey: string | null
 	imageUrl: string | null
 	imageKeys: string[]
@@ -280,6 +286,8 @@ export type PublicPhotoExtras = {
 			key: string
 		}
 	>
+	/** Dish ids that should say "Only a few left" (#473). Never a count. */
+	fewLeftIds?: ReadonlySet<string>
 }
 
 function focalField(
@@ -337,6 +345,7 @@ export function serializePublicOption(
 		imageUrl: opt.imageKey ? (mediaMap.get(opt.imageKey) ?? null) : null,
 		...focalField(extras.focalMap, opt.imageKey),
 		price: opt.price,
+		barcode: opt.barcode ?? null,
 		priceWhole: opt.priceWhole,
 		priceLeft: opt.priceLeft,
 		priceRight: opt.priceRight,
@@ -519,6 +528,8 @@ export function serializePublicMenuItem(
 		...(variations.variants.length > 0
 			? {}
 			: orderTypePricesField(item.orderTypePrices)),
+		barcode: item.barcode ?? null,
+		fewLeft: extras.fewLeftIds?.has(item.id) === true,
 		excludeFromDiscounts: Boolean(item.excludeFromDiscounts),
 		excludeFromOrderLimits: Boolean(item.excludeFromOrderLimits),
 		allergens: safeJsonParse<string[]>(item.allergens, []),

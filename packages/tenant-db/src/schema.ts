@@ -2305,6 +2305,11 @@ export const staffMembers = sqliteTable(
 			mode: 'boolean',
 		}),
 		primaryScopeId: text('primary_scope_id'),
+		/**
+		 * Till role (#230). Null keeps the old rule: a row in `pos_managers` is
+		 * the built-in manager, everyone else is the built-in cashier.
+		 */
+		posRoleId: text('pos_role_id'),
 		createdBy: text('created_by'),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
@@ -2876,6 +2881,25 @@ export const posDevices = sqliteTable(
 		// station, menu layout, guest second screen), as JSON. See
 		// `@repo/common/terminal-profiles`.
 		deviceSettings: text('device_settings').notNull().default('{}'),
+		/**
+		 * Till / kitchen / time clock (#173). A replacement must be the same kind.
+		 * `permission_allow` is a JSON array of permission keys (#230); null means
+		 * the terminal adds no limit of its own.
+		 */
+		terminalKind: text('terminal_kind', {
+			enum: ['till', 'kitchen', 'time_clock'],
+		})
+			.notNull()
+			.default('till'),
+		permissionAllow: text('permission_allow'),
+		/** Print the Z report when a drawer closes (#278). Off by default. */
+		printShiftOnClose: integer('print_shift_on_close', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		/** Print a slip on clock in and clock out (#278). Off by default. */
+		printClockSlip: integer('print_clock_slip', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		// Keyed hash of the device secret. The secret itself is never stored.
 		secretHash: text('secret_hash').notNull(),
 		pairedBy: text('paired_by').notNull(),
@@ -2938,6 +2962,11 @@ export const posPairingCodes = sqliteTable(
 			.default(false),
 		// The profile the new terminal will inherit (#373).
 		profileId: text('profile_id'),
+		/**
+		 * When set, pairing this code replaces that terminal (#173): copy its
+		 * settings and revoke it in the same transaction. Null is a new terminal.
+		 */
+		replacesDeviceId: text('replaces_device_id'),
 		createdBy: text('created_by').notNull(),
 		expiresAt: integer('expires_at').notNull(),
 		usedAt: integer('used_at'),
@@ -3346,6 +3375,10 @@ export const posShifts = sqliteTable(
 		expectedCashCents: integer('expected_cash_cents'),
 		receivedAt: integer('received_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
+		/** Automatic Z-report print (#278): queued, printed, dropped, skipped. */
+		autoPrintJobId: text('auto_print_job_id'),
+		autoPrintStatus: text('auto_print_status'),
+		autoPrintedAt: integer('auto_printed_at'),
 	},
 	(table) => [
 		index('idx_pos_shifts_device_opened').on(table.deviceId, table.openedAt),
@@ -3621,6 +3654,24 @@ export const posManagers = sqliteTable('pos_managers', {
 	addedAt: integer('added_at').notNull().default(nowMs),
 })
 
+/**
+ * Till roles (#230). The two built-in rows cannot be deleted. `permissions`
+ * is a JSON array of keys from `@repo/common/pos-roles`. No pay rates.
+ */
+export const posRoles = sqliteTable(
+	'pos_roles',
+	{
+		id: text('id').primaryKey(),
+		name: text('name').notNull(),
+		builtIn: integer('built_in', { mode: 'boolean' }).notNull().default(false),
+		permissions: text('permissions').notNull(),
+		createdBy: text('created_by').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [uniqueIndex('uniq_pos_roles_name').on(table.name)],
+)
+
 // People who may run the host stand on a Station terminal (book, seat, walk-ins,
 // waitlist), set by someone who manages reservations. Everyone else with a PIN
 // takes orders and punches the clock, nothing more. `guestDetails` also opens
@@ -3702,6 +3753,10 @@ export const timeEntries = sqliteTable(
 		// How the entry was closed: kiosk, manager, auto.
 		clockOutKind: text('clock_out_kind'),
 		approvedBy: text('approved_by'),
+		/** Automatic clock slip (#278). Never stores a pay rate. */
+		slipPrintJobId: text('slip_print_job_id'),
+		slipPrintStatus: text('slip_print_status'),
+		slipPrintedAt: integer('slip_printed_at'),
 		approvedAt: integer('approved_at'),
 		lockedBy: text('locked_by'),
 		lockedAt: integer('locked_at'),
@@ -6982,6 +7037,14 @@ export const qrTabs = sqliteTable(
 		closedAt: integer('closed_at'),
 		paidAt: integer('paid_at'),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
+		/** Last round placed (#424). Null falls back to `opened_at`. */
+		lastRoundAt: integer('last_round_at'),
+		/** Who or what closed the tab: a staff id, `guest`, or `auto`. */
+		closedByActor: text('closed_by_actor'),
+		/** Set when auto-close had no card and a manager must collect (#424). */
+		managerFlaggedAt: integer('manager_flagged_at'),
+		/** Opaque saved-payment reference. Never a card number. */
+		heldPaymentRef: text('held_payment_ref'),
 	},
 	(table) => [
 		uniqueIndex('qr_tabs_one_open_per_table')
@@ -7009,6 +7072,12 @@ export const qrTabPayments = sqliteTable(
 		amountCents: integer('amount_cents').notNull(),
 		currency: text('currency').notNull(),
 		receivedAt: integer('received_at').notNull().default(nowMs),
+		/**
+		 * A guest split of this tab (#389). Null on a review payment. Append-only:
+		 * a failed split is its own row with `split_status` `failed`.
+		 */
+		splitIndex: integer('split_index'),
+		splitStatus: text('split_status'),
 	},
 	(table) => [
 		uniqueIndex('qr_tab_payments_session_unique').on(
@@ -7097,8 +7166,38 @@ export const qrSettings = sqliteTable('qr_settings', {
 	perTableLimitPerHour: integer('per_table_limit_per_hour')
 		.notNull()
 		.default(12),
+	/** Hours after the last round before an open tab auto-closes (#424). 0 is off. */
+	autoCloseHours: integer('auto_close_hours').notNull().default(0),
+	/** Minimum share of a guest split, in cents (#389). 0 means no minimum. */
+	splitMinBasketCents: integer('split_min_basket_cents').notNull().default(0),
+	/** Maximum number of payers. 0 means splits are off. */
+	splitMaxParts: integer('split_max_parts').notNull().default(0),
+	/** Guests pay before more rounds when this is on. */
+	splitRequirePaymentFirst: integer('split_require_payment_first', {
+		mode: 'boolean',
+	})
+		.notNull()
+		.default(false),
 	updatedAt: integer('updated_at').notNull().default(nowMs),
 })
+
+/** Tab history (#424, #389): who closed it, a split, a flag. No guest PII. */
+export const qrTabEvents = sqliteTable(
+	'qr_tab_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		tabId: text('tab_id')
+			.notNull()
+			.references(() => qrTabs.id, { onDelete: 'cascade' }),
+		kind: text('kind').notNull(),
+		actor: text('actor').notNull(),
+		detail: text('detail'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [index('idx_qr_tab_events_tab').on(table.tabId, table.createdAt)],
+)
 
 export const qrTablesRelations = relations(qrTables, ({ many }) => ({
 	tabs: many(qrTabs),
@@ -10369,6 +10468,11 @@ export const invLocationSettings = sqliteTable(
 		})
 			.notNull()
 			.default(false),
+		/**
+		 * Portions at or below which Station shows "N left" (#473). Default 5.
+		 * Nothing is shown unless the ingredients were counted in the last 7 days.
+		 */
+		fewLeftThreshold: integer('few_left_threshold').notNull().default(5),
 		version: integer('version').notNull().default(1),
 		syncedAt: integer('synced_at'),
 		updatedAt: integer('updated_at').notNull().default(nowMs),

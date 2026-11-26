@@ -192,6 +192,8 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 		'purpose-prefixed keyed HMAC of the requesting IP, used only for send-code limits and pruned by the regional tick after 24 hours',
 	'pos_terminal_profiles.name':
 		'terminal profile title written by the operator',
+	'pos_roles.name':
+		'till role title written by the operator (#230), not a person',
 	'marketing_campaigns.name': 'campaign title written by the operator',
 	'marketing_journeys.name': 'journey title written by the operator',
 	'marketing_audiences.name': 'audience title written by the operator',
