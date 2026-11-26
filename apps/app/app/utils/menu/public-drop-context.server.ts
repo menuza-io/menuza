@@ -16,6 +16,7 @@ import {
 	dailyIntakeMarket,
 	isCalorieDisplayMode,
 	resolveCalorieDisplay,
+	type DailyIntakeMarket,
 } from '@repo/common/calorie-display'
 import { focalPointOf, type FocalPoint } from '@repo/common/image-focal'
 import { type LocationAddress } from '@repo/common/location-types'
@@ -97,6 +98,9 @@ export interface PublicSiteDropPayload {
 			id: string
 			displayName: string
 			specialInstructions: boolean
+			showCalories?: boolean
+			calorieGaps?: number
+			dailyIntake?: DailyIntakeMarket | null
 			channels?: MenuChannel[]
 		}
 	}
