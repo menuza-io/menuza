@@ -81,11 +81,11 @@ if (root) {
 					headers: { [ORDER_PAY_LINK_HEADER]: token },
 					cache: 'no-store',
 				})
-				const data = (await res.json().catch(() => null)) as
+				const raw = (await res.json().catch(() => null)) as
 					OrderPayLinkSummary | { error?: string; message?: string } | null
 				status.textContent = ''
-				if (!res.ok || !data || 'error' in data) {
-					const code = data && 'error' in data ? data.error : ''
+				if (!res.ok || !raw || !('amountDueCents' in raw)) {
+					const code = raw && 'error' in raw ? raw.error : ''
 					if (code === 'pay_link_expired') {
 						showMessage(labels.expired ?? 'This payment link has expired.')
 					} else if (code === 'order_cancelled') {
@@ -95,6 +95,7 @@ if (root) {
 					}
 					return
 				}
+				const data = raw
 
 				if (params.get('cancelled') === '1') {
 					errorEl.textContent = labels.paymentCancelled ?? ''
@@ -174,10 +175,10 @@ if (root) {
 							headers: { [ORDER_PAY_LINK_HEADER]: token },
 							cache: 'no-store',
 						})
-						const started = (await startRes.json().catch(() => null)) as
+						const rawStart = (await startRes.json().catch(() => null)) as
 							OrderPayLinkStart | { error?: string; message?: string } | null
-						if (!startRes.ok || !started || 'error' in started) {
-							const code = started && 'error' in started ? started.error : ''
+						if (!startRes.ok || !rawStart || !('orderRef' in rawStart)) {
+							const code = rawStart && 'error' in rawStart ? rawStart.error : ''
 							errorEl.textContent =
 								code === 'order_fully_paid'
 									? (labels.paid ?? 'This order is already paid in full.')
@@ -187,6 +188,7 @@ if (root) {
 							payBtn.disabled = false
 							return
 						}
+						const started = rawStart
 						const checkoutUrl = await startPayment(
 							started.orderRef,
 							started.paymentToken,
