@@ -3,7 +3,11 @@ import {
 	db,
 	eq,
 	MenuCheckDismissal,
+	OrganizationMenu,
+	OrganizationMenuCategory,
+	OrganizationMenuCategoryAssignment,
 	OrganizationMenuItem,
+	OrganizationMenuItemCategoryAssignment,
 } from '@repo/database'
 import { RouterContextProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -56,6 +60,26 @@ async function post(
 }
 
 async function dish(organizationId: string, name: string, patch: object = {}) {
+	const [menu] = await db
+		.insert(OrganizationMenu)
+		.values({
+			organizationId,
+			displayName: JSON.stringify({ en: 'Main' }),
+			availabilityStatus: 'available',
+		})
+		.returning()
+	const [category] = await db
+		.insert(OrganizationMenuCategory)
+		.values({
+			organizationId,
+			displayName: JSON.stringify({ en: 'Mains' }),
+			availabilityStatus: 'available',
+		})
+		.returning()
+	await db.insert(OrganizationMenuCategoryAssignment).values({
+		menuId: menu!.id,
+		categoryId: category!.id,
+	})
 	const [row] = await db
 		.insert(OrganizationMenuItem)
 		.values({
@@ -69,6 +93,10 @@ async function dish(organizationId: string, name: string, patch: object = {}) {
 			...patch,
 		})
 		.returning()
+	await db.insert(OrganizationMenuItemCategoryAssignment).values({
+		categoryId: category!.id,
+		itemId: row!.id,
+	})
 	return row!
 }
 

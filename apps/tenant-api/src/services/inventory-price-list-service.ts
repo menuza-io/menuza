@@ -1109,6 +1109,8 @@ export async function applySupplierPriceList(
 							kind: 'bought' as const,
 							baseUnit: line.createItem.baseUnit,
 							notes: null,
+							allergens: '[]',
+							allergensConfirmed: false,
 							batchCounted: false,
 							autoSoldOut: false,
 							isDraft: false,
