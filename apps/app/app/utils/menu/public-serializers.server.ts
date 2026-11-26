@@ -114,6 +114,8 @@ export interface PublicMenuOptionData {
 	/** Focal point of the photo (#394); absent or null means the centre. */
 	imageFocal?: FocalPoint | null
 	price: number
+	/** EAN, UPC or GTIN (#407). Absent on a menu published before it. */
+	barcode?: string | null
 	priceWhole: number | null
 	priceLeft: number | null
 	priceRight: number | null
@@ -157,6 +159,8 @@ export interface PublicMenuItemData {
 	kitchenHighlight?: string | null
 	description: string | null
 	price: number
+	/** EAN, UPC or GTIN (#407). Absent on a menu published before it. */
+	barcode?: string | null
 	imageKey: string | null
 	imageUrl: string | null
 	imageKeys: string[]
@@ -339,6 +343,7 @@ export function serializePublicOption(
 		imageUrl: opt.imageKey ? (mediaMap.get(opt.imageKey) ?? null) : null,
 		...focalField(extras.focalMap, opt.imageKey),
 		price: opt.price,
+		barcode: opt.barcode ?? null,
 		priceWhole: opt.priceWhole,
 		priceLeft: opt.priceLeft,
 		priceRight: opt.priceRight,
