@@ -9,6 +9,11 @@
  * Contains no customer PII: only public org, location, menu, and pricing data.
  */
 
+import {
+	dailyIntakeMarket,
+	isCalorieDisplayMode,
+	resolveCalorieDisplay,
+} from '@repo/common/calorie-display'
 import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import { focalPointOf, type FocalPoint } from '@repo/common/image-focal'
@@ -707,22 +712,64 @@ export async function buildPublicSiteMenuPayload(
 		}
 	}
 
-	const allStructuredMenus: PublicMenuData[] = menus.map((menu) => ({
-		id: menu.id,
-		displayName: menu.displayName,
-		internalName: menu.internalName,
-		menuType: menu.menuType,
-		nutritionalInfo: Boolean(menu.nutritionalInfo),
-		specialInstructions: Boolean(menu.specialInstructions),
-		availabilityStatus: effectiveAvailabilityStatus(
-			menu.availabilityStatus,
-			menu.unavailableUntil,
-			now,
-		),
-		channels: parseMenuChannels(menu.channels),
-		position: menu.position,
-		categories: categoriesByMenuId.get(menu.id) ?? [],
-	}))
+	const [orgCalories] = await db
+		.select({
+			calorieDisplay: Organization.calorieDisplay,
+			dataRegion: Organization.dataRegion,
+		})
+		.from(Organization)
+		.where(eq(Organization.id, orgId))
+		.limit(1)
+	const orgMode = isCalorieDisplayMode(orgCalories?.calorieDisplay)
+		? orgCalories.calorieDisplay
+		: 'always'
+	const intake = dailyIntakeMarket(orgCalories?.dataRegion)
+	const calorieGapsFor = (categories: PublicMenuCategoryData[]) => {
+		const seen = new Set<string>()
+		let missing = 0
+		const walk = (rows: PublicMenuCategoryData[]) => {
+			for (const category of rows) {
+				for (const item of category.items) {
+					if (seen.has(item.id)) continue
+					seen.add(item.id)
+					if (item.calorieMin == null) missing += 1
+				}
+				if (category.subcategories) walk(category.subcategories)
+			}
+		}
+		walk(categories)
+		return missing
+	}
+
+	const allStructuredMenus: PublicMenuData[] = menus.map((menu) => {
+		const categories = categoriesByMenuId.get(menu.id) ?? []
+		const calorieGaps = calorieGapsFor(categories)
+		const display = resolveCalorieDisplay({
+			orgMode,
+			menuMode: menu.calorieDisplay,
+			nutritionalInfo: Boolean(menu.nutritionalInfo),
+			missingCount: calorieGaps,
+		})
+		return {
+			id: menu.id,
+			displayName: menu.displayName,
+			internalName: menu.internalName,
+			menuType: menu.menuType,
+			nutritionalInfo: Boolean(menu.nutritionalInfo),
+			showCalories: display.show,
+			calorieGaps: display.missingCount,
+			dailyIntake: display.show ? intake : null,
+			specialInstructions: Boolean(menu.specialInstructions),
+			availabilityStatus: effectiveAvailabilityStatus(
+				menu.availabilityStatus,
+				menu.unavailableUntil,
+				now,
+			),
+			channels: parseMenuChannels(menu.channels),
+			position: menu.position,
+			categories,
+		}
+	})
 
 	const channel = buildOptions?.channel
 	const overrideByEntityId =

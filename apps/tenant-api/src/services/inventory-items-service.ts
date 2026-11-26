@@ -14,6 +14,7 @@ import {
 	inventoryValueMinor,
 	inventoryValueMinorClamped,
 	STANDARD_UNIT_SPECS,
+	STOCK_ALLERGEN_KEYS,
 	stockStatus,
 	type InventoryBaseUnit,
 	type ItemDetail,
@@ -337,6 +338,20 @@ function bottleColumns(
 	}
 }
 
+function parseStockAllergens(value: string | null | undefined) {
+	const keys = new Set<string>(STOCK_ALLERGEN_KEYS)
+	try {
+		const parsed = JSON.parse(value || '[]') as unknown
+		if (!Array.isArray(parsed)) return []
+		return parsed.filter(
+			(entry): entry is (typeof STOCK_ALLERGEN_KEYS)[number] =>
+				typeof entry === 'string' && keys.has(entry),
+		)
+	} catch {
+		return []
+	}
+}
+
 export function toStockItem(row: StockRow, cost: boolean): StockItem {
 	const value = stockValueMinor(row.onHand, row.cost)
 	const base: StockItem = {
@@ -547,6 +562,8 @@ export async function getItemDetail(
 	const detail: ItemDetail = {
 		...toStockItem(row, caller.cost),
 		notes: item.notes,
+		allergens: parseStockAllergens(item.allergens),
+		allergensConfirmed: item.allergensConfirmed,
 		places: visiblePlaces.map((entry) => ({
 			locationId: entry.locationId,
 			countUnit: wireUnit(
@@ -982,6 +999,11 @@ export async function updateItem(
 		if (body.isKey !== undefined && body.isKey !== item.isKey) {
 			set.isKey = body.isKey
 			changed.push('isKey')
+		}
+		if (body.allergens !== undefined) {
+			set.allergens = JSON.stringify(body.allergens)
+			set.allergensConfirmed = body.allergensConfirmed ?? true
+			changed.push('allergens')
 		}
 		if (body.baseUnit !== undefined && body.baseUnit !== item.baseUnit) {
 			const used = await tx

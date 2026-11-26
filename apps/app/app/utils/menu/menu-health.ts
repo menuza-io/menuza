@@ -31,6 +31,7 @@ export const MENU_HEALTH_CHECK_KEYS = [
 	'no_description',
 	'missing_translation',
 	'empty_category',
+	'dishes_guests_cannot_see',
 	'long_unavailable',
 	'no_allergens_or_calories',
 	'name_all_caps',
@@ -62,6 +63,7 @@ export const MENU_HEALTH_WEIGHTS: Record<MenuHealthCheckKey, number> = {
 	missing_translation: 10,
 	no_allergens_or_calories: 10,
 	empty_category: 5,
+	dishes_guests_cannot_see: 5,
 	long_unavailable: 5,
 	// Deductions (see above).
 	weak_photo: 10,
@@ -83,6 +85,7 @@ export const MENU_HEALTH_DEDUCTION_CHECKS: ReadonlySet<MenuHealthCheckKey> =
 		'name_all_caps',
 		'name_too_long',
 		'delivery_menu_differs',
+		'dishes_guests_cannot_see',
 	])
 
 const SEVERITY: Record<MenuHealthCheckKey, MenuHealthSeverity> = {
@@ -93,6 +96,7 @@ const SEVERITY: Record<MenuHealthCheckKey, MenuHealthSeverity> = {
 	no_description: 'warning',
 	missing_translation: 'warning',
 	empty_category: 'warning',
+	dishes_guests_cannot_see: 'warning',
 	empty_option_group: 'warning',
 	duplicate_item: 'warning',
 	delivery_menu_differs: 'warning',
@@ -244,6 +248,15 @@ export type MenuHealthInput = {
 	deliveryMenuDiffs?: readonly DeliveryMenuDiffSummary[]
 	/** Health dismissals of this organization (`card:` rows are ignored). */
 	dismissals?: readonly MenuHealthDismissal[]
+	/**
+	 * Which dishes sit on a published menu (#235). Absent: the
+	 * "dishes guests cannot see" check does not run.
+	 */
+	guestVisibility?: {
+		itemCategories: Iterable<{ itemId: string; categoryId: string }>
+		categoryMenus: Iterable<{ categoryId: string; menuId: string }>
+		menus: Iterable<{ id: string; availabilityStatus: string }>
+	}
 	/** Fill `fingerprints` on every check (server use, e.g. to dismiss). */
 	includeFingerprints?: boolean
 	now?: Date
@@ -481,6 +494,7 @@ export type MenuHealthFingerprintSource =
 				| 'no_photo'
 				| 'no_description'
 				| 'empty_category'
+				| 'dishes_guests_cannot_see'
 				| 'no_allergens_or_calories'
 	  }
 	| { key: 'zero_price'; price: number; variantPrices: readonly number[] }
@@ -530,6 +544,7 @@ export function menuHealthFingerprint(
 			return shortHash('none')
 		case 'no_description':
 		case 'empty_category':
+		case 'dishes_guests_cannot_see':
 		case 'no_allergens_or_calories':
 			return shortHash('')
 		case 'weak_photo':
@@ -894,6 +909,46 @@ export function computeMenuHealth(input: MenuHealthInput): MenuHealth {
 			})
 		}
 		addCheck('duplicate_item', items.length, duplicates)
+
+		if (input.guestVisibility) {
+			const publishedMenus = new Set(
+				[...input.guestVisibility.menus]
+					.filter((menu) => menu.availabilityStatus === 'available')
+					.map((menu) => menu.id),
+			)
+			const visibleCategories = new Set(
+				input.categories
+					.filter(
+						(category) =>
+							category.availabilityStatus !== 'hidden' &&
+							category.availabilityStatus !== 'unavailable',
+					)
+					.map((category) => category.id),
+			)
+			const categoryOnPublishedMenu = new Set<string>()
+			for (const link of input.guestVisibility.categoryMenus) {
+				if (
+					publishedMenus.has(link.menuId) &&
+					visibleCategories.has(link.categoryId)
+				) {
+					categoryOnPublishedMenu.add(link.categoryId)
+				}
+			}
+			const visibleItems = new Set<string>()
+			for (const link of input.guestVisibility.itemCategories) {
+				if (categoryOnPublishedMenu.has(link.categoryId)) {
+					visibleItems.add(link.itemId)
+				}
+			}
+			addCheck(
+				'dishes_guests_cannot_see',
+				items.length,
+				collect(
+					(fact) => !visibleItems.has(fact.item.id),
+					() => menuHealthFingerprint({ key: 'dishes_guests_cannot_see' }),
+				),
+			)
+		}
 	}
 
 	const categories = input.categories.filter(

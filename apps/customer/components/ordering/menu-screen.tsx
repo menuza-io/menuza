@@ -341,6 +341,9 @@ function MenuItemRow({
 			{item.description ? (
 				<Text variant="caption">{item.description}</Text>
 			) : null}
+			{item.calories ? (
+				<Text variant="caption">{t`${item.calories} Cal`}</Text>
+			) : null}
 			{item.deliveryPrice !== undefined && !item.soldOut ? (
 				<Text variant="caption">{t`Delivery price ${deliveryPriceText}`}</Text>
 			) : null}

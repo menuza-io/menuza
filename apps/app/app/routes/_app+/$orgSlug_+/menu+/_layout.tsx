@@ -95,6 +95,21 @@ export default function MenuLayout() {
 				location.pathname === `/${orgSlug}/menu/items/`,
 		},
 		{
+			label: _(t`Tidy up`),
+			href: `/${orgSlug}/menu/tidy`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/menu/tidy`),
+		},
+		{
+			label: _(t`Calories`),
+			href: `/${orgSlug}/menu/calories`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/menu/calories`),
+		},
+		{
+			label: _(t`Descriptions`),
+			href: `/${orgSlug}/menu/descriptions`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/menu/descriptions`),
+		},
+		{
 			label: _(t`Modifier Groups`),
 			href: `/${orgSlug}/menu/modifiers`,
 			isActive:

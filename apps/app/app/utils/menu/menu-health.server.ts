@@ -19,7 +19,9 @@ import {
 	not,
 	like,
 	or,
+	OrganizationMenu,
 	OrganizationMenuCategory,
+	OrganizationMenuCategoryAssignment,
 	OrganizationMediaAsset,
 	OrganizationMenuItem,
 	OrganizationMenuItemCategoryAssignment,
@@ -91,6 +93,7 @@ export type MenuHealthData = {
 	photoQuality?: boolean
 	/** `integrations.menu_check` is on: delivery platform menu differences (#144). */
 	deliveryMenuDiffs?: DeliveryMenuDiffSummary[]
+	guestVisibility?: MenuHealthInput['guestVisibility']
 }
 
 /** Health dismissals of an organization; review-stack `card:` rows excluded. */
@@ -195,6 +198,40 @@ export async function loadMenuHealthData(
 			.from(MenuCheckDismissal)
 			.where(healthDismissalRows(organizationId)),
 	])
+	const [publishedMenus, categoryMenus, itemCategories] = await Promise.all([
+		db
+			.select({
+				id: OrganizationMenu.id,
+				availabilityStatus: OrganizationMenu.availabilityStatus,
+			})
+			.from(OrganizationMenu)
+			.where(eq(OrganizationMenu.organizationId, organizationId)),
+		db
+			.select({
+				categoryId: OrganizationMenuCategoryAssignment.categoryId,
+				menuId: OrganizationMenuCategoryAssignment.menuId,
+			})
+			.from(OrganizationMenuCategoryAssignment)
+			.innerJoin(
+				OrganizationMenu,
+				eq(OrganizationMenu.id, OrganizationMenuCategoryAssignment.menuId),
+			)
+			.where(eq(OrganizationMenu.organizationId, organizationId)),
+		db
+			.select({
+				itemId: OrganizationMenuItemCategoryAssignment.itemId,
+				categoryId: OrganizationMenuItemCategoryAssignment.categoryId,
+			})
+			.from(OrganizationMenuItemCategoryAssignment)
+			.innerJoin(
+				OrganizationMenuCategory,
+				eq(
+					OrganizationMenuCategory.id,
+					OrganizationMenuItemCategoryAssignment.categoryId,
+				),
+			)
+			.where(eq(OrganizationMenuCategory.organizationId, organizationId)),
+	])
 	const [photoQualityFlag, menuCheckEnabled] = await Promise.all([
 		getFeatureFlag(MEDIA_FLAG_KEYS.photoQuality, { organizationId }),
 		isMenuCheckEnabled(organizationId),
@@ -244,6 +281,11 @@ export async function loadMenuHealthData(
 		modifierGroupOptions,
 		dismissals,
 		photoQuality,
+		guestVisibility: {
+			menus: publishedMenus,
+			categoryMenus,
+			itemCategories,
+		},
 		...(deliveryMenuDiffs ? { deliveryMenuDiffs } : {}),
 	}
 }
@@ -460,6 +502,7 @@ export function computeMenuHealthFor(
 		| 'dismissals'
 		| 'photoQuality'
 		| 'deliveryMenuDiffs'
+		| 'guestVisibility'
 	>,
 	options: { includeFingerprints?: boolean; now?: Date } = {},
 ): MenuHealth {

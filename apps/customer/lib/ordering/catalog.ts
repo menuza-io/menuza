@@ -1,3 +1,4 @@
+import { guestCalorieView } from '@repo/common/calorie-display'
 import { isSoldOn } from '@repo/common/menu-channels'
 import {
 	fixedOverridePrice,
@@ -40,6 +41,8 @@ const itemSchema = z.object({
 	isVegetarian: z.boolean().optional().catch(undefined),
 	isGlutenFree: z.boolean().optional().catch(undefined),
 	orderTypePrices: z.unknown().optional(),
+	calorieMin: z.number().nullable().optional().catch(undefined),
+	calorieMax: z.number().nullable().optional().catch(undefined),
 	variations: z
 		.object({
 			variants: z
@@ -71,6 +74,8 @@ const menuSchema = z.object({
 	availabilityStatus: z.string().optional(),
 	channels: channelsFieldSchema,
 	categories: z.array(z.unknown()).optional(),
+	showCalories: z.boolean().optional().catch(undefined),
+	dailyIntake: z.enum(['us', 'ksa']).nullable().optional().catch(undefined),
 })
 
 const OFFER_MODES: readonly OfferMode[] = ['pickup', 'delivery', 'dine_in']
@@ -220,6 +225,8 @@ export type MenuItemView = {
 	excludeFromDiscounts: boolean
 	/** Dietary tags (#335); unknown values dropped. */
 	dietaryTags: DietaryTag[]
+	/** Absent or null when this menu hides calories (#285). */
+	calories?: string | null
 }
 
 export type MenuSectionView = {
@@ -369,6 +376,12 @@ export function presentMenu(
 			defaultLocale,
 			sections,
 			pricing,
+			menu.data.showCalories !== false,
+			menu.data.dailyIntake === 'ksa'
+				? 'ksa'
+				: menu.data.dailyIntake === 'us'
+					? 'us'
+					: null,
 		)
 	}
 	return { currency, sections, promotions, offerScope }
@@ -464,6 +477,31 @@ export function isMissingCatalog(error: unknown): boolean {
 	return error instanceof ApiError && error.isNotFound
 }
 
+function calorieField(
+	show: boolean,
+	calorieMin: number | null | undefined,
+	calorieMax: number | null | undefined,
+	dataRegion: 'us' | 'ksa' | null,
+): { calories: string } | Record<string, never> {
+	const label = calorieLabel(show, calorieMin, calorieMax, dataRegion)
+	return label ? { calories: label } : {}
+}
+
+function calorieLabel(
+	show: boolean,
+	calorieMin: number | null | undefined,
+	calorieMax: number | null | undefined,
+	dataRegion: 'us' | 'ksa' | null,
+): string | null {
+	const view = guestCalorieView({
+		show,
+		dish: { calorieMin: calorieMin ?? null, calorieMax: calorieMax ?? null },
+		dataRegion,
+	})
+	if (!view.visible) return null
+	return view.min === view.max ? `${view.min}` : `${view.min}–${view.max}`
+}
+
 function textOf(value: string, locale: string, defaultLocale: string): string {
 	return getLocalizedMenuValue(value, locale, defaultLocale)
 }
@@ -551,6 +589,8 @@ function walkCategories(
 	defaultLocale: string,
 	sections: MenuSectionView[],
 	pricing: PricingScope,
+	showCalories = true,
+	dataRegion: 'us' | 'ksa' | null = null,
 ) {
 	for (const value of values) {
 		const category = categorySchema.safeParse(value)
@@ -600,6 +640,12 @@ function walkCategories(
 					soldOut,
 					categoryIds,
 					dietaryTags: dietaryTagsOf(item.data),
+					...calorieField(
+						showCalories,
+						item.data.calorieMin,
+						item.data.calorieMax,
+						dataRegion,
+					),
 					excludeFromDiscounts:
 						item.data.excludeFromDiscounts === true ||
 						variants.some(
@@ -625,6 +671,8 @@ function walkCategories(
 			defaultLocale,
 			sections,
 			pricing,
+			showCalories,
+			dataRegion,
 		)
 	}
 }

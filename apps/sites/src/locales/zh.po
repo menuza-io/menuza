@@ -62,6 +62,7 @@ msgstr "{count, plural, other {每份订单最多适用于 # 件商品}}"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "{count} Cal"
 msgstr "{count} 卡"
 
@@ -109,6 +110,7 @@ msgstr "{min} 至 {max} 位客人"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "{min}–{max} Cal"
 msgstr "{min}–{max} 卡"
 
@@ -283,6 +285,10 @@ msgstr "1 位"
 msgid "1 item is no longer available and was left out."
 msgstr "有 1 件商品已不可用，已被略过。"
 
+#: src/pages/menu.astro.ts:3
+msgid "2,000 calories a day is used for general nutrition advice."
+msgstr "一般营养建议以每日 2,000 卡路里为参考。"
+
 #: src/lib/catering/labels.ts:50
 msgid "A {percent}% deposit is due now. You pay the balance later."
 msgstr "现在需支付 {percent}% 的定金,余款稍后支付。"
@@ -431,6 +437,10 @@ msgstr "已调整"
 #: src/lib/loyalty/labels.ts:245
 msgid "Adjusted by staff"
 msgstr "工作人员调整"
+
+#: src/pages/menu.astro.ts:3
+msgid "Adults need about 2,000 kcal a day."
+msgstr "成年人每天大约需要 2,000 千卡。"
 
 #: src/lib/ordering-labels.ts:230
 msgid "After address"

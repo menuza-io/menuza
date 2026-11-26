@@ -306,8 +306,15 @@ function priceParts(item: OrderingItem): { priceLabel: string; fromLabel: string
 	}
 }
 
+const showMenuCalories = (menuPayload?.menus ?? []).every(
+	(menu) => menu.showCalories !== false,
+)
+const calorieIntake = showMenuCalories
+	? (menuPayload?.menus ?? []).find((menu) => menu.dailyIntake)?.dailyIntake ?? null
+	: null
+
 function caloriesFor(item: OrderingItem): string | null {
-	if (!item.calorieMin) return null
+	if (!showMenuCalories || !item.calorieMin) return null
 	if (item.calorieMax && item.calorieMax !== item.calorieMin) {
 		return translate(i18n, msg`{min}–{max} Cal`, { min: item.calorieMin, max: item.calorieMax })
 	}
@@ -881,6 +888,11 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 									))}
 								</div>
 								<p class="text-xs text-muted-foreground">{dietDisclaimer}</p>
+								{calorieIntake === 'us' ? (
+									<p class="text-xs text-muted-foreground">{translate(i18n, msg`2,000 calories a day is used for general nutrition advice.`)}</p>
+								) : calorieIntake === 'ksa' ? (
+									<p class="text-xs text-muted-foreground">{translate(i18n, msg`Adults need about 2,000 kcal a day.`)}</p>
+								) : null}
 							</div>
 						) : null}
 						<div id="menu-search-empty" class="surface mb-6 flex hidden flex-col items-center gap-3 px-6 py-12 text-center" role="status">

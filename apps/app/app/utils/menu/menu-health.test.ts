@@ -279,6 +279,39 @@ describe('computeMenuHealth', () => {
 		expect(check(health, 'zero_price')).toMatchObject({ count: 0, total: 1 })
 	})
 
+	test('a dish in no category is one guests cannot see', () => {
+		const health = run({
+			items: [item({ id: 'loose' }), item({ id: 'live' })],
+			categories: [category({ id: 'mains' })],
+			categoryIdsWithItems: ['mains'],
+			guestVisibility: {
+				menus: [{ id: 'lunch', availabilityStatus: 'available' }],
+				categoryMenus: [{ categoryId: 'mains', menuId: 'lunch' }],
+				itemCategories: [{ itemId: 'live', categoryId: 'mains' }],
+			},
+		})
+		expect(check(health, 'dishes_guests_cannot_see')).toMatchObject({
+			count: 1,
+			itemIds: ['loose'],
+		})
+	})
+
+	test('a dish only on an unpublished menu is one guests cannot see', () => {
+		const health = run({
+			items: [item({ id: 'hidden-menu' })],
+			categories: [category({ id: 'mains' })],
+			categoryIdsWithItems: ['mains'],
+			guestVisibility: {
+				menus: [{ id: 'draft', availabilityStatus: 'hidden' }],
+				categoryMenus: [{ categoryId: 'mains', menuId: 'draft' }],
+				itemCategories: [{ itemId: 'hidden-menu', categoryId: 'mains' }],
+			},
+		})
+		expect(check(health, 'dishes_guests_cannot_see')?.itemIds).toEqual([
+			'hidden-menu',
+		])
+	})
+
 	test('empty categories: no items and no subcategories', () => {
 		const health = run({
 			categories: [

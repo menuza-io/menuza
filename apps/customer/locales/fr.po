@@ -13,6 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: item.calories
+#: components/ordering/menu-screen.tsx:345
+msgid "{0} Cal"
+msgstr "{0} cal"
+
 #: lib/loyalty/labels.ts:35
 msgid "{amount} held for an order in progress"
 msgstr "{amount} en attente pour une commande en cours"
@@ -29,7 +34,7 @@ msgstr "Encore {amount} pour atteindre {tier}"
 msgid "{amount} more to unlock {reward}"
 msgstr "Encore {amount} pour obtenir {reward}"
 
-#: components/ordering/menu-screen.tsx:417
+#: components/ordering/menu-screen.tsx:420
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "{amount} de réduction"
@@ -62,11 +67,11 @@ msgstr "{n, plural, one {{count} point} other {{count} points}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, one {{count} étoile} other {{count} étoiles}}"
 
-#: components/ordering/menu-screen.tsx:400
+#: components/ordering/menu-screen.tsx:403
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (limite de {count} par commande)"
 
-#: components/ordering/menu-screen.tsx:396
+#: components/ordering/menu-screen.tsx:399
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (jusqu’à {amount} de réduction)"
 
@@ -74,7 +79,7 @@ msgstr "{name} (jusqu’à {amount} de réduction)"
 msgid "{percent} off"
 msgstr "{percent} de réduction"
 
-#: components/ordering/menu-screen.tsx:409
+#: components/ordering/menu-screen.tsx:412
 msgid "{percentText} off"
 msgstr "{percentText} de réduction"
 
@@ -405,7 +410,7 @@ msgstr "Copier le lien d'invitation"
 msgid "Cost"
 msgstr "Coût"
 
-#: components/ordering/menu-screen.tsx:446
+#: components/ordering/menu-screen.tsx:449
 msgid "Dairy-free"
 msgstr "Sans produits laitiers"
 
@@ -434,7 +439,7 @@ msgid "Declined: {reward}."
 msgstr "Refusé : {reward}."
 
 #: components/ordering/menu-screen.tsx:319
-#: components/ordering/menu-screen.tsx:345
+#: components/ordering/menu-screen.tsx:348
 msgid "Delivery price {deliveryPriceText}"
 msgstr "Prix en livraison {deliveryPriceText}"
 
@@ -564,7 +569,7 @@ msgstr "Pour un groupe de cette taille, veuillez appeler le {phone}."
 msgid "Free {item}"
 msgstr "Offert : {item}"
 
-#: components/ordering/menu-screen.tsx:427
+#: components/ordering/menu-screen.tsx:430
 msgid "Free delivery"
 msgstr "Livraison offerte"
 
@@ -621,11 +626,11 @@ msgstr "Les cartes cadeaux ne sont pas disponibles pour le moment. Veuillez rée
 msgid "Give a friend {friendReward}, get {referrerPoints} after their first paid order."
 msgstr "Offrez {friendReward} à un ami et recevez {referrerPoints} après sa première commande payée."
 
-#: components/ordering/menu-screen.tsx:444
+#: components/ordering/menu-screen.tsx:447
 msgid "Gluten-free"
 msgstr "Sans gluten"
 
-#: components/ordering/menu-screen.tsx:438
+#: components/ordering/menu-screen.tsx:441
 msgid "Halal"
 msgstr "Halal"
 
@@ -880,7 +885,7 @@ msgstr "Les notifications sont désactivées dans les réglages de votre télép
 msgid "Notifications from {name}"
 msgstr "Notifications de {name}"
 
-#: components/ordering/menu-screen.tsx:448
+#: components/ordering/menu-screen.tsx:451
 msgid "Nut-free"
 msgstr "Sans fruits à coque"
 
@@ -930,7 +935,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "S'ouvre dans votre navigateur. Vos points et récompenses s'appliquent lorsque vous y commandez."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:368
+#: components/ordering/menu-screen.tsx:371
 msgid "Opens the website"
 msgstr "Ouvre le site web"
 
@@ -1197,7 +1202,7 @@ msgstr "Envoyer une demande"
 msgid "Send code"
 msgstr "Envoyer le code"
 
-#: components/ordering/menu-screen.tsx:425
+#: components/ordering/menu-screen.tsx:428
 msgid "Set price {amount}"
 msgstr "Prix fixe {amount}"
 
@@ -1286,7 +1291,7 @@ msgstr "Utilise {points} pour {amount} de réduction"
 msgid "Spent"
 msgstr "Dépensé"
 
-#: components/ordering/menu-screen.tsx:450
+#: components/ordering/menu-screen.tsx:453
 msgid "Spicy"
 msgstr "Épicé"
 
@@ -1525,11 +1530,11 @@ msgstr "Utiliser en caisse"
 msgid "Use code {code}"
 msgstr "Utilisez le code {code}"
 
-#: components/ordering/menu-screen.tsx:440
+#: components/ordering/menu-screen.tsx:443
 msgid "Vegan"
 msgstr "Végan"
 
-#: components/ordering/menu-screen.tsx:442
+#: components/ordering/menu-screen.tsx:445
 msgid "Vegetarian"
 msgstr "Végétarien"
 

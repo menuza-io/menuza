@@ -27,6 +27,21 @@ import {
 	unitRefSchema,
 } from './common.ts'
 
+/** The menu's allergen keys. Kept in step with `ALLERGENS` in menu-types. */
+export const STOCK_ALLERGEN_KEYS = [
+	'dairy',
+	'eggs',
+	'fish',
+	'gluten',
+	'mango',
+	'peanuts',
+	'sesame',
+	'shellfish',
+	'soy',
+	'tree_nuts',
+] as const
+export const stockAllergenSchema = z.enum(STOCK_ALLERGEN_KEYS)
+
 /** Stock status at a location: out at or below zero, low below "order more when below". */
 export const STOCK_STATUSES = ['ok', 'low', 'out'] as const
 export type StockStatus = (typeof STOCK_STATUSES)[number]
@@ -133,6 +148,12 @@ export const updateItemSchema = z
 		isDraft: z.boolean().optional(),
 		/** Star the item: a key item is in every quick count (#490). */
 		isKey: z.boolean().optional(),
+		/**
+		 * Confirmed allergens (#496). The keys match the menu's allergen list.
+		 * A name suggestion stays unconfirmed until the operator checks it.
+		 */
+		allergens: z.array(stockAllergenSchema).max(12).optional(),
+		allergensConfirmed: z.boolean().optional(),
 		/**
 		 * Counted by bottle (#470): the bottle size and optional weights, or
 		 * `null` to stop. Millilitre items only (`invalid_request` otherwise).
@@ -322,6 +343,8 @@ export type ItemOthersPay = z.infer<typeof itemOthersPaySchema>
 /** `GET /items/:id?locationId=` */
 export const itemDetailSchema = stockItemSchema.extend({
 	notes: z.string().nullable(),
+	allergens: z.array(stockAllergenSchema).optional(),
+	allergensConfirmed: z.boolean().optional(),
 	places: z.array(itemPlaceSchema),
 	onHandByLocation: z.array(
 		z.object({ locationId: z.string(), onHand: z.number().int() }),

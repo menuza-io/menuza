@@ -111,6 +111,16 @@
       "import": "./src/menu-types.ts",
       "default": "./src/menu-types.ts"
     },
+    "./calorie-display": {
+      "types": "./src/calorie-display.ts",
+      "import": "./src/calorie-display.ts",
+      "default": "./src/calorie-display.ts"
+    },
+    "./recipe-allergens": {
+      "types": "./src/recipe-allergens.ts",
+      "import": "./src/recipe-allergens.ts",
+      "default": "./src/recipe-allergens.ts"
+    },
     "./menu-channels": {
       "types": "./src/menu-channels.ts",
       "import": "./src/menu-channels.ts",

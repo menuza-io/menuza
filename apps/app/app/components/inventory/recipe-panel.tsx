@@ -1,5 +1,11 @@
 import { Trans, useLingui } from '@lingui/react/macro'
-import { type PlateCost } from '@repo/inventory'
+import { type Allergen } from '@repo/common/menu-types'
+import { parseAllergenList } from '@repo/common/recipe-allergens'
+import {
+	itemDetailSchema,
+	recipeResultSchema,
+	type PlateCost,
+} from '@repo/inventory'
 import { Button } from '@repo/ui/button'
 import {
 	Frame,
@@ -14,6 +20,7 @@ import {
 	type ReactNode,
 	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
 	useState,
 } from 'react'
@@ -26,6 +33,7 @@ import {
 	FoodCostDot,
 	RecipeSection,
 } from '#app/components/inventory/recipe-section.tsx'
+import { RecipeAllergenNotice } from '#app/components/menu/recipe-allergen-notice.tsx'
 import { useRecipeAccess } from '#app/hooks/use-recipe-access.ts'
 import { useRecipeCosts } from '#app/hooks/use-recipe-costs.ts'
 import { formatMoney } from '#app/utils/inventory/format.ts'
@@ -115,6 +123,8 @@ export function RecipePanel({
 	dataRegion,
 	priceMajor,
 	variants = [],
+	menuAllergens = [],
+	onApplyAllergens,
 }: {
 	orgSlug: string
 	/** Null on the new-item page: there is nothing to attach a recipe to yet. */
@@ -124,6 +134,9 @@ export function RecipePanel({
 	priceMajor: number
 	/** The sizes the item has as saved. */
 	variants?: readonly RecipeVariant[]
+	/** Typed allergens on the dish, for the recipe mismatch (#496). */
+	menuAllergens?: readonly string[]
+	onApplyAllergens?: (allergens: Allergen[]) => void
 }) {
 	const access = useRecipeAccess()
 	const [hidden, setHidden] = useState(false)
@@ -163,6 +176,8 @@ export function RecipePanel({
 							canTypeCost={access.canTypeCost}
 							locationId={access.locationId}
 							onHidden={() => setHidden(true)}
+							menuAllergens={menuAllergens}
+							onApplyAllergens={onApplyAllergens}
 						/>
 					</RecipeScope>
 				)}
@@ -180,6 +195,8 @@ function ItemRecipe({
 	canTypeCost,
 	locationId,
 	onHidden,
+	menuAllergens,
+	onApplyAllergens,
 }: {
 	itemId: string
 	dataRegion: string | null | undefined
@@ -189,6 +206,8 @@ function ItemRecipe({
 	canTypeCost: boolean
 	locationId: string
 	onHidden: () => void
+	menuAllergens: readonly string[]
+	onApplyAllergens?: (allergens: Allergen[]) => void
 }) {
 	const currency = regionCurrency(dataRegion)
 	const hasSizes = variants.length > 0
@@ -228,6 +247,13 @@ function ItemRecipe({
 					) : undefined
 				}
 			/>
+			{onApplyAllergens ? (
+				<RecipeAllergenBridge
+					itemId={itemId}
+					menuAllergens={menuAllergens}
+					onApply={onApplyAllergens}
+				/>
+			) : null}
 			{hasSizes ? (
 				<Sizes
 					variants={variants}
@@ -546,5 +572,63 @@ export function OptionRecipePanel({
 				)}
 			</FramePanel>
 		</Frame>
+	)
+}
+
+function RecipeAllergenBridge({
+	itemId,
+	menuAllergens,
+	onApply,
+}: {
+	itemId: string
+	menuAllergens: readonly string[]
+	onApply: (allergens: Allergen[]) => void
+}) {
+	const client = useContext(InventoryClientContext)
+	const [ingredients, setIngredients] = useState<
+		Array<{ id: string; name: string; allergens: Allergen[] }>
+	>([])
+	useEffect(() => {
+		if (!client) return
+		let live = true
+		void (async () => {
+			try {
+				const body = await client.request(
+					`/recipes?ownerKind=menu_item&ownerId=${encodeURIComponent(itemId)}`,
+				)
+				const parsed = recipeResultSchema.safeParse(body)
+				if (!parsed.success || !parsed.data.recipe || !live) return
+				const loaded: Array<{
+					id: string
+					name: string
+					allergens: Allergen[]
+				}> = []
+				for (const line of parsed.data.recipe.lines.slice(0, 40)) {
+					const detail = itemDetailSchema.safeParse(
+						await client.request(`/items/${encodeURIComponent(line.itemId)}`),
+					)
+					if (!detail.success || !detail.data.allergensConfirmed) continue
+					loaded.push({
+						id: line.itemId,
+						name: line.itemName,
+						allergens: parseAllergenList(detail.data.allergens ?? []),
+					})
+				}
+				if (live) setIngredients(loaded)
+			} catch {
+				if (live) setIngredients([])
+			}
+		})()
+		return () => {
+			live = false
+		}
+	}, [client, itemId])
+	if (ingredients.length === 0) return null
+	return (
+		<RecipeAllergenNotice
+			ingredients={ingredients}
+			menuAllergens={menuAllergens}
+			onApply={onApply}
+		/>
 	)
 }

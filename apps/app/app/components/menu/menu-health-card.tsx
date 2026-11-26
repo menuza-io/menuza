@@ -172,6 +172,14 @@ function FixLabel({ check }: { check: MenuHealthCheckSummary }) {
 					other="# categories are empty"
 				/>
 			)
+		case 'dishes_guests_cannot_see':
+			return (
+				<Plural
+					value={n}
+					one="# dish guests cannot see"
+					other="# dishes guests cannot see"
+				/>
+			)
 		case 'name_all_caps':
 			return (
 				<Plural
@@ -232,6 +240,7 @@ const CHECK_TITLES: Record<MenuHealthCheckKey, MessageDescriptor> = {
 	no_allergens_or_calories: msg`Dishes without allergens or calories`,
 	long_unavailable: msg`Dishes unavailable for a week`,
 	empty_category: msg`Empty categories`,
+	dishes_guests_cannot_see: msg`Dishes guests cannot see`,
 	name_all_caps: msg`Dish names in capitals`,
 	name_too_long: msg`Dish names that are too long`,
 	empty_option_group: msg`Option groups with no choices`,
@@ -249,6 +258,7 @@ const CHECK_HINTS: Record<MenuHealthCheckKey, MessageDescriptor> = {
 	no_allergens_or_calories: msg`Guests look for allergens and calories.`,
 	long_unavailable: msg`Hide it or bring it back.`,
 	empty_category: msg`Guests see a heading with nothing under it.`,
+	dishes_guests_cannot_see: msg`In no category, or only on a menu that is not published.`,
 	name_all_caps: msg`Capitals read like shouting. Use normal case.`,
 	name_too_long: msg`Long names get cut off on small screens.`,
 	empty_option_group: msg`Guests are asked to choose and have nothing to pick.`,
@@ -795,6 +805,8 @@ function FilterLabel({ checkKey }: { checkKey: MenuHealthCheckKey }) {
 			return <Trans>Showing dishes unavailable for more than a week</Trans>
 		case 'empty_category':
 			return <Trans>Showing empty categories</Trans>
+		case 'dishes_guests_cannot_see':
+			return <Trans>Showing dishes guests cannot see</Trans>
 		case 'name_all_caps':
 			return <Trans>Showing dishes with names in capitals</Trans>
 		case 'name_too_long':
