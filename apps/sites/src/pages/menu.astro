@@ -889,9 +889,9 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 								</div>
 								<p class="text-xs text-muted-foreground">{dietDisclaimer}</p>
 								{calorieIntake === 'us' ? (
-									<p class="text-xs text-muted-foreground">{translate(i18n, msg`2,000 calories a day is used for general nutrition advice.`)}</p>
+									<p class="text-xs text-muted-foreground">{i18n._(msg`2,000 calories a day is used for general nutrition advice.`)}</p>
 								) : calorieIntake === 'ksa' ? (
-									<p class="text-xs text-muted-foreground">{translate(i18n, msg`Adults need about 2,000 kcal a day.`)}</p>
+									<p class="text-xs text-muted-foreground">{i18n._(msg`Adults need about 2,000 kcal a day.`)}</p>
 								) : null}
 							</div>
 						) : null}
