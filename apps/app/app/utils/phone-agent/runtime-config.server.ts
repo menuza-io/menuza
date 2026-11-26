@@ -18,6 +18,7 @@ import {
 	resolvePhrase,
 } from '@repo/phone-agent'
 import { ENV } from 'varlock/env'
+import { cateringFaqForCall } from '#app/utils/catering/phone-agent-knowledge.server.ts'
 import {
 	getDraftFlow,
 	getPhoneAgent,
@@ -260,6 +261,15 @@ export async function buildRuntimeConfig(
 		return { ok: false, status: 404, error: 'Scope not found' }
 	}
 	const { parts, currency } = built
+	// Catering answers (#325, #255): the same ones the catering page shows, built
+	// from the location's settings for this call, so a change reaches the next call.
+	const cateringFaq = await cateringFaqForCall({
+		organizationId: orgId,
+		scopeId: parts.scopeId ?? scopeId,
+		currency,
+		language: agent.settings.languages[0] ?? 'en',
+		defaultLocale: organization.siteDefaultLocale || 'en',
+	}).catch(() => [])
 
 	return {
 		ok: true,
@@ -271,7 +281,10 @@ export async function buildRuntimeConfig(
 				currency,
 			},
 			...parts,
-			settings: agent.settings,
+			settings:
+				cateringFaq.length > 0
+					? { ...agent.settings, faq: [...agent.settings.faq, ...cateringFaq] }
+					: agent.settings,
 			flow,
 			rules: rules.map(({ updatedAt: ignoredUpdatedAt, ...rule }) => rule),
 			fallbackPhone: pickSafeTransferTarget(

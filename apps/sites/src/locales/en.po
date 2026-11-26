@@ -812,7 +812,7 @@ msgstr "Careers"
 msgid "Catering"
 msgstr "Catering"
 
-#: src/lib/catering/labels.ts:162
+#: src/lib/catering/labels.ts:180
 msgid "Catering is for pickup only."
 msgstr "Catering is for pickup only."
 
@@ -1337,7 +1337,7 @@ msgstr "Delivery fee {amount}"
 msgid "Delivery fee and discounts at checkout"
 msgstr "Delivery fee and discounts at checkout"
 
-#: src/lib/catering/labels.ts:169
+#: src/lib/catering/labels.ts:188
 msgid "Delivery from {feeText}."
 msgstr "Delivery from {feeText}."
 
@@ -3057,7 +3057,7 @@ msgstr "Pickup {when}"
 msgid "Pickup instructions"
 msgstr "Pickup instructions"
 
-#: src/lib/catering/labels.ts:170
+#: src/lib/catering/labels.ts:189
 msgid "Pickup is available too."
 msgstr "Pickup is available too."
 
@@ -4107,7 +4107,7 @@ msgstr "The kitchen has paused new orders for a moment. Please ask a team member
 msgid "The kitchen is closed right now."
 msgstr "The kitchen is closed right now."
 
-#: src/lib/catering/labels.ts:157
+#: src/lib/catering/labels.ts:167
 msgid "The largest order we take online is {maxText}."
 msgstr "The largest order we take online is {maxText}."
 
@@ -4123,7 +4123,7 @@ msgstr "The link may be incomplete or may have expired."
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "The link may be incomplete. You can start a new order from the menu."
 
-#: src/lib/catering/labels.ts:155
+#: src/lib/catering/labels.ts:162
 msgid "The minimum catering order is {minText}."
 msgstr "The minimum catering order is {minText}."
 
@@ -4870,7 +4870,7 @@ msgstr "We are still confirming your payment. Check your tab again in a minute."
 msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 msgstr "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 
-#: src/lib/catering/labels.ts:158
+#: src/lib/catering/labels.ts:174
 msgid "We cater for up to {maxGuests} guests."
 msgstr "We cater for up to {maxGuests} guests."
 
@@ -5013,11 +5013,11 @@ msgstr "We couldn't send your refund automatically. Please call the restaurant."
 msgid "We couldn't start payment. Please try again."
 msgstr "We couldn't start payment. Please try again."
 
-#: src/lib/catering/labels.ts:166
+#: src/lib/catering/labels.ts:184
 msgid "We deliver catering orders to {where}."
 msgstr "We deliver catering orders to {where}."
 
-#: src/lib/catering/labels.ts:167
+#: src/lib/catering/labels.ts:185
 msgid "We deliver catering orders."
 msgstr "We deliver catering orders."
 
@@ -5053,7 +5053,7 @@ msgstr "We know you are on your way"
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "We loaded your order from your call. Review it and check out."
 
-#: src/lib/catering/labels.ts:152
+#: src/lib/catering/labels.ts:157
 msgid "We need at least {hours} hours of notice."
 msgstr "We need at least {hours} hours of notice."
 
@@ -5077,7 +5077,7 @@ msgstr "We sent a confirmation to your email or phone."
 msgid "We sent a link to confirm your email"
 msgstr "We sent a link to confirm your email"
 
-#: src/lib/catering/labels.ts:176
+#: src/lib/catering/labels.ts:196
 msgid "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
 msgstr "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
 

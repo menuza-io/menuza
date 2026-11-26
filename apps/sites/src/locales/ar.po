@@ -812,7 +812,7 @@ msgstr "الوظائف"
 msgid "Catering"
 msgstr "التموين"
 
-#: src/lib/catering/labels.ts:162
+#: src/lib/catering/labels.ts:180
 msgid "Catering is for pickup only."
 msgstr "التموين متاح للاستلام فقط."
 
@@ -1337,7 +1337,7 @@ msgstr "رسوم التوصيل {amount}"
 msgid "Delivery fee and discounts at checkout"
 msgstr "رسوم التوصيل والخصومات عند إتمام الطلب"
 
-#: src/lib/catering/labels.ts:169
+#: src/lib/catering/labels.ts:188
 msgid "Delivery from {feeText}."
 msgstr "التوصيل بدءًا من {feeText}."
 
@@ -3057,7 +3057,7 @@ msgstr "استلام {when}"
 msgid "Pickup instructions"
 msgstr "تعليمات الاستلام"
 
-#: src/lib/catering/labels.ts:170
+#: src/lib/catering/labels.ts:189
 msgid "Pickup is available too."
 msgstr "الاستلام متاح أيضًا."
 
@@ -4107,7 +4107,7 @@ msgstr "أوقف المطبخ الطلبات الجديدة مؤقتًا. يُر
 msgid "The kitchen is closed right now."
 msgstr "المطبخ مغلق حاليًا."
 
-#: src/lib/catering/labels.ts:157
+#: src/lib/catering/labels.ts:167
 msgid "The largest order we take online is {maxText}."
 msgstr "أكبر طلب نقبله عبر الإنترنت هو {maxText}."
 
@@ -4123,7 +4123,7 @@ msgstr "قد يكون الرابط غير مكتمل أو منتهي الصلا�
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "قد يكون الرابط غير مكتمل. يمكنك بدء طلب جديد من القائمة."
 
-#: src/lib/catering/labels.ts:155
+#: src/lib/catering/labels.ts:162
 msgid "The minimum catering order is {minText}."
 msgstr "الحد الأدنى لطلب التموين هو {minText}."
 
@@ -4870,7 +4870,7 @@ msgstr "ما زلنا نؤكد دفعتك. تحقق من حسابك مجددًا
 msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 msgstr "لا يمكننا إتمام هذه العملية. جرّب مبلغًا أصغر أو تواصل مع المطعم."
 
-#: src/lib/catering/labels.ts:158
+#: src/lib/catering/labels.ts:174
 msgid "We cater for up to {maxGuests} guests."
 msgstr "نقدم خدمة التموين لما يصل إلى {maxGuests} ضيفًا."
 
@@ -5013,11 +5013,11 @@ msgstr "تعذّر إرسال المبلغ المسترد تلقائيًا. ير
 msgid "We couldn't start payment. Please try again."
 msgstr "تعذّر بدء الدفع. حاول مرة أخرى."
 
-#: src/lib/catering/labels.ts:166
+#: src/lib/catering/labels.ts:184
 msgid "We deliver catering orders to {where}."
 msgstr "نوصّل طلبات التموين إلى {where}."
 
-#: src/lib/catering/labels.ts:167
+#: src/lib/catering/labels.ts:185
 msgid "We deliver catering orders."
 msgstr "نوصّل طلبات التموين."
 
@@ -5053,7 +5053,7 @@ msgstr "نعلم أنك في الطريق"
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "حمّلنا طلبك من مكالمتك. راجعه ثم أكمل الدفع."
 
-#: src/lib/catering/labels.ts:152
+#: src/lib/catering/labels.ts:157
 msgid "We need at least {hours} hours of notice."
 msgstr "نحتاج إلى مهلة لا تقل عن {hours} ساعة."
 
@@ -5077,7 +5077,7 @@ msgstr "أرسلنا تأكيدًا إلى بريدك الإلكتروني أو 
 msgid "We sent a link to confirm your email"
 msgstr "أرسلنا رابطاً لتأكيد بريدك الإلكتروني"
 
-#: src/lib/catering/labels.ts:176
+#: src/lib/catering/labels.ts:196
 msgid "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
 msgstr "نأخذ عربونًا بنسبة {percent}% عند الطلب. يُستحق الرصيد قبل المناسبة بـ {balanceDueDays} أيام."
 

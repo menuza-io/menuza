@@ -116,7 +116,6 @@ const ERROR_LABELS: Record<string, keyof typeof labels> = {
 
 if (root && config) {
 	const cfg = config
-	const status = root.querySelector<HTMLElement>('[data-ct-status]')!
 	const mount = root.querySelector<HTMLElement>('[data-ct-form]')!
 	const locale = browserLocale()
 	const money = (minor: number) =>

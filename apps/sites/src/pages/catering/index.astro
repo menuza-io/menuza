@@ -147,7 +147,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
 			<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
 		) : null
 	}
-	{faqJsonLd ? <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd).replace(/</g, '\\u003c')} /> : null}
+	{faqJsonLd ? <script is:inline type="application/ld+json" set:html={JSON.stringify(faqJsonLd).replace(/</g, '\\u003c')} /> : null}
 	<section class={siteSection}>
 		<div class={`${siteContainer} flex max-w-3xl flex-col gap-8`}>
 			<header class="flex flex-col gap-2">

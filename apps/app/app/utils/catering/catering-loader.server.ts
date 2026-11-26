@@ -1,8 +1,8 @@
 import { parseCateringSettings } from '@repo/common/catering'
 import { pickLocalized } from '@repo/common/site-locales'
 import { and, db, eq, OrganizationLocation } from '@repo/database'
-import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
+import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
 
 export type CateringLocation = {
 	id: string

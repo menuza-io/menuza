@@ -812,7 +812,7 @@ msgstr "Carrières"
 msgid "Catering"
 msgstr "Traiteur"
 
-#: src/lib/catering/labels.ts:162
+#: src/lib/catering/labels.ts:180
 msgid "Catering is for pickup only."
 msgstr "Le traiteur est uniquement à emporter."
 
@@ -1337,7 +1337,7 @@ msgstr "Frais de livraison {amount}"
 msgid "Delivery fee and discounts at checkout"
 msgstr "Frais de livraison et réductions au paiement"
 
-#: src/lib/catering/labels.ts:169
+#: src/lib/catering/labels.ts:188
 msgid "Delivery from {feeText}."
 msgstr "Livraison à partir de {feeText}."
 
@@ -3057,7 +3057,7 @@ msgstr "Retrait {when}"
 msgid "Pickup instructions"
 msgstr "Instructions de retrait"
 
-#: src/lib/catering/labels.ts:170
+#: src/lib/catering/labels.ts:189
 msgid "Pickup is available too."
 msgstr "Le retrait est aussi possible."
 
@@ -4107,7 +4107,7 @@ msgstr "La cuisine a suspendu les nouvelles commandes pour un moment. Demandez �
 msgid "The kitchen is closed right now."
 msgstr "La cuisine est fermée pour le moment."
 
-#: src/lib/catering/labels.ts:157
+#: src/lib/catering/labels.ts:167
 msgid "The largest order we take online is {maxText}."
 msgstr "La plus grosse commande acceptée en ligne est de {maxText}."
 
@@ -4123,7 +4123,7 @@ msgstr "Le lien est peut-être incomplet ou a expiré."
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "Le lien est peut-être incomplet. Vous pouvez commencer une nouvelle commande depuis le menu."
 
-#: src/lib/catering/labels.ts:155
+#: src/lib/catering/labels.ts:162
 msgid "The minimum catering order is {minText}."
 msgstr "La commande minimum pour le traiteur est de {minText}."
 
@@ -4870,7 +4870,7 @@ msgstr "Nous confirmons encore votre paiement. Revenez à votre note dans une mi
 msgid "We cannot complete this purchase. Please try a smaller amount or contact the restaurant."
 msgstr "Nous ne pouvons pas finaliser cet achat. Essayez un montant plus petit ou contactez le restaurant."
 
-#: src/lib/catering/labels.ts:158
+#: src/lib/catering/labels.ts:174
 msgid "We cater for up to {maxGuests} guests."
 msgstr "Nous servons jusqu'à {maxGuests} convives."
 
@@ -5013,11 +5013,11 @@ msgstr "Nous n'avons pas pu envoyer votre remboursement automatiquement. Veuille
 msgid "We couldn't start payment. Please try again."
 msgstr "Nous n'avons pas pu démarrer le paiement. Veuillez réessayer."
 
-#: src/lib/catering/labels.ts:166
+#: src/lib/catering/labels.ts:184
 msgid "We deliver catering orders to {where}."
 msgstr "Nous livrons les commandes traiteur à {where}."
 
-#: src/lib/catering/labels.ts:167
+#: src/lib/catering/labels.ts:185
 msgid "We deliver catering orders."
 msgstr "Nous livrons les commandes traiteur."
 
@@ -5053,7 +5053,7 @@ msgstr "Nous savons que vous êtes en route"
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "Nous avons chargé la commande de votre appel. Vérifiez-la et passez à la caisse."
 
-#: src/lib/catering/labels.ts:152
+#: src/lib/catering/labels.ts:157
 msgid "We need at least {hours} hours of notice."
 msgstr "Nous avons besoin d'au moins {hours} heures de préavis."
 
@@ -5077,7 +5077,7 @@ msgstr "Nous avons envoyé une confirmation à votre e-mail ou téléphone."
 msgid "We sent a link to confirm your email"
 msgstr "Nous vous avons envoyé un lien pour confirmer votre e-mail"
 
-#: src/lib/catering/labels.ts:176
+#: src/lib/catering/labels.ts:196
 msgid "We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event."
 msgstr "Nous demandons un acompte de {percent} % à la commande. Le solde est dû {balanceDueDays} jours avant l'événement."
 

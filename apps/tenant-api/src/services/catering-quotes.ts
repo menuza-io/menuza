@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { and, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, lte, or, sql } from 'drizzle-orm'
 
 import {
 	CATERING_DEFAULT_QUOTE_VALID_DAYS,
@@ -11,7 +11,6 @@ import {
 	quotePayability,
 	readCateringPolicy,
 	validateCateringEvent,
-	type CateringFailure,
 	type CateringLocationPolicy,
 	type CateringQuoteCharge,
 	type CateringQuoteLine,
@@ -33,12 +32,13 @@ import {
 	cateringQuotes,
 	getTenantDb,
 	restaurantOrders,
+	runTenantTransaction,
 	type CateringQuote,
 	type RestaurantOrder,
 } from '@repo/tenant-db'
 
 import { isCateringPublicDisabled } from '../lib/catering-switches.ts'
-import { deriveQuoteToken, readQuoteToken } from '../lib/catering-tokens.ts'
+import { readQuoteToken } from '../lib/catering-tokens.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import {
 	onCateringQuoteRequested,
@@ -59,7 +59,6 @@ import {
 	type OrderServiceResult,
 } from './order-service.ts'
 import { recordOrderStep } from './order-steps.ts'
-import { runTenantTransaction } from '@repo/tenant-db'
 
 /**
  * Catering quotes (#124): a guest's request or a quote an operator wrote, the
@@ -77,18 +76,6 @@ import { runTenantTransaction } from '@repo/tenant-db'
  * again. Everything here is regional: contact, notes and the address never
  * leave the region.
  */
-
-type Fail = { ok: false; failure: CateringFailure & { status: number } }
-const failWith = (status: number, failure: CateringFailure): Fail => ({
-	ok: false,
-	failure: { ...failure, status },
-})
-
-function toOrderFailure(f: Fail) {
-	return orderFailure(f.failure.status, f.failure.code, f.failure.message, {
-		details: f.failure.details,
-	})
-}
 
 type CateringEnv = {
 	context: RestaurantOrderContext

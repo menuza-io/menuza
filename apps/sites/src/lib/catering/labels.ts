@@ -148,14 +148,36 @@ export function cateringQuestionLabels(
  */
 export function cateringPhrases(i18n: I18n): CateringPhrases {
 	const t = (descriptor: MessageDescriptor) => i18n._(descriptor)
+	// The values go to Lingui, which fills the `{name}` placeholders itself.
+	const fill = (
+		descriptor: MessageDescriptor,
+		values: Record<string, string | number>,
+	) => {
+		const message: MessageDescriptor = { ...descriptor, values }
+		return i18n._(message)
+	}
 	return {
-		notice: (hours) => t(msg`We need at least ${hours} hours of notice.`),
+		notice: (hours) =>
+			fill(msg`We need at least {hours} hours of notice.`, { hours }),
 		minimum: ({ minText, maxText, maxGuests }) => {
 			const parts: string[] = []
-			if (minText) parts.push(t(msg`The minimum catering order is ${minText}.`))
-			if (maxText)
-				parts.push(t(msg`The largest order we take online is ${maxText}.`))
-			if (maxGuests) parts.push(t(msg`We cater for up to ${maxGuests} guests.`))
+			if (minText) {
+				parts.push(
+					fill(msg`The minimum catering order is {minText}.`, { minText }),
+				)
+			}
+			if (maxText) {
+				parts.push(
+					fill(msg`The largest order we take online is {maxText}.`, {
+						maxText,
+					}),
+				)
+			}
+			if (maxGuests) {
+				parts.push(
+					fill(msg`We cater for up to {maxGuests} guests.`, { maxGuests }),
+				)
+			}
 			return parts.length > 0 ? parts.join(' ') : null
 		},
 		delivery: ({ delivers, pickup, zones, feeText }) => {
@@ -163,17 +185,18 @@ export function cateringPhrases(i18n: I18n): CateringPhrases {
 			const where = zones.join(', ')
 			const parts = [
 				where
-					? t(msg`We deliver catering orders to ${where}.`)
+					? fill(msg`We deliver catering orders to {where}.`, { where })
 					: t(msg`We deliver catering orders.`),
 			]
-			if (feeText) parts.push(t(msg`Delivery from ${feeText}.`))
+			if (feeText) parts.push(fill(msg`Delivery from {feeText}.`, { feeText }))
 			if (pickup) parts.push(t(msg`Pickup is available too.`))
 			return parts.join(' ')
 		},
 		deposit: ({ percent, balanceDueDays }) =>
 			percent > 0 && percent < 100
-				? t(
-						msg`We take a ${percent}% deposit when you order. The balance is due ${balanceDueDays} days before the event.`,
+				? fill(
+						msg`We take a {percent}% deposit when you order. The balance is due {balanceDueDays} days before the event.`,
+						{ percent, balanceDueDays },
 					)
 				: null,
 	}

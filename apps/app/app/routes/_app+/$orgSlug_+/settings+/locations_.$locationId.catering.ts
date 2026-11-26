@@ -6,6 +6,7 @@ import {
 	parseCateringSettings,
 	validateCateringSettings,
 } from '@repo/common/catering'
+import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import {
 	and,
 	db,
@@ -16,7 +17,6 @@ import {
 } from '@repo/database'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
-import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { getCateringFeatures } from '#app/utils/catering/catering-context.server.ts'
 import { resolveMemberLocationIds } from '#app/utils/location/member-scope.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -24,7 +24,7 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
-import { parseSiteLocalesConfig } from '@repo/common/site-locales'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
 
