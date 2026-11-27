@@ -9,6 +9,7 @@ import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { giftCardLedger, giftCards, type TenantDatabase } from '@repo/tenant-db'
 import { localParts } from '@repo/zoned-time'
 import { and, eq, gte, inArray, lt } from 'drizzle-orm'
+import { getNodeRegion } from '../lib/region.ts'
 import { activeReportCatalog } from '../restaurant/staffing-report-catalog.ts'
 import { readSaleLines } from './item-sales.ts'
 import { loadSalesRecords } from './sales-report-records.ts'
@@ -301,6 +302,7 @@ export async function loadAccountingFacts(input: {
 			businessDate: bucket.businessDate,
 			currency: bucket.currency,
 			closed: bucket.businessDate < today,
+			...(getNodeRegion() === 'ksa' ? { zatca: true } : {}),
 			categories,
 			grossMinor: bucket.gross,
 			serviceFeesMinor: bucket.serviceFees,

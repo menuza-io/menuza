@@ -46,6 +46,8 @@ export type AccountingDayFacts = {
 	currency: string
 	/** The location's day has ended (final) or is still open (provisional). */
 	closed: boolean
+	/** A Saudi (ZATCA) node: tax lines carry the ZATCA category (S, standard rate). */
+	zatca?: boolean
 	/** Sales by menu category: gross item sales after item-level adjustments. */
 	categories: Array<{ key: string; label: string; minor: number }>
 	/** Gross sales (items and fees before discounts) of sale rows. */
@@ -188,7 +190,11 @@ export function buildJournalDay(facts: AccountingDayFacts): JournalDay {
 			creditNatured(
 				`tax:${tax.rateBp}`,
 				'tax',
-				tax.rateBp === 0 ? 'Tax' : `Tax ${tax.rateBp / 100}%`,
+				tax.rateBp === 0
+					? 'Tax'
+					: facts.zatca
+						? `VAT ${tax.rateBp / 100}% (ZATCA category S, standard rate)`
+						: `Tax ${tax.rateBp / 100}%`,
 				tax.minor,
 			),
 		)

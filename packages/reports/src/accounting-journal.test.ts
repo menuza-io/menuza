@@ -162,6 +162,17 @@ describe('the daily journal (#189)', () => {
 		expect(csv).toContain('Difference (needs review)')
 	})
 
+	it('names tax lines by ZATCA category on a Saudi node', () => {
+		const day = buildJournalDay(facts({ zatca: true }))
+		expect(day.lines.find((l) => l.lineKey === 'tax:1500')!.label).toBe(
+			'VAT 15% (ZATCA category S, standard rate)',
+		)
+		expect(
+			buildJournalDay(facts()).lines.find((l) => l.lineKey === 'tax:1500')!
+				.label,
+		).toBe('Tax 15%')
+	})
+
 	it('is provisional until the day closes', () => {
 		expect(buildJournalDay(facts({ closed: false })).status).toBe('provisional')
 	})

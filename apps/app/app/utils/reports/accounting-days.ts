@@ -99,6 +99,7 @@ export const accountingDaysSchema = z.object({
 			businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 			currency: z.string(),
 			closed: z.boolean(),
+			zatca: z.boolean().optional(),
 			categories: z.array(
 				z.object({ key: z.string(), label: z.string(), minor: minorField }),
 			),

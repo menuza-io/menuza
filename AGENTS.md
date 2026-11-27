@@ -667,6 +667,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   and notices (dropped, not held, so re-enabling sends no backlog); in the App
   it stops manager alert emails (in-app notifications are unaffected). `false`
   (also `0`, `off`, `no`, `disabled`).
+- `REPORT_EMAIL_ENABLED` - Tenant-api only, optional (unset or `true` is on).
+  Kill switch for scheduled report emails (#121): `false` (also `0`, `off`,
+  `no`, `disabled`) drops sends on that node instead of holding them. See
+  `docs/owner-reports.md`.
 - `RESERVATIONS_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true`
   is on). Kill switch for reservations email: on tenant-api it drops guest
   emails (dropped, not held); in the App it stops manager-alert emails (in-app
@@ -1927,6 +1931,18 @@ profitability, order steps, missed sales while paused, online uptime; #227,
 - Cost and margin need the cost grant (`inventory_cost` report permission, the
   `read:inventory_cost:any` grant on the inventory token). Docs:
   `docs/sales-insights.md`.
+
+**Owner reporting and exports (customer list export, export progress, scheduled
+report emails, monthly results, accounting journal; #231, #386, #121, #221,
+#189):**
+
+- Extends the report engine, `POST /analytics/query` and the existing job,
+  email, payout and audit code; never add a second CSV writer, scheduler or
+  email sender. One chunked exporter (`runChunkedCsvExport`), one set of summary
+  figures (`packages/reports/src/summary-figures.ts`), one journal builder
+  (`accounting-journal.ts`). Flags `reports.schedules` and `reports.accounting`
+  default off; one control-plane migration (`0084`). Docs:
+  `docs/owner-reports.md`.
 
 **Gift cards (sell, redeem, fraud holds, guest wallet):**
 

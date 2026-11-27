@@ -596,6 +596,26 @@ describe('POST /internal/reports/figures: the monthly totals (#221)', () => {
 		expect(report.result.total).toBe(by.directOrders!.entries[0]!.value)
 	})
 
+	it('limits a location-scoped member to their own locations', async () => {
+		await seedOctober()
+		const res = await figures({
+			orgId: ORG,
+			month: '2026-10',
+			timeZone: 'America/Chicago',
+			groups: [
+				{
+					key: 'ruh',
+					grants: { ...grants(['sales']), locationIds: ['loc-ruh'] },
+					figureIds: ['directSales', 'directOrders'],
+				},
+			],
+		})
+		const body = (await res.json()) as FiguresBody
+		const by = Object.fromEntries(body.groups[0]!.figures.map((f) => [f.id, f]))
+		expect(by.directSales!.entries).toEqual([{ currency: 'SAR', value: 200 }])
+		expect(by.directOrders!.entries).toEqual([{ currency: null, value: 1 }])
+	})
+
 	it('hides a figure the grants do not cover, and one whose module is off', async () => {
 		await seedOctober()
 		const res = await figures({
