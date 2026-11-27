@@ -57,8 +57,24 @@ async function seedSchedule() {
 
 const tokenOf = (url: string) => new URL(url).searchParams.get('token')!
 
-describe('one-click unsubscribe from a report email (#121, #221)', () => {
-	it('works without a login: GET on the link switches the schedule off for that member only', async () => {
+const post = (url: string, init: RequestInit = {}) =>
+	action({
+		request: new Request(url, { method: 'POST', ...init }),
+		params: {},
+		context: {},
+	} as never)
+const get = (url: string) =>
+	loader({ request: new Request(url), params: {}, context: {} } as never)
+const unsubscribedAt = async (scheduleId: string) =>
+	(
+		await db
+			.select()
+			.from(ReportScheduleRecipient)
+			.where(eq(ReportScheduleRecipient.scheduleId, scheduleId))
+	)[0]!.unsubscribedAt
+
+describe('unsubscribe from a report email (#121, #221)', () => {
+	it('GET on the emailed link only shows a confirm button: scanners and previewers change nothing', async () => {
 		const { user, schedule } = await seedSchedule()
 		const url = reportUnsubscribeUrl({
 			kind: 'schedule',
@@ -66,44 +82,32 @@ describe('one-click unsubscribe from a report email (#121, #221)', () => {
 			userId: user.id,
 		})
 		// No cookie, no session: the request is a plain GET.
-		const response = await loader({
-			request: new Request(url),
-			params: {},
-			context: {},
-		} as never)
+		const response = await get(url)
 		expect(response.status).toBe(200)
-		expect(await response.text()).toContain('You are unsubscribed')
-		const [row] = await db
-			.select()
-			.from(ReportScheduleRecipient)
-			.where(eq(ReportScheduleRecipient.scheduleId, schedule.id))
-		expect(row!.unsubscribedAt).not.toBeNull()
+		const html = await response.text()
+		expect(html).toContain('<form method="post"')
+		expect(html).toContain('/resources/report-unsubscribe?token=')
+		expect(html).not.toContain('You are unsubscribed')
+		expect(response.headers.get('referrer-policy')).toBe('no-referrer')
+		expect(await unsubscribedAt(schedule.id)).toBeNull()
 	})
 
-	it("accepts the mail client's one-click POST", async () => {
+	it('POST (the button, or the mail client one-click) switches the schedule off for that member only, and repeating it is harmless', async () => {
 		const { user, schedule } = await seedSchedule()
 		const url = reportUnsubscribeUrl({
 			kind: 'schedule',
 			scheduleId: schedule.id,
 			userId: user.id,
 		})
-		const response = await action({
-			request: new Request(url, {
-				method: 'POST',
-				body: 'List-Unsubscribe=One-Click',
-			}),
-			params: {},
-			context: {},
-		} as never)
-		expect(response.status).toBe(200)
-		const [row] = await db
-			.select()
-			.from(ReportScheduleRecipient)
-			.where(eq(ReportScheduleRecipient.scheduleId, schedule.id))
-		expect(row!.unsubscribedAt).not.toBeNull()
+		for (let i = 0; i < 2; i += 1) {
+			const response = await post(url, { body: 'List-Unsubscribe=One-Click' })
+			expect(response.status).toBe(200)
+			expect(await response.text()).toContain('You are unsubscribed')
+		}
+		expect(await unsubscribedAt(schedule.id)).not.toBeNull()
 	})
 
-	it('refuses a forged, edited or missing token and changes nothing', async () => {
+	it('refuses a forged, edited or missing token, on GET and POST, and changes nothing', async () => {
 		const { user, schedule } = await seedSchedule()
 		const url = reportUnsubscribeUrl({
 			kind: 'schedule',
@@ -112,23 +116,33 @@ describe('one-click unsubscribe from a report email (#121, #221)', () => {
 		})
 		const token = tokenOf(url)
 		for (const bad of [`${token}x`, token.replace(/.$/, 'A'), 'garbage', '']) {
-			const response = await loader({
-				request: new Request(
-					`http://localhost:3000/resources/report-unsubscribe?token=${encodeURIComponent(bad)}`,
-				),
-				params: {},
-				context: {},
-			} as never)
-			expect(response.status).toBe(400)
+			const target = `http://localhost:3000/resources/report-unsubscribe?token=${encodeURIComponent(bad)}`
+			expect((await get(target)).status).toBe(400)
+			expect((await post(target)).status).toBe(400)
 		}
-		const [row] = await db
-			.select()
-			.from(ReportScheduleRecipient)
-			.where(eq(ReportScheduleRecipient.scheduleId, schedule.id))
-		expect(row!.unsubscribedAt).toBeNull()
+		const none = await post(
+			'http://localhost:3000/resources/report-unsubscribe',
+		)
+		expect(none.status).toBe(400)
+		expect(await unsubscribedAt(schedule.id)).toBeNull()
 	})
 
-	it('switches the monthly results email off from its own link', async () => {
+	it('refuses other methods', async () => {
+		const { user, schedule } = await seedSchedule()
+		const url = reportUnsubscribeUrl({
+			kind: 'schedule',
+			scheduleId: schedule.id,
+			userId: user.id,
+		})
+		const response = await action({
+			request: new Request(url, { method: 'DELETE' }),
+			params: {},
+			context: {},
+		} as never)
+		expect(response.status).toBe(405)
+	})
+
+	it('switches the monthly results email off from its own link, by POST only', async () => {
 		const { user, organization } = await seedSchedule()
 		expect(await monthlyResultsEmailEnabled(user.id, organization.id)).toBe(
 			true,
@@ -138,12 +152,11 @@ describe('one-click unsubscribe from a report email (#121, #221)', () => {
 			organizationId: organization.id,
 			userId: user.id,
 		})
-		const response = await loader({
-			request: new Request(url),
-			params: {},
-			context: {},
-		} as never)
-		expect(response.status).toBe(200)
+		expect((await get(url)).status).toBe(200)
+		expect(await monthlyResultsEmailEnabled(user.id, organization.id)).toBe(
+			true,
+		)
+		expect((await post(url)).status).toBe(200)
 		expect(await monthlyResultsEmailEnabled(user.id, organization.id)).toBe(
 			false,
 		)

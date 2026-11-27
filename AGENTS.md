@@ -671,6 +671,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   Kill switch for scheduled report emails (#121): `false` (also `0`, `off`,
   `no`, `disabled`) drops sends on that node instead of holding them. See
   `docs/owner-reports.md`.
+- `REPORT_UNSUBSCRIBE_SECRET` - App only, optional (16+ chars). Keys the
+  one-click unsubscribe links in report emails (#121, #221). Unset, the session
+  secret is used, and rotating it then breaks every link already sent. Set it
+  before the first email goes out and rotate it only on purpose. See
+  `docs/owner-reports.md`.
 - `RESERVATIONS_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true`
   is on). Kill switch for reservations email: on tenant-api it drops guest
   emails (dropped, not held); in the App it stops manager-alert emails (in-app

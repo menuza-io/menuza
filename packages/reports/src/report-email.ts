@@ -27,7 +27,7 @@ const COPY = {
 		unsubscribe: 'Unsubscribe from this email',
 		because: (org: string) =>
 			`You receive this because you are a member of ${org}.`,
-		csvNote: 'The CSV link works for 7 days.',
+		csvNote: 'The CSV link works for 2 days.',
 		cut: (n: number) =>
 			`Showing the first ${n} rows. Download the CSV for the rest.`,
 		noData: 'No data for this period.',
@@ -42,7 +42,7 @@ const COPY = {
 		downloadCsv: 'تنزيل ملف CSV',
 		unsubscribe: 'إلغاء الاشتراك في هذا البريد',
 		because: (org: string) => `تصلك هذه الرسالة لأنك عضو في ${org}.`,
-		csvNote: 'رابط ملف CSV يعمل لمدة 7 أيام.',
+		csvNote: 'رابط ملف CSV يعمل لمدة يومين.',
 		cut: (n: number) => `يعرض أول ${n} صفًا. نزّل ملف CSV لبقية الصفوف.`,
 		noData: 'لا توجد بيانات لهذه الفترة.',
 		same: 'بلا تغيير',

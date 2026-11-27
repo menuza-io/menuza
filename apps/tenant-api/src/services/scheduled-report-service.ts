@@ -41,7 +41,10 @@ import {
 } from '@repo/reports/token'
 import { consentBaseUrl, listUnsubscribeHeaders } from '../lib/email-consent.ts'
 import { isReportEmailEnabled } from '../lib/report-email-switch.ts'
-import { signReportCsvToken } from '../lib/report-csv-link.ts'
+import {
+	REPORT_CSV_TTL_MS,
+	signReportCsvToken,
+} from '../lib/report-csv-link.ts'
 import { getOperatorAnalyticsToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { analyticsRoutes } from '../routes/analytics.ts'
@@ -354,11 +357,19 @@ export async function sendScheduledReport(
 		if (base) {
 			const token = signReportCsvToken({
 				o: req.orgId,
-				exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
+				u: recipient.userId,
+				exp: Date.now() + REPORT_CSV_TTL_MS,
 				spec: { req: runSpec, grants: recipient.grants },
 			})
 			if (token) {
 				csvUrl = `${base}/reports/csv/${encodeURIComponent(req.orgId)}?t=${encodeURIComponent(token)}`
+			} else {
+				// Too many grants to fit a mail link: the email goes without it.
+				// Ids only, so a large grant set does not lose the link unnoticed.
+				console.warn('Report CSV link left out: token too long', {
+					orgId: req.orgId,
+					scheduleId: req.scheduleId,
+				})
 			}
 		}
 		const rendered =

@@ -1,16 +1,13 @@
 import { csvLines } from '@repo/reports/export'
 import { reportFiguresRequestSchema } from '@repo/reports/figures-contract'
-import {
-	reportGrantsSchema,
-	reportRunSpecSchema,
-	reportSendRequestSchema,
-} from '@repo/reports/send-contract'
+import { reportSendRequestSchema } from '@repo/reports/send-contract'
 import { TENANT_ORG_ID_PATTERN, getTenantDb } from '@repo/tenant-db'
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
 import { verifyReportCsvToken } from '../lib/report-csv-link.ts'
+import { checkReportLink } from '../lib/report-link-check.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
-import { rateLimit } from '../lib/rate-limit.ts'
+import { rateLimit, rateLimitByKey } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import {
 	getBearerToken,
@@ -191,21 +188,44 @@ reportsInternalRoutes.post('/accounting', async (c) => {
 const csvParamsSchema = z.object({
 	orgId: z.string().regex(TENANT_ORG_ID_PATTERN),
 })
-const csvSpecSchema = z.object({
-	req: reportRunSpecSchema,
-	grants: reportGrantsSchema,
-})
+
+/**
+ * The link is a bearer capability, so it is rate limited per address and per
+ * organization (each download reruns the report), never cached, never sent on
+ * as a Referer, and checked with the App on every download.
+ */
+reportsPublicRoutes.use(
+	'/csv/*',
+	rateLimit('reports-csv', { windowMs: 60 * 1000, maxRequests: 20 }),
+)
+const CSV_ORG_LIMIT = { windowMs: 60 * 1000, maxRequests: 60 }
+const CSV_HEADERS = {
+	...NO_STORE,
+	'Referrer-Policy': 'no-referrer',
+	'X-Robots-Tag': 'noindex',
+}
 
 reportsPublicRoutes.get('/csv/:orgId', async (c) => {
-	const notFound = () => c.body('Not found', 404, NO_STORE)
+	const notFound = () => c.body('Not found', 404, CSV_HEADERS)
 	const params = csvParamsSchema.safeParse({ orgId: c.req.param('orgId') })
 	const token = c.req.query('t')
 	if (!params.success || !token) return notFound()
 	const payload = verifyReportCsvToken(token)
-	if (!payload || payload.o !== params.data.orgId) return notFound()
-	const spec = csvSpecSchema.safeParse(payload.spec)
-	if (!spec.success || spec.data.req.orgId !== params.data.orgId)
+	if (
+		!payload ||
+		payload.o !== params.data.orgId ||
+		payload.spec.req.orgId !== params.data.orgId
+	) {
 		return notFound()
+	}
+	if (
+		rateLimitByKey('reports-csv-org', params.data.orgId, CSV_ORG_LIMIT).limited
+	) {
+		return c.body('Too many requests', 429, {
+			...CSV_HEADERS,
+			'Retry-After': '60',
+		})
+	}
 	const organization = await findActiveOrganizationById(params.data.orgId)
 	if (
 		!organization ||
@@ -214,13 +234,28 @@ reportsPublicRoutes.get('/csv/:orgId', async (c) => {
 	) {
 		return notFound()
 	}
+	// Ask the App every time: a removed member, a deleted, paused or switched
+	// off schedule or an unsubscribed recipient revokes the link, and the
+	// recipient's grants are today's. An App that cannot answer fails closed.
+	const check = await checkReportLink({
+		orgId: params.data.orgId,
+		scheduleId: payload.spec.req.scheduleId,
+		userId: payload.u,
+	})
+	if (check.status === 'unavailable') {
+		return c.body('Try again later', 503, {
+			...CSV_HEADERS,
+			'Retry-After': '60',
+		})
+	}
+	if (check.status === 'revoked') return notFound()
 	try {
-		const rows = await buildCsvRows(spec.data.req, spec.data.grants)
+		const rows = await buildCsvRows(payload.spec.req, check.grants)
 		if (!Array.isArray(rows)) return notFound()
 		return new Response(csvLines(rows), {
 			status: 200,
 			headers: {
-				...NO_STORE,
+				...CSV_HEADERS,
 				'Content-Type': 'text/csv; charset=utf-8',
 				'Content-Disposition': 'attachment; filename="report.csv"',
 			},

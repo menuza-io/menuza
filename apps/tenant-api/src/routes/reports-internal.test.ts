@@ -16,6 +16,7 @@ import {
 import { Hono } from 'hono'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type PublishedOrganization } from '../lib/origin.ts'
+import { resetRateLimits } from '../lib/rate-limit.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { runReportInRegion } from '../services/scheduled-report-service.ts'
 import {
@@ -40,6 +41,16 @@ const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
 vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../lib/origin.ts')>()),
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
+}))
+const linkCheck = vi.hoisted(() => ({
+	answer: null as null | (() => unknown),
+	calls: [] as unknown[],
+}))
+vi.mock('../lib/report-link-check.ts', () => ({
+	checkReportLink: vi.fn(async (request: unknown) => {
+		linkCheck.calls.push(request)
+		return linkCheck.answer!()
+	}),
 }))
 vi.mock('../lib/tenant-email.ts', () => ({
 	sendTenantEmail: vi.fn().mockResolvedValue({ status: 'success' }),
@@ -149,6 +160,10 @@ beforeEach(async () => {
 	process.env.TENANT_API_URL = 'https://tenant.example.test'
 	process.env.REPORT_EMAIL_ENABLED = 'true'
 	emailMock.mockClear()
+	linkCheck.calls = []
+	// The App says the link's recipient may still have it, with today's grants.
+	linkCheck.answer = () => ({ status: 'active', grants: SALES_GRANTS })
+	resetRateLimits()
 	for (const [id, region] of [
 		[ORG, 'us'],
 		[ORG_B, 'us'],
@@ -221,8 +236,14 @@ describe('POST /internal/reports/send: daily summary (#121)', () => {
 		const csv = await app.request(`${url.pathname}${url.search}`)
 		expect(csv.status).toBe(200)
 		expect(csv.headers.get('content-type')).toContain('text/csv')
+		expect(csv.headers.get('referrer-policy')).toBe('no-referrer')
+		expect(csv.headers.get('cache-control')).toContain('no-store')
 		const body = await csv.text()
 		expect(body).toContain('Net sales,$150.00,$80.00,up 87.5%')
+		// The App was asked about this schedule and recipient, by ids only.
+		expect(linkCheck.calls).toEqual([
+			{ orgId: ORG, scheduleId: 'sch_1', userId: expect.any(String) },
+		])
 	})
 
 	it('leaves out the lines a recipient has no grant for, and skips one with none', async () => {
@@ -449,6 +470,88 @@ describe('region and link rules (#121)', () => {
 		]
 		for (const target of cases) {
 			expect((await app.request(target)).status).toBe(404)
+		}
+	})
+})
+
+describe('the CSV link is a revocable capability (#121)', () => {
+	async function csvPath() {
+		await post(request())
+		const text = emailMock.mock.calls[0]![0].text
+		const url = new URL(
+			/https:\/\/tenant\.example\.test\/reports\/csv\/[^\s"]+/.exec(text)![0],
+		)
+		return `${url.pathname}${url.search}`
+	}
+
+	it('answers 404 once the App says the recipient lost the link', async () => {
+		const path = await csvPath()
+		expect((await app.request(path)).status).toBe(200)
+		linkCheck.answer = () => ({ status: 'revoked' })
+		const gone = await app.request(path)
+		expect(gone.status).toBe(404)
+		expect(await gone.text()).not.toContain('Net sales')
+	})
+
+	it('fails closed when the App cannot be asked', async () => {
+		const path = await csvPath()
+		linkCheck.answer = () => ({ status: 'unavailable' })
+		const res = await app.request(path)
+		expect(res.status).toBe(503)
+		expect(res.headers.get('retry-after')).toBe('60')
+		expect(await res.text()).not.toContain('Net sales')
+	})
+
+	it("builds the file from the recipient's grants of today, not of the send", async () => {
+		const path = await csvPath()
+		linkCheck.answer = () => ({
+			status: 'active',
+			grants: { ...SALES_GRANTS, subjects: ['customers'] },
+		})
+		// No sales grant any more: the report is refused, nothing is served.
+		const res = await app.request(path)
+		expect(res.status).toBe(404)
+	})
+
+	it('never runs the report for a token with a lifetime this node does not issue', async () => {
+		const { signReportCsvToken, REPORT_CSV_TTL_MS } =
+			await import('../lib/report-csv-link.ts')
+		await post(request())
+		const text = emailMock.mock.calls[0]![0].text
+		const url = new URL(
+			/https:\/\/tenant\.example\.test\/reports\/csv\/[^\s"]+/.exec(text)![0],
+		)
+		const good = JSON.parse(
+			Buffer.from(
+				url.searchParams.get('t')!.split('.')[0]!,
+				'base64url',
+			).toString('utf8'),
+		)
+		const long = signReportCsvToken({
+			...good,
+			exp: Date.now() + REPORT_CSV_TTL_MS * 10,
+		})!
+		linkCheck.calls = []
+		const res = await app.request(
+			`${url.pathname}?t=${encodeURIComponent(long)}`,
+		)
+		expect(res.status).toBe(404)
+		expect(linkCheck.calls).toEqual([])
+	})
+
+	it('rate limits a link that is replayed', async () => {
+		const path = await csvPath()
+		const previous = process.env.NODE_ENV
+		process.env.NODE_ENV = 'production'
+		try {
+			let last = 200
+			for (let i = 0; i < 25; i += 1) {
+				last = (await app.request(path)).status
+				if (last === 429) break
+			}
+			expect(last).toBe(429)
+		} finally {
+			process.env.NODE_ENV = previous
 		}
 	})
 })

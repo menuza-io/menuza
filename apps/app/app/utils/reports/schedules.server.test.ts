@@ -26,6 +26,7 @@ import {
 import {
 	createReportSchedule,
 	deleteReportSchedule,
+	resolveCsvLinkGrants,
 	listReportSchedules,
 	runDueReportSchedules,
 	setReportSchedulePaused,
@@ -548,6 +549,108 @@ describe('the hourly job (#121)', () => {
 		const region = fakeRegion()
 		await runDueReportSchedules({ now: NOW, post: region.post })
 		expect(region.calls).toHaveLength(0)
+	})
+})
+
+describe('the CSV link of a report email stays revocable (#121)', () => {
+	async function scheduled() {
+		const ctx = await setup()
+		const created = await createReportSchedule({
+			organizationId: ctx.organization.id,
+			userId: ctx.user.id,
+			request,
+			schedule: baseInput(ctx.report.id, [ctx.user.id]),
+		})
+		if (!created.ok) throw new Error('create failed')
+		return {
+			...ctx,
+			scheduleId: created.data.id,
+			check: () =>
+				resolveCsvLinkGrants({
+					organizationId: ctx.organization.id,
+					scheduleId: created.data.id,
+					userId: ctx.user.id,
+				}),
+		}
+	}
+
+	it("answers with the recipient's grants of today while everything stands", async () => {
+		const { check } = await scheduled()
+		const answer = await check()
+		expect(answer.active).toBe(true)
+		if (!answer.active) return
+		expect(answer.grants.subjects).toContain('sales')
+		expect(
+			answer.grants.scopeIds === null || Array.isArray(answer.grants.scopeIds),
+		).toBe(true)
+	})
+
+	it('is revoked when the schedule is paused, deleted or the flag is off', async () => {
+		const { check, scheduleId, organization } = await scheduled()
+		await setReportSchedulePaused({
+			organizationId: organization.id,
+			scheduleId,
+			paused: true,
+		})
+		expect(await check()).toEqual({ active: false })
+		await setReportSchedulePaused({
+			organizationId: organization.id,
+			scheduleId,
+			paused: false,
+		})
+		expect((await check()).active).toBe(true)
+		await db.delete(ConfigFlag).where(eq(ConfigFlag.id, flagId!))
+		flagId = null
+		expect(await check()).toEqual({ active: false })
+	})
+
+	it('is revoked when the recipient unsubscribes, leaves, or the schedule is deleted', async () => {
+		const { check, scheduleId, organization, user } = await scheduled()
+		await db
+			.update(ReportScheduleRecipient)
+			.set({ unsubscribedAt: new Date() })
+			.where(eq(ReportScheduleRecipient.scheduleId, scheduleId))
+		expect(await check()).toEqual({ active: false })
+		await db
+			.update(ReportScheduleRecipient)
+			.set({ unsubscribedAt: null })
+			.where(eq(ReportScheduleRecipient.scheduleId, scheduleId))
+		expect((await check()).active).toBe(true)
+		await db
+			.update(UserOrganization)
+			.set({ active: false })
+			.where(
+				and(
+					eq(UserOrganization.userId, user.id),
+					eq(UserOrganization.organizationId, organization.id),
+				),
+			)
+		expect(await check()).toEqual({ active: false })
+		await db
+			.update(UserOrganization)
+			.set({ active: true })
+			.where(eq(UserOrganization.userId, user.id))
+		await db.delete(ReportSchedule).where(eq(ReportSchedule.id, scheduleId))
+		expect(await check()).toEqual({ active: false })
+	})
+
+	it('never answers for a schedule of another organization or a stranger', async () => {
+		const { scheduleId, user } = await scheduled()
+		const other = await setupTestOrgWithUser('admin')
+		expect(
+			await resolveCsvLinkGrants({
+				organizationId: other.organization.id,
+				scheduleId,
+				userId: user.id,
+			}),
+		).toEqual({ active: false })
+		expect(
+			await resolveCsvLinkGrants({
+				organizationId: other.organization.id,
+				scheduleId,
+				userId: other.user.id,
+			}),
+		).toEqual({ active: false })
 	})
 })
 

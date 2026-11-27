@@ -17,8 +17,15 @@ import { readLiveEnv } from '#app/utils/env.server.ts'
 /** The notification workflow key of the monthly results email (#221). */
 export const MONTHLY_RESULTS_WORKFLOW = 'reports.monthly_results'
 
+/**
+ * The key of the unsubscribe links: `REPORT_UNSUBSCRIBE_SECRET`, else the
+ * session secret (the token's own purpose string keeps the derived key apart).
+ * Links in sent emails never expire, so a deployment sets the dedicated one
+ * and a session secret rotation then leaves them working.
+ */
 function secret(): string {
-	return String(ENV.SESSION_SECRET ?? '')
+	const dedicated = readLiveEnv('REPORT_UNSUBSCRIBE_SECRET')
+	return dedicated.length >= 16 ? dedicated : String(ENV.SESSION_SECRET ?? '')
 }
 
 /** The signed one-click link in a report email; it needs no login. */
@@ -26,6 +33,11 @@ export function reportUnsubscribeUrl(target: ReportUnsubscribeTarget): string {
 	const base = readLiveEnv('BASE_URL').replace(/\/$/u, '')
 	const token = signReportUnsubscribeToken(target, secret())
 	return `${base}/resources/report-unsubscribe?token=${encodeURIComponent(token)}`
+}
+
+/** Whether a token is one this app signed (nothing is changed). */
+export function isValidReportUnsubscribeToken(token: string): boolean {
+	return verifyReportUnsubscribeToken(token, secret()) !== null
 }
 
 export type UnsubscribeResult =

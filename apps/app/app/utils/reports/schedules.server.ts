@@ -714,6 +714,103 @@ async function scheduleTitle(schedule: typeof ReportSchedule.$inferSelect) {
 	return report?.title ?? 'Report'
 }
 
+/**
+ * Whether a scheduled report email's CSV link may still be served, and to
+ * what: the answer to the region's `report-link-check` (ids in, grants out).
+ * The link is a bearer capability, so every download asks again: a deleted or
+ * paused schedule, a switched-off flag, a recipient who unsubscribed or left
+ * the organization, or a report they may no longer run all revoke it, and the
+ * grants are today's, not those of the day the email went out.
+ */
+export async function resolveCsvLinkGrants(input: {
+	organizationId: string
+	scheduleId: string
+	userId: string
+}): Promise<
+	| { active: false }
+	| {
+			active: true
+			grants: {
+				subjects: string[]
+				scopeIds: string[] | null
+				locationIds?: string[] | null
+				modules: Awaited<ReturnType<typeof resolveFigureModules>>
+			}
+	  }
+> {
+	const revoked = { active: false } as const
+	const [schedule] = await db
+		.select()
+		.from(ReportSchedule)
+		.where(
+			and(
+				eq(ReportSchedule.id, input.scheduleId),
+				eq(ReportSchedule.organizationId, input.organizationId),
+			),
+		)
+		.limit(1)
+	if (!schedule || schedule.pausedAt !== null) return revoked
+	if (!(await isReportSchedulesEnabled(input.organizationId))) return revoked
+	const [recipient] = await db
+		.select({ unsubscribedAt: ReportScheduleRecipient.unsubscribedAt })
+		.from(ReportScheduleRecipient)
+		.where(
+			and(
+				eq(ReportScheduleRecipient.scheduleId, schedule.id),
+				eq(ReportScheduleRecipient.userId, input.userId),
+			),
+		)
+		.limit(1)
+	if (!recipient || recipient.unsubscribedAt !== null) return revoked
+	const members = await activeMemberIds(input.organizationId, [input.userId])
+	if (!members.has(input.userId)) return revoked
+
+	const placeholder = new Request('https://job.invalid/')
+	const subjectGrants = await resolveReportGrantsForRequest(
+		placeholder,
+		input.userId,
+		input.organizationId,
+	)
+	if (schedule.savedReportId) {
+		const [report] = await db
+			.select({ definition: SavedReport.definition })
+			.from(SavedReport)
+			.where(eq(SavedReport.id, schedule.savedReportId))
+			.limit(1)
+		if (!report) return revoked
+		const { catalog } = await organizationReportCatalog(input.organizationId)
+		if (
+			!definitionAllowed(
+				catalog,
+				parseDefinition(report.definition),
+				subjectGrants,
+			)
+		) {
+			return revoked
+		}
+	}
+	const grants = await resolveReportTokenGrantsForMember({
+		userId: input.userId,
+		organizationId: input.organizationId,
+	})
+	return {
+		active: true,
+		grants: {
+			subjects: [
+				...grants.subjects,
+				...(!schedule.savedReportId && subjectGrants.includes('reviews')
+					? ['reviews']
+					: []),
+			],
+			scopeIds: grants.scopeIds,
+			...(grants.locationIds === undefined
+				? {}
+				: { locationIds: grants.locationIds }),
+			modules: await resolveFigureModules(input.organizationId),
+		},
+	}
+}
+
 type RunOutcome =
 	{ kind: 'sent' } | { kind: 'skipped' } | { kind: 'failed'; reason: string }
 

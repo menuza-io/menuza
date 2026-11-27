@@ -56,11 +56,35 @@ email code that already existed.
   Kill switch `REPORT_EMAIL_ENABLED=false` on a node drops sends (not held).
 - **Decision, CSV:** the email sender (OCI Email Delivery `SubmitEmail`) has no
   attachment field. The CSV is a signed link to the region
-  (`GET /reports/csv/:orgId`, HMAC with `AUTH_HMAC_SECRET`, 7 days, rebuilt at
-  download time, aggregate only).
-- One-click unsubscribe: signed token, `resources+/report-unsubscribe.ts`, GET
-  and the mail client's POST, no login. Settings, Notifications lists each
-  report email.
+  (`GET /reports/csv/:orgId?t=<token>`, HMAC with `AUTH_HMAC_SECRET`, rebuilt at
+  download time, aggregate only). The link is a bearer capability, so it is kept
+  narrow:
+  - It lapses after **48 hours**, and a token signed with a longer life is
+    refused.
+  - Every download asks the App (`POST /resources/report-link-check`, internal
+    token, ids in, grants out; `REPORT_LINK_CHECK_PATH` in
+    `@repo/reports/send-contract`). A deleted or paused schedule, the
+    `reports.schedules` flag off, a recipient who unsubscribed or left the
+    organization, or a report they may no longer run all answer 404, and the
+    file is built from the recipient's grants **of that moment**, not those of
+    the day the email went out. An App that cannot be reached answers 503 (the
+    link fails closed, never open).
+  - Rate limited per address (20 a minute) and per organization (60 a minute),
+    `Cache-Control: private, no-store`, `Referrer-Policy: no-referrer`,
+    `X-Robots-Tag: noindex`.
+  - The token travels in the query string, because the region serves no page to
+    hold it in a fragment; the 48 hour life and the check above are what limit a
+    copy in a proxy log. A token too long for a mail link is left out and logged
+    with ids only (`Report CSV link left out`).
+- One-click unsubscribe: signed token, `resources+/report-unsubscribe.ts`, no
+  login. A GET (the emailed link) only shows a page with an Unsubscribe button,
+  because mail scanners and previewers open links; the POST does the write (the
+  button, and the mail client's `List-Unsubscribe-Post`). Rate limited per
+  address. The key is `REPORT_UNSUBSCRIBE_SECRET` when set (at least 16
+  characters), else `SESSION_SECRET`. Links in sent emails never expire, so set
+  the dedicated secret and rotate it only on purpose: changing it (or
+  `SESSION_SECRET` while it is the fallback) makes every link already sent
+  answer 400. Settings, Notifications lists each report email.
 - The daily summary is a built-in schedule (`builtIn: daily_summary`): net
   sales, orders, average sale, tips, refunds, labor cost and percent, covers,
   new reviews, each against the same weekday last week (`dailyAsOf` moves the

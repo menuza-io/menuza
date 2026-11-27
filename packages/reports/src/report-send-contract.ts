@@ -101,3 +101,29 @@ export const reportSendResponseSchema = z.object({
 	),
 })
 export type ReportSendResponse = z.infer<typeof reportSendResponseSchema>
+
+/**
+ * `POST /resources/report-link-check` (region to App, internal token): the
+ * region asks, before it serves a scheduled report's CSV link, whether that
+ * link's recipient may still have it. Ids in, the recipient's grants as they
+ * are now out; never a figure. A removed member, a deleted or paused schedule,
+ * a recipient who unsubscribed or a flag that is off all answer `active: false`,
+ * so a forwarded or old email stops working at once and a demotion shrinks
+ * what the link can read.
+ */
+export const REPORT_LINK_CHECK_PATH = '/resources/report-link-check'
+
+export const reportLinkCheckRequestSchema = z
+	.object({ orgId: id, scheduleId: id, userId: id })
+	.strict()
+export type ReportLinkCheckRequest = z.infer<
+	typeof reportLinkCheckRequestSchema
+>
+
+export const reportLinkCheckResponseSchema = z.discriminatedUnion('active', [
+	z.object({ active: z.literal(false) }),
+	z.object({ active: z.literal(true), grants: reportGrantsSchema }),
+])
+export type ReportLinkCheckResponse = z.infer<
+	typeof reportLinkCheckResponseSchema
+>
