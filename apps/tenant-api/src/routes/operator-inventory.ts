@@ -41,6 +41,7 @@ import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
 import { operatorInventoryPrepRoutes } from './operator-inventory-prep.ts'
 import { operatorInventoryPurchasingRoutes } from './operator-inventory-purchasing.ts'
 import { operatorInventoryRecipesRoutes } from './operator-inventory-recipes.ts'
+import { operatorInventoryRoutinesRoutes } from './operator-inventory-routines.ts'
 import { operatorInventoryRepeatOrdersRoutes } from './operator-inventory-repeat-orders.ts'
 import { operatorInventorySetupChecksRoutes } from './operator-inventory-setup-checks.ts'
 import { operatorInventorySoldOutRoutes } from './operator-inventory-sold-out.ts'
@@ -82,6 +83,7 @@ operatorInventoryRoutes.route('/', operatorInventoryFreshnessRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryStockHistoryRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryVoiceRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryInvoiceInboxRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryRoutinesRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryMergeRoutes)
 operatorInventoryRoutes.route('/', operatorInventorySetupChecksRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)

@@ -86,6 +86,10 @@ const FEATURES_NO_INBOX: InventoryFeatures = {
 	...FEATURES_ON,
 	invoiceInbox: false,
 }
+const FEATURES_NO_ROUTINES: InventoryFeatures = {
+	...FEATURES_ON,
+	routines: false,
+}
 const FEATURES_NO_VOICE: InventoryFeatures = {
 	...FEATURES_ON,
 	voiceCounts: false,
@@ -162,6 +166,10 @@ const ROUTE_GRANTS: Record<
 	'POST /invoice-inbox/:id/dismiss': UPDATE,
 	'POST /invoice-inbox/:id/allow-sender': UPDATE,
 	'POST /invoice-inbox/:id/read': PURCHASING,
+	// Ready-made routines (#529).
+	'GET /routines': READ,
+	'GET /routines/runs': READ,
+	'PUT /routines/:key': UPDATE,
 	'GET /items': READ,
 	'POST /items': UPDATE,
 	'POST /items/bulk': UPDATE,
@@ -403,6 +411,13 @@ const INBOX_FLAG_ROUTES = new Set([
 	'POST /invoice-inbox/:id/dismiss',
 	'POST /invoice-inbox/:id/allow-sender',
 	'POST /invoice-inbox/:id/read',
+])
+
+/** Routes behind the `inventory.routines` flag (403 feature_disabled while it is off). */
+const ROUTINES_FLAG_ROUTES = new Set([
+	'GET /routines',
+	'GET /routines/runs',
+	'PUT /routines/:key',
 ])
 
 /** Routes behind the `inventory.recipes` flag (403 feature_disabled while it is off). */
@@ -887,6 +902,32 @@ describe('inventory operator routes: flags and switches', () => {
 					res.status !== 403 ||
 					body.code !== 'feature_disabled' ||
 					body.feature !== 'invoiceInbox'
+				) {
+					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
+				}
+			} else if (body.code === 'feature_disabled') {
+				failures.push(`${routeKey(route)} is gated but not listed`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('inventory.routines gates the routine routes (403 feature_disabled) and nothing else', async () => {
+		const token = await mintInventoryToken({ features: FEATURES_NO_ROUTINES })
+		const failures: string[] = []
+		for (const route of ROUTES) {
+			const request = validRequest(route)
+			const res = await call(route.method, request.path, {
+				token,
+				body: request.body,
+			})
+			const body = (await res.json()) as { code?: string; feature?: string }
+			const gated = ROUTINES_FLAG_ROUTES.has(routeKey(route))
+			if (gated) {
+				if (
+					res.status !== 403 ||
+					body.code !== 'feature_disabled' ||
+					body.feature !== 'routines'
 				) {
 					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
 				}
@@ -1423,6 +1464,11 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			c('POST /invoice-inbox/:id/read', `/invoice-inbox/${seed.inbox}/read`, {
 				body: {},
 				byId: true,
+			}),
+			c('GET /routines', `/routines?${q}`),
+			c('GET /routines/runs', `/routines/runs?${q}`),
+			c('PUT /routines/:key', '/routines/morning_brief', {
+				body: { locationId: loc, enabled: false, expectedVersion: 0 },
 			}),
 			c('GET /voice', `/voice?${q}`),
 			c('POST /voice/propose', `/voice/propose?${q}`),

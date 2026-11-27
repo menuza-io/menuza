@@ -57,6 +57,7 @@ import {
 	type PriceRiseRow,
 } from './inventory-receiving-service.ts'
 import { processDueRepeatOrders } from './inventory-repeat-orders-service.ts'
+import { processRoutinesForOrg } from './inventory-routines-service.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
 
 /**
@@ -520,6 +521,28 @@ export async function runInventoryTickForOrg(
 					}
 				}
 			})
+		}
+
+		// ── Routines (#529): drafts and manager messages, on this same tick ───
+		if (features.routines) {
+			try {
+				const routines = await processRoutinesForOrg(db, {
+					orgId,
+					now,
+					post,
+					deadline,
+				})
+				result.routineRuns = (result.routineRuns ?? 0) + routines.runs
+				result.alertsSent += routines.alertsSent
+				result.alertsDeferred += routines.alertsDeferred
+				result.errors += routines.errors
+			} catch (error) {
+				result.errors += 1
+				console.error('Inventory routines step failed', {
+					orgId,
+					...errorLogFields(error),
+				})
+			}
 		}
 
 		// ── Repeat orders: draft due schedules before supplier cut-off (#499) ─
