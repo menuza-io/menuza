@@ -90,6 +90,14 @@ const TOKEN_MAX_SECONDS = 15 * 60
 export type OperatorAnalyticsRole = 'operator' | 'admin'
 
 /**
+ * The accounting export (#189): daily journal figures per location. Not an
+ * engine subject: the token lists it like one, so the same grant check (the
+ * flag `reports.accounting`, analytics access and order access, applied by the
+ * App when it mints the token) gates `GET /analytics/accounting-daily`.
+ */
+export const ACCOUNTING_REPORT_SUBJECT = 'accounting_daily' as const
+
+/**
  * Report subjects that need their own permission on top of analytics access,
  * because their rows hold data the analytics permissions don't cover (call
  * logs include caller phone numbers; customers and shop orders are
@@ -120,6 +128,7 @@ export const RESTRICTED_REPORT_SUBJECTS = [
 	...MENU_INSIGHTS_REPORT_SUBJECTS,
 	// Own-driver deliveries (#324): only with `delivery.in_house` on, granted by the App.
 	...DELIVERY_REPORT_SUBJECTS,
+	ACCOUNTING_REPORT_SUBJECT,
 ] as const
 
 /** Restricted subjects that menu access (which covers orders) grants. */
@@ -250,7 +259,10 @@ export async function mintOperatorAnalyticsToken(options: {
 		throw new Error('Staff and reservations report subjects need a scope')
 	}
 	if (
-		subjects.some((subject) => isSalesReportSubject(subject)) &&
+		subjects.some(
+			(subject) =>
+				isSalesReportSubject(subject) || subject === ACCOUNTING_REPORT_SUBJECT,
+		) &&
 		options.locationIds === undefined
 	) {
 		throw new Error('Sales report subjects need a location limit')
