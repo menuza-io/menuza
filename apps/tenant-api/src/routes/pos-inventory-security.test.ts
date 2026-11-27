@@ -106,7 +106,7 @@ describe('/pos/inventory security', () => {
 		h = await createClockHarness([ORG_A, ORG_B])
 		kit = createStationKit(h)
 		// Use-by labels (#523) are behind their own flag, on for the baseline.
-		kit.enableInventory(ORG_A, { ...ON, useBy: true })
+		kit.enableInventory(ORG_A, { ...ON, useBy: true, voiceCounts: true })
 		kit.enableInventory(ORG_B)
 		k = await kit.kitchen(ORG_A)
 		tablet = await kit.station(ORG_A)
@@ -345,6 +345,14 @@ describe('/pos/inventory security', () => {
 						kind: 'made',
 					},
 				}),
+			},
+			// The recording route (`/voice/propose`) takes the audio as the body, which
+			// this JSON harness cannot send; `pos-inventory-voice.test.ts` covers it.
+			{
+				name: 'voice parse',
+				method: 'POST',
+				path: '/pos/inventory/voice/parse',
+				body: { transcript: 'two kilos of tomatoes' },
 			},
 			{
 				name: 'prep skip',

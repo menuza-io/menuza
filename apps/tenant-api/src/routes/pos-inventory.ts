@@ -10,6 +10,10 @@ import {
 	prepTaskSchema,
 	stationLabelSchema,
 	stationPrepDoneResultSchema,
+	stationVoiceParseSchema,
+	stationVoiceProposeQuerySchema,
+	VOICE_AUDIO_MAX_BYTES,
+	voiceProposalSchema,
 	inventoryIdSchema,
 	labelResultSchema,
 	stationCatalogQuerySchema,
@@ -66,7 +70,12 @@ import {
 	markCountDeviceDone,
 	startOrJoinCount,
 } from '../services/inventory-counts-service.ts'
+import { isSpeechReaderConfigured } from '../lib/speech-reader.ts'
 import { printItemLabel } from '../services/inventory-labels-service.ts'
+import {
+	proposeFromAudio,
+	proposeFromText,
+} from '../services/inventory-voice-count-service.ts'
 import {
 	loadAllowedDelivery,
 	recordDelivery,
@@ -202,6 +211,9 @@ posInventoryRoutes.get(
 				ordersEnabled: flags.features.purchasing,
 				transfersEnabled: flags.features.transfers,
 				recipesEnabled: flags.features.recipes,
+				useByEnabled: flags.features.useBy === true,
+				voiceCountsEnabled:
+					flags.features.voiceCounts === true && isSpeechReaderConfigured(),
 				anyStaffCanReceive: settings.anyStaffCanReceive === true,
 				now: posInventoryDeps.now(),
 			})
@@ -625,6 +637,48 @@ posInventoryRoutes.post(
 			})
 			return stationJson(labelResultSchema.parse(result))
 		},
+	),
+)
+
+// ── Counting by voice (#488) ────────────────────────────────────────────────
+
+/**
+ * A recording becomes proposed lines for the terminal's own location. Nothing
+ * is written and the audio is never stored; the lines are confirmed on the
+ * tablet and go through the ordinary count entries route.
+ */
+posInventoryRoutes.post(
+	'/voice/propose',
+	stationRoute({ query: stationVoiceProposeQuerySchema }, async (ctx, query) => {
+		const length = Number(ctx.c.req.header('content-length') ?? 0)
+		if (length > VOICE_AUDIO_MAX_BYTES) return stationError('payload_too_large')
+		const bytes = new Uint8Array(await ctx.c.req.arrayBuffer())
+		const proposal = await proposeFromAudio(ctx.pos.db, {
+			caller: ctx.caller,
+			locationId: ctx.locationId,
+			audio: {
+				bytes,
+				contentType: ctx.c.req.header('content-type') ?? 'application/octet-stream',
+			},
+			language: query.language,
+			now: posInventoryDeps.now(),
+		})
+		return stationJson(voiceProposalSchema.parse(proposal))
+	}),
+)
+
+posInventoryRoutes.post(
+	'/voice/parse',
+	stationRoute({ body: stationVoiceParseSchema }, async (ctx, body) =>
+		stationJson(
+			voiceProposalSchema.parse(
+				await proposeFromText(ctx.pos.db, {
+					caller: ctx.caller,
+					locationId: ctx.locationId,
+					transcript: body.transcript,
+				}),
+			),
+		),
 	),
 )
 

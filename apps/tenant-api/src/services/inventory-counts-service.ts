@@ -1034,6 +1034,10 @@ export async function addCountEntries(
 				counterId: counter.id,
 				clientId: entry.clientId,
 				pass,
+				// What was said (#488), kept for the review; never any audio.
+				transcript: caller.features?.voiceCounts
+					? (entry.transcript ?? null)
+					: null,
 				createdAt: madeAt,
 			})
 			accepted.push({

@@ -23,6 +23,7 @@ import {
 	countSecondStateSchema,
 } from './count-controls.ts'
 import { itemUnitSchema } from './items.ts'
+import { entryTranscriptSchema } from './voice.ts'
 
 export const countStatusSchema = z.enum(COUNT_STATUSES)
 
@@ -197,6 +198,12 @@ export const countEntrySchema = z
 		areaId: inventoryIdSchema.nullable(),
 		amount: typedAmountSchema.nullable(),
 		unit: unitRefSchema,
+		/**
+		 * The words a person said or confirmed for this line (#488), kept on the
+		 * entry for the review. Never audio. Needs `inventory.voice_counts`; a
+		 * node with the flag off stores nothing.
+		 */
+		transcript: entryTranscriptSchema.optional(),
 	})
 	.strict()
 

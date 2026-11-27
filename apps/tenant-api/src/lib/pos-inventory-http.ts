@@ -86,6 +86,8 @@ const POS_CODE_OF: Partial<Record<InventoryErrorCode, InventoryPosErrorCode>> =
 		reason_not_allowed: 'reason_not_allowed',
 		unit_mismatch: 'unit_mismatch',
 		upload_not_configured: 'upload_not_configured',
+		reader_not_configured: 'voice_not_available',
+		reader_failed: 'voice_failed',
 		inventory_unavailable: 'inventory_unavailable',
 		inventory_disabled: 'inventory_disabled',
 		// A feature behind its own flag (use-by dates, labels) that is off.

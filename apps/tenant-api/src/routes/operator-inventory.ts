@@ -47,6 +47,7 @@ import { operatorInventoryStockHistoryRoutes } from './operator-inventory-stock-
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryTransfersRoutes } from './operator-inventory-transfers.ts'
 import { operatorInventoryVarianceRoutes } from './operator-inventory-variance.ts'
+import { operatorInventoryVoiceRoutes } from './operator-inventory-voice.ts'
 import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
 import {
 	listLocationSettings,
@@ -78,6 +79,7 @@ operatorInventoryRoutes.route('/', operatorInventoryImportsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryGroupsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryFreshnessRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryStockHistoryRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryVoiceRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryMergeRoutes)
 operatorInventoryRoutes.route('/', operatorInventorySetupChecksRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)

@@ -81,6 +81,10 @@ const FEATURES_NO_RECIPES: InventoryFeatures = {
 	recipes: false,
 }
 const FEATURES_NO_USE_BY: InventoryFeatures = { ...FEATURES_ON, useBy: false }
+const FEATURES_NO_VOICE: InventoryFeatures = {
+	...FEATURES_ON,
+	voiceCounts: false,
+}
 
 const READ = INVENTORY_PERMISSIONS.READ_INVENTORY
 const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY
@@ -140,6 +144,10 @@ const ROUTE_GRANTS: Record<
 	'GET /stock/on-date': READ,
 	'GET /stock/day': READ,
 	'GET /stock/value-export': COST,
+	// Counting by voice (#488): `GET /voice` answers `available` and is never gated.
+	'GET /voice': READ,
+	'POST /voice/propose': UPDATE,
+	'POST /voice/parse': UPDATE,
 	'GET /items': READ,
 	'POST /items': UPDATE,
 	'POST /items/bulk': UPDATE,
@@ -368,6 +376,9 @@ const USE_BY_FLAG_ROUTES = new Set([
 	'POST /items/:id/lots/confirm',
 	'POST /lots/:lotId/waste',
 ])
+
+/** Routes behind the `inventory.voice_counts` flag (403 feature_disabled while it is off). */
+const VOICE_FLAG_ROUTES = new Set(['POST /voice/propose', 'POST /voice/parse'])
 
 /** Routes behind the `inventory.recipes` flag (403 feature_disabled while it is off). */
 const RECIPES_FLAG_ROUTES = new Set([
@@ -825,6 +836,32 @@ describe('inventory operator routes: flags and switches', () => {
 					res.status !== 403 ||
 					body.code !== 'feature_disabled' ||
 					body.feature !== 'useBy'
+				) {
+					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
+				}
+			} else if (body.code === 'feature_disabled') {
+				failures.push(`${routeKey(route)} is gated but not listed`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('inventory.voice_counts gates the voice routes (403 feature_disabled) and nothing else', async () => {
+		const token = await mintInventoryToken({ features: FEATURES_NO_VOICE })
+		const failures: string[] = []
+		for (const route of ROUTES) {
+			const request = validRequest(route)
+			const res = await call(route.method, request.path, {
+				token,
+				body: request.body,
+			})
+			const body = (await res.json()) as { code?: string; feature?: string }
+			const gated = VOICE_FLAG_ROUTES.has(routeKey(route))
+			if (gated) {
+				if (
+					res.status !== 403 ||
+					body.code !== 'feature_disabled' ||
+					body.feature !== 'voiceCounts'
 				) {
 					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
 				}
@@ -1304,6 +1341,11 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			c('GET /stock/on-date', `/stock/on-date?${q}`),
 			c('GET /stock/day', `/stock/day?${q}&date=${today}`),
 			c('GET /stock/value-export', `/stock/value-export?${q}&date=${today}`),
+			c('GET /voice', `/voice?${q}`),
+			c('POST /voice/propose', `/voice/propose?${q}`),
+			c('POST /voice/parse', '/voice/parse', {
+				body: { locationId: loc, transcript: 'two cases of tomatoes' },
+			}),
 			c('GET /items', `/items?${q}`),
 			c('POST /items', '/items', {
 				location: true,
