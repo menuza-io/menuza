@@ -105,7 +105,8 @@ describe('/pos/inventory security', () => {
 		)
 		h = await createClockHarness([ORG_A, ORG_B])
 		kit = createStationKit(h)
-		kit.enableInventory(ORG_A)
+		// Use-by labels (#523) are behind their own flag, on for the baseline.
+		kit.enableInventory(ORG_A, { ...ON, useBy: true })
 		kit.enableInventory(ORG_B)
 		k = await kit.kitchen(ORG_A)
 		tablet = await kit.station(ORG_A)
@@ -324,6 +325,26 @@ describe('/pos/inventory security', () => {
 					clientId: uid('prep'),
 					made: { kind: 'batches', count: 1 },
 				},
+			},
+			{
+				name: 'label',
+				method: 'POST',
+				path: '/pos/inventory/labels',
+				body: {
+					requestId: uid('label'),
+					locationId: STOCK_LOC,
+					itemId: 'sec_sauce',
+					kind: 'made',
+				},
+				named: (location) => ({
+					path: '/pos/inventory/labels',
+					body: {
+						requestId: uid('label'),
+						locationId: location,
+						itemId: 'sec_sauce',
+						kind: 'made',
+					},
+				}),
 			},
 			{
 				name: 'prep skip',
@@ -636,6 +657,7 @@ describe('/pos/inventory security', () => {
 				'dish waste',
 				'prep plan',
 				'prep generate',
+				'label',
 				'delivery',
 			])
 			for (const route of named) {

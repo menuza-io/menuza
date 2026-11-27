@@ -15,7 +15,7 @@ import {
 	inventoryGuard,
 	requireInventoryLocation,
 } from '../lib/inventory-guard.ts'
-import { inventoryDeny, inventoryErrorResponse } from '../lib/inventory-http.ts'
+import { inventoryErrorResponse } from '../lib/inventory-http.ts'
 import { inventoryCaller, parseQuery, respond } from '../lib/inventory-route.ts'
 import {
 	getStockDay,
@@ -87,18 +87,15 @@ operatorInventoryStockHistoryRoutes.get(
 
 operatorInventoryStockHistoryRoutes.get(
 	'/stock/value-export',
-	inventoryGuard({ scope: ['read', 'write'], grant: READ }),
+	// A file of money: the cost grant, not just the read grant.
+	inventoryGuard({
+		scope: ['read', 'write'],
+		grant: INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
+	}),
 	async (c) => {
 		try {
 			const ctx = getInventoryAuth(c)
 			const caller = inventoryCaller(ctx)
-			// A file of money: the cost grant, not just the read grant.
-			if (!caller.cost) {
-				return inventoryDeny(403, 'forbidden', {
-					reason: 'grant',
-					required: INVENTORY_PERMISSIONS.READ_INVENTORY_COST,
-				})
-			}
 			const query = parseQuery(c, stockValueExportQuerySchema)
 			if ('error' in query) return query.error
 			const location = requireInventoryLocation(ctx, query.data.locationId)

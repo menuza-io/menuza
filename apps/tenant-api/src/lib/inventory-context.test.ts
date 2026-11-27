@@ -12,12 +12,19 @@ import {
 } from './inventory-context.ts'
 
 const ORG = 'org_inv_flags_1'
+const FRESHNESS_OFF = {
+	useBy: false,
+	voiceCounts: false,
+	invoiceInbox: false,
+	routines: false,
+}
 const ON = {
 	enabled: true,
 	purchasing: true,
 	recipes: false,
 	prep: false,
 	transfers: false,
+	...FRESHNESS_OFF,
 }
 const OFF = { ...ON, enabled: false, purchasing: false }
 const ALL_OFF = {
@@ -26,6 +33,7 @@ const ALL_OFF = {
 	recipes: false,
 	prep: false,
 	transfers: false,
+	...FRESHNESS_OFF,
 }
 const T0 = Date.UTC(2026, 10, 8, 12, 0, 0)
 
