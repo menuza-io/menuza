@@ -27,6 +27,8 @@ export type CheckoutSubEntityStatus = {
 	chargesEnabled: boolean
 	payoutsEnabled: boolean
 	status: string
+	requirementsDue?: string[]
+	deadline?: Date | null
 }
 
 export type CheckoutShopPaymentSession = {
@@ -51,6 +53,9 @@ export type CheckoutShopPayment = {
 	status?: string
 	metadata: Record<string, string>
 	productName: string
+	/** Card brand (scheme) and last four digits only (#423). Never a full PAN. */
+	cardBrand?: string | null
+	cardLast4?: string | null
 }
 
 function metadataRecord(
@@ -271,6 +276,11 @@ type RawCheckoutPayment = {
 	processing?: {
 		payment_session_id?: string
 	}
+	source?: {
+		type?: string
+		scheme?: string
+		last4?: string
+	}
 }
 
 function toCheckoutShopPayment(
@@ -282,6 +292,18 @@ function toCheckoutShopPayment(
 		payment.approved === true ||
 		payment.status === 'Authorized' ||
 		payment.status === 'Captured'
+	const rawLast4 =
+		typeof payment.source?.last4 === 'string' ? payment.source.last4.trim() : ''
+	const cardLast4 = /^\d{4}$/.test(rawLast4) ? rawLast4 : null
+	const rawBrand =
+		typeof payment.source?.scheme === 'string'
+			? payment.source.scheme
+					.trim()
+					.toLowerCase()
+					.replace(/[^a-z0-9 _-]/g, '')
+					.slice(0, 32)
+			: ''
+	const cardBrand = rawBrand || null
 
 	return {
 		id: payment.id ?? fallbackId,
@@ -297,6 +319,8 @@ function toCheckoutShopPayment(
 			payment.description ||
 			payment.reference ||
 			'Product',
+		...(cardBrand ? { cardBrand } : {}),
+		...(cardLast4 ? { cardLast4 } : {}),
 	}
 }
 

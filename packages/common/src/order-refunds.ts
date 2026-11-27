@@ -316,6 +316,8 @@ export const orderDisputeStatusRequestSchema = z
 		sessionId: providerIdSchema.optional(),
 		processor: z.enum(ORDER_PAYMENT_PROCESSORS).optional(),
 		status: z.enum(ORDER_DISPUTE_STATUSES),
+		/** Provider dispute fee in minor units, when closed (#187). */
+		feeCents: z.number().int().min(0).max(100_000_000).optional(),
 	})
 	.refine(
 		(body) => body.orderId !== undefined || body.sessionId !== undefined,

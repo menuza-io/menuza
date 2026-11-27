@@ -333,6 +333,45 @@ export const ATTENTION_DETECTORS: readonly AttentionDetector[] = [
 		},
 	},
 	{
+		kind: 'payment_account_action_needed',
+		flag: null,
+		permission: ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		async detect({ organization }) {
+			const { PaymentAccountStatus } = await import('@repo/database')
+			const { evaluatePaymentAccountState } =
+				await import('#app/utils/payments/account-status.ts')
+			const rows = await db
+				.select()
+				.from(PaymentAccountStatus)
+				.where(eq(PaymentAccountStatus.organizationId, organization.id))
+			const urgent = rows.some((row) => {
+				let reqs: string[] = []
+				try {
+					const parsed = JSON.parse(row.requirementsDue)
+					if (Array.isArray(parsed)) {
+						reqs = parsed.filter((x): x is string => typeof x === 'string')
+					}
+				} catch {
+					reqs = []
+				}
+				return (
+					evaluatePaymentAccountState({
+						chargesEnabled: row.chargesEnabled,
+						payoutsEnabled: row.payoutsEnabled,
+						requirementsDue: reqs,
+						deadline: row.deadline,
+					}).state !== 'active'
+				)
+			})
+			if (!urgent) return []
+			return [
+				attentionItem('payment_account_action_needed', null, {
+					href: '/settings/shop',
+				}),
+			]
+		},
+	},
+	{
 		kind: 'ordering_paused',
 		flag: null,
 		permission: ORG_PERMISSIONS.READ_MENU_ANY,

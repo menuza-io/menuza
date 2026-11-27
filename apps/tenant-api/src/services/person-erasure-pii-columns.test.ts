@@ -64,6 +64,8 @@ const COVERED: Record<string, string> = {
 	'restaurant_orders.receipt_token_hash':
 		'replaced by a random value, so the old receipt link stops working',
 	'restaurant_orders.payment_token_hash': 'nulled with the order contact',
+	'restaurant_orders.card_brand': 'nulled with the order contact',
+	'restaurant_orders.card_last4': 'nulled with the order contact',
 	'catering_quotes.contact_name':
 		'scrubbed by customer id, paid order, normalised phone or case-insensitive email; version bumped to burn quote link',
 	'catering_quotes.contact_phone':

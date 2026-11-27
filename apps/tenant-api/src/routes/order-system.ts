@@ -445,6 +445,8 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 								amountCents: parsed.data.amountCents,
 								currency: parsed.data.currency,
 								paymentId: parsed.data.paymentId,
+								cardBrand: parsed.data.cardBrand,
+								cardLast4: parsed.data.cardLast4,
 							})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json({
@@ -643,6 +645,7 @@ orderSystemRoutes.post('/dispute-status', async (c) => {
 			sessionId: body.sessionId,
 			processor: body.processor,
 			status: body.status,
+			feeCents: body.feeCents,
 		})
 		if (!result.ok) return failureResponse(c, result.failure)
 		return c.json(result.data)

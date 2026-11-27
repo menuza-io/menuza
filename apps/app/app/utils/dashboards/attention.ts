@@ -16,6 +16,7 @@ import { type HomeLocation } from './today.ts'
  */
 export const ATTENTION_KINDS = [
 	'payments_not_connected',
+	'payment_account_action_needed',
 	'payment_review',
 	'ordering_paused',
 	'no_active_menu',
@@ -46,6 +47,7 @@ export type AttentionUrgency = 'urgent' | 'todo'
  */
 export const ATTENTION_URGENCY: Record<AttentionKind, AttentionUrgency> = {
 	payments_not_connected: 'urgent',
+	payment_account_action_needed: 'urgent',
 	payment_review: 'urgent',
 	ordering_paused: 'urgent',
 	no_active_menu: 'urgent',

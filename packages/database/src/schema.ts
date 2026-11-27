@@ -8691,3 +8691,144 @@ export const LocationOrderingPause = sqliteTable(
 			.where(sql`${table.endedAt} is null and ${table.kind} = 'pause'`),
 	],
 )
+
+/**
+ * Payment account health per organization & provider (#269).
+ * Stores provider requirement codes, deadline, charges/payouts flags, and
+ * notification deduplication state. Never stores bank details or documents.
+ */
+export const PaymentAccountStatus = sqliteTable(
+	'PaymentAccountStatus',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** 'connect' (Stripe Connect) | 'checkout' (Checkout.com) */
+		provider: text().notNull(),
+		providerAccountId: text(),
+		chargesEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
+		payoutsEnabled: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** JSON array of provider requirement codes currently due or past due. */
+		requirementsDue: text().default('[]').notNull(),
+		/** Earliest provider deadline for currently due requirements, if any. */
+		deadline: integer({ mode: 'timestamp_ms' }),
+		/** Deduplication key of the last notified account state. */
+		lastNotifiedState: text(),
+		/** Last deadline reminder bucket sent (7, 3, 1, or 0 for disabled/past-due). */
+		lastReminderBucket: integer(),
+		lastNotifiedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('PaymentAccountStatus_org_provider_key').on(
+			table.organizationId,
+			table.provider,
+		),
+		index('PaymentAccountStatus_deadline_idx').on(table.deadline),
+	],
+)
+
+/**
+ * 10-minute cache for provider payout & balance snapshots (#168).
+ * Provider objects hold opaque ids and amounts only; never guest PII.
+ */
+export const PaymentPayoutCache = sqliteTable(
+	'PaymentPayoutCache',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** 'connect' | 'checkout' */
+		provider: text().notNull(),
+		/** 'summary' or 'payout:<payoutId>' */
+		cacheKey: text().notNull(),
+		json: text().notNull(),
+		fetchedAt: integer({ mode: 'timestamp_ms' }).notNull(),
+	},
+	(table) => [
+		uniqueIndex('PaymentPayoutCache_org_provider_cacheKey_key').on(
+			table.organizationId,
+			table.provider,
+			table.cacheKey,
+		),
+	],
+)
+
+/**
+ * Payment disputes (chargebacks) across online orders and reservations (#187).
+ * Holds opaque ids, amounts, reason, status, and deadlines only — no guest PII.
+ */
+export const PaymentDispute = sqliteTable(
+	'PaymentDispute',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** 'connect' | 'checkout' */
+		provider: text().notNull(),
+		providerDisputeId: text().notNull(),
+		providerPaymentId: text(),
+		/** 'restaurant_order' | 'reservation' | 'qr_tab' | 'gift_card' */
+		orderKind: text().default('restaurant_order').notNull(),
+		/** Opaque order id, reservation id, or `tab:<id>`. */
+		orderRef: text().notNull(),
+		amountMinor: integer().notNull(),
+		/** Dispute fee charged by the provider (minor units), for reports. */
+		feeMinor: integer().default(0).notNull(),
+		currency: text().notNull(),
+		reason: text().notNull(),
+		/** 'needs_response' | 'under_review' | 'won' | 'lost' | 'accepted' */
+		status: text().notNull(),
+		dueAt: integer({ mode: 'timestamp_ms' }),
+		submittedAt: integer({ mode: 'timestamp_ms' }),
+		closedAt: integer({ mode: 'timestamp_ms' }),
+		alreadyRefunded: integer({ mode: 'boolean' }).default(false).notNull(),
+		openedNotifiedAt: integer({ mode: 'timestamp_ms' }),
+		reminderSentAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('PaymentDispute_provider_dispute_key').on(
+			table.provider,
+			table.providerDisputeId,
+		),
+		index('PaymentDispute_org_status_due_idx').on(
+			table.organizationId,
+			table.status,
+			table.dueAt,
+		),
+	],
+)

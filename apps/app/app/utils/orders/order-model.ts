@@ -11,6 +11,9 @@ export const orderSchema = z.object({
 	paymentStatus: z.string(),
 	paymentMethod: z.enum(['handoff', 'online']),
 	paymentProcessor: z.string().nullable().optional(),
+	/** Card brand and last four digits (#423); null when absent or not permitted. */
+	cardBrand: z.string().nullable().optional().catch(null),
+	cardLast4: z.string().nullable().optional().catch(null),
 	revision: z.number().int().optional().catch(1),
 	timeChangeCount: z.number().int().optional().catch(0),
 	paidCents: z.number().int().optional().catch(undefined),

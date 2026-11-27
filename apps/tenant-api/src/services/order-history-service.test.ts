@@ -263,4 +263,52 @@ describe('order history search, filter and CSV export (#224)', () => {
 			expect(mixed.data.csv).not.toContain('Totals,')
 		}
 	})
+
+	it('searches by card last four only when caller holds payments access (#423)', async () => {
+		await seedOrder({
+			number: 'CARD-1',
+			cardBrand: 'visa',
+			cardLast4: '4242',
+		})
+		await seedOrder({
+			number: 'CARD-2',
+			cardBrand: 'mastercard',
+			cardLast4: '9911',
+		})
+
+		// Permitted caller finds by explicit cardLast4 and by q
+		const byFilter = await queryOrderHistory({
+			orgId,
+			locationIds: null,
+			query: { cardLast4: '4242' },
+			canSearchCard: true,
+		})
+		expect(byFilter.ok).toBe(true)
+		if (byFilter.ok) {
+			expect(byFilter.data.orders.map((o) => o.number)).toEqual(['CARD-1'])
+		}
+
+		const byQuery = await queryOrderHistory({
+			orgId,
+			locationIds: null,
+			query: { q: '9911' },
+			canSearchCard: true,
+		})
+		expect(byQuery.ok).toBe(true)
+		if (byQuery.ok) {
+			expect(byQuery.data.orders.map((o) => o.number)).toEqual(['CARD-2'])
+		}
+
+		// Caller without payments access cannot match orders by card last4 via q
+		const denied = await queryOrderHistory({
+			orgId,
+			locationIds: null,
+			query: { q: '4242' },
+			canSearchCard: false,
+		})
+		expect(denied.ok).toBe(true)
+		if (denied.ok) {
+			expect(denied.data.orders).toHaveLength(0)
+		}
+	})
 })

@@ -152,6 +152,11 @@ export const RESTAURANT_ORDER_STATUS_VALUES = [
 	 * not count as a sale, for inventory, loyalty or discounts until accepted.
 	 */
 	'pending_acceptance',
+	/**
+	 * A chargeback on this order was lost (#187). Loyalty points were reversed
+	 * like a refund; excluded from active sales while surfaced in dispute reports.
+	 */
+	'disputed_lost',
 ] as const
 export type RestaurantOrderStatus =
 	(typeof RESTAURANT_ORDER_STATUS_VALUES)[number]
@@ -762,6 +767,12 @@ export const orderPaymentStatusRequestSchema = z.strictObject({
 	currency: z.string().length(3),
 	/** One payment's provider id (Checkout.com shares the session per order). */
 	paymentId: z.string().min(1).max(200).optional(),
+	/** Card brand and last four digits only (#423). Never a full card number. */
+	cardBrand: z.string().min(1).max(32).optional(),
+	cardLast4: z
+		.string()
+		.regex(/^\d{4}$/)
+		.optional(),
 	/**
 	 * What the provider said about the payment's risk (gift card purchases
 	 * only; ids and flags, never card data). Additive: an App that predates it
@@ -2118,7 +2129,9 @@ type DeliveryCoverageLocation = Pick<
 export function locationZonePriority(
 	location: Partial<Pick<PublicLocationContext, 'deliveryConfig'>>,
 ): 'cheapest' | 'order' {
-	return location.deliveryConfig?.zonePriority === 'order' ? 'order' : 'cheapest'
+	return location.deliveryConfig?.zonePriority === 'order'
+		? 'order'
+		: 'cheapest'
 }
 
 /**
@@ -3650,7 +3663,9 @@ export function priceRestaurantOrder(
 			(zone as { provider?: string }).provider !== 'in_house'
 		deliveryZoneForFee = zone
 		if (deliveryQuote) {
-			const store = hasRealCoordinates(location.address) ? location.address : null
+			const store = hasRealCoordinates(location.address)
+				? location.address
+				: null
 			deliveryDistanceMeters =
 				distanceForZone(zone, {
 					straightMeters: store
@@ -3693,10 +3708,19 @@ export function priceRestaurantOrder(
 	const alcoholLines = pricedLines.flatMap((line, index) => {
 		const hits = [
 			...(line.alcohol ? [line.itemName] : []),
-			...line.options.filter((option) => option.alcohol).map((o) => o.optionName),
+			...line.options
+				.filter((option) => option.alcohol)
+				.map((o) => o.optionName),
 		]
 		return hits.length
-			? [{ line: index, itemId: line.itemId, name: line.itemName, flagged: hits }]
+			? [
+					{
+						line: index,
+						itemId: line.itemId,
+						name: line.itemName,
+						flagged: hits,
+					},
+				]
 			: []
 	})
 	const hasAlcohol = alcoholLines.length > 0

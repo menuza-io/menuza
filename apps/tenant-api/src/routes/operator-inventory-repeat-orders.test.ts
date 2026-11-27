@@ -60,6 +60,12 @@ describe('operator inventory repeat orders (#499)', () => {
 	let basilProductId: string
 
 	beforeAll(async () => {
+		// Pin wall clock before anchorDate week's Thursday (2026-11-26) so
+		// upcomingRuns computed by POST /repeat-orders stays deterministic.
+		vi.useFakeTimers({
+			toFake: ['Date'],
+			now: Date.UTC(2026, 10, 24, 12, 0, 0),
+		})
 		env = setupTenantEnv('inv-repeat')
 		orgs.set(ORG, {
 			id: ORG,
@@ -114,6 +120,7 @@ describe('operator inventory repeat orders (#499)', () => {
 	})
 
 	afterAll(async () => {
+		vi.useRealTimers()
 		await destroyTenantDb(ORG)
 		env?.cleanup()
 	})

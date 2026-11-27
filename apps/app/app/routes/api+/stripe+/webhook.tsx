@@ -251,6 +251,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 			}
 
 			case 'charge.dispute.created':
+			case 'charge.dispute.updated':
 			case 'charge.dispute.closed': {
 				// Each handler ignores payments that are not its own.
 				await handleReservationStripeDisputeEvent(

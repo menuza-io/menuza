@@ -1080,6 +1080,8 @@ export async function erasePerson(
 								deliveryLat: null,
 								deliveryLng: null,
 								cateringNotes: null,
+								cardBrand: null,
+								cardLast4: null,
 								balanceVersion: sql`${restaurantOrders.balanceVersion} + 1`,
 								receiptTokenHash: crypto.randomUUID(),
 								paymentTokenHash: null,

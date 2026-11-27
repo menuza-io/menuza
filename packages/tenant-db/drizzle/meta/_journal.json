@@ -526,6 +526,13 @@
 			"when": 1796100000000,
 			"tag": "0074_stock_item_allergens",
 			"breakpoints": true
+		},
+		{
+			"idx": 75,
+			"version": "6",
+			"when": 1796200000000,
+			"tag": "0075_order_card_and_dispute_status",
+			"breakpoints": true
 		}
 	]
 }

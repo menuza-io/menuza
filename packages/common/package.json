@@ -8,6 +8,8 @@
   "types": "./index.ts",
   "exports": {
     "./order-receipt": "./src/order-receipt.ts",
+    "./order-money": "./src/order-money.ts",
+    "./payout-reconciliation": "./src/payout-reconciliation.ts",
     "./order-pay-links": "./src/order-pay-links.ts",
     "./order-edits": "./src/order-edits.ts",
     "./pos-split-check": "./src/pos-split-check.ts",

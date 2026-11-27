@@ -35,6 +35,7 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_update_guest_photo_any',
 	'org_perm_update_order_refund_any',
 	'org_perm_update_pos_shift_any',
+	'org_perm_read_payments_any',
 	'org_perm_update_chat_any',
 	'org_perm_create_chat_group',
 	'org_perm_read_phone_agent_any',

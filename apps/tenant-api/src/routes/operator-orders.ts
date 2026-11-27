@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono'
 import { jwtVerify } from 'jose'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import {
@@ -23,6 +23,7 @@ import {
 	type RestaurantOrder,
 } from '@repo/tenant-db'
 
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { checkDeliveryAddress } from './delivery.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
@@ -111,6 +112,8 @@ export type OperatorOrderAuth = {
 	 * on and the member may write orders. Absent reads as false (fail closed).
 	 */
 	deliveries: boolean
+	/** May view card brand & last4 and search by last4 (#423). */
+	readPayments: boolean
 	operatorName: string | null
 	impersonated: boolean
 }
@@ -213,6 +216,7 @@ export async function authenticateOrdersOperator(
 		refundProvider?: boolean
 		closeShifts?: boolean
 		deliveries?: boolean
+		readPayments?: boolean
 		operatorName?: unknown
 		impersonated?: boolean
 	}
@@ -272,6 +276,7 @@ export async function authenticateOrdersOperator(
 			closeShifts:
 				decoded.closeShifts === true && decoded.impersonated !== true,
 			deliveries: decoded.deliveries === true,
+			readPayments: decoded.readPayments === true,
 			operatorName:
 				typeof decoded.operatorName === 'string' &&
 				decoded.operatorName.trim().length > 0
@@ -315,10 +320,15 @@ async function withCustomerKeys(
 		const campaignId = parseStoredAttribution(order.attribution)?.campaignId
 		return {
 			campaignName: campaignId ? (campaignNames.get(campaignId) ?? null) : null,
-			...operatorOrder(order, keys?.get(order.id) ?? null, {
-				refundStatus: fields.refundStatus,
-				pendingCents: fields.refundPendingCents,
-			}),
+			...operatorOrder(
+				order,
+				keys?.get(order.id) ?? null,
+				{
+					refundStatus: fields.refundStatus,
+					pendingCents: fields.refundPendingCents,
+				},
+				{ includeCardDetails: auth.readPayments },
+			),
 			...fields,
 		}
 	})
@@ -378,6 +388,8 @@ function orderStatus(value: string): RestaurantOrder['status'] | null {
 		'payment_review',
 		// Waiting for a person to accept (#107): the Orders page badge.
 		'pending_acceptance',
+		// Lost chargeback (#187).
+		'disputed_lost',
 	]
 	return allowed.includes(value as RestaurantOrder['status'])
 		? (value as RestaurantOrder['status'])
@@ -396,6 +408,73 @@ operatorOrderRoutes.get('/', async (c) => {
 	if (denied) return denied.error
 
 	const rawQuery = c.req.query()
+	// Batch lookup by opaque order ids (#168): lets the browser resolve Menuza
+	// order numbers, tips, and order types directly from the region without
+	// passing regional order data through the US App.
+	if (typeof rawQuery.ids === 'string' && rawQuery.ids.trim().length > 0) {
+		const ids = [
+			...new Set(
+				rawQuery.ids
+					.split(',')
+					.map((id) => id.trim())
+					.filter((id) => id.length > 0 && id.length <= 100),
+			),
+		].slice(0, 200)
+		if (ids.length === 0) {
+			return c.json(
+				{ orders: [], serverNow: Date.now() },
+				200,
+				noStoreHeaders(),
+			)
+		}
+		try {
+			const db = await getTenantDb(auth.auth.orgId)
+			const rows = await queryInChunks(ids, (chunk) =>
+				db
+					.select()
+					.from(restaurantOrders)
+					.where(
+						and(
+							eq(restaurantOrders.orgId, auth.auth.orgId),
+							inArray(restaurantOrders.id, chunk),
+						),
+					),
+			)
+			const visible = rows.filter((row) =>
+				orderVisible(auth.auth, row.locationId),
+			)
+			return c.json(
+				{
+					orders: await withCustomerKeys(auth.auth, visible),
+					serverNow: Date.now(),
+				},
+				200,
+				noStoreHeaders(),
+			)
+		} catch (error) {
+			console.error(
+				`Failed to batch-load orders for org ${auth.auth.orgId}:`,
+				error instanceof Error ? error.message : error,
+			)
+			return c.json(
+				{ error: 'Tenant Database unavailable' },
+				500,
+				noStoreHeaders(),
+			)
+		}
+	}
+
+	if (rawQuery.cardLast4 && !auth.auth.readPayments) {
+		return c.json(
+			{
+				error: 'payments_read_forbidden',
+				message: 'Payments access is required to search by card last four.',
+			},
+			403,
+			noStoreHeaders(),
+		)
+	}
+
 	const hasHistoryParams = Boolean(
 		rawQuery.from ||
 		rawQuery.to ||
@@ -404,6 +483,7 @@ operatorOrderRoutes.get('/', async (c) => {
 		rawQuery.channel ||
 		rawQuery.paymentMethod ||
 		rawQuery.taxExempt ||
+		rawQuery.cardLast4 ||
 		rawQuery.locationId ||
 		rawQuery.sort ||
 		rawQuery.cursor,
@@ -422,6 +502,7 @@ operatorOrderRoutes.get('/', async (c) => {
 				orgId: auth.auth.orgId,
 				locationIds: auth.auth.locationIds,
 				query: parsed.data,
+				canSearchCard: auth.auth.readPayments,
 			})
 			if (!history.ok) {
 				return c.json(

@@ -54,6 +54,12 @@ export const orderHistoryQuerySchema = z.object({
 	channel: z.enum(['online', 'qr', 'catering']).optional(),
 	paymentMethod: z.enum(['online', 'handoff']).optional(),
 	taxExempt: z.enum(['true', 'false']).optional(),
+	/** Card last four digits filter (#423), gated by `readPayments`. */
+	cardLast4: z
+		.string()
+		.trim()
+		.regex(/^\d{4}$/)
+		.optional(),
 	locationId: z.string().trim().min(1).max(100).optional(),
 	sort: z.enum(ORDER_HISTORY_SORT_VALUES).optional(),
 	cursor: z.string().trim().min(1).max(200).optional(),
@@ -93,7 +99,11 @@ function decodeCursor(raw: string | undefined): number {
 	return 0
 }
 
-function orderMatchesSearch(order: RestaurantOrder, qLower: string): boolean {
+function orderMatchesSearch(
+	order: RestaurantOrder,
+	qLower: string,
+	canSearchCard: boolean,
+): boolean {
 	if (order.number.toLowerCase().includes(qLower)) return true
 	if (order.contactName.toLowerCase().includes(qLower)) return true
 	if (order.contactPhone.toLowerCase().includes(qLower)) return true
@@ -101,6 +111,14 @@ function orderMatchesSearch(order: RestaurantOrder, qLower: string): boolean {
 	if (
 		digitsOnly.length >= 4 &&
 		order.contactPhone.replace(/\D/g, '').includes(digitsOnly)
+	) {
+		return true
+	}
+	if (
+		canSearchCard &&
+		digitsOnly.length === 4 &&
+		order.cardLast4 &&
+		order.cardLast4 === digitsOnly
 	) {
 		return true
 	}
@@ -130,8 +148,10 @@ export async function queryOrderHistory(input: {
 	locationIds: string[] | null
 	query: OrderHistoryQuery
 	maxRows?: number
+	/** Whether the caller holds payments read access (#423). */
+	canSearchCard?: boolean
 }): Promise<OrderServiceResult<OrderHistoryPage>> {
-	const { orgId, locationIds, query } = input
+	const { orgId, locationIds, query, canSearchCard = false } = input
 
 	const fromDate = query.from ? parseDateBound(query.from, false) : null
 	const toDate = query.to ? parseDateBound(query.to, true) : null
@@ -192,6 +212,9 @@ export async function queryOrderHistory(input: {
 	} else if (query.taxExempt === 'false') {
 		conditions.push(isNull(restaurantOrders.taxExemptRef))
 	}
+	if (query.cardLast4 && canSearchCard) {
+		conditions.push(eq(restaurantOrders.cardLast4, query.cardLast4))
+	}
 	if (fromDate) {
 		conditions.push(gte(restaurantOrders.createdAt, fromDate))
 	}
@@ -229,7 +252,7 @@ export async function queryOrderHistory(input: {
 
 	const qLower = query.q?.trim().toLowerCase() ?? ''
 	const filtered = qLower
-		? rawRows.filter((row) => orderMatchesSearch(row, qLower))
+		? rawRows.filter((row) => orderMatchesSearch(row, qLower, canSearchCard))
 		: rawRows
 
 	if (input.maxRows !== undefined) {

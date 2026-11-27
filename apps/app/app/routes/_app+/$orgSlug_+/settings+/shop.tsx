@@ -1,7 +1,13 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
-import { db, eq, User as UserTable } from '@repo/database'
+import {
+	db,
+	eq,
+	OrganizationLocation,
+	PaymentAccountStatus,
+	User as UserTable,
+} from '@repo/database'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
 	type ActionFunctionArgs,
@@ -19,6 +25,10 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import {
+	evaluatePaymentAccountState,
+	type PaymentAccountHealthState,
+} from '#app/utils/payments/account-status.ts'
 import {
 	getPaymentsMockStatus,
 	requirePaymentsMock,
@@ -130,6 +140,71 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		shopFields,
 	)
 
+	const activeProcessor =
+		(refreshedOrg.dataRegion || 'us') === 'us'
+			? normalizeShopProcessor(refreshedOrg.shopPaymentProvider)
+			: 'checkout'
+	const [locations, statusRows] = await Promise.all([
+		db
+			.select({
+				id: OrganizationLocation.id,
+				name: OrganizationLocation.name,
+			})
+			.from(OrganizationLocation)
+			.where(eq(OrganizationLocation.organizationId, organization.id)),
+		db
+			.select()
+			.from(PaymentAccountStatus)
+			.where(eq(PaymentAccountStatus.organizationId, organization.id)),
+	])
+	const statusRow =
+		statusRows.find((r) => r.provider === activeProcessor) ??
+		statusRows[0] ??
+		null
+	let reqsDue: string[] = []
+	if (statusRow) {
+		try {
+			const parsed = JSON.parse(statusRow.requirementsDue)
+			if (Array.isArray(parsed)) {
+				reqsDue = parsed.filter((x): x is string => typeof x === 'string')
+			}
+		} catch {
+			reqsDue = []
+		}
+	}
+	const evaluatedStatus = statusRow
+		? evaluatePaymentAccountState({
+				chargesEnabled: statusRow.chargesEnabled,
+				payoutsEnabled: statusRow.payoutsEnabled,
+				requirementsDue: reqsDue,
+				deadline: statusRow.deadline,
+			})
+		: evaluatePaymentAccountState({
+				chargesEnabled:
+					activeProcessor === 'checkout'
+						? refreshedOrg.checkoutChargesEnabled
+						: refreshedOrg.stripeConnectChargesEnabled,
+				payoutsEnabled:
+					activeProcessor === 'checkout'
+						? refreshedOrg.checkoutPayoutsEnabled
+						: refreshedOrg.stripeConnectPayoutsEnabled,
+				requirementsDue: [],
+				deadline: null,
+			})
+	const locationAccountStates: Array<{
+		locationId: string
+		locationName: string
+		state: PaymentAccountHealthState
+		deadlineIso: string | null
+		requirements: string[]
+	}> = locations.map((loc) => ({
+		locationId: loc.id,
+		locationName: loc.name,
+		state: evaluatedStatus.state,
+		deadlineIso: evaluatedStatus.deadline?.toISOString() ?? null,
+		requirements: evaluatedStatus.requirementDescriptions,
+	}))
+
 	return {
 		organization: {
 			...refreshedOrg,
@@ -137,6 +212,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				refreshedOrg.shopPaymentProvider,
 			),
 		},
+		locationAccountStates,
 		orders,
 		ordersUnavailable,
 		ordersHidden: !canViewOrders,
@@ -448,6 +524,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function ShopSettingsRoute() {
 	const {
 		organization,
+		locationAccountStates,
 		orders,
 		ordersUnavailable,
 		ordersHidden,
@@ -460,6 +537,7 @@ export default function ShopSettingsRoute() {
 			<AnnotatedSection>
 				<ShopCard
 					organization={organization}
+					locationAccountStates={locationAccountStates}
 					orders={orders}
 					ordersUnavailable={ordersUnavailable}
 					ordersHidden={ordersHidden}
