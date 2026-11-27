@@ -17,6 +17,7 @@ import { parseStoredAttribution } from '@repo/common/order-attribution'
 import { orderTimeline } from '@repo/common/order-steps'
 import { brand } from '@repo/config/brand'
 import {
+	formExportAudit,
 	getTenantDb,
 	restaurantOrders,
 	TENANT_ORG_ID_PATTERN,
@@ -61,6 +62,7 @@ import {
 	reviseOperatorOrder,
 } from '../services/order-revise-service.ts'
 import {
+	exportOrderHistoryChunk,
 	exportOrderHistoryCsv,
 	orderHistoryQuerySchema,
 	queryOrderHistory,
@@ -592,6 +594,36 @@ operatorOrderRoutes.get('/export', async (c) => {
 		return c.json({ error: 'Invalid status filter' }, 400, noStoreHeaders())
 	}
 	try {
+		// `chunk=1` (#386): one page of rows as JSON, so the browser shows
+		// progress and can cancel. The first page leaves one audit row.
+		if (c.req.query('chunk') === '1') {
+			const result = await exportOrderHistoryChunk({
+				orgId: auth.auth.orgId,
+				locationIds: auth.auth.locationIds,
+				query: { ...parsed.data, cursor: undefined },
+				includeCustomerPii: auth.auth.link.linkCustomers === true,
+				canSearchCard: auth.auth.readPayments,
+				cursor: parsed.data.cursor,
+				chunkRows: Number(c.req.query('chunkRows')) || undefined,
+			})
+			if (!result.ok) {
+				return c.json(
+					{ error: result.failure.code, message: result.failure.message },
+					result.failure.status as 400 | 422,
+					noStoreHeaders(),
+				)
+			}
+			if (!parsed.data.cursor) {
+				const db = await getTenantDb(auth.auth.orgId)
+				await db.insert(formExportAudit).values({
+					kind: 'orders',
+					targetId: '',
+					operatorId: auth.auth.userId || 'operator',
+					rowCount: result.data.total,
+				})
+			}
+			return c.json({ ok: true, ...result.data }, 200, noStoreHeaders())
+		}
 		const result = await exportOrderHistoryCsv({
 			orgId: auth.auth.orgId,
 			locationIds: auth.auth.locationIds,

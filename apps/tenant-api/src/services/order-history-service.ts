@@ -1,6 +1,7 @@
 import {
 	and,
 	asc,
+	count,
 	desc,
 	eq,
 	gte,
@@ -12,7 +13,7 @@ import {
 } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { csvLines } from '@repo/reports/export'
+import { csvLines, EXPORT_CHUNK_ROWS } from '@repo/reports/export'
 import {
 	getTenantDb,
 	restaurantOrders,
@@ -243,6 +244,39 @@ export async function queryOrderHistory(input: {
 	const db = await getTenantDb(orgId)
 	const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
+	const qLower = query.q?.trim().toLowerCase() ?? ''
+
+	// Without a text search the database pages the rows itself: a page (and
+	// every chunk of an export) reads only its own rows, never the whole view.
+	if (!qLower && input.maxRows === undefined) {
+		const pageSize = query.limit ?? ORDER_HISTORY_DEFAULT_PAGE_SIZE
+		const offset = decodeCursor(query.cursor)
+		const [counted] = await db
+			.select({ n: count() })
+			.from(restaurantOrders)
+			.where(whereClause)
+		const totalCount = Math.min(
+			Number(counted?.n ?? 0),
+			ORDER_HISTORY_EXPORT_MAX_ROWS + 1,
+		)
+		const page = await db
+			.select()
+			.from(restaurantOrders)
+			.where(whereClause)
+			.orderBy(...orderBy)
+			.limit(pageSize)
+			.offset(offset)
+		return {
+			ok: true,
+			data: {
+				orders: page,
+				nextCursor:
+					offset + pageSize < totalCount ? encodeCursor(offset + pageSize) : null,
+				totalCount,
+			},
+		}
+	}
+
 	const rawRows = await db
 		.select()
 		.from(restaurantOrders)
@@ -250,7 +284,6 @@ export async function queryOrderHistory(input: {
 		.orderBy(...orderBy)
 		.limit((input.maxRows ?? ORDER_HISTORY_EXPORT_MAX_ROWS) + 1)
 
-	const qLower = query.q?.trim().toLowerCase() ?? ''
 	const filtered = qLower
 		? rawRows.filter((row) => orderMatchesSearch(row, qLower, canSearchCard))
 		: rawRows
@@ -330,6 +363,111 @@ export type OrderHistoryExportResult = {
 	truncated: boolean
 }
 
+const ORDER_EXPORT_MONEY_HEADER = [
+	'Subtotal',
+	'Discount',
+	'Loyalty Reward',
+	'Delivery Fee',
+	'Service Fee',
+	'Tax',
+	'Tip',
+	'Total',
+]
+
+export function orderExportHeader(includeCustomerPii: boolean): string[] {
+	return [
+		'Date',
+		'Time',
+		'Time Zone',
+		'Order Number',
+		'Status',
+		'Type',
+		'Channel',
+		...(includeCustomerPii ? ['Guest Name', 'Guest Phone'] : []),
+		...ORDER_EXPORT_MONEY_HEADER,
+		'Payment Method',
+		'Coupon Code',
+		'Tax Exempt Ref',
+		'Currency',
+	]
+}
+
+export function orderExportRow(
+	order: RestaurantOrder,
+	includeCustomerPii: boolean,
+): string[] {
+	const { date, time, timeZone } = formatOrderDateParts(order)
+	return [
+		date,
+		time,
+		timeZone,
+		order.number,
+		order.status,
+		order.fulfillment,
+		orderChannelOf(order),
+		...(includeCustomerPii ? [order.contactName, order.contactPhone] : []),
+		centsToMajorString(order.subtotalCents),
+		centsToMajorString(order.discountCents),
+		centsToMajorString(order.loyaltyDiscountCents),
+		centsToMajorString(order.deliveryFeeCents),
+		centsToMajorString(order.serviceFeeCents),
+		centsToMajorString(order.taxCents),
+		centsToMajorString(order.tipCents),
+		centsToMajorString(order.totalCents),
+		order.paymentMethod,
+		extractCouponCode(order),
+		order.taxExemptRef ?? '',
+		order.currency.toUpperCase(),
+	]
+}
+
+/**
+ * The closing rows of an export: a totals row (money is NEVER totalled across
+ * currencies, #224) and, when the cap cut the result, the note saying so.
+ */
+export function orderExportFooter(input: {
+	rows: readonly RestaurantOrder[]
+	includeCustomerPii: boolean
+	truncated: boolean
+	limit: number
+	matching: number
+}): string[][] {
+	const footer: string[][] = []
+	const currencies = new Set(input.rows.map((o) => o.currency.toUpperCase()))
+	if (input.rows.length > 0 && currencies.size === 1) {
+		const sum = (pick: (o: RestaurantOrder) => number) =>
+			centsToMajorString(input.rows.reduce((acc, o) => acc + pick(o), 0))
+		footer.push([
+			'Totals',
+			'',
+			'',
+			String(input.rows.length),
+			'',
+			'',
+			'',
+			...(input.includeCustomerPii ? ['', ''] : []),
+			sum((o) => o.subtotalCents),
+			sum((o) => o.discountCents),
+			sum((o) => o.loyaltyDiscountCents),
+			sum((o) => o.deliveryFeeCents),
+			sum((o) => o.serviceFeeCents),
+			sum((o) => o.taxCents),
+			sum((o) => o.tipCents),
+			sum((o) => o.totalCents),
+			'',
+			'',
+			'',
+			[...currencies][0]!,
+		])
+	}
+	if (input.truncated) {
+		footer.push([
+			`Export truncated to ${input.limit} rows. Narrow your date range or filters to export all ${input.matching} matching orders.`,
+		])
+	}
+	return footer
+}
+
 export async function exportOrderHistoryCsv(input: {
 	orgId: string
 	locationIds: string[] | null
@@ -351,118 +489,108 @@ export async function exportOrderHistoryCsv(input: {
 
 	const truncated = queried.data.totalCount > limit
 	const rows = queried.data.orders
-
-	const header = [
-		'Date',
-		'Time',
-		'Time Zone',
-		'Order Number',
-		'Status',
-		'Type',
-		'Channel',
-		...(input.includeCustomerPii ? ['Guest Name', 'Guest Phone'] : []),
-		'Subtotal',
-		'Discount',
-		'Loyalty Reward',
-		'Delivery Fee',
-		'Service Fee',
-		'Tax',
-		'Tip',
-		'Total',
-		'Payment Method',
-		'Coupon Code',
-		'Tax Exempt Ref',
-		'Currency',
+	const body = [
+		...rows.map((order) => orderExportRow(order, input.includeCustomerPii)),
+		...orderExportFooter({
+			rows,
+			includeCustomerPii: input.includeCustomerPii,
+			truncated,
+			limit,
+			matching: queried.data.totalCount,
+		}),
 	]
-
-	const currencies = new Set<string>()
-	let sumSubtotal = 0
-	let sumDiscount = 0
-	let sumLoyalty = 0
-	let sumDelivery = 0
-	let sumService = 0
-	let sumTax = 0
-	let sumTip = 0
-	let sumTotal = 0
-
-	const body: string[][] = rows.map((order) => {
-		const { date, time, timeZone } = formatOrderDateParts(order)
-		const currency = order.currency.toUpperCase()
-		currencies.add(currency)
-		sumSubtotal += order.subtotalCents
-		sumDiscount += order.discountCents
-		sumLoyalty += order.loyaltyDiscountCents
-		sumDelivery += order.deliveryFeeCents
-		sumService += order.serviceFeeCents
-		sumTax += order.taxCents
-		sumTip += order.tipCents
-		sumTotal += order.totalCents
-
-		return [
-			date,
-			time,
-			timeZone,
-			order.number,
-			order.status,
-			order.fulfillment,
-			orderChannelOf(order),
-			...(input.includeCustomerPii
-				? [order.contactName, order.contactPhone]
-				: []),
-			centsToMajorString(order.subtotalCents),
-			centsToMajorString(order.discountCents),
-			centsToMajorString(order.loyaltyDiscountCents),
-			centsToMajorString(order.deliveryFeeCents),
-			centsToMajorString(order.serviceFeeCents),
-			centsToMajorString(order.taxCents),
-			centsToMajorString(order.tipCents),
-			centsToMajorString(order.totalCents),
-			order.paymentMethod,
-			extractCouponCode(order),
-			order.taxExemptRef ?? '',
-			currency,
-		]
-	})
-
-	// Totals row: money is NEVER totalled across currencies (#224).
-	if (rows.length > 0 && currencies.size === 1) {
-		const [singleCurrency] = [...currencies]
-		body.push([
-			'Totals',
-			'',
-			'',
-			String(rows.length),
-			'',
-			'',
-			'',
-			...(input.includeCustomerPii ? ['', ''] : []),
-			centsToMajorString(sumSubtotal),
-			centsToMajorString(sumDiscount),
-			centsToMajorString(sumLoyalty),
-			centsToMajorString(sumDelivery),
-			centsToMajorString(sumService),
-			centsToMajorString(sumTax),
-			centsToMajorString(sumTip),
-			centsToMajorString(sumTotal),
-			'',
-			'',
-			'',
-			singleCurrency!,
-		])
-	}
-
-	if (truncated) {
-		body.push([
-			`Export truncated to ${limit} rows. Narrow your date range or filters to export all ${queried.data.totalCount} matching orders.`,
-		])
-	}
-
 	return {
 		ok: true,
 		data: {
-			csv: csvLines([header, ...body]),
+			csv: csvLines([orderExportHeader(input.includeCustomerPii), ...body]),
 			rowCount: rows.length,
 			truncated,
+		},
+	}
+}
+
+export type OrderHistoryExportChunk = {
+	header: string[]
+	rows: string[][]
+	nextCursor: string | null
+	total: number
+	matching: number
+	truncated: boolean
+	footer: string[][] | null
+}
+
+/**
+ * One page of the order history export (#386): the same rows, header and
+ * closing rows as the one-shot file, read `chunkRows` at a time so the
+ * browser can show progress and cancel. The footer (totals, the cut-off note)
+ * rides on the last page and is computed over the whole capped view.
+ */
+export async function exportOrderHistoryChunk(input: {
+	orgId: string
+	locationIds: string[] | null
+	query: OrderHistoryQuery
+	includeCustomerPii: boolean
+	canSearchCard?: boolean
+	cursor?: string
+	chunkRows?: number
+	maxRows?: number
+}): Promise<OrderServiceResult<OrderHistoryExportChunk>> {
+	const cap = Math.min(
+		input.maxRows ?? ORDER_HISTORY_EXPORT_MAX_ROWS,
+		ORDER_HISTORY_EXPORT_MAX_ROWS,
+	)
+	const chunkRows = Math.min(
+		Math.max(input.chunkRows ?? EXPORT_CHUNK_ROWS, 1),
+		EXPORT_CHUNK_ROWS,
+	)
+	const offset = Math.min(decodeCursor(input.cursor), cap)
+	const size = Math.min(chunkRows, cap - offset)
+	const header = orderExportHeader(input.includeCustomerPii)
+
+	const page = await queryOrderHistory({
+		orgId: input.orgId,
+		locationIds: input.locationIds,
+		query: { ...input.query, limit: Math.max(size, 1), cursor: input.cursor },
+		canSearchCard: input.canSearchCard,
+	})
+	if (!page.ok) return page
+	const matching = page.data.totalCount
+	const total = Math.min(matching, cap)
+	const rows = size > 0 ? page.data.orders : []
+	const done = offset + rows.length >= total || page.data.nextCursor === null
+	const nextCursor = done ? null : encodeCursor(offset + rows.length)
+
+	let footer: string[][] | null = null
+	if (done) {
+		// Totals cover the whole capped view, so the last page reads it once.
+		const all = await queryOrderHistory({
+			orgId: input.orgId,
+			locationIds: input.locationIds,
+			query: input.query,
+			canSearchCard: input.canSearchCard,
+			maxRows: cap,
+		})
+		if (!all.ok) return all
+		footer = orderExportFooter({
+			rows: all.data.orders,
+			includeCustomerPii: input.includeCustomerPii,
+			truncated: matching > cap,
+			limit: cap,
+			matching,
+		})
+	}
+	return {
+		ok: true,
+		data: {
+			header,
+			rows: rows.map((order) =>
+				orderExportRow(order, input.includeCustomerPii),
+			),
+			nextCursor,
+			total,
+			matching,
+			truncated: matching > cap,
+			footer,
 		},
 	}
 }

@@ -9,7 +9,9 @@ import {
 	restaurantOrders,
 } from '@repo/tenant-db'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { runChunkedCsvExport } from '@repo/reports/export'
 import {
+	exportOrderHistoryChunk,
 	exportOrderHistoryCsv,
 	queryOrderHistory,
 } from './order-history-service.ts'
@@ -310,5 +312,85 @@ describe('order history search, filter and CSV export (#224)', () => {
 		if (denied.ok) {
 			expect(denied.data.orders).toHaveLength(0)
 		}
+	})
+	it('exports in chunks with the same file as the one-shot export (#386)', async () => {
+		for (let i = 0; i < 7; i += 1) {
+			await seedOrder({
+				number: `C-${i}`,
+				totalCents: 1000 + i,
+				createdAt: new Date(Date.now() - i * 60_000),
+			})
+		}
+		const oneShot = await exportOrderHistoryCsv({
+			orgId,
+			locationIds: null,
+			query: {},
+			includeCustomerPii: true,
+		})
+		expect(oneShot.ok).toBe(true)
+
+		const result = await runChunkedCsvExport({
+			fetchChunk: async (cursor) => {
+				const chunk = await exportOrderHistoryChunk({
+					orgId,
+					locationIds: null,
+					query: {},
+					includeCustomerPii: true,
+					cursor: cursor ?? undefined,
+					chunkRows: 3,
+				})
+				if (!chunk.ok) throw new Error(chunk.failure.code)
+				return chunk.data
+			},
+			yieldTurn: async () => {},
+		})
+		expect(result.status).toBe('done')
+		if (result.status !== 'done' || !oneShot.ok) return
+		expect(result.rowCount).toBe(7)
+		expect(await result.blob.text()).toBe(oneShot.data.csv)
+	})
+
+	it('cuts a chunked export at the row cap, keeps scope, and says so (#386)', async () => {
+		for (let i = 0; i < 5; i += 1) {
+			await seedOrder({
+				number: `K-${i}`,
+				locationId: i < 4 ? 'loc-1' : 'loc-2',
+			})
+		}
+		const capped = await exportOrderHistoryChunk({
+			orgId,
+			locationIds: null,
+			query: {},
+			includeCustomerPii: false,
+			chunkRows: 2,
+			maxRows: 3,
+		})
+		if (!capped.ok) throw new Error('chunk failed')
+		expect(capped.data.truncated).toBe(true)
+		expect(capped.data.total).toBe(3)
+		expect(capped.data.matching).toBe(5)
+		const second = await exportOrderHistoryChunk({
+			orgId,
+			locationIds: null,
+			query: {},
+			includeCustomerPii: false,
+			chunkRows: 2,
+			maxRows: 3,
+			cursor: capped.data.nextCursor!,
+		})
+		if (!second.ok) throw new Error('chunk failed')
+		expect(second.data.rows).toHaveLength(1)
+		expect(second.data.nextCursor).toBeNull()
+		expect(second.data.footer?.flat().join(' ')).toContain('truncated to 3 rows')
+
+		const scoped = await exportOrderHistoryChunk({
+			orgId,
+			locationIds: ['loc-2'],
+			query: {},
+			includeCustomerPii: false,
+		})
+		if (!scoped.ok) throw new Error('chunk failed')
+		expect(scoped.data.matching).toBe(1)
+		expect(scoped.data.header).not.toContain('Guest Name')
 	})
 })

@@ -1,3 +1,4 @@
+import { EXPORT_CHUNK_ROWS, type ExportChunk } from '@repo/reports/export'
 import { type PeopleAccess } from './people-access.ts'
 
 /**
@@ -8,7 +9,14 @@ import { type PeopleAccess } from './people-access.ts'
 export const PEOPLE_PAGE_SIZE = 50
 export const LAPSED_DAYS = 90
 
-export const PEOPLE_SORTS = ['recent', 'name', 'visits', 'last_visit'] as const
+export const PEOPLE_SORTS = [
+	'recent',
+	'name',
+	'visits',
+	'last_visit',
+	'total_spend',
+	'points_used',
+] as const
 export type PeopleSort = (typeof PEOPLE_SORTS)[number]
 
 export type PersonStatus = 'signed_in' | 'guest_no_sign_in' | 'unverified'
@@ -41,6 +49,12 @@ export type PersonRow = {
 		nextBookingAt: number | null
 	} | null
 	orders: { count: number; lastOrderAt: number | null } | null
+	/** Lifetime spend per currency (never added together). Customers facet only. */
+	spend?: Array<{ currency: string; minor: number }> | null
+	/** Loyalty points balance and points used. Customers facet only. */
+	points?: { balance: number; used: number } | null
+	/** Subscribed to marketing email and/or text. Customers facet only. */
+	marketing?: { email: boolean; sms: boolean } | null
 	flags: { vip: boolean; allergy: boolean | null; noShowRisk: boolean }
 	tags: PersonTag[]
 	createdAt: number
@@ -83,6 +97,11 @@ export type PeopleListParams = {
 	 */
 	subscribed?: PeopleSubscribedFilter
 	sort?: PeopleSort
+	/** `YYYY-MM-DD` bounds (UTC days) on when the person joined / last ordered. */
+	joinedFrom?: string
+	joinedTo?: string
+	lastOrderFrom?: string
+	lastOrderTo?: string
 	cursor?: string | null
 }
 
@@ -162,7 +181,12 @@ export type PersonProfile = {
 		phone: string | null
 		phoneVerified: boolean
 		createdAt: number
-		orders: { count: number; lastOrderAt: number | null }
+		orders: {
+			count: number
+			lastOrderAt: number | null
+			/** Where the last order came from; null without orders. */
+			lastOrderChannel?: string | null
+		}
 	} | null
 	dining: {
 		guest: {
@@ -351,8 +375,39 @@ export function listQuery(params: PeopleListParams) {
 		returning: params.returning ? 1 : undefined,
 		subscribed: params.subscribed,
 		sort: params.sort,
+		joinedFrom: params.joinedFrom || undefined,
+		joinedTo: params.joinedTo || undefined,
+		lastOrderFrom: params.lastOrderFrom || undefined,
+		lastOrderTo: params.lastOrderTo || undefined,
 		cursor: params.cursor || undefined,
 		limit: PEOPLE_PAGE_SIZE,
+	}
+}
+
+/**
+ * One page of the CSV export of the current view (`GET /operator/people/export`,
+ * #231), in the shape `runChunkedCsvExport` reads (#386). Same filters and
+ * sort as the list; the region answers browser-direct.
+ */
+export async function fetchPeopleExportChunk(
+	client: PeopleClient,
+	params: PeopleListParams,
+	cursor: string | null,
+	signal?: AbortSignal,
+): Promise<ExportChunk> {
+	const { cursor: ignoredCursor, limit: ignoredLimit, ...filters } = listQuery(params)
+	const raw = await client.request<Partial<ExportChunk>>('/export', {
+		query: { ...filters, chunk: EXPORT_CHUNK_ROWS, cursor: cursor ?? undefined },
+		signal,
+	})
+	return {
+		header: raw.header,
+		rows: raw.rows ?? [],
+		nextCursor: raw.nextCursor ?? null,
+		total: raw.total ?? 0,
+		matching: raw.matching ?? 0,
+		truncated: raw.truncated === true,
+		footer: raw.footer ?? null,
 	}
 }
 

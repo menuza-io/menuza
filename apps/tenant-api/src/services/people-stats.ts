@@ -3,8 +3,8 @@ import {
 	customerSubscriptions,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, eq, isNotNull, sql, type SQL } from 'drizzle-orm'
-import { chunkIds, inJsonList } from '../lib/chunked-in.ts'
+import { and, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm'
+import { chunkIds, inJsonList, queryInChunks } from '../lib/chunked-in.ts'
 import { OPAQUE_ID_PATTERN, serviceUnavailable } from '../lib/http.ts'
 import { BROADCAST_TOPIC, emailConsentHash } from './marketing-audience.ts'
 import { type PeopleAccess } from './people-service.ts'
@@ -248,4 +248,147 @@ export function subscribedPredicate(
 				? sql`unsubscribed_at IS NULL AND subscribed_at > ${cutoffSec}`
 				: sql`subscribed_at <= ${cutoffSec} AND unsubscribed_at > ${cutoffSec}`
 	return sql`p.consent_customer_id IN (SELECT customer_id FROM sub WHERE channel = ${channel} AND ${when})`
+}
+
+// ---------------------------------------------------------------------------
+// Spend, points and marketing badges (#231)
+// ---------------------------------------------------------------------------
+
+/**
+ * `phoneKey` (report-records.ts) in SQL: the last nine digits of a phone with
+ * at least six, so a checkout phone and an account phone written differently
+ * are one person. Only the usual separators are stripped here; the reports'
+ * `\D` also drops other characters, which a phone never carries.
+ */
+export function phoneKeySql(column: string): SQL {
+	const digits = ['+', ' ', '-', '(', ')', '.', '/'].reduce(
+		(expr, ch) => `replace(${expr}, '${ch}', '')`,
+		column,
+	)
+	return sql.raw(`CASE WHEN length(${digits}) >= 6 THEN substr(${digits}, -9) END`)
+}
+
+/**
+ * CTEs for the Customers list's money and points (appended after `ord`, read
+ * by `peopleCte` when `metrics` is on):
+ *  - `spend`: per customer and currency, the totals of orders that count
+ *    toward sales (`countedOrderCondition`, the rule behind the reports'
+ *    "Total spent"), matched like the reports match them: the signed-in
+ *    customer, else the customer whose phone key equals the checkout phone's.
+ *    Money is never added across currencies.
+ *  - `spend_primary`: the spend in the organization's main currency (most
+ *    counted orders), the figure the Total spend sort uses.
+ *  - `pts`: per customer, the points balance and the points used (redeemed,
+ *    net of restored). Erased members have no customer and never appear.
+ */
+export function peopleMetricsCtes(): SQL {
+	return sql`ck AS (
+			SELECT id, ${phoneKeySql('phone')} AS k FROM customers WHERE phone IS NOT NULL
+		), og AS (
+			SELECT customer_id, contact_phone, upper(currency) AS currency,
+				SUM(total_cents) AS cents, COUNT(*) AS n
+			FROM restaurant_orders WHERE ${countedOrderCondition()}
+			GROUP BY customer_id, contact_phone, upper(currency)
+		), spend AS (
+			SELECT customer_id, currency, SUM(cents) AS cents, SUM(n) AS n FROM (
+				SELECT COALESCE(og.customer_id,
+					(SELECT MIN(ck.id) FROM ck WHERE ck.k = ${phoneKeySql('og.contact_phone')})) AS customer_id,
+					og.currency AS currency, og.cents AS cents, og.n AS n
+				FROM og
+			) WHERE customer_id IS NOT NULL GROUP BY customer_id, currency
+		), pc AS (
+			SELECT upper(currency) AS currency FROM restaurant_orders
+			WHERE ${countedOrderCondition()}
+			GROUP BY upper(currency) ORDER BY COUNT(*) DESC, upper(currency) LIMIT 1
+		), spend_primary AS (
+			SELECT customer_id, cents FROM spend WHERE currency = (SELECT currency FROM pc)
+		), pts AS (
+			SELECT m.customer_id AS customer_id, COALESCE(b.points, 0) AS balance,
+				COALESCE(u.used, 0) AS used
+			FROM loyalty_members m
+			LEFT JOIN loyalty_balances b ON b.member_id = m.id
+			LEFT JOIN (
+				SELECT member_id, -SUM(delta) AS used FROM loyalty_ledger
+				WHERE type IN ('redeem', 'redeem_restore') GROUP BY member_id
+			) u ON u.member_id = m.id
+			WHERE m.customer_id IS NOT NULL AND m.erased_at IS NULL
+		)`
+}
+
+/** One money figure of one currency, in minor units. */
+export type PersonSpend = { currency: string; minor: number }
+
+/**
+ * Spend per currency for these customers (a page of the list), from the same
+ * `spend` CTE the sort reads. Needs `peopleCte(..., { metrics: true })`.
+ */
+export async function loadSpendByCurrency(
+	db: TenantDatabase,
+	cte: SQL,
+	customerIds: readonly string[],
+): Promise<Map<string, PersonSpend[]>> {
+	const out = new Map<string, PersonSpend[]>()
+	if (customerIds.length === 0) return out
+	const rows = await db.all<{
+		customer_id: string
+		currency: string
+		cents: number
+	}>(
+		sql`${cte} SELECT customer_id, currency, cents FROM spend
+			WHERE ${inJsonList(sql.raw('customer_id'), customerIds)}
+			ORDER BY customer_id, currency`,
+	)
+	for (const row of rows) {
+		const list = out.get(row.customer_id) ?? []
+		list.push({ currency: row.currency, minor: Number(row.cents) })
+		out.set(row.customer_id, list)
+	}
+	return out
+}
+
+export type MarketingFlags = { email: boolean; sms: boolean }
+
+/**
+ * The marketing badge of each row: email and text subscriber, under the
+ * deliverability rules the audiences use (`hasMarketingConsent`): texts need a
+ * verified phone, emails a confirmation of the CURRENT address. Reads only the
+ * page's customers.
+ */
+export async function loadMarketingFlags(
+	db: TenantDatabase,
+	customerIds: readonly string[],
+): Promise<Map<string, MarketingFlags>> {
+	const out = new Map<string, MarketingFlags>()
+	if (customerIds.length === 0) return out
+	const rows = await queryInChunks([...new Set(customerIds)], (chunk) =>
+		db
+			.select({
+				customerId: customerSubscriptions.customerId,
+				channel: customerSubscriptions.channel,
+				hash: customerSubscriptions.confirmedEmailHash,
+				email: customers.email,
+				phone: customers.phone,
+				phoneVerified: customers.phoneVerified,
+			})
+			.from(customerSubscriptions)
+			.innerJoin(customers, eq(customers.id, customerSubscriptions.customerId))
+			.where(
+				and(
+					eq(customerSubscriptions.topic, BROADCAST_TOPIC),
+					isNull(customerSubscriptions.unsubscribedAt),
+					inArray(customerSubscriptions.customerId, chunk),
+				),
+			),
+	)
+	for (const row of rows) {
+		const flags = out.get(row.customerId) ?? { email: false, sms: false }
+		if (row.channel === 'sms') {
+			if (row.phoneVerified && (row.phone ?? '') !== '') flags.sms = true
+		} else if (row.channel === 'email') {
+			const email = row.email?.trim()
+			if (email && row.hash === emailConsentHash(email)) flags.email = true
+		}
+		out.set(row.customerId, flags)
+	}
+	return out
 }

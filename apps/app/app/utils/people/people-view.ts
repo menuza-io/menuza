@@ -14,6 +14,8 @@ export const PEOPLE_SORT_LABELS = {
 	name: msg`Name`,
 	visits: msg`Most visits`,
 	last_visit: msg`Latest visit`,
+	total_spend: msg`Total spend`,
+	points_used: msg`Points used`,
 } as const
 
 /** Name of a tag for display: system tags are translated, custom ones keep their own name. */
@@ -82,4 +84,19 @@ export function downloadJson(filename: string, data: unknown): boolean {
 	link.remove()
 	URL.revokeObjectURL(url)
 	return true
+}
+
+const LAST_ORDER_CHANNEL_LABELS: Record<string, MessageDescriptor> = {
+	online_menu: msg`Online menu`,
+	drop: msg`Drop`,
+	qr_table: msg`Table QR code`,
+	qr_poster: msg`Order-ahead QR code`,
+	station_counter: msg`Counter`,
+	station_phone: msg`Phone order`,
+	shop: msg`Shop`,
+}
+
+/** Where a customer's last order came from (#231); an unknown value reads as the online menu. */
+export function lastOrderChannelLabel(channel: string): MessageDescriptor {
+	return LAST_ORDER_CHANNEL_LABELS[channel] ?? LAST_ORDER_CHANNEL_LABELS.online_menu!
 }

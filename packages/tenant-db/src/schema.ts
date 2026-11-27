@@ -890,15 +890,18 @@ export const formResponseOutbox = sqliteTable(
 	],
 )
 
-// One row per CSV export (#142): who, which form or posting, how many rows.
-// Never a value.
+// One row per CSV export (#142, #231): who, which form, posting or list, how
+// many rows. Never a value. `kind` is plain text (no CHECK), so a new kind
+// needs no migration.
 export const formExportAudit = sqliteTable(
 	'form_export_audit',
 	{
 		id: text('id')
 			.primaryKey()
 			.$defaultFn(() => randomUUID()),
-		kind: text('kind', { enum: ['form_responses', 'applicants'] }).notNull(),
+		kind: text('kind', {
+			enum: ['form_responses', 'applicants', 'people', 'orders'],
+		}).notNull(),
 		// The form id, or the posting id (empty for "all postings").
 		targetId: text('target_id').notNull().default(''),
 		operatorId: text('operator_id').notNull(),

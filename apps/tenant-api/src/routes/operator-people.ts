@@ -2,6 +2,7 @@ import { BIRTHDAY_ERROR, birthMonthDayFieldSchema } from '@repo/common/birthday'
 import { STAFF_CONSENT_METHODS } from '@repo/common/marketing-consent'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono, type Context } from 'hono'
+import { EXPORT_CHUNK_ROWS } from '@repo/reports/export'
 import { z } from 'zod'
 import {
 	handleRouteError,
@@ -31,6 +32,7 @@ import {
 	type PeopleAccess,
 } from '../services/people-service.ts'
 import { recordPersonConsent } from '../services/people-consent-service.ts'
+import { exportPeopleChunk } from '../services/people-export-service.ts'
 import { listPersonOrders } from '../services/people-orders-service.ts'
 import {
 	readPeopleLocationIds,
@@ -125,6 +127,24 @@ const flag = z
 	.optional()
 	.transform((v) => v === '1' || v === 'true')
 
+/** `YYYY-MM-DD` as the first or last millisecond of that UTC day. */
+function dayBound(endOfDay: boolean) {
+	return z
+		.string()
+		.trim()
+		.regex(/^\d{4}-\d{2}-\d{2}$/)
+		.optional()
+		.transform((value, ctx) => {
+			if (value === undefined) return undefined
+			const ms = Date.parse(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`)
+			if (Number.isNaN(ms)) {
+				ctx.addIssue({ code: 'custom', message: 'invalid_date' })
+				return z.NEVER
+			}
+			return ms
+		})
+}
+
 const listQuerySchema = z.object({
 	q: z.string().trim().max(120).optional(),
 	vip: flag,
@@ -138,10 +158,22 @@ const listQuerySchema = z.object({
 	includeWalkIns: flag,
 	returning: flag,
 	subscribed: z.enum(PEOPLE_SUBSCRIBED_FILTERS).optional(),
+	joinedFrom: dayBound(false),
+	joinedTo: dayBound(true),
+	lastOrderFrom: dayBound(false),
+	lastOrderTo: dayBound(true),
 	sort: z.enum(PEOPLE_SORTS).optional(),
 	cursor: z.string().trim().max(512).optional(),
 	limit: z.coerce.number().int().min(1).max(100).optional(),
 })
+
+/** The export takes the list's filters and sort; its cursor is its own (longer). */
+const exportQuerySchema = listQuerySchema
+	.omit({ cursor: true, limit: true })
+	.extend({
+		cursor: z.string().trim().max(2048).optional(),
+		chunk: z.coerce.number().int().min(1).max(EXPORT_CHUNK_ROWS).optional(),
+	})
 
 operatorPeopleRoutes.get('/', async (c) => {
 	const ctx = await authenticate(c)
@@ -157,6 +189,40 @@ operatorPeopleRoutes.get('/', async (c) => {
 			locationIds: ctx.locationIds,
 		})
 		return json({ ok: true, orgId: ctx.orgId, ...page })
+	} catch (error) {
+		return fail(error)
+	}
+})
+
+/**
+ * The Customers list as CSV rows (#231), one chunk per request (#386): same
+ * filters and sort as the list, so the file is exactly the filtered view.
+ * Needs the customers facet (the customer read grant). The browser reads it
+ * directly and builds the file; each export leaves one audit row (a count,
+ * never a value). Before `/:key` so `export` is not read as a key.
+ */
+operatorPeopleRoutes.get('/export', async (c) => {
+	const ctx = await authenticate(c)
+	if ('response' in ctx) return ctx.response
+	if (!ctx.access.customers) {
+		return json({ error: 'insufficient_permissions' }, 403)
+	}
+	const q = readQuery(c, exportQuerySchema)
+	if ('error' in q) return q.error
+	try {
+		const db = await getTenantDb(ctx.orgId)
+		const { cursor, chunk, ...filters } = q.data
+		const result = await exportPeopleChunk(
+			db,
+			ctx.access,
+			{
+				...filters,
+				lapsedDays: filters.lapsedDays ?? DEFAULT_LAPSED_DAYS,
+				locationIds: ctx.locationIds,
+			},
+			{ cursor, chunkRows: chunk, actorId: ctx.access.actorId },
+		)
+		return json({ ok: true, orgId: ctx.orgId, ...result })
 	} catch (error) {
 		return fail(error)
 	}
