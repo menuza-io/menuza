@@ -4254,6 +4254,12 @@ export const Organization = sqliteTable(
 		 * `@repo/common/cuisines`. Null: not set (left out of the site).
 		 */
 		cuisines: text(),
+		/**
+		 * What a delivery app would have charged on the same orders, in basis
+		 * points (default 25%). Only ever used to estimate "Kept by ordering
+		 * direct" on the monthly results (#221); never a real money figure.
+		 */
+		deliveryCommissionBp: integer().default(2500).notNull(),
 		/** Price range 1 to 4 (`$` to `$$$$`); null leaves it out everywhere. */
 		priceRange: integer(),
 		/** Search engine site verification codes (#138), rendered escaped. */
@@ -4971,6 +4977,248 @@ export const SavedReport = sqliteTable(
 		),
 		index('SavedReport_scope_updatedAt_idx').on(table.scope, table.updatedAt),
 		index('SavedReport_createdById_idx').on(table.createdById),
+	],
+)
+
+/**
+ * A scheduled report email (#121): a saved report, or the ready-made daily
+ * summary (`builtIn`), sent at a chosen hour in `timeZone` (the organization's
+ * reporting zone: the first location's unless edited). The control plane keeps
+ * only the schedule, who gets it and how the last sends went; the region runs
+ * the report and sends the email, and reports back a status.
+ * `lastRunKey` is the local date of the last run that finished (sent or given
+ * up), so a day sends once. A failed run keeps `retryCount` and
+ * `nextAttemptAt` until it succeeds or the retries are spent; three failed
+ * days in a row set `pausedAt` (`pausedReason` `failures`).
+ */
+export const ReportSchedule = sqliteTable(
+	'ReportSchedule',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		savedReportId: text().references(() => SavedReport.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+		/** `daily_summary` for the ready-made one; null for a saved report. */
+		builtIn: text(),
+		cadence: text().notNull(),
+		/** 0 = Sunday ... 6 = Saturday; only for weekly. */
+		weekday: integer(),
+		hour: integer().notNull(),
+		timeZone: text().notNull(),
+		createdById: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		pausedAt: integer({ mode: 'timestamp_ms' }),
+		pausedReason: text(),
+		lastRunKey: text(),
+		lastSentAt: integer({ mode: 'timestamp_ms' }),
+		lastError: text(),
+		failureDays: integer().default(0).notNull(),
+		retryCount: integer().default(0).notNull(),
+		nextAttemptAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('ReportSchedule_organizationId_idx').on(table.organizationId),
+		index('ReportSchedule_savedReportId_idx').on(table.savedReportId),
+		index('ReportSchedule_pausedAt_idx').on(table.pausedAt),
+	],
+)
+
+/**
+ * Who receives a scheduled report: organization members only (no free-text
+ * address). `unsubscribedAt` is the recipient's own one-click opt-out;
+ * `lastStatus` is what the last send did for this person (`sent`,
+ * `skipped_no_access`, `skipped_not_member`, `failed`).
+ */
+export const ReportScheduleRecipient = sqliteTable(
+	'ReportScheduleRecipient',
+	{
+		scheduleId: text()
+			.notNull()
+			.references(() => ReportSchedule.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		unsubscribedAt: integer({ mode: 'timestamp_ms' }),
+		lastStatus: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.scheduleId, table.userId] }),
+		index('ReportScheduleRecipient_userId_idx').on(table.userId),
+	],
+)
+
+/**
+ * One monthly results email to one person for one month (#221): the unique
+ * key is what makes the monthly job idempotent (one email per person per
+ * month, however often the hourly job runs).
+ */
+export const MonthlyResultsDelivery = sqliteTable(
+	'MonthlyResultsDelivery',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		/** `YYYY-MM`. */
+		month: text().notNull(),
+		sentAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('MonthlyResultsDelivery_org_user_month_key').on(
+			table.organizationId,
+			table.userId,
+			table.month,
+		),
+	],
+)
+
+/**
+ * Accounting export (#189): the operator maps each journal line to an account
+ * once. `lineKey` is a line of the daily journal (`sales:<category>`,
+ * `discounts`, `tax:<rate>`, `tips`, ...). Names and codes only.
+ */
+export const AccountingMapping = sqliteTable(
+	'AccountingMapping',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		lineKey: text().notNull(),
+		accountCode: text().default('').notNull(),
+		accountName: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('AccountingMapping_org_lineKey_key').on(
+			table.organizationId,
+			table.lineKey,
+		),
+	],
+)
+
+/**
+ * Accounting settings: the file layout, and the optional weekly email to the
+ * bookkeeper (an address typed here, outside the member list: the one place a
+ * free-text recipient exists, because a bookkeeper is rarely a member).
+ */
+export const AccountingSettings = sqliteTable('AccountingSettings', {
+	organizationId: text()
+		.primaryKey()
+		.references(() => Organization.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+	/** `quickbooks`, `xero` or `generic`. */
+	layout: text().default('generic').notNull(),
+	bookkeeperEmail: text(),
+	weeklyEmail: integer({ mode: 'boolean' }).default(false).notNull(),
+	/** Local date of the last weekly email, so a week sends once. */
+	lastWeeklyKey: text(),
+	createdAt: integer({ mode: 'timestamp_ms' })
+		.$defaultFn(() => new Date())
+		.notNull(),
+	updatedAt: integer({ mode: 'timestamp_ms' })
+		.$defaultFn(() => new Date())
+		.$onUpdate(() => new Date())
+		.notNull(),
+})
+
+/**
+ * One export of one location's business day (#189). `lines` is the JSON of
+ * the day's journal lines as exported (aggregate money per line, no guest
+ * data); the next export of the same day is compared with the latest row, and
+ * a difference (a late refund) becomes an adjusting entry (`sequence` 2, 3...)
+ * rather than a silent change. `totalsHash` equal means nothing changed.
+ */
+export const AccountingExport = sqliteTable(
+	'AccountingExport',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		locationId: text().notNull(),
+		/** `YYYY-MM-DD`, the location's business day. */
+		businessDate: text().notNull(),
+		currency: text().notNull(),
+		sequence: integer().default(1).notNull(),
+		status: text().default('final').notNull(),
+		totalsHash: text().notNull(),
+		lines: text().notNull(),
+		exportedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		exportedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('AccountingExport_day_sequence_key').on(
+			table.organizationId,
+			table.locationId,
+			table.businessDate,
+			table.currency,
+			table.sequence,
+		),
+		index('AccountingExport_org_date_idx').on(
+			table.organizationId,
+			table.businessDate,
+		),
 	],
 )
 

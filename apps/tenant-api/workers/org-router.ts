@@ -485,6 +485,25 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// App -> regional scheduled report emails (#121): body orgId, authenticated
+	// by INTERNAL_COMMAND_TOKEN inside the handler.
+	if (pathname.startsWith('/internal/reports/')) {
+		return orgIdFromJsonBody(request)
+	}
+
+	// The signed CSV link in a report email (#121): the organization is named in
+	// the path; the edge's organization check runs before the Durable Object, and
+	// the handler verifies the signature, so a made-up id only gets a 404.
+	if (pathname.startsWith('/reports/csv/')) {
+		let orgId = ''
+		try {
+			orgId = decodeURIComponent(pathname.split('/')[3] ?? '')
+		} catch {
+			return null
+		}
+		return TENANT_ORG_ID_PATTERN.test(orgId) ? orgId : null
+	}
+
 	// App -> regional home and launch facts (ids, booleans, a timestamp):
 	// body orgId, authenticated by INTERNAL_COMMAND_TOKEN inside the handler.
 	if (pathname.startsWith('/internal/home/')) {

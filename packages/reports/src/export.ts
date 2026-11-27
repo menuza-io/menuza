@@ -240,17 +240,18 @@ export async function runChunkedCsvExport(options: {
 	}
 }
 
-export function reportToCsv(
+/** The rows of a report's CSV (header first), before CSV quoting. */
+export function reportToRows(
 	definition: ReportDefinition,
 	result: ReportResult,
-): string {
+): string[][] {
 	if (isListReport(definition) && result.columns && result.rows) {
-		return csvLines([
+		return [
 			result.columns.map((column) => column.label),
 			...result.rows.map((row) =>
 				result.columns!.map((column) => row[column.id] ?? ''),
 			),
-		])
+		]
 	}
 
 	const columns = segmentTableColumns(
@@ -290,7 +291,14 @@ export function reportToCsv(
 			? [`${segmentPercent(segment, result).toFixed(1)}%`]
 			: []),
 	])
-	return csvLines([header, ...body])
+	return [header, ...body]
+}
+
+export function reportToCsv(
+	definition: ReportDefinition,
+	result: ReportResult,
+): string {
+	return csvLines(reportToRows(definition, result))
 }
 
 /** The value column's header, naming the unit its plain digits are in. */

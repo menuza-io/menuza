@@ -140,7 +140,21 @@ const querySchema = z.object({
 	definition: reportDefinitionSchema,
 	/** The viewer's IANA zone, used when the report follows the user's zone. */
 	timeZone: z.string().max(64).optional(),
+	/**
+	 * Read the report as of an earlier instant instead of now (#121, #221): the
+	 * "yesterday" of a week ago, or a past month's `last_complete_month`. Only
+	 * ever moves the clock back (a later value is clamped to now), so it cannot
+	 * show anything a run at that time could not have.
+	 */
+	asOf: z.string().datetime().optional(),
 })
+
+/** The instant a run reads as of: `asOf` when it is in the past, else now. */
+export function queryClock(asOf: string | undefined, now = new Date()): Date {
+	if (!asOf) return now
+	const at = new Date(asOf)
+	return Number.isNaN(at.getTime()) || at > now ? now : at
+}
 
 const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'orders',
@@ -490,7 +504,7 @@ analyticsRoutes.post('/query', async (c) => {
 		)
 	}
 
-	const now = new Date()
+	const now = queryClock(parsed.data.asOf)
 	const timeZone = resolveReportTimeZone(
 		definition.settings.timezone,
 		parsed.data.timeZone,
