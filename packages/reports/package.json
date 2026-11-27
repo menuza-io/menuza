@@ -37,6 +37,11 @@
       "import": "./src/report-schedule.ts",
       "default": "./src/report-schedule.ts"
     },
+    "./unsubscribe-token": {
+      "types": "./src/report-unsubscribe-token.ts",
+      "import": "./src/report-unsubscribe-token.ts",
+      "default": "./src/report-unsubscribe-token.ts"
+    },
     "./token": {
       "types": "./src/operator-token.ts",
       "import": "./src/operator-token.ts",

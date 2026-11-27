@@ -10,7 +10,7 @@ import {
 	signReportUnsubscribeToken,
 	verifyReportUnsubscribeToken,
 	type ReportUnsubscribeTarget,
-} from '@repo/reports/schedule'
+} from '@repo/reports/unsubscribe-token'
 import { ENV } from 'varlock/env'
 import { readLiveEnv } from '#app/utils/env.server.ts'
 

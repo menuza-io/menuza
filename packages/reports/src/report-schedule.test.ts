@@ -3,10 +3,12 @@ import {
 	dueRunKey,
 	nextRetryAt,
 	reportScheduleInputSchema,
-	signReportUnsubscribeToken,
-	verifyReportUnsubscribeToken,
 	type ScheduleTiming,
 } from './report-schedule.ts'
+import {
+	signReportUnsubscribeToken,
+	verifyReportUnsubscribeToken,
+} from './report-unsubscribe-token.ts'
 
 const SECRET = 'unit-test-secret-for-report-unsubscribe-0123456789'
 const created = new Date('2026-11-01T00:00:00Z')
