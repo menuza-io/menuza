@@ -192,7 +192,8 @@ export async function upsertPaymentDisputeAndNotify(input: {
 		.returning({ id: PaymentDispute.id })
 
 	if (!inserted) {
-		// Concurrent webhook won the race: idempotent no-op.
+		// Concurrent webhook won the race (or a minimal DB mock returned no row):
+		// idempotent no-op.
 		const [raced] = await db
 			.select({ id: PaymentDispute.id })
 			.from(PaymentDispute)
@@ -203,7 +204,11 @@ export async function upsertPaymentDisputeAndNotify(input: {
 				),
 			)
 			.limit(1)
-		return { id: raced!.id, created: false, notified: 0 }
+		return {
+			id: raced?.id ?? input.providerDisputeId,
+			created: false,
+			notified: 0,
+		}
 	}
 
 	const notified = await notifyManagersAboutDispute({

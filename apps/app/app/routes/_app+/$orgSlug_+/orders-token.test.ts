@@ -270,15 +270,15 @@ describe('order credentials', () => {
 		)
 		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
 			scope: 'orders:write',
-			claims: { locationIds: null, refundProvider: true },
+			claims: { locationIds: null, refundProvider: true, readPayments: true },
 		})
 
-		// Read credentials never carry it.
+		// Read credentials never carry refundProvider (readPayments stays for card last4).
 		mocks.client.mockClear()
 		await run()
 		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
 			scope: 'orders:read',
-			claims: { locationIds: null },
+			claims: { locationIds: null, readPayments: true },
 		})
 
 		// Nor does an impersonated session, whatever the role.
@@ -287,7 +287,7 @@ describe('order credentials', () => {
 		await run('?write=1')
 		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
 			scope: 'orders:write',
-			claims: { locationIds: null, impersonated: true },
+			claims: { locationIds: null, impersonated: true, readPayments: true },
 		})
 
 		// Nor a member without the permission.
