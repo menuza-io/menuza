@@ -88,8 +88,8 @@ export function useOperatorClient(
 				const { jwt, tenantApiUrl } = await credentials
 				const headers = new Headers(init.headers)
 				headers.set('Authorization', `Bearer ${jwt}`)
-				// A form (several files at once) sets its own multipart boundary.
-				// A form sets its own boundary and a recording its own type.
+				// A form (several files at once) sets its own multipart boundary, and a
+				// recording (voice count) sets its own content type.
 				if (
 					init.body &&
 					!(init.body instanceof FormData) &&
