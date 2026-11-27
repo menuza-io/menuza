@@ -22,6 +22,11 @@
       "import": "./src/ui/index.ts",
       "default": "./src/ui/index.ts"
     },
+    "./figures-contract": {
+      "types": "./src/report-figures-contract.ts",
+      "import": "./src/report-figures-contract.ts",
+      "default": "./src/report-figures-contract.ts"
+    },
     "./send-contract": {
       "types": "./src/report-send-contract.ts",
       "import": "./src/report-send-contract.ts",

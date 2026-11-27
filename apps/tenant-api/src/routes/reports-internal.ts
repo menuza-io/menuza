@@ -1,4 +1,5 @@
 import { csvLines } from '@repo/reports/export'
+import { reportFiguresRequestSchema } from '@repo/reports/figures-contract'
 import {
 	reportGrantsSchema,
 	reportRunSpecSchema,
@@ -18,6 +19,7 @@ import {
 } from '../lib/secrets.ts'
 import {
 	buildCsvRows,
+	computeMonthlyFigures,
 	ReportHasPersonalFieldsError,
 	sendScheduledReport,
 } from '../services/scheduled-report-service.ts'
@@ -91,6 +93,38 @@ reportsInternalRoutes.post('/send', async (c) => {
 			error instanceof Error ? error.message : 'unknown',
 		)
 		return respond(c, 500, { error: 'send_failed' })
+	}
+})
+
+/**
+ * `POST /internal/reports/figures` (#221): the month's totals for the monthly
+ * results email, one answer per set of grants. Totals only.
+ */
+reportsInternalRoutes.post('/figures', async (c) => {
+	const denied = authorize(c)
+	if (denied) return denied
+	const parsed = reportFiguresRequestSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success || !TENANT_ORG_ID_PATTERN.test(parsed.data.orgId)) {
+		return respond(c, 400, { error: 'invalid_request' })
+	}
+	const organization = await findActiveOrganizationById(parsed.data.orgId)
+	if (!organization || !organization.hasProvisionedDb) {
+		return respond(c, 404, { error: 'org_not_found' })
+	}
+	if (!orgMatchesNodeRegion(organization.dataRegion)) {
+		return respond(c, 409, { error: 'region_mismatch' })
+	}
+	try {
+		await getTenantDb(parsed.data.orgId)
+		return c.json(await computeMonthlyFigures(parsed.data), 200, NO_STORE)
+	} catch (error) {
+		console.error(
+			'Monthly figures failed:',
+			error instanceof Error ? error.message : 'unknown',
+		)
+		return respond(c, 500, { error: 'figures_failed' })
 	}
 })
 

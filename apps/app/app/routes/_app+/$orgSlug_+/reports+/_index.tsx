@@ -143,6 +143,14 @@ export default function ReportsIndex() {
 				<Button
 					variant="outline"
 					size="sm"
+					render={<Link to={`${basePath}/monthly`} />}
+					data-testid="reports-monthly-link"
+				>
+					<Trans>Monthly results</Trans>
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
 					render={<Link to={`${basePath}/schedules`} />}
 					data-testid="reports-schedules-link"
 				>

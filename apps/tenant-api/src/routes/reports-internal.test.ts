@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { createReportDefinition } from '@repo/reports'
+import { createReportDefinition, monthlyAsOf, templatesFor } from '@repo/reports'
 import {
 	destroyTenantDb,
 	getTenantDb,
@@ -13,6 +13,7 @@ import { Hono } from 'hono'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type PublishedOrganization } from '../lib/origin.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
+import { runReportInRegion } from '../services/scheduled-report-service.ts'
 import { reportsInternalRoutes, reportsPublicRoutes } from './reports-internal.ts'
 
 /**
@@ -410,5 +411,182 @@ describe('region and link rules (#121)', () => {
 		for (const target of cases) {
 			expect((await app.request(target)).status).toBe(404)
 		}
+	})
+})
+
+
+describe('POST /internal/reports/figures: the monthly totals (#221)', () => {
+	async function figures(body: Record<string, unknown>, token: string | null = INTERNAL) {
+		return app.request('/internal/reports/figures', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			body: JSON.stringify(body),
+		})
+	}
+	type FiguresBody = {
+		groups: Array<{
+			key: string
+			figures: Array<{
+				id: string
+				entries: Array<{ currency: string | null; value: number }>
+				previous: Array<{ currency: string | null; value: number }>
+			}>
+		}>
+	}
+	const grants = (subjects: string[]) => ({
+		subjects,
+		scopeIds: null,
+		locationIds: null,
+		modules: ['marketing'],
+	})
+
+	async function seedOctober() {
+		// Start clean: the file's default sales belong to the daily summary tests.
+		await (await getTenantDb(ORG)).delete(restaurantOrders)
+		// October, in two locations with their own zones: the Chicago sale a few
+		// hours before midnight UTC on Oct 1 is still September there.
+		const at = (iso: string) => new Date(iso).getTime()
+		await sale(ORG, at('2026-10-10T18:00:00Z'), 10_000)
+		await sale(ORG, at('2026-10-20T18:00:00Z'), 5_000)
+		await sale(ORG, at('2026-10-01T03:00:00Z'), 777) // Sep 30, 22:00 in Chicago
+		await sale(ORG, at('2026-09-12T18:00:00Z'), 2_000) // September
+		const db = await getTenantDb(ORG)
+		await db.insert(restaurantOrders).values({
+			id: crypto.randomUUID(),
+			orgId: ORG,
+			number: 'R-RUH',
+			status: 'completed',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			fulfillment: 'pickup',
+			locationId: 'loc-ruh',
+			locationName: 'Riyadh',
+			locationTimezone: 'Asia/Riyadh',
+			contactName: 'x',
+			contactPhone: '+966500000000',
+			currency: 'SAR',
+			subtotalCents: 20_000,
+			taxCents: 0,
+			totalCents: 20_000,
+			createdAt: new Date(at('2026-10-01T03:00:00Z')), // Oct 1, 06:00 in Riyadh
+			lines: [],
+			idempotencyKey: crypto.randomUUID(),
+			requestHash: 'x',
+			receiptTokenHash: 'y',
+		} as typeof restaurantOrders.$inferInsert)
+		// A cancelled order never counts.
+		await db.insert(restaurantOrders).values({
+			id: crypto.randomUUID(),
+			orgId: ORG,
+			number: 'R-CAN',
+			status: 'cancelled',
+			paymentMethod: 'handoff',
+			paymentStatus: 'unpaid',
+			fulfillment: 'pickup',
+			locationId: 'loc-a',
+			locationName: 'Main',
+			locationTimezone: 'America/Chicago',
+			contactName: 'x',
+			contactPhone: '+15550000000',
+			currency: 'USD',
+			subtotalCents: 90_000,
+			taxCents: 0,
+			totalCents: 90_000,
+			createdAt: new Date(at('2026-10-15T18:00:00Z')),
+			lines: [],
+			idempotencyKey: crypto.randomUUID(),
+			requestHash: 'x',
+			receiptTokenHash: 'y',
+		} as typeof restaurantOrders.$inferInsert)
+	}
+
+	it('answers each location\'s own month, currencies apart, and equals the matching report templates', async () => {
+		await seedOctober()
+		const res = await figures({
+			orgId: ORG,
+			month: '2026-10',
+			timeZone: 'America/Chicago',
+			groups: [
+				{
+					key: 'all',
+					grants: grants(['sales', 'orders']),
+					figureIds: ['directSales', 'directOrders', 'onlineSales'],
+				},
+			],
+		})
+		expect(res.status).toBe(200)
+		const body = (await res.json()) as FiguresBody
+		const by = Object.fromEntries(body.groups[0]!.figures.map((f) => [f.id, f]))
+		// USD: 100 + 50 in Chicago's October; the Sep 30 sale is September's.
+		// SAR: the Riyadh order is October's there.
+		expect(by.directSales!.entries).toEqual([
+			{ currency: 'SAR', value: 200 },
+			{ currency: 'USD', value: 150 },
+		])
+		// September (set against it): Chicago's Sep 12 and Sep 30 sales.
+		expect(by.directSales!.previous).toEqual([{ currency: 'USD', value: 27.77 }])
+		expect(by.directOrders!.entries).toEqual([{ currency: null, value: 3 }])
+
+		// The same month through the existing "Total orders" template, run by the
+		// same route: counted orders, each location's own month.
+		const template = templatesFor('organization').find((t) => t.id === 'orders-total')!
+		const definition = {
+			...template.definition,
+			timeframe: { ...template.definition.timeframe, preset: 'last_complete_month' as const },
+		}
+		const report = await runReportInRegion({
+			orgId: ORG,
+			definition,
+			grants: { ...grants(['orders']), modules: [] } as never,
+			timeZone: 'America/Chicago',
+			asOf: monthlyAsOf('2026-10').current,
+		})
+		if (!report.ok) throw new Error(report.reason)
+		expect(report.result.total).toBe(by.directOrders!.entries[0]!.value)
+	})
+
+	it('hides a figure the grants do not cover, and one whose module is off', async () => {
+		await seedOctober()
+		const res = await figures({
+			orgId: ORG,
+			month: '2026-10',
+			timeZone: 'America/Chicago',
+			groups: [
+				{ key: 'none', grants: grants([]), figureIds: ['directSales', 'callsAnswered'] },
+				{ key: 'sales', grants: grants(['sales']), figureIds: ['directSales', 'bookings'] },
+			],
+		})
+		const body = (await res.json()) as FiguresBody
+		expect(body.groups.find((g) => g.key === 'none')!.figures).toEqual([])
+		const ids = body.groups.find((g) => g.key === 'sales')!.figures.map((f) => f.id)
+		// Sales granted; bookings need the reservations subject and module.
+		expect(ids).toEqual(['directSales'])
+	})
+
+	it('needs the internal token, refuses an unknown figure and a wrong-region organization', async () => {
+		expect((await figures({}, null)).status).toBe(401)
+		expect(
+			(
+				await figures({
+					orgId: ORG,
+					month: '2026-10',
+					timeZone: 'UTC',
+					groups: [{ key: 'a', grants: grants(['sales']), figureIds: ['newReviews'] }],
+				})
+			).status,
+		).toBe(400)
+		expect(
+			(
+				await figures({
+					orgId: KSA_ORG,
+					month: '2026-10',
+					timeZone: 'UTC',
+					groups: [{ key: 'a', grants: grants(['sales']), figureIds: ['directSales'] }],
+				})
+			).status,
+		).toBe(409)
 	})
 })

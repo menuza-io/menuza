@@ -2,6 +2,8 @@ import {
 	DAILY_SUMMARY_FIGURES,
 	DAILY_SUMMARY_PRESET,
 	dailyAsOf,
+	MONTHLY_PRESET,
+	monthlyAsOf,
 	figureLabels,
 	FIGURES,
 	figureValue,
@@ -29,6 +31,10 @@ import {
 	type ReportSendResponse,
 } from '@repo/reports/send-contract'
 import { shiftDateKey } from '@repo/reports/schedule'
+import {
+	type ReportFiguresRequest,
+	type ReportFiguresResponse,
+} from '@repo/reports/figures-contract'
 import {
 	mintOperatorAnalyticsToken,
 	type RestrictedReportSubject,
@@ -403,4 +409,48 @@ export async function sendScheduledReport(
 		}
 	}
 	return { results }
+}
+
+/**
+ * The month's figures (#221), one answer per distinct set of grants: each figure
+ * is a report definition run by the same engine and route as the Reports page,
+ * so the totals equal the matching reports. A figure the grants do not cover is
+ * left out (hidden, not zero). Totals only.
+ */
+export async function computeMonthlyFigures(
+	req: ReportFiguresRequest,
+): Promise<ReportFiguresResponse> {
+	const asOf = monthlyAsOf(req.month)
+	const groups: ReportFiguresResponse['groups'] = []
+	for (const group of req.groups) {
+		const figures: FigureValue[] = []
+		for (const id of group.figureIds) {
+			const spec = FIGURES[id]
+			if (!group.grants.subjects.includes(spec.subject)) continue
+			if (spec.module && !group.grants.modules.includes(spec.module)) continue
+			const definition = spec.definition(MONTHLY_PRESET)
+			const [current, previous] = await Promise.all([
+				runReportInRegion({
+					orgId: req.orgId,
+					definition,
+					grants: group.grants,
+					timeZone: req.timeZone,
+					asOf: asOf.current,
+				}),
+				runReportInRegion({
+					orgId: req.orgId,
+					definition,
+					grants: group.grants,
+					timeZone: req.timeZone,
+					asOf: asOf.previous,
+				}),
+			])
+			if (!current.ok) continue
+			figures.push(
+				figureValue(id, current.result, previous.ok ? previous.result : null),
+			)
+		}
+		groups.push({ key: group.key, figures })
+	}
+	return { groups }
 }
