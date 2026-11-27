@@ -16,6 +16,7 @@ import {
 	useMemo,
 	useState,
 } from 'react'
+import { Link } from 'react-router'
 import { ReservationsClientContext } from '#app/components/reservations/reservations-client-provider.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import {
@@ -262,6 +263,17 @@ export function TodayBlock({
 				) : (
 					<TodayFigures figures={state.figures} access={access} />
 				)}
+				{access.orders ? (
+					<Button
+						variant="link"
+						size="sm"
+						className="h-auto self-start p-0"
+						render={<Link to={`/${orgSlug}/reports/schedules?report=daily_summary`} />}
+						data-testid="today-email-summary"
+					>
+						<Trans>Email me yesterday&apos;s summary every morning</Trans>
+					</Button>
+				) : null}
 				{access.orders && access.tenantApiUrl ? (
 					<MissedWhilePausedLine
 						orgSlug={orgSlug}

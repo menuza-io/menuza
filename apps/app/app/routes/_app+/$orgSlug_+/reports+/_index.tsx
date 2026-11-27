@@ -140,6 +140,22 @@ export default function ReportsIndex() {
 				>
 					<Trans>Online ordering uptime</Trans>
 				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					render={<Link to={`${basePath}/schedules`} />}
+					data-testid="reports-schedules-link"
+				>
+					<Trans>Scheduled reports</Trans>
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					render={<Link to={`${basePath}/schedules?report=daily_summary`} />}
+					data-testid="reports-daily-summary-link"
+				>
+					<Trans>Email me a daily summary</Trans>
+				</Button>
 			</nav>
 			<ReportStart
 				heading="Analytics & Reports"

@@ -59,6 +59,7 @@ CREATE TABLE `ReportSchedule` (
 	`weekday` integer,
 	`hour` integer NOT NULL,
 	`timeZone` text NOT NULL,
+	`locale` text DEFAULT 'en' NOT NULL,
 	`createdById` text NOT NULL,
 	`pausedAt` integer,
 	`pausedReason` text,

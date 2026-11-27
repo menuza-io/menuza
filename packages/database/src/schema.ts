@@ -5015,6 +5015,8 @@ export const ReportSchedule = sqliteTable(
 		weekday: integer(),
 		hour: integer().notNull(),
 		timeZone: text().notNull(),
+		/** `en` or `ar`: the language of the email. */
+		locale: text().default('en').notNull(),
 		createdById: text()
 			.notNull()
 			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),

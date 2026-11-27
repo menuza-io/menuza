@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "fe8251ee-d9bb-4373-bbbc-9a08ee07aa42",
+	"id": "6e609011-f462-4c93-8f8d-b95ddf3bd372",
 	"prevId": "22231acd-e8a0-4758-8c6e-71ef9bf55fac",
 	"tables": {
 		"AccountingExport": {
@@ -19074,6 +19074,14 @@
 					"primaryKey": false,
 					"notNull": true,
 					"autoincrement": false
+				},
+				"locale": {
+					"name": "locale",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'en'"
 				},
 				"createdById": {
 					"name": "createdById",
