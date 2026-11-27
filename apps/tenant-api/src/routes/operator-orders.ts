@@ -23,6 +23,7 @@ import {
 	type RestaurantOrder,
 } from '@repo/tenant-db'
 
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { errorLogFields } from '../lib/error-log.ts'
 import { checkDeliveryAddress } from './delivery.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
@@ -428,15 +429,17 @@ operatorOrderRoutes.get('/', async (c) => {
 		}
 		try {
 			const db = await getTenantDb(auth.auth.orgId)
-			const rows = await db
-				.select()
-				.from(restaurantOrders)
-				.where(
-					and(
-						eq(restaurantOrders.orgId, auth.auth.orgId),
-						inArray(restaurantOrders.id, ids),
+			const rows = await queryInChunks(ids, (chunk) =>
+				db
+					.select()
+					.from(restaurantOrders)
+					.where(
+						and(
+							eq(restaurantOrders.orgId, auth.auth.orgId),
+							inArray(restaurantOrders.id, chunk),
+						),
 					),
-				)
+			)
 			const visible = rows.filter((row) =>
 				orderVisible(auth.auth, row.locationId),
 			)
