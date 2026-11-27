@@ -12498,7 +12498,13 @@ export type RestaurantOrderStepRecord = typeof restaurantOrderSteps.$inferSelect
 
 export const PRINT_PROTOCOLS = ['star_cloudprnt', 'epson_sdp'] as const
 export type PrintProtocol = (typeof PRINT_PROTOCOLS)[number]
-export const PRINT_JOB_KINDS = ['kitchen', 'receipt', 'test', 'drawer'] as const
+export const PRINT_JOB_KINDS = [
+	'kitchen',
+	'receipt',
+	'test',
+	'drawer',
+	'label',
+] as const
 export type PrintJobKind = (typeof PRINT_JOB_KINDS)[number]
 export const PRINT_JOB_STATUSES = [
 	'queued',

@@ -741,6 +741,8 @@ export const stationDeliveryLineSchema = z
 		packBaseQuantity: deliveryLineInputSchema.shape.packBaseQuantity,
 		realWeightQuantity: deliveryLineInputSchema.shape.realWeightQuantity,
 		orderLineId: deliveryLineInputSchema.shape.orderLineId,
+		/** The last day to use it (#479), for an item tracked by date. */
+		useByDate: deliveryLineInputSchema.shape.useByDate,
 	})
 	.strict()
 

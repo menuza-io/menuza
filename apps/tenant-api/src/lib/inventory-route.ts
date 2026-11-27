@@ -70,6 +70,10 @@ export const MONEY_FIELDS = [
 	'priceChanges',
 	'foodCost',
 	'cost',
+	// Stock on a past day (#521): the day view's money columns and totals.
+	'money',
+	'totalsMoney',
+	'unpricedItems',
 	'openingMinor',
 	'closingMinor',
 	'salesMinor',
@@ -129,6 +133,7 @@ export function inventoryCaller(
 			INVENTORY_PERMISSIONS.UPDATE_INVENTORY_RECIPE,
 		),
 		recipesEnabled: ctx.features.recipes,
+		features: ctx.features,
 		canManageSettings: ctx.canManageSettings,
 		isOwner: ctx.isOwner,
 	}

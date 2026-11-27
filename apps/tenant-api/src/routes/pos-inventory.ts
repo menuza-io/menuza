@@ -8,7 +8,10 @@ import {
 	prepTaskActionSchema,
 	prepPlanSchema,
 	prepTaskSchema,
+	stationLabelSchema,
+	stationPrepDoneResultSchema,
 	inventoryIdSchema,
+	labelResultSchema,
 	stationCatalogQuerySchema,
 	stationCashPurchaseResultSchema,
 	stationCashPurchaseSchema,
@@ -63,6 +66,7 @@ import {
 	markCountDeviceDone,
 	startOrJoinCount,
 } from '../services/inventory-counts-service.ts'
+import { printItemLabel } from '../services/inventory-labels-service.ts'
 import {
 	loadAllowedDelivery,
 	recordDelivery,
@@ -579,8 +583,49 @@ posInventoryRoutes.post(
 		const refused = await prepGate(ctx)
 		if (refused) return refused
 		const task = await donePrepTask(ctx.caller, { id: idParam(ctx), body })
-		return stationJson(prepTaskSchema.parse(task))
+		// "Print labels" with the batch (#523): best effort, never undoes the task.
+		let label: Awaited<ReturnType<typeof printItemLabel>> | null = null
+		if (body.labels && ctx.caller.features?.useBy) {
+			label = await printItemLabel(ctx.pos.db, {
+				caller: ctx.caller,
+				locationId: ctx.locationId,
+				itemId: task.itemId,
+				kind: 'made',
+				copies: body.labels.copies,
+				quantityLabel: body.labels.quantityLabel,
+				madeBy: ctx.session.staff.name,
+				requestId: body.clientId,
+				now: posInventoryDeps.now(),
+			}).catch(() => null)
+		}
+		return stationJson(stationPrepDoneResultSchema.parse({ ...task, label }))
 	}),
+)
+
+/**
+ * The Labels screen of Station Kitchen (#523): a label for any made item (made
+ * time) or stock item (opened time), through the one cloud print path.
+ */
+posInventoryRoutes.post(
+	'/labels',
+	stationRoute(
+		{ body: stationLabelSchema, locations: (body) => [body.locationId] },
+		async (ctx, body) => {
+			const result = await printItemLabel(ctx.pos.db, {
+				caller: ctx.caller,
+				locationId: body.locationId,
+				itemId: body.itemId,
+				kind: body.kind,
+				copies: body.copies,
+				quantityLabel: body.quantityLabel,
+				madeAt: body.madeAt,
+				madeBy: ctx.session.staff.name,
+				requestId: body.requestId,
+				now: posInventoryDeps.now(),
+			})
+			return stationJson(labelResultSchema.parse(result))
+		},
+	),
 )
 
 // ── Transfers (#515) ────────────────────────────────────────────────────────

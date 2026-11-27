@@ -29,6 +29,7 @@ import {
 } from '../lib/inventory-route.ts'
 import { hashInventoryRequest } from '../lib/inventory-write.ts'
 import { operatorInventoryCountsRoutes } from './operator-inventory-counts.ts'
+import { operatorInventoryFreshnessRoutes } from './operator-inventory-freshness.ts'
 import { operatorInventoryGroupsRoutes } from './operator-inventory-groups.ts'
 import { operatorInventoryImportsRoutes } from './operator-inventory-imports.ts'
 import { operatorInventoryItemsRoutes } from './operator-inventory-items.ts'
@@ -42,6 +43,7 @@ import { operatorInventoryRecipesRoutes } from './operator-inventory-recipes.ts'
 import { operatorInventoryRepeatOrdersRoutes } from './operator-inventory-repeat-orders.ts'
 import { operatorInventorySetupChecksRoutes } from './operator-inventory-setup-checks.ts'
 import { operatorInventorySoldOutRoutes } from './operator-inventory-sold-out.ts'
+import { operatorInventoryStockHistoryRoutes } from './operator-inventory-stock-history.ts'
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryTransfersRoutes } from './operator-inventory-transfers.ts'
 import { operatorInventoryVarianceRoutes } from './operator-inventory-variance.ts'
@@ -74,6 +76,8 @@ export const operatorInventoryRoutes = new Hono()
 operatorInventoryRoutes.route('/', operatorInventoryItemsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryImportsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryGroupsRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryFreshnessRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryStockHistoryRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryMergeRoutes)
 operatorInventoryRoutes.route('/', operatorInventorySetupChecksRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)

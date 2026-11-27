@@ -1,5 +1,6 @@
 import {
 	inventoryValueMinorClamped,
+	type Freshness,
 	isNotCountedLately,
 	runsOutBeforeDelivery,
 	type AttentionItem,
@@ -53,6 +54,7 @@ import {
 	listOpenOrdersForWeek,
 	listUnconfirmedOrdersForDate,
 } from './inventory-orders-service.ts'
+import { getFreshness } from './inventory-lots-service.ts'
 import { findPriceRises } from './inventory-receiving-service.ts'
 import {
 	getInventorySettings,
@@ -82,6 +84,9 @@ const KIND_PRIORITY: Record<AttentionItem['kind'], number> = {
 	prices_pending: 6,
 	price_rise: 7,
 	ran_out_at_till: 7.5,
+	// Use-by dates (#479): expired stock is a food-safety job, use first is a nudge.
+	expired_stock: 0.8,
+	use_first: 1.8,
 	unpaid_deliveries: 8,
 }
 
@@ -533,6 +538,43 @@ export async function getToday(
 		}
 	}
 
+	// Use-by dates (#479): what is past its date and what to use first.
+	let freshness: Freshness | undefined
+	if (caller.features?.useBy) {
+		freshness = await getFreshness(db, { locationId, caller, now })
+		const oldest = freshness.expired[0]
+		if (oldest) {
+			push(
+				{
+					kind: 'expired_stock',
+					lotId: oldest.lotId,
+					itemId: oldest.itemId,
+					itemName: oldest.itemName,
+					useByDate: oldest.useByDate,
+					more: freshness.expiredCount - 1,
+					valueAtStakeMinor: oldest.valueMinor,
+				},
+				oldest.valueMinor ?? 0,
+			)
+		}
+		const soonest = freshness.useFirst[0]
+		if (soonest) {
+			push(
+				{
+					kind: 'use_first',
+					lotId: soonest.lotId,
+					itemId: soonest.itemId,
+					itemName: soonest.itemName,
+					useByDate: soonest.useByDate,
+					daysLeft: soonest.daysLeft,
+					more: freshness.useFirstCount - 1,
+					valueAtStakeMinor: soonest.valueMinor,
+				},
+				soonest.valueMinor ?? 0,
+			)
+		}
+	}
+
 	const reviewing = openCounts.counts.find(
 		(entry) => entry.status === 'in_review',
 	)
@@ -731,6 +773,7 @@ export async function getToday(
 		attention: candidates.slice(0, 5).map((entry) => entry.item),
 		week,
 		...(catering ? { catering } : {}),
+		...(freshness ? { freshness } : {}),
 		setup: {
 			items: status.items,
 			storageAreas: status.storageAreas,

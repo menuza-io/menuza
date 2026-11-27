@@ -71,6 +71,10 @@ import {
 } from './inventory-contract-types.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
 import {
+	recordLotForReceipt,
+	takeLotsOfCancelledDelivery,
+} from './inventory-lots-service.ts'
+import {
 	assertLocationCurrency,
 	getLocationCurrency,
 	requireLocationCurrency,
@@ -1550,6 +1554,21 @@ export async function recordDelivery(
 			for (const line of lines) {
 				const item = itemById.get(line.itemId)!
 				const lineId = newId()
+				// Stock that arrives with a use-by date (#479), oldest date used first.
+				// A credit note takes stock out and carries no date.
+				if (!isCredit) {
+					await recordLotForReceipt(tx, {
+						caller,
+						locationId: body.locationId,
+						item,
+						quantity: line.quantity,
+						sourceType: 'delivery',
+						sourceId: lineId,
+						useByDate: line.useByDate,
+						receivedAt,
+						now: ctx.now,
+					})
+				}
 				if (quantityOnly) {
 					// Stock in only: no cost, no price, no value.
 					await tx.insert(invDeliveryLines).values({
@@ -2460,6 +2479,12 @@ async function cancelDeliveryInTx(
 		.where(eq(invDeliveryLines.deliveryId, row.id))
 		.orderBy(invDeliveryLines.createdAt, invDeliveryLines.id)
 	const businessDate = await locationBusinessDate(tx, row.locationId, now)
+	if (!row.isCredit) {
+		await takeLotsOfCancelledDelivery(tx, {
+			lineIds: lines.map((line) => line.id),
+			now,
+		})
+	}
 	for (const line of lines) {
 		const priced = line.pricedAt !== null
 		await tx.insert(invMovements).values({

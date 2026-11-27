@@ -11,6 +11,7 @@ import {
 	typedAmountSchema,
 	unitRefSchema,
 } from './common.ts'
+import { doneLabelsSchema, labelResultSchema } from './freshness.ts'
 import { itemUnitSchema } from './items.ts'
 
 /**
@@ -179,9 +180,22 @@ export const doneTaskSchema = z
 				.strict(),
 		]),
 		note: inventoryNoteSchema.optional(),
+		/**
+		 * Print labels for the batch with the made and use-by time (#523, Station
+		 * only; behind `inventory.use_by`). The App ignores it.
+		 */
+		labels: doneLabelsSchema.optional(),
 	})
 	.strict()
 export type DoneTask = z.infer<typeof doneTaskSchema>
+
+/**
+ * The answer of `POST /pos/inventory/prep/tasks/:id/done` (Station): the task,
+ * plus the label that was asked for (null when none was, or the item has none).
+ */
+export const stationPrepDoneResultSchema = prepTaskSchema.extend({
+	label: labelResultSchema.nullable().optional(),
+})
 
 /** Station paths, for clients and tests. */
 export const PREP_POS_PATHS = {
