@@ -12,12 +12,13 @@ import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { Textarea } from '@repo/ui/textarea'
 import { useRef } from 'react'
-import { Form, useFetcher } from 'react-router'
+import { Form, Link, useFetcher } from 'react-router'
 import {
 	MockPaymentsPanel,
 	type PaymentsMockUiState,
 } from '#app/components/settings/cards/organization/mock-payments-panel.tsx'
 import { useNativeFormSaveBar } from '#app/components/use-native-form-save-bar.ts'
+import { type PaymentAccountHealthState } from '#app/utils/payments/account-status.ts'
 import {
 	SHOP_PLATFORM_FEE_PERCENT,
 	SHOP_PROCESSOR_CATALOG,
@@ -28,8 +29,17 @@ import {
 	type ShopProcessorId,
 } from '#app/utils/shop.types.ts'
 
+type LocationAccountStateRow = {
+	locationId: string
+	locationName: string
+	state: PaymentAccountHealthState
+	deadlineIso: string | null
+	requirements: string[]
+}
+
 type ShopCardProps = {
 	organization: ShopOrganization
+	locationAccountStates?: LocationAccountStateRow[]
 	orders: ShopOrderSummary[]
 	ordersUnavailable?: boolean
 	/** The viewer may not see customer details, so orders were not loaded. */
@@ -65,6 +75,7 @@ function formatMoney(cents: number, currency = 'usd') {
 
 export function ShopCard({
 	organization,
+	locationAccountStates = [],
 	orders,
 	ordersUnavailable = false,
 	ordersHidden = false,
@@ -172,6 +183,83 @@ export function ShopCard({
 								</Badge>
 							) : null}
 						</div>
+
+						{locationAccountStates.length > 0 ? (
+							<div
+								className="space-y-2 rounded-lg border p-4"
+								data-testid="payment-account-location-states"
+							>
+								<div className="flex flex-wrap items-center justify-between gap-2">
+									<p className="text-sm font-medium">
+										<Trans>Payment account status by location</Trans>
+									</p>
+									<Button
+										variant="outline"
+										size="sm"
+										render={
+											<Link
+												to={`/${organization.slug}/settings/payments-calculator`}
+											/>
+										}
+									>
+										<Trans>What you get paid</Trans>
+									</Button>
+								</div>
+								<ul className="divide-y text-sm">
+									{locationAccountStates.map((loc) => {
+										const deadlineFormatted = loc.deadlineIso
+											? new Intl.DateTimeFormat('en-US', {
+													month: 'short',
+													day: 'numeric',
+													year: 'numeric',
+													timeZone: 'UTC',
+												}).format(new Date(loc.deadlineIso))
+											: null
+										const badgeVariant =
+											loc.state === 'active'
+												? 'default'
+												: loc.state === 'cannot_take_payments'
+													? 'destructive'
+													: 'warning'
+										return (
+											<li
+												key={loc.locationId}
+												className="flex flex-col gap-1 py-2"
+												data-testid={`payment-location-state-${loc.locationId}`}
+											>
+												<div className="flex flex-wrap items-center justify-between gap-2">
+													<span className="font-medium wrap-anywhere">
+														{loc.locationName}
+													</span>
+													<Badge variant={badgeVariant}>
+														{loc.state === 'active' ? (
+															<Trans>Active</Trans>
+														) : loc.state === 'cannot_take_payments' ? (
+															<Trans>Cannot take payments</Trans>
+														) : loc.state === 'payouts_paused' ? (
+															<Trans>Payouts paused</Trans>
+														) : deadlineFormatted ? (
+															<Trans>
+																Action needed by {deadlineFormatted}
+															</Trans>
+														) : (
+															<Trans>Action needed</Trans>
+														)}
+													</Badge>
+												</div>
+												{loc.requirements.length > 0 ? (
+													<ul className="text-muted-foreground list-disc ps-5 text-xs">
+														{loc.requirements.map((req) => (
+															<li key={req}>{req}</li>
+														))}
+													</ul>
+												) : null}
+											</li>
+										)
+									})}
+								</ul>
+							</div>
+						) : null}
 
 						<div className="flex flex-wrap gap-3">
 							{isUsRegion ? (

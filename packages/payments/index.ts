@@ -150,6 +150,7 @@ export {
 	RESTAURANT_TERMINAL_PAYMENT_STATUSES,
 	buildRestaurantOrderMetadata,
 	buildRestaurantOrderSessionIdempotencyKey,
+	extractCardSummaryFromStripeIntent,
 	isRestaurantOrderMetadata,
 	isRestaurantOrderProcessor,
 	isTerminalRestaurantPaymentStatus,
@@ -157,11 +158,18 @@ export {
 	mapCheckoutWebhookToRestaurantOrder,
 	mapCheckoutPaymentToRestaurantOrder,
 	restaurantOrderCheckoutReference,
+	sanitizeCardSummary,
 	type RestaurantOrderProcessor,
 	type RestaurantOrderPaymentEvent,
 	type RestaurantOrderPaymentStatus,
 	type RestaurantTerminalPaymentStatus,
 } from './src/shop'
+
+// Read-only payouts & balance snapshots (#168)
+export * from './src/connect/payouts'
+
+// Payment disputes & evidence adapters (#187)
+export * from './src/connect/disputes'
 
 // Restaurant order provider refunds and disputes (#80; non-PII ids only)
 export * from './src/shop/restaurant-refunds'

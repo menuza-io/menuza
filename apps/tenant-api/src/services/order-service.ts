@@ -2445,6 +2445,9 @@ export async function applyPaymentEvent(input: {
 	 * event so a refund can name the payment.
 	 */
 	paymentId?: string
+	/** Card brand and last four digits only (#423). Never a full card number. */
+	cardBrand?: string
+	cardLast4?: string
 }): Promise<OrderServiceResult<PaymentEventResult>> {
 	const {
 		orgId,
@@ -2540,13 +2543,33 @@ export async function applyPaymentEvent(input: {
 						order.paymentId,
 						status === 'paid' ? input.paymentId : undefined,
 					)
+					const safeLast4 =
+						status === 'paid' &&
+						input.cardLast4 &&
+						/^\d{4}$/.test(input.cardLast4)
+							? input.cardLast4
+							: undefined
+					const storedCardLast4 = order.cardLast4 ?? safeLast4 ?? null
+					const storedCardBrand =
+						order.cardBrand ??
+						(safeLast4 && input.cardBrand
+							? input.cardBrand.trim().toLowerCase().slice(0, 32)
+							: null)
 
 					if (status === 'paid') {
 						if (order.paymentStatus === 'paid') {
-							if (storedPaymentId !== order.paymentId) {
+							if (
+								storedPaymentId !== order.paymentId ||
+								storedCardLast4 !== order.cardLast4 ||
+								storedCardBrand !== order.cardBrand
+							) {
 								await tx
 									.update(restaurantOrders)
-									.set({ paymentId: storedPaymentId })
+									.set({
+										paymentId: storedPaymentId,
+										cardBrand: storedCardBrand,
+										cardLast4: storedCardLast4,
+									})
 									.where(eq(restaurantOrders.id, order.id))
 							}
 							return { ok: true, data: idempotent }
@@ -2571,6 +2594,8 @@ export async function applyPaymentEvent(input: {
 									paidAt: now,
 									paymentEventAt: now,
 									paymentId: storedPaymentId,
+									cardBrand: storedCardBrand,
+									cardLast4: storedCardLast4,
 									// A catering order captured its deposit (#361).
 									...cateringPaidColumns(order),
 									...(waits
@@ -2641,6 +2666,8 @@ export async function applyPaymentEvent(input: {
 									paidAt: now,
 									paymentEventAt: now,
 									paymentId: storedPaymentId,
+									cardBrand: storedCardBrand,
+									cardLast4: storedCardLast4,
 									...cateringPaidColumns(order),
 									// An operator decides a late payment from review: it
 									// never also waits for acceptance.
@@ -2822,6 +2849,8 @@ const OPERATOR_STATUS_TRANSITIONS: Record<RestaurantOrder['status'], string[]> =
 		// Manual acceptance (#107): accept, or reject (a cancel with a reject
 		// reason). Nothing else leaves it; the kitchen never sees it.
 		pending_acceptance: ['accepted', 'cancelled'],
+		// Lost chargeback (#187): terminal state, no operator transitions.
+		disputed_lost: [],
 	}
 
 export type OperatorPatchInput =
@@ -3916,7 +3945,9 @@ export function operatorOrder(
 	order: RestaurantOrder,
 	customerKey: string | null = null,
 	refunds: OrderRefundGlance | null = null,
+	options: { includeCardDetails?: boolean } = {},
 ) {
+	const showCard = options.includeCardDetails === true
 	return {
 		...receiptOrder(order, refunds),
 		id: order.id,
@@ -3927,6 +3958,9 @@ export function operatorOrder(
 		paymentMethod: order.paymentMethod,
 		paymentProcessor: order.paymentProcessor,
 		paymentSessionId: order.paymentSessionId,
+		/** Card brand and last four digits (#423), gated by payments access. */
+		cardBrand: showCard ? (order.cardBrand ?? null) : null,
+		cardLast4: showCard ? (order.cardLast4 ?? null) : null,
 		revision: order.revision ?? 1,
 		timeChangeCount: order.timeChangeCount ?? 0,
 		paidCents:

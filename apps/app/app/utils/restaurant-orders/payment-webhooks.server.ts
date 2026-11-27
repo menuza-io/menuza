@@ -15,13 +15,16 @@
 
 import { and, db, eq, Organization } from '@repo/database'
 import {
+	extractCardSummaryFromStripeIntent,
 	isRestaurantOrderMetadata,
 	isTerminalRestaurantPaymentStatus,
+	mapCheckoutDisputeToControlPlane,
 	mapCheckoutDisputeWebhookToRestaurantOrder,
 	mapCheckoutRefundWebhookToRestaurantOrder,
 	mapCheckoutWebhookToRestaurantOrder,
 	mapConnectSessionToRestaurantOrder,
 	mapStripeDisputeStatusToRestaurantOrder,
+	mapStripeDisputeToControlPlane,
 	mapStripeRefundToRestaurantOrder,
 	parseRestaurantOrderRefundReference,
 	restaurantOrderFromMetadata,
@@ -72,6 +75,8 @@ async function dispatchTerminalRestaurantPayment(
 			amountCents: event.amountCents,
 			currency: event.currency,
 			paymentId: event.paymentId,
+			cardBrand: event.cardBrand,
+			cardLast4: event.cardLast4,
 		})
 	} catch (error) {
 		if (error instanceof RegionalOrderApiError && !error.retryable) {
@@ -104,6 +109,27 @@ export async function handleRestaurantOrderStripeSessionEvent(
 	})
 	if (!event) return
 	if (!isTerminalRestaurantPaymentStatus(event.status)) return
+	// Best-effort card brand & last four lookup when Stripe webhook did not
+	// expand the PaymentIntent (#423). Never blocks payment settlement.
+	if (
+		event.processor === 'connect' &&
+		event.status === 'paid' &&
+		event.paymentId &&
+		!event.cardLast4
+	) {
+		try {
+			const intent = await getShopCommerce().retrieveReservationPaymentIntent(
+				event.paymentId,
+			)
+			const card = extractCardSummaryFromStripeIntent(intent)
+			if (card.cardLast4) {
+				event.cardLast4 = card.cardLast4
+				if (card.cardBrand) event.cardBrand = card.cardBrand
+			}
+		} catch {
+			// Non-fatal: order still settles without card summary.
+		}
+	}
 	await dispatchTerminalRestaurantPayment(event)
 }
 
@@ -119,6 +145,27 @@ export async function handleRestaurantOrderCheckoutWebhookEvent(verifiedEvent: {
 	const event = mapCheckoutWebhookToRestaurantOrder(verifiedEvent)
 	if (!event) return
 	if (!isTerminalRestaurantPaymentStatus(event.status)) return
+	// Best-effort card brand & last four lookup when Stripe webhook did not
+	// expand the PaymentIntent (#423). Never blocks payment settlement.
+	if (
+		event.processor === 'connect' &&
+		event.status === 'paid' &&
+		event.paymentId &&
+		!event.cardLast4
+	) {
+		try {
+			const intent = await getShopCommerce().retrieveReservationPaymentIntent(
+				event.paymentId,
+			)
+			const card = extractCardSummaryFromStripeIntent(intent)
+			if (card.cardLast4) {
+				event.cardLast4 = card.cardLast4
+				if (card.cardBrand) event.cardBrand = card.cardBrand
+			}
+		} catch {
+			// Non-fatal: order still settles without card summary.
+		}
+	}
 	await dispatchTerminalRestaurantPayment(event)
 }
 
@@ -293,6 +340,26 @@ export async function handleRestaurantOrderStripeDisputeEvent(
 	)
 	// A Stripe inquiry is not a chargeback: it never blocks a refund.
 	if (!status) return
+	const mapped = mapStripeDisputeToControlPlane(dispute)
+	if (mapped) {
+		const { upsertPaymentDisputeAndNotify } =
+			await import('#app/utils/payments/disputes.server.ts')
+		await upsertPaymentDisputeAndNotify({
+			organizationId: order.orgId,
+			provider: 'connect',
+			providerDisputeId: mapped.providerDisputeId,
+			providerPaymentId: mapped.providerPaymentId,
+			orderKind: 'restaurant_order',
+			orderRef: order.orderId,
+			amountMinor: mapped.amountMinor,
+			feeMinor: mapped.feeMinor,
+			currency: mapped.currency,
+			reason: mapped.reason,
+			status: mapped.status,
+			dueAt: mapped.dueAt,
+			alreadyRefunded: mapped.alreadyRefunded,
+		})
+	}
 	await reportDisputeFromProvider({
 		...order,
 		processor: 'connect',
@@ -345,6 +412,26 @@ export async function handleRestaurantOrderCheckoutRefundOrDisputeEvent(verified
 	}
 	const order = restaurantOrderFromMetadata(payment.metadata)
 	if (!order) return
+	const mapped = mapCheckoutDisputeToControlPlane(verifiedEvent)
+	if (mapped) {
+		const { upsertPaymentDisputeAndNotify } =
+			await import('#app/utils/payments/disputes.server.ts')
+		await upsertPaymentDisputeAndNotify({
+			organizationId: order.orgId,
+			provider: 'checkout',
+			providerDisputeId: mapped.providerDisputeId,
+			providerPaymentId: mapped.providerPaymentId,
+			orderKind: 'restaurant_order',
+			orderRef: order.orderId,
+			amountMinor: mapped.amountMinor,
+			feeMinor: mapped.feeMinor,
+			currency: mapped.currency,
+			reason: mapped.reason,
+			status: mapped.status,
+			dueAt: mapped.dueAt,
+			alreadyRefunded: mapped.alreadyRefunded,
+		})
+	}
 	await reportDisputeFromProvider({
 		...order,
 		processor: 'checkout',

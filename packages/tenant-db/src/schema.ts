@@ -1119,6 +1119,10 @@ export const restaurantOrders = sqliteTable(
 		// event names it (0044; null for older orders). Provider refunds use it;
 		// without it the App resolves the payment from `payment_session_id`.
 		paymentId: text('payment_id'),
+		// Card brand (e.g. 'visa', 'mastercard', 'mada') and last four digits
+		// only (#423, migration 0075). Never stores full card numbers.
+		cardBrand: text('card_brand'),
+		cardLast4: text('card_last4'),
 		paymentEventAt: integer('payment_event_at', { mode: 'timestamp' }),
 		fulfillment: text('fulfillment', {
 			enum: ['pickup', 'delivery', 'dine_in'],
@@ -1309,12 +1313,15 @@ export const restaurantOrders = sqliteTable(
 		rejectedReason: text('rejected_reason', {
 			enum: [...ORDER_STORED_CANCEL_REASONS],
 		}),
-		// A payment dispute (chargeback) reported by the provider (#80): when it
-		// was first opened and its latest state. `open` and `lost` block refunds.
+		// A payment dispute (chargeback) reported by the provider (#80, #187): when
+		// it was first opened, its latest state, when a lost dispute was applied
+		// (idempotency guard for loyalty reversal), and the provider's dispute fee.
 		disputedAt: integer('disputed_at', { mode: 'timestamp' }),
 		disputeStatus: text('dispute_status', {
 			enum: [...ORDER_DISPUTE_STATUSES],
 		}),
+		disputedLostAt: integer('disputed_lost_at', { mode: 'timestamp' }),
+		disputeFeeCents: integer('dispute_fee_cents').notNull().default(0),
 		// Catering (#124, #361; migration 0071). `is_catering` marks an order
 		// placed through the catering page or paid from a quote; the event time
 		// and head count are what the guest chose, the notes are the guest's own
@@ -1367,6 +1374,10 @@ export const restaurantOrders = sqliteTable(
 	},
 	(table) => [
 		index('idx_restaurant_orders_number').on(table.number),
+		// Card last-four search (#423, migration 0075).
+		index('idx_restaurant_orders_card_last4')
+			.on(table.cardLast4)
+			.where(sql`${table.cardLast4} is not null`),
 		// The catering tab, the day-before alert and the balance reminders.
 		index('idx_restaurant_orders_catering_event')
 			.on(table.cateringEventAt)

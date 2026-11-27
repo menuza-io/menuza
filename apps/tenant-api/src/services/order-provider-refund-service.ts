@@ -24,6 +24,7 @@ import {
 import {
 	getTenantDb,
 	type TenantDatabase,
+	loyaltyPurchases,
 	qrTabPayments,
 	qrTabRefunds,
 	qrTabs,
@@ -43,6 +44,10 @@ import {
 	refundDiscountRedemptions,
 	refundDiscountSource,
 } from './discount-apply.ts'
+import {
+	applyPurchaseRefundsInTx,
+	purchaseForSourceInTx,
+} from './loyalty-purchase-service.ts'
 import { loyaltySettleQueue } from './loyalty-purchase-service.ts'
 import {
 	bookOrderProviderRefundInTx,
@@ -892,6 +897,7 @@ export type DisputeStatusInput = {
 	sessionId?: string
 	processor?: 'connect' | 'checkout'
 	status: OrderDisputeStatus
+	feeCents?: number
 	now?: number
 }
 
@@ -1029,16 +1035,60 @@ export async function applyDisputeStatus(
 								orderId: order.id,
 							})
 						}
-						const applied = order.disputeStatus !== status || !order.disputedAt
+						const applied =
+							order.disputeStatus !== status ||
+							!order.disputedAt ||
+							(status === 'lost' && !order.disputedLostAt)
 						if (applied) {
+							const isNewlyLost = status === 'lost' && !order.disputedLostAt
 							await tx
 								.update(restaurantOrders)
 								.set({
+									...(isNewlyLost
+										? {
+												status: 'disputed_lost' as const,
+												disputedLostAt: new Date(now),
+												disputeFeeCents: Math.max(
+													order.disputeFeeCents ?? 0,
+													input.feeCents ?? 0,
+												),
+											}
+										: {}),
 									disputeStatus: status,
 									disputedAt: order.disputedAt ?? new Date(now),
 									updatedAt: new Date(now),
 								})
 								.where(eq(restaurantOrders.id, order.id))
+							// Lost dispute (#187): take loyalty points back like a full refund.
+							// Won dispute changes nothing.
+							if (isNewlyLost) {
+								const ltx = tx as unknown as LoyaltyTx
+								const purchase = await purchaseForSourceInTx(ltx, {
+									type: 'restaurant_order',
+									id: order.id,
+								})
+								if (purchase && purchase.state === 'completed') {
+									const nextRefunded = Math.max(
+										purchase.refundedMinor,
+										order.totalCents,
+									)
+									const [updatedPurchase] = await tx
+										.update(loyaltyPurchases)
+										.set({
+											refundedMinor: nextRefunded,
+											updatedAt: now,
+										})
+										.where(eq(loyaltyPurchases.id, purchase.id))
+										.returning()
+									if (updatedPurchase) {
+										await applyPurchaseRefundsInTx(ltx, updatedPurchase, {
+											at: now,
+											actorKind: 'system',
+											actorId: 'dispute_lost',
+										})
+									}
+								}
+							}
 							// A cancel that owes its refund waited on this dispute:
 							// won, it is booked now; lost, the chargeback gave the
 							// money back and the mark is dropped.

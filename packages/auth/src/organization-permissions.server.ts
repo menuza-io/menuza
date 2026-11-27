@@ -300,6 +300,9 @@ export const ORG_PERMISSIONS = {
 
 	// Closing an open cash drawer shift remotely from the App (#403).
 	UPDATE_POS_SHIFT_ANY: 'update:pos_shift:any' as const,
+
+	// Viewing payouts, balances, reconciliation and card brand/last4 (#168, #423).
+	READ_PAYMENTS_ANY: 'read:payments:any' as const,
 } as const
 
 /**

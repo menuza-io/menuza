@@ -63,13 +63,13 @@ import {
 } from '#app/utils/orders/order-model.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
 import { AcceptanceCountdown, RejectOrderDialog } from './acceptance.tsx'
+import { CateringDetails } from './catering-details.tsx'
 import { OrderStatusLabel, PaymentStatusLabel } from './order-status.tsx'
 import { stepActivityEvents } from './order-steps-activity.ts'
 import {
 	ProviderRefundDialog,
 	type ProviderRefundOutcome,
 } from './provider-refund-dialog.tsx'
-import { CateringDetails } from './catering-details.tsx'
 import { RecordOrderRefundDialog } from './record-order-refund-dialog.tsx'
 import {
 	CANCEL_REASON_LABELS,
@@ -543,7 +543,18 @@ export function OrderDetail({
 							) : null}
 							{disputed ? (
 								<Badge variant="destructive" data-testid="order-disputed-badge">
-									<Trans>Disputed</Trans>
+									{order.disputeStatus === 'lost' ? (
+										<Trans>Dispute lost</Trans>
+									) : (
+										<Trans>Disputed</Trans>
+									)}
+								</Badge>
+							) : order.disputeStatus === 'won' ? (
+								<Badge
+									variant="secondary"
+									data-testid="order-dispute-won-badge"
+								>
+									<Trans>Dispute won</Trans>
 								</Badge>
 							) : null}
 							<CopyButton
@@ -1168,6 +1179,32 @@ export function OrderDetail({
 											? _(msg`Online (${processor})`)
 											: _(msg`Online`)}
 								</dd>
+								{order.cardLast4 ? (
+									<>
+										<dt className="text-muted-foreground">
+											<Trans>Card</Trans>
+										</dt>
+										<dd data-testid="order-card-summary">
+											<bdi dir="ltr">
+												{order.cardBrand
+													? `${order.cardBrand.charAt(0).toUpperCase()}${order.cardBrand.slice(1)} •••• ${order.cardLast4}`
+													: `•••• ${order.cardLast4}`}
+											</bdi>
+										</dd>
+									</>
+								) : null}
+								<dt className="text-muted-foreground">
+									<Trans>Breakdown</Trans>
+								</dt>
+								<dd>
+									<Link
+										to={`/${orgSlug}/settings/payments-calculator?locationId=${encodeURIComponent(order.location.id)}&amount=${encodeURIComponent(((order.subtotalCents ?? order.totalCents) / 100).toFixed(2))}&orderType=${encodeURIComponent(order.fulfillment === 'delivery' ? 'delivery' : order.fulfillment === 'dine_in' ? 'in_store' : 'pickup')}&paymentMethod=${order.paymentMethod === 'online' ? 'card' : 'cash'}&tip=${encodeURIComponent(((order.tipCents ?? 0) / 100).toFixed(2))}`}
+										className="text-primary underline-offset-4 hover:underline"
+										data-testid="order-what-you-get-paid-link"
+									>
+										<Trans>See what you receive</Trans>
+									</Link>
+								</dd>
 								<dt className="text-muted-foreground">
 									<Trans>Status</Trans>
 								</dt>
@@ -1235,7 +1272,13 @@ export function OrderDetail({
 									<Trans>
 										The guest disputed this payment with their card issuer, so
 										it cannot be refunded here until the dispute is settled.
-									</Trans>
+									</Trans>{' '}
+									<Link
+										to={`/${orgSlug}/orders/disputes`}
+										className="text-primary underline-offset-4 hover:underline"
+									>
+										<Trans>View disputes</Trans>
+									</Link>
 								</p>
 							) : null}
 							{canProviderRefund ? (

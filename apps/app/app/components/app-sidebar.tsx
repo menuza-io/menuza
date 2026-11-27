@@ -783,6 +783,13 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/settings/shop`,
 					isActive: location.pathname === `/${orgSlug}/settings/shop`,
 				},
+				{
+					title: _(msg`Payments`),
+					url: `/${orgSlug}/payments`,
+					isActive:
+						location.pathname === `/${orgSlug}/payments` ||
+						location.pathname.startsWith(`/${orgSlug}/payments/`),
+				},
 				...(canReadMenu
 					? [
 							{

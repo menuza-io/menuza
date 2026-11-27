@@ -80,6 +80,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (shiftCloseOnly && !closeShifts) {
 		throw new Response('Forbidden', { status: 403 })
 	}
+	// Card brand & last4 visibility and last-four search (#423): restricted to
+	// roles that may view payments, settings, or issue provider refunds.
+	const readPayments =
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.READ_PAYMENTS_ANY,
+		)) ||
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.READ_SETTINGS_ANY,
+		)) ||
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_ORDER_REFUND_ANY,
+		))
 	// Own-driver deliveries (#287): the board's routes need this claim, which is
 	// signed only while the organization's `delivery.in_house` flag is on.
 	const deliveries = await isInHouseDeliveryEnabled(organization.id)
@@ -104,6 +122,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		...(refundProvider ? { refundProvider: true } : {}),
 		...(closeShifts ? { closeShifts: true, operatorName } : {}),
 		...(deliveries ? { deliveries: true } : {}),
+		...(readPayments ? { readPayments: true } : {}),
 	}
 	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
 		request,

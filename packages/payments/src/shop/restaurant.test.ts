@@ -227,6 +227,45 @@ describe('mapConnectSessionToRestaurantOrder', () => {
 			currency: 'sar',
 		})
 	})
+
+	it('extracts card brand and last4 from an expanded PaymentIntent and never a full PAN (#423)', () => {
+		const event = mapConnectSessionToRestaurantOrder(
+			stripeSession({
+				status: 'complete',
+				payment_status: 'paid',
+				payment_intent: {
+					id: 'pi_card_1',
+					latest_charge: {
+						payment_method_details: {
+							card: { brand: 'Visa', last4: '4242' },
+						},
+					},
+				} as unknown as Stripe.PaymentIntent,
+			}),
+		)
+		expect(event).toMatchObject({
+			paymentId: 'pi_card_1',
+			cardBrand: 'visa',
+			cardLast4: '4242',
+		})
+
+		const badPan = mapConnectSessionToRestaurantOrder(
+			stripeSession({
+				status: 'complete',
+				payment_status: 'paid',
+				payment_intent: {
+					id: 'pi_card_2',
+					latest_charge: {
+						payment_method_details: {
+							card: { brand: 'visa', last4: '4242424242424242' },
+						},
+					},
+				} as unknown as Stripe.PaymentIntent,
+			}),
+		)
+		expect(badPan?.cardLast4).toBeUndefined()
+		expect(badPan?.cardBrand).toBeUndefined()
+	})
 })
 
 describe('mapCheckoutWebhookToRestaurantOrder', () => {

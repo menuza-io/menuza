@@ -12,6 +12,10 @@ export type ConnectAccountStatus = {
 	chargesEnabled: boolean
 	payoutsEnabled: boolean
 	detailsSubmitted: boolean
+	/** Currently due and past due requirement codes (#269). */
+	requirementsDue: string[]
+	/** Earliest deadline for due requirements, or null (#269). */
+	deadline: Date | null
 }
 
 export async function createConnectExpressAccount(
@@ -66,11 +70,23 @@ export async function retrieveConnectAccountStatus(
 	accountId: string,
 ): Promise<ConnectAccountStatus> {
 	const account = await stripe.accounts.retrieve(accountId)
+	const due = [
+		...(account.requirements?.past_due ?? []),
+		...(account.requirements?.currently_due ?? []),
+	]
+	const requirementsDue = [...new Set(due.filter(Boolean))]
+	const deadlineEpoch = account.requirements?.current_deadline
+	const deadline =
+		typeof deadlineEpoch === 'number' && deadlineEpoch > 0
+			? new Date(deadlineEpoch * 1000)
+			: null
 	return {
 		accountId: account.id,
 		chargesEnabled: Boolean(account.charges_enabled),
 		payoutsEnabled: Boolean(account.payouts_enabled),
 		detailsSubmitted: Boolean(account.details_submitted),
+		requirementsDue,
+		deadline,
 	}
 }
 

@@ -214,6 +214,13 @@ function useItemText() {
 						msg`Connect Stripe or Checkout.com to take card payments online.`,
 					),
 				}
+			case 'payment_account_action_needed':
+				return {
+					title: _(msg`Payment account needs action`),
+					detail: _(
+						msg`Your payment provider requires information to keep payments and payouts running.`,
+					),
+				}
 			case 'payment_review':
 				return {
 					title: _(

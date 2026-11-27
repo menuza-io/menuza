@@ -13,6 +13,7 @@ export { default as CommentEmail } from './templates/comment-email'
 export { default as StaffingAlertEmail } from './templates/staffing-alert-email'
 export { default as DomainInstructionsEmail } from './templates/domain-instructions'
 export { default as ReplyToVerificationEmail } from './templates/reply-to-verification'
+export { default as PaymentAccountAlertEmail } from './templates/payment-account-alert'
 
 // Export types
 export type { OrganizationInviteEmailProps } from './templates/organization-invite'
@@ -29,6 +30,7 @@ export type { CommentEmailProps } from './templates/comment-email'
 export type { StaffingAlertEmailProps } from './templates/staffing-alert-email'
 export type { DomainInstructionsEmailProps } from './templates/domain-instructions'
 export type { ReplyToVerificationEmailProps } from './templates/reply-to-verification'
+export type { PaymentAccountAlertEmailProps } from './templates/payment-account-alert'
 
 // Email theme tokens (mirror the app's shadcn design tokens)
 export {

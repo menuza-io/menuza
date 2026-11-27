@@ -124,6 +124,8 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 		`${MENU_SYNC_JOB_PATH}?nightly=1`,
 		// Daily check that delivery platform menus match Menuza (#144).
 		'/resources/jobs/menu-check',
+		// Daily payment account deadline reminders (#269) and dispute reminders (#187).
+		'/resources/jobs/payment-account-check',
 	],
 	'0 4 * * *': [
 		'/resources/jobs/gdpr-erasure',

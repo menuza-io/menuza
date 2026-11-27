@@ -1031,6 +1031,19 @@ export async function handleConnectAccountUpdated(event: unknown) {
 		await notifyReservationsContextChanged(update.organizationId, 'payments')
 	}
 
+	// Persist requirements, deadline, and send deduplicated alerts / recovery (#269).
+	const { syncPaymentAccountStatusAndNotify } =
+		await import('#app/utils/payments/account-alerts.server.ts')
+	await syncPaymentAccountStatusAndNotify({
+		organizationId: update.organizationId,
+		provider: 'connect',
+		providerAccountId: update.accountId,
+		chargesEnabled: current.chargesEnabled,
+		payoutsEnabled: current.payoutsEnabled,
+		requirementsDue: current.requirementsDue ?? [],
+		deadline: current.deadline ?? null,
+	})
+
 	// The payment account on the Admin Timeline (#279): connected once it can
 	// take charges and payouts, needs action when it cannot. The state is the
 	// key, so a retried webhook writes once.

@@ -61,6 +61,55 @@ export type RestaurantOrderPaymentEvent = {
 	 * tells them apart (Stripe sessions are already one payment each).
 	 */
 	paymentId?: string
+	/** Card brand and last four digits only (#423). Never a full card number. */
+	cardBrand?: string
+	cardLast4?: string
+}
+
+/**
+ * Sanitize card brand and last four digits (#423). Rejects anything that is
+ * not strictly 4 ASCII digits for `last4` so a full PAN can never be stored.
+ */
+export function sanitizeCardSummary(
+	brand: string | null | undefined,
+	last4: string | null | undefined,
+): { cardBrand?: string; cardLast4?: string } {
+	const cleanedLast4 = typeof last4 === 'string' ? last4.trim() : ''
+	if (!/^\d{4}$/.test(cleanedLast4)) return {}
+	const cleanedBrand =
+		typeof brand === 'string'
+			? brand
+					.trim()
+					.toLowerCase()
+					.replace(/[^a-z0-9 _-]/g, '')
+					.slice(0, 32)
+			: ''
+	return {
+		...(cleanedBrand ? { cardBrand: cleanedBrand } : {}),
+		cardLast4: cleanedLast4,
+	}
+}
+
+/**
+ * Extract card brand and last four digits from an expanded Stripe PaymentIntent
+ * (checking `latest_charge.payment_method_details.card` then `payment_method.card`).
+ */
+export function extractCardSummaryFromStripeIntent(
+	intent: Stripe.PaymentIntent | string | null | undefined,
+): { cardBrand?: string; cardLast4?: string } {
+	if (!intent || typeof intent === 'string') return {}
+	const latestCharge = intent.latest_charge
+	if (latestCharge && typeof latestCharge !== 'string') {
+		const card = latestCharge.payment_method_details?.card
+		if (card?.last4) {
+			return sanitizeCardSummary(card.brand, card.last4)
+		}
+	}
+	const pm = intent.payment_method
+	if (pm && typeof pm !== 'string' && pm.card?.last4) {
+		return sanitizeCardSummary(pm.card.brand, pm.card.last4)
+	}
+	return {}
 }
 
 export function isRestaurantOrderMetadata(
@@ -150,6 +199,11 @@ export function mapConnectSessionToRestaurantOrder(
 			? session.payment_intent
 			: (session.payment_intent?.id ?? null)
 
+	const card =
+		status === 'paid'
+			? extractCardSummaryFromStripeIntent(session.payment_intent)
+			: {}
+
 	return {
 		orgId,
 		orderId,
@@ -161,6 +215,7 @@ export function mapConnectSessionToRestaurantOrder(
 		...(status === 'paid' && paymentIntent?.startsWith('pi_')
 			? { paymentId: paymentIntent }
 			: {}),
+		...card,
 	}
 }
 
@@ -198,6 +253,11 @@ export function mapCheckoutPaymentToRestaurantOrder(
 			? 'failed'
 			: 'pending'
 
+	const card =
+		status === 'paid'
+			? sanitizeCardSummary(payment.cardBrand, payment.cardLast4)
+			: {}
+
 	return {
 		orgId,
 		orderId,
@@ -207,6 +267,7 @@ export function mapCheckoutPaymentToRestaurantOrder(
 		amountCents: payment.amountCents,
 		currency: payment.currency.toLowerCase(),
 		...(payment.id ? { paymentId: payment.id } : {}),
+		...card,
 	}
 }
 

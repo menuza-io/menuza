@@ -291,6 +291,8 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 	amountCents: number
 	currency: string
 	paymentId?: string
+	cardBrand?: string
+	cardLast4?: string
 }): Promise<void> {
 	const isTab = parseTabOrderRef(options.orderId) !== null
 	// The payment's own id (`pi_…`, `pay_…`): the region stores it on the
@@ -301,6 +303,12 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 		options.paymentId && (!isTab || options.processor === 'checkout')
 			? options.paymentId
 			: undefined
+	const cardLast4 =
+		!isTab && options.cardLast4 && /^\d{4}$/.test(options.cardLast4)
+			? options.cardLast4
+			: undefined
+	const cardBrand =
+		cardLast4 && options.cardBrand ? options.cardBrand.slice(0, 32) : undefined
 	const body = {
 		orgId: options.orgId,
 		orderId: options.orderId,
@@ -310,18 +318,23 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 		amountCents: options.amountCents,
 		currency: options.currency,
 	}
+	const extendedBody = {
+		...body,
+		...(paymentId ? { paymentId } : {}),
+		...(cardBrand ? { cardBrand } : {}),
+		...(cardLast4 ? { cardLast4 } : {}),
+	}
 	try {
 		await callRegionalOrderCommand({
 			dataRegion: options.dataRegion,
 			path: '/api/orders/payment-status',
-			body: paymentId ? { ...body, paymentId } : body,
+			body: extendedBody,
 		})
 	} catch (error) {
-		// A region that predates `paymentId` refuses unknown keys (400). The
-		// payment itself must still count there: send it again without the id,
-		// which is only a refund convenience. Tabs always needed the field.
+		// A region that predates `paymentId` or `cardBrand`/`cardLast4` refuses
+		// unknown keys (400). Retry without optional fields so payment still settles.
 		if (
-			paymentId &&
+			(paymentId || cardLast4) &&
 			!isTab &&
 			error instanceof RegionalOrderApiError &&
 			error.httpStatus === 400
