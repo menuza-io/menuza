@@ -2,6 +2,7 @@ import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { fetchNoRedirect } from './fetch-no-redirect.ts'
 import { getNodeRegion } from './region.ts'
+import { syncEnvFromProcess } from './secrets.ts'
 
 /**
  * Turns a spoken count into text (#488), through an OpenAI-compatible
@@ -18,6 +19,8 @@ import { getNodeRegion } from './region.ts'
  */
 
 export function isSpeechReaderConfigured(): boolean {
+	// The Node entry sets values on `process.env`: read them in before looking.
+	syncEnvFromProcess()
 	return Boolean(
 		ENV.SPEECH_COUNT_BASE_URL &&
 		ENV.SPEECH_COUNT_MODEL &&
@@ -71,6 +74,7 @@ async function transcribeWithEndpoint(
 	audio: SpeechAudio,
 	hints: SpeechHints,
 ): Promise<string> {
+	syncEnvFromProcess()
 	const baseUrl = (ENV.SPEECH_COUNT_BASE_URL ?? '').replace(/\/$/, '')
 	const type = audio.contentType.toLowerCase().split(';')[0]!.trim()
 	const form = new FormData()

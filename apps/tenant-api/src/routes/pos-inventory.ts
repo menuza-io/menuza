@@ -54,6 +54,7 @@ import {
 import { invCounts, invItems } from '@repo/tenant-db'
 import { and, eq, inArray } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
+import { readCappedRequestBytes } from '../lib/http.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import {
@@ -705,22 +706,28 @@ posInventoryRoutes.post(
  */
 posInventoryRoutes.post(
 	'/voice/propose',
-	stationRoute({ query: stationVoiceProposeQuerySchema }, async (ctx, query) => {
-		const length = Number(ctx.c.req.header('content-length') ?? 0)
-		if (length > VOICE_AUDIO_MAX_BYTES) return stationError('payload_too_large')
-		const bytes = new Uint8Array(await ctx.c.req.arrayBuffer())
-		const proposal = await proposeFromAudio(ctx.pos.db, {
-			caller: ctx.caller,
-			locationId: ctx.locationId,
-			audio: {
-				bytes,
-				contentType: ctx.c.req.header('content-type') ?? 'application/octet-stream',
-			},
-			language: query.language,
-			now: posInventoryDeps.now(),
-		})
-		return stationJson(voiceProposalSchema.parse(proposal))
-	}),
+	stationRoute(
+		{ query: stationVoiceProposeQuerySchema },
+		async (ctx, query) => {
+			const bytes = await readCappedRequestBytes(
+				ctx.c.req.raw,
+				VOICE_AUDIO_MAX_BYTES,
+			)
+			if (!bytes) return stationError('payload_too_large')
+			const proposal = await proposeFromAudio(ctx.pos.db, {
+				caller: ctx.caller,
+				locationId: ctx.locationId,
+				audio: {
+					bytes,
+					contentType:
+						ctx.c.req.header('content-type') ?? 'application/octet-stream',
+				},
+				language: query.language,
+				now: posInventoryDeps.now(),
+			})
+			return stationJson(voiceProposalSchema.parse(proposal))
+		},
+	),
 )
 
 posInventoryRoutes.post(

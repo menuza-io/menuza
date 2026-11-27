@@ -39,7 +39,10 @@ import {
 	setupTenantEnv,
 	UPDATE,
 } from './inventory-test-utils.ts'
-import { invoiceMailWebhookRoutes } from './invoice-inbox-webhook.ts'
+import {
+	invoiceInboxInternalRoutes,
+	invoiceMailWebhookRoutes,
+} from './invoice-inbox-webhook.ts'
 import { operatorInventoryRoutes } from './operator-inventory.ts'
 
 /**
@@ -83,6 +86,7 @@ vi.mock('../lib/invoice-reader.ts', async (importOriginal) => ({
 const app = new Hono()
 app.route(BASE, operatorInventoryRoutes)
 app.route('/webhooks/invoice-mail', invoiceMailWebhookRoutes)
+app.route('/api/invoice-inbox', invoiceInboxInternalRoutes)
 const call = makeClient(app)
 
 const addresses = new Map<string, InvoiceAddress>([
@@ -440,6 +444,26 @@ describe('an emailed invoice', () => {
 		const db = await getTenantDb(ORG)
 		const files = await db.select().from(invInvoiceInboxFiles)
 		expect(files.filter((file) => file.fileName === 'notes.txt')).toEqual([])
+	})
+
+	it('the hop to the organization takes no more than the edge took, plus the envelope', async () => {
+		useEnv({ INTERNAL_COMMAND_TOKEN: 'test-internal-token-123456789' })
+		const res = await app.request('/api/invoice-inbox/receive', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: 'Bearer test-internal-token-123456789',
+				'content-length': String(40 * 1024 * 1024),
+			},
+			body: '{}',
+		})
+		expect(res.status, await res.clone().text()).toBe(413)
+		const refused = await app.request('/api/invoice-inbox/receive', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: '{}',
+		})
+		expect(refused.status).toBe(401)
 	})
 
 	it('asks the provider to retry while storage is down', async () => {

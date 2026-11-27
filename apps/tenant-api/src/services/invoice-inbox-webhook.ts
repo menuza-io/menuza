@@ -16,7 +16,7 @@ import {
 import { type MailOutcome } from './inventory-invoice-inbox-service.ts'
 
 /** Base64 and the envelope on top of 25 MB of attachments. */
-const MAX_BODY_BYTES = Math.ceil((INVOICE_MAIL_MAX_BYTES * 4) / 3) + 512 * 1024
+export const MAX_BODY_BYTES = Math.ceil((INVOICE_MAIL_MAX_BYTES * 4) / 3) + 512 * 1024
 
 /**
  * `POST /webhooks/invoice-mail` for the Node runtime and the Workers edge alike

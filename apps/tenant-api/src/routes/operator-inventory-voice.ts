@@ -9,6 +9,7 @@ import {
 } from '@repo/inventory'
 import { getTenantDb } from '@repo/tenant-db'
 import { Hono, type Context } from 'hono'
+import { readCappedRequestBytes } from '../lib/http.ts'
 import {
 	getInventoryAuth,
 	inventoryGuard,
@@ -38,9 +39,10 @@ const UPDATE = INVENTORY_PERMISSIONS.UPDATE_INVENTORY
 
 /** The recording of a request, read in memory with a size cap (never stored). */
 async function readAudio(c: Context) {
-	const length = Number(c.req.header('content-length') ?? 0)
-	if (length > VOICE_AUDIO_MAX_BYTES) return null
-	const bytes = new Uint8Array(await c.req.arrayBuffer())
+	// Read as a stream and cut off at the cap, so it stays safe whatever the
+	// header says and wherever this route is mounted.
+	const bytes = await readCappedRequestBytes(c.req.raw, VOICE_AUDIO_MAX_BYTES)
+	if (!bytes) return null
 	return {
 		bytes,
 		contentType: c.req.header('content-type') ?? 'application/octet-stream',
@@ -84,7 +86,10 @@ operatorInventoryVoiceRoutes.post(
 			const location = requireInventoryLocation(ctx, query.data.locationId)
 			if (!location.ok) return location.response
 			const audio = await readAudio(c)
-			if (!audio) return inventoryDeny(413, 'invalid_request', { reason: 'audio_too_large' })
+			if (!audio)
+				return inventoryDeny(413, 'invalid_request', {
+					reason: 'audio_too_large',
+				})
 			return respond(
 				ctx,
 				voiceProposalSchema.parse(

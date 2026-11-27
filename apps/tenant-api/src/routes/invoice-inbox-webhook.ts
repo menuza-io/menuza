@@ -9,7 +9,18 @@ import {
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
 import { receiveInvoiceMail } from '../services/inventory-invoice-inbox-service.ts'
-import { handleInvoiceMailWebhook } from '../services/invoice-inbox-webhook.ts'
+import {
+	handleInvoiceMailWebhook,
+	MAX_BODY_BYTES,
+} from '../services/invoice-inbox-webhook.ts'
+
+/**
+ * The edge already refused anything over `MAX_BODY_BYTES`, so the hop to the
+ * organization's Durable Object takes that plus the small envelope (ids) and no
+ * more: the isolate holds the text, its parse and the decoded files at once, so
+ * a flat 40 MB would leave too little of its 128 MB.
+ */
+const RECEIVE_MAX_BYTES = MAX_BODY_BYTES + 64 * 1024
 
 /**
  * Inbound supplier invoice mail (#503). `POST /webhooks/invoice-mail` is the
@@ -43,7 +54,7 @@ invoiceInboxInternalRoutes.post('/receive', async (c) => {
 	if (!presented || !timingSafeEqualString(presented, token)) {
 		return c.json({ error: 'Unauthorized' }, 401)
 	}
-	const raw = await readCappedRequestText(c.req.raw, 40 * 1024 * 1024)
+	const raw = await readCappedRequestText(c.req.raw, RECEIVE_MAX_BYTES)
 	if (raw === null) return c.json({ status: 'too_large' }, 413)
 	const parsed = receiveSchema.safeParse(
 		(() => {

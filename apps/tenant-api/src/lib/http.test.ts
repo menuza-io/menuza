@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { validationBody } from './http.ts'
+import { readCappedRequestBytes, validationBody } from './http.ts'
 
 describe('validationBody', () => {
 	it('keeps the message of an ordinary issue', () => {
@@ -38,5 +38,42 @@ describe('validationBody', () => {
 		expect(body.issues).toEqual([{ path: '', code: 'unrecognized_keys' }])
 		expect(JSON.stringify(body)).not.toContain('a@example.com')
 		expect(JSON.stringify(body)).not.toContain('+15550100')
+	})
+})
+
+describe('readCappedRequestBytes', () => {
+	const post = (body: BodyInit, headers: Record<string, string> = {}) =>
+		new Request('https://node.test/x', { method: 'POST', body, headers })
+
+	it('reads a body under the cap whole', async () => {
+		const bytes = await readCappedRequestBytes(
+			post(new Uint8Array([1, 2, 3])),
+			10,
+		)
+		expect([...bytes!]).toEqual([1, 2, 3])
+	})
+
+	it('refuses a declared length over the cap before reading', async () => {
+		expect(
+			await readCappedRequestBytes(
+				post('abc', { 'content-length': '999' }),
+				10,
+			),
+		).toBeNull()
+	})
+
+	it('cuts a body off at the cap even with no content-length, so a header cannot be trusted', async () => {
+		const stream = new ReadableStream<Uint8Array>({
+			pull(controller) {
+				controller.enqueue(new Uint8Array(6))
+			},
+		})
+		const request = new Request('https://node.test/x', {
+			method: 'POST',
+			body: stream,
+			// @ts-expect-error duplex is required for a streaming body
+			duplex: 'half',
+		})
+		expect(await readCappedRequestBytes(request, 10)).toBeNull()
 	})
 })

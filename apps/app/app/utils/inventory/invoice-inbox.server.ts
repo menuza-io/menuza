@@ -11,14 +11,33 @@ import { and, db, eq, isNull, OrganizationLocation } from '@repo/database'
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
 export const INVOICE_CODE_LENGTH = 12
 
+/** Largest multiple of the alphabet size that fits a byte: bytes at or above it are redrawn, so every letter is equally likely. */
+const UNBIASED_LIMIT = 256 - (256 % ALPHABET.length)
+
 export function generateInvoiceInboxCode(random = crypto): string {
-	const bytes = new Uint8Array(INVOICE_CODE_LENGTH)
-	random.getRandomValues(bytes)
-	return Array.from(
-		bytes,
-		(byte) => ALPHABET[byte % ALPHABET.length]!,
-	).join('')
+	let code = ''
+	const bytes = new Uint8Array(INVOICE_CODE_LENGTH * 2)
+	while (code.length < INVOICE_CODE_LENGTH) {
+		random.getRandomValues(bytes)
+		for (const byte of bytes) {
+			if (byte >= UNBIASED_LIMIT) continue
+			code += ALPHABET[byte % ALPHABET.length]!
+			if (code.length === INVOICE_CODE_LENGTH) break
+		}
+	}
+	return code
 }
+
+/** A unique-index collision (the one failure worth another try). */
+const isUniqueViolation = (error: unknown) =>
+	/UNIQUE|constraint/i.test(
+		[
+			error instanceof Error ? error.message : String(error),
+			error instanceof Error && error.cause instanceof Error
+				? error.cause.message
+				: '',
+		].join(' '),
+	)
 
 /** The location's code, made on first use. Null when the location is not the organization's. */
 export async function ensureInvoiceInboxCode(input: {
@@ -58,8 +77,17 @@ export async function ensureInvoiceInboxCode(input: {
 				.where(eq(OrganizationLocation.id, input.locationId))
 				.limit(1)
 			return again?.code ?? null
-		} catch {
-			// A code that was already taken (unique index): try another.
+		} catch (error) {
+			// A code that was already taken (unique index): try another. Anything else
+			// (an outage, a timeout, a schema mismatch) is a real failure: say so,
+			// with ids only, never the code.
+			if (!isUniqueViolation(error)) {
+				console.error('invoice inbox code could not be saved', {
+					organizationId: input.organizationId,
+					locationId: input.locationId,
+				})
+				throw error
+			}
 		}
 	}
 	return null

@@ -12,6 +12,10 @@ const querySchema = z.object({ locationId: z.string().min(1).max(100) })
  * kept in the control plane, which holds nothing else about the feature: the
  * region receives and stores the mail. The page shows
  * `invoices+<code>@<domain>`, the domain coming from the region.
+ *
+ * Note: this GET writes the code the first time a location asks (idempotent:
+ * one compare-and-set, the same code every time after). It is deliberately open
+ * to a reader, because anyone who may see Purchasing may see where invoices go.
  */
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requireInventoryAccess(request, params.orgSlug, {
