@@ -28,6 +28,10 @@ const OFF = {
 	recipes: false,
 	prep: false,
 	transfers: false,
+	useBy: false,
+	voiceCounts: false,
+	invoiceInbox: false,
+	routines: false,
 }
 
 const flagIds: string[] = []

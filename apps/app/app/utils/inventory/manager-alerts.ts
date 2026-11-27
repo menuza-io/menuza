@@ -7,6 +7,7 @@ import {
 	type CountOverdueAlert,
 	type OrderApprovalAlert,
 	type RepeatOrderDraftAlert,
+	type RoutineAlert,
 } from '@repo/inventory'
 
 /**
@@ -47,6 +48,7 @@ export const INVENTORY_ALERT_WORKFLOWS = [
 	'inventory.order_approval',
 	'inventory.count_overdue',
 	'inventory.sold_out',
+	'inventory.routine',
 ] as const satisfies readonly ReturnType<typeof inventoryAlertWorkflow>[]
 
 export function isInventoryAlertWorkflow(value: unknown): boolean {
@@ -126,6 +128,9 @@ export function inventoryAlertPath(kind: InventoryNotifyKind): string {
 		case 'inventory_count_overdue':
 			// Today lists the scheduled count that is waiting, with who is responsible.
 			return '/inventory/today'
+		case 'inventory_routine':
+			// The Routines page lists every run and what it did (#529).
+			return '/inventory/routines'
 		case 'inventory_delivery_due':
 		case 'inventory_price_rise':
 		case 'inventory_repeat_order_draft':
@@ -208,6 +213,8 @@ export function describeInventoryAlert(input: {
 	orderApproval?: OrderApprovalAlert
 	/** Overdue scheduled count kind (#491): a kind and a slot, never a name. */
 	countOverdue?: CountOverdueAlert
+	/** Routine kind (#529): which routine ran; the summary stays in the region. */
+	routine?: RoutineAlert
 }): InventoryAlertCopy {
 	const { kind, count } = input
 	const place = input.locationName ? ` at ${input.locationName}` : ''
@@ -331,6 +338,28 @@ export function describeInventoryAlert(input: {
 				headline,
 				detail: `${orderLabel} ${draft || count === 1 ? 'was' : 'were'} drafted from your repeat schedule${place}${deliveryNote}. Review and send before cut-off.`,
 				actionLabel: 'Review draft',
+			}
+		}
+		case 'inventory_routine': {
+			const key = input.routine?.key
+			const headline =
+				key === 'weekly_waste'
+					? 'Your weekly waste summary is ready'
+					: key === 'supplier_cutoff'
+						? "A supplier's cut-off is near and no order is drafted"
+						: 'Your morning brief is ready'
+			const detail =
+				key === 'weekly_waste'
+					? `Last week's top wasted items and reasons${place} are ready. Open Routines to read them.`
+					: key === 'supplier_cutoff'
+						? `A supplier's cut-off is coming${place} and nothing is drafted. Open Routines to see which one.`
+						: `Today's deliveries, counts, prep, who is working and what is running out${place} are ready. Open Routines to read it.`
+			return {
+				eyebrow: 'Routines',
+				subject: `${headline}${place}`,
+				headline,
+				detail,
+				actionLabel: 'Open Routines',
 			}
 		}
 		case 'inventory_order_approval': {

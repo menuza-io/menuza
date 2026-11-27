@@ -161,7 +161,10 @@ const list = async (locationId = LOC, status = 'open', token = owner) => {
 const settle = async (id: string) => {
 	const db = await getTenantDb(ORG)
 	for (let i = 0; i < 100; i++) {
-		const [row] = await db.select().from(invInvoiceInbox).where(eq(invInvoiceInbox.id, id))
+		const [row] = await db
+			.select()
+			.from(invInvoiceInbox)
+			.where(eq(invInvoiceInbox.id, id))
 		if (row && row.readState !== 'pending') return row
 		await new Promise((resolve) => setTimeout(resolve, 10))
 	}
@@ -233,13 +236,15 @@ beforeEach(() => {
 		lookups.push(code)
 		return addresses.get(code) ?? null
 	}
-	fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
-		if ((init as RequestInit | undefined)?.method === 'PUT') {
-			puts.push(String(url))
-			return new Response(null, { status: 200 })
-		}
-		throw new Error(`unexpected fetch ${String(url)}`)
-	})
+	fetchSpy = vi
+		.spyOn(globalThis, 'fetch')
+		.mockImplementation(async (url, init) => {
+			if ((init as RequestInit | undefined)?.method === 'PUT') {
+				puts.push(String(url))
+				return new Response(null, { status: 200 })
+			}
+			throw new Error(`unexpected fetch ${String(url)}`)
+		})
 })
 
 afterEach(() => {
@@ -265,7 +270,9 @@ afterAll(async () => {
 describe('the webhook', () => {
 	it('needs the secret, a configured node and a body in our shape', async () => {
 		expect((await post(mail(), null)).status).toBe(401)
-		expect((await post(mail(), 'wrong-secret-0123456789abcdef')).status).toBe(401)
+		expect((await post(mail(), 'wrong-secret-0123456789abcdef')).status).toBe(
+			401,
+		)
 		expect((await post({ nonsense: true })).status).toBe(400)
 		clearEnv('INVOICE_INBOX_DOMAIN')
 		expect((await post(mail())).status).toBe(503)
@@ -274,11 +281,24 @@ describe('the webhook', () => {
 
 	it('ignores mail that is not for an invoice address, and an address nobody has', async () => {
 		const elsewhere = await post(mail({ to: ['someone@in.menuza.test'] }))
-		expect(elsewhere.body).toMatchObject({ status: 'ignored', reason: 'no_address' })
-		const wrongDomain = await post(mail({ to: [`invoices+${CODE_A}@other.example`] }))
-		expect(wrongDomain.body).toMatchObject({ status: 'ignored', reason: 'no_address' })
-		const unknown = await post(mail({ to: ['invoices+nobody123456@in.menuza.test'] }))
-		expect(unknown.body).toMatchObject({ status: 'ignored', reason: 'unknown_address' })
+		expect(elsewhere.body).toMatchObject({
+			status: 'ignored',
+			reason: 'no_address',
+		})
+		const wrongDomain = await post(
+			mail({ to: [`invoices+${CODE_A}@other.example`] }),
+		)
+		expect(wrongDomain.body).toMatchObject({
+			status: 'ignored',
+			reason: 'no_address',
+		})
+		const unknown = await post(
+			mail({ to: ['invoices+nobody123456@in.menuza.test'] }),
+		)
+		expect(unknown.body).toMatchObject({
+			status: 'ignored',
+			reason: 'unknown_address',
+		})
 		expect(puts).toEqual([])
 	})
 
@@ -286,7 +306,11 @@ describe('the webhook', () => {
 		await post(mail())
 		expect(lookups).toEqual([CODE_A])
 		// The fetches this test saw are storage PUTs only: nothing else left the node.
-		expect(fetchSpy.mock.calls.every(([, init]) => (init as RequestInit)?.method === 'PUT')).toBe(true)
+		expect(
+			fetchSpy.mock.calls.every(
+				([, init]) => (init as RequestInit)?.method === 'PUT',
+			),
+		).toBe(true)
 	})
 })
 
@@ -302,25 +326,37 @@ describe('an emailed invoice', () => {
 			source: 'email',
 			status: 'new',
 			fromAddress: 'billing@fresh-farms.example',
-			files: [{ fileName: 'invoice.pdf', contentType: 'application/pdf', sizeBytes: 600 }],
+			files: [
+				{
+					fileName: 'invoice.pdf',
+					contentType: 'application/pdf',
+					sizeBytes: 600,
+				},
+			],
 		})
 		expect(here.openCount).toBeGreaterThan(0)
 		// The other location of the same organization sees nothing of it.
 		expect((await list(LOC_B)).items).toEqual([])
 		// A token limited to the other location cannot read this one.
-		const refused = await call('GET', `${BASE}/invoice-inbox?locationId=${LOC}`, { token: scoped })
+		const refused = await call(
+			'GET',
+			`${BASE}/invoice-inbox?locationId=${LOC}`,
+			{ token: scoped },
+		)
 		expect(refused.status).toBe(403)
 	})
 
-	it('goes straight to the node\'s own storage: the PDF and the body, nothing else', async () => {
+	it("goes straight to the node's own storage: the PDF and the body, nothing else", async () => {
 		await post(mail())
 		expect(puts.length).toBe(2)
-		expect(puts.every((url) => url.startsWith('https://s3.us.example.test/'))).toBe(true)
+		expect(
+			puts.every((url) => url.startsWith('https://s3.us.example.test/')),
+		).toBe(true)
 		expect(puts[0]).toContain(`/inventory-invoices/${ORG}/inbox-`)
 		expect(puts.some((url) => url.includes('/body.txt'))).toBe(true)
 	})
 
-	it('a KSA location\'s invoice is stored only in KSA storage, and a US node never keeps it', async () => {
+	it("a KSA location's invoice is stored only in KSA storage, and a US node never keeps it", async () => {
 		// The KSA node: the KSA bucket only.
 		process.env.DATA_REGION = 'ksa'
 		useEnv(storageEnv('s3.ksa.example.test'))
@@ -329,7 +365,9 @@ describe('an emailed invoice', () => {
 		)
 		expect(stored.body.status).toBe('stored')
 		expect(puts.length).toBe(2)
-		expect(puts.every((url) => url.startsWith('https://s3.ksa.example.test/'))).toBe(true)
+		expect(
+			puts.every((url) => url.startsWith('https://s3.ksa.example.test/')),
+		).toBe(true)
 		expect(puts.some((url) => url.includes('s3.us.example.test'))).toBe(false)
 		const db = await getTenantDb(ORG_KSA)
 		expect(await db.select().from(invInvoiceInbox)).toHaveLength(1)
@@ -341,7 +379,10 @@ describe('an emailed invoice', () => {
 		const abroad = await post(
 			mail({ to: [`invoices+${CODE_KSA}@in.menuza.test`] }),
 		)
-		expect(abroad.body).toMatchObject({ status: 'ignored', reason: 'other_region' })
+		expect(abroad.body).toMatchObject({
+			status: 'ignored',
+			reason: 'other_region',
+		})
 		expect(puts).toEqual([])
 		expect(await db.select().from(invInvoiceInbox)).toHaveLength(1)
 	})
@@ -369,8 +410,16 @@ describe('an emailed invoice', () => {
 		const none = await post(
 			mail({
 				attachments: [
-					{ filename: 'logo.exe', contentType: 'application/x-msdownload', contentBase64: 'QUJD' },
-					{ filename: 'notes.txt', contentType: 'text/plain', contentBase64: 'QUJD' },
+					{
+						filename: 'logo.exe',
+						contentType: 'application/x-msdownload',
+						contentBase64: 'QUJD',
+					},
+					{
+						filename: 'notes.txt',
+						contentType: 'text/plain',
+						contentBase64: 'QUJD',
+					},
 				],
 			}),
 		)
@@ -378,7 +427,11 @@ describe('an emailed invoice', () => {
 		const mixed = await post(
 			mail({
 				attachments: [
-					{ filename: 'notes.txt', contentType: 'text/plain', contentBase64: 'QUJD' },
+					{
+						filename: 'notes.txt',
+						contentType: 'text/plain',
+						contentBase64: 'QUJD',
+					},
 					pdf('real.pdf'),
 				],
 			}),
@@ -396,7 +449,9 @@ describe('an emailed invoice', () => {
 		expect(reply.body.status).toBe('storage_unavailable')
 		const db = await getTenantDb(ORG)
 		expect(
-			(await db.select().from(invInvoiceInbox)).some((row) => row.messageId?.includes('m')),
+			(await db.select().from(invInvoiceInbox)).some((row) =>
+				row.messageId?.includes('m'),
+			),
 		).toBe(true) // earlier tests' rows exist; none was made for this message
 	})
 
@@ -410,7 +465,10 @@ describe('an emailed invoice', () => {
 			invoiceInbox: false,
 		})
 		const reply = await post(mail())
-		expect(reply.body).toMatchObject({ status: 'ignored', reason: 'feature_off' })
+		expect(reply.body).toMatchObject({
+			status: 'ignored',
+			reason: 'feature_off',
+		})
 		expect(puts).toEqual([])
 	})
 })
@@ -430,26 +488,61 @@ describe('reading, marking and matching', () => {
 		})
 		expect(row.supplierId).not.toBeNull()
 		expect(row.linesJson).toMatchObject([
-			{ description: 'Tomatoes', quantity: 5, unit: 'kg', lineTotalMinor: 1250 },
-			{ description: 'Mystery crate', quantity: 2, unit: null, lineTotalMinor: null },
+			{
+				description: 'Tomatoes',
+				quantity: 5,
+				unit: 'kg',
+				lineTotalMinor: 1250,
+			},
+			{
+				description: 'Mystery crate',
+				quantity: 2,
+				unit: null,
+				lineTotalMinor: null,
+			},
 		])
 	})
 
 	it('the owner can allow a sender, which clears the mark everywhere', async () => {
-		const first = await post(mail({ from: { address: 'accounts@newsupplier.example' }, subject: 'First' }))
-		await post(mail({ from: { address: 'accounts@newsupplier.example' }, subject: 'Second' }))
-		const rows = (await list(LOC, 'all')).items.filter((r) => r.fromAddress === 'accounts@newsupplier.example')
+		const first = await post(
+			mail({
+				from: { address: 'accounts@newsupplier.example' },
+				subject: 'First',
+			}),
+		)
+		await post(
+			mail({
+				from: { address: 'accounts@newsupplier.example' },
+				subject: 'Second',
+			}),
+		)
+		const rows = (await list(LOC, 'all')).items.filter(
+			(r) => r.fromAddress === 'accounts@newsupplier.example',
+		)
 		expect(rows.every((r) => r.senderState === 'unknown')).toBe(true)
-		const allowed = await call('POST', `${BASE}/invoice-inbox/${first.body.inboxId}/allow-sender`, {
-			token: owner,
-			body: {},
-		})
+		const allowed = await call(
+			'POST',
+			`${BASE}/invoice-inbox/${first.body.inboxId}/allow-sender`,
+			{
+				token: owner,
+				body: {},
+			},
+		)
 		expect(allowed.status, JSON.stringify(allowed.body)).toBe(200)
-		const after = (await list(LOC, 'all')).items.filter((r) => r.fromAddress === 'accounts@newsupplier.example')
+		const after = (await list(LOC, 'all')).items.filter(
+			(r) => r.fromAddress === 'accounts@newsupplier.example',
+		)
 		expect(after.every((r) => r.senderState === 'allowed')).toBe(true)
 		// A person without the settings grant cannot.
-		const plain = await mintToken(ORG, { features: { invoiceInbox: true }, canManageSettings: false })
-		const refused = await call('POST', `${BASE}/invoice-inbox/${first.body.inboxId}/allow-sender`, { token: plain, body: {} })
+		const plain = await mintToken(ORG, {
+			features: { invoiceInbox: true },
+			canManageSettings: false,
+		})
+		const refused = await call(
+			'POST',
+			`${BASE}/invoice-inbox/${first.body.inboxId}/allow-sender`,
+			{ token: plain, body: {} },
+		)
 		expect(refused.status).toBe(403)
 	})
 
@@ -495,17 +588,33 @@ describe('reading, marking and matching', () => {
 			invoiceNumber: 'M-500',
 			invoiceDate: '2026-11-27',
 			total: 270,
-			lines: [{ text: 'Matching tomatoes', quantity: 3, unit: 'crate', lineTotal: 270 }],
+			lines: [
+				{
+					text: 'Matching tomatoes',
+					quantity: 3,
+					unit: 'crate',
+					lineTotal: 270,
+				},
+			],
 		})
-		const mailed = await post(mail({ from: { address: 'billing@matching.example' } }))
+		const mailed = await post(
+			mail({ from: { address: 'billing@matching.example' } }),
+		)
 		await settle(mailed.body.inboxId)
 		const id = mailed.body.inboxId as string
 
 		const detail = invoiceInboxDetailSchema.parse(
-			(await call('GET', `${BASE}/invoice-inbox/${id}?locationId=${LOC}`, { token: owner })).body,
+			(
+				await call('GET', `${BASE}/invoice-inbox/${id}?locationId=${LOC}`, {
+					token: owner,
+				})
+			).body,
 		)
 		expect(detail.suggestedOrders.map((o) => o.id)).toEqual([order.id])
-		expect(detail.lines[0]).toMatchObject({ description: 'Matching tomatoes', itemId: item.id })
+		expect(detail.lines[0]).toMatchObject({
+			description: 'Matching tomatoes',
+			itemId: item.id,
+		})
 		expect(detail.files[0]!.url).toContain('https://s3.us.example.test/')
 
 		const matched = await call('POST', `${BASE}/invoice-inbox/${id}/match`, {
@@ -525,9 +634,44 @@ describe('reading, marking and matching', () => {
 			inboxId: id,
 		})
 		// The delivery screen's own prefill from the order is the existing route.
-		const prefill = await call('GET', `${BASE}/orders/${order.id}/receive-prefill`, { token: owner })
+		const prefill = await call(
+			'GET',
+			`${BASE}/orders/${order.id}/receive-prefill`,
+			{ token: owner },
+		)
 		expect(prefill.status).toBe(200)
 		expect(prefill.body.lines[0].itemId).toBe(item.id)
+		// Without the use-by flag the line says nothing about dates (#479).
+		expect(prefill.body.lines[0]).not.toHaveProperty('trackByDate')
+		// With it, the receiving screen learns the item is tracked by date and its shelf life.
+		const dated = await mintToken(ORG, {
+			features: { invoiceInbox: true, useBy: true },
+			subject: 'user_owner',
+			canManageSettings: true,
+		})
+		const current = await call(
+			'GET',
+			`${BASE}/items/${item.id}?locationId=${LOC}`,
+			{ token: dated },
+		)
+		const tracked = await call('PATCH', `${BASE}/items/${item.id}`, {
+			token: dated,
+			body: {
+				trackByDate: true,
+				shelfLifeHours: 48,
+				expectedVersion: current.body.version,
+			},
+		})
+		expect(tracked.status, JSON.stringify(tracked.body)).toBe(200)
+		const datedPrefill = await call(
+			'GET',
+			`${BASE}/orders/${order.id}/receive-prefill`,
+			{ token: dated },
+		)
+		expect(datedPrefill.body.lines[0]).toMatchObject({
+			trackByDate: true,
+			shelfLifeHours: 48,
+		})
 
 		// Receiving against the order, made from the invoice, delivers it.
 		const delivered = await call('POST', `${BASE}/deliveries`, {
@@ -555,9 +699,18 @@ describe('reading, marking and matching', () => {
 		})
 		expect(delivered.status, JSON.stringify(delivered.body)).toBe(200)
 		const db = await getTenantDb(ORG)
-		const [row] = await db.select().from(invInvoiceInbox).where(eq(invInvoiceInbox.id, id))
-		expect(row).toMatchObject({ status: 'delivered', deliveryId: delivered.body.delivery.id })
-		const stored = await db.select().from(invDeliveries).where(eq(invDeliveries.id, delivered.body.delivery.id))
+		const [row] = await db
+			.select()
+			.from(invInvoiceInbox)
+			.where(eq(invInvoiceInbox.id, id))
+		expect(row).toMatchObject({
+			status: 'delivered',
+			deliveryId: delivered.body.delivery.id,
+		})
+		const stored = await db
+			.select()
+			.from(invDeliveries)
+			.where(eq(invDeliveries.id, delivered.body.delivery.id))
 		expect(stored[0]!.invoiceNumber).toBe('M-500')
 		// A delivered invoice cannot be matched again.
 		const again = await call('POST', `${BASE}/invoice-inbox/${id}/match`, {
@@ -567,7 +720,7 @@ describe('reading, marking and matching', () => {
 		expect(again.status).toBe(409)
 	})
 
-	it('matching to another supplier\'s order, or a closed one, is refused; matching to a delivery delivers the invoice', async () => {
+	it("matching to another supplier's order, or a closed one, is refused; matching to a delivery delivers the invoice", async () => {
 		const other = await world.supplier('Other Farms')
 		const item = await world.item('Other tomatoes')
 		const product = await world.product(other.id, item.id)
@@ -578,7 +731,13 @@ describe('reading, marking and matching', () => {
 			lines: [{ itemId: item.id, supplierProductId: product.id, packs: 1 }],
 		})
 		const sup = await world.supplier('Right Farms')
-		reader.read.mockResolvedValue({ supplierName: 'Right Farms', invoiceNumber: 'R-1', invoiceDate: null, total: 5, lines: [] })
+		reader.read.mockResolvedValue({
+			supplierName: 'Right Farms',
+			invoiceNumber: 'R-1',
+			invoiceDate: null,
+			total: 5,
+			lines: [],
+		})
 		const mailed = await post(mail())
 		const row = await settle(mailed.body.inboxId)
 		const wrong = await call('POST', `${BASE}/invoice-inbox/${row.id}/match`, {
@@ -587,36 +746,58 @@ describe('reading, marking and matching', () => {
 		})
 		expect(wrong.status).toBe(409)
 		expect(wrong.body.code).toBe('supplier_mismatch')
-		const unknown = await call('POST', `${BASE}/invoice-inbox/${row.id}/match`, {
-			token: owner,
-			body: { expectedVersion: row.version, orderId: 'nope' },
-		})
+		const unknown = await call(
+			'POST',
+			`${BASE}/invoice-inbox/${row.id}/match`,
+			{
+				token: owner,
+				body: { expectedVersion: row.version, orderId: 'nope' },
+			},
+		)
 		expect(unknown.status).toBe(404)
 		expect(sup.id).toBeTruthy()
 	})
 
 	it('dismisses an invoice, and asks the reader again on request', async () => {
-		reader.read.mockResolvedValue({ supplierName: 'Again Farms', invoiceNumber: 'A-9', invoiceDate: null, total: 1, lines: [] })
+		reader.read.mockResolvedValue({
+			supplierName: 'Again Farms',
+			invoiceNumber: 'A-9',
+			invoiceDate: null,
+			total: 1,
+			lines: [],
+		})
 		const mailed = await post(mail())
 		const row = await settle(mailed.body.inboxId)
-		const reread = await call('POST', `${BASE}/invoice-inbox/${row.id}/read`, { token: owner, body: {} })
+		const reread = await call('POST', `${BASE}/invoice-inbox/${row.id}/read`, {
+			token: owner,
+			body: {},
+		})
 		// Re-reading fetches the stored file; this test's storage only accepts uploads.
 		expect([200, 502]).toContain(reread.status)
-		const dismissed = await call('POST', `${BASE}/invoice-inbox/${row.id}/dismiss`, {
-			token: owner,
-			body: { expectedVersion: (await settle(row.id)).version },
-		})
+		const dismissed = await call(
+			'POST',
+			`${BASE}/invoice-inbox/${row.id}/dismiss`,
+			{
+				token: owner,
+				body: { expectedVersion: (await settle(row.id)).version },
+			},
+		)
 		expect(dismissed.status, JSON.stringify(dismissed.body)).toBe(200)
 		expect(dismissed.body.status).toBe('dismissed')
 		expect((await list(LOC)).items.some((r) => r.id === row.id)).toBe(false)
-		expect((await list(LOC, 'dismissed')).items.some((r) => r.id === row.id)).toBe(true)
+		expect(
+			(await list(LOC, 'dismissed')).items.some((r) => r.id === row.id),
+		).toBe(true)
 	})
 
 	it('shows readState not_configured when the node has no reader', async () => {
 		reader.on = false
 		const mailed = await post(mail())
 		const db = await getTenantDb(ORG)
-		const [row] = await db.select().from(invInvoiceInbox).where(eq(invInvoiceInbox.id, mailed.body.inboxId))
+		const [row] = await db
+			.select()
+			.from(invInvoiceInbox)
+			.where(eq(invInvoiceInbox.id, mailed.body.inboxId))
 		expect(row!.readState).toBe('not_configured')
 		expect(reader.read).not.toHaveBeenCalled()
 	})
@@ -630,13 +811,21 @@ describe('uploads and Station photos', () => {
 	) => {
 		const form = new FormData()
 		for (const file of files) {
-			form.append('files', new File([new Uint8Array(file.bytes).fill(2)], file.name, { type: file.type }))
+			form.append(
+				'files',
+				new File([new Uint8Array(file.bytes).fill(2)], file.name, {
+					type: file.type,
+				}),
+			)
 		}
-		const res = await app.request(`${BASE}/invoice-inbox/upload?locationId=${location}`, {
-			method: 'POST',
-			headers: { Authorization: `Bearer ${token}` },
-			body: form,
-		})
+		const res = await app.request(
+			`${BASE}/invoice-inbox/upload?locationId=${location}`,
+			{
+				method: 'POST',
+				headers: { Authorization: `Bearer ${token}` },
+				body: form,
+			},
+		)
 		return { status: res.status, body: (await res.json()) as any }
 	}
 
@@ -649,23 +838,55 @@ describe('uploads and Station photos', () => {
 		expect(reply.status, JSON.stringify(reply.body)).toBe(201)
 		expect(reply.body.invoices).toHaveLength(2)
 		expect(reply.body.ignored).toBe(1)
-		expect(reply.body.invoices.every((row: any) => row.source === 'upload' && row.senderState === 'known')).toBe(true)
+		expect(
+			reply.body.invoices.every(
+				(row: any) => row.source === 'upload' && row.senderState === 'known',
+			),
+		).toBe(true)
 		expect(puts.length).toBe(2)
 	})
 
 	it('refuses nothing-to-keep, too much, the wrong location and a missing flag', async () => {
-		expect((await upload([{ name: 'c.txt', type: 'text/plain', bytes: 10 }])).status).toBe(400)
-		expect((await upload([{ name: 'a.pdf', type: 'application/pdf', bytes: 500 }], scoped)).status).toBe(403)
-		expect((await upload([{ name: 'a.pdf', type: 'application/pdf', bytes: 500 }], noFlag)).status).toBe(403)
+		expect(
+			(await upload([{ name: 'c.txt', type: 'text/plain', bytes: 10 }])).status,
+		).toBe(400)
+		expect(
+			(
+				await upload(
+					[{ name: 'a.pdf', type: 'application/pdf', bytes: 500 }],
+					scoped,
+				)
+			).status,
+		).toBe(403)
+		expect(
+			(
+				await upload(
+					[{ name: 'a.pdf', type: 'application/pdf', bytes: 500 }],
+					noFlag,
+				)
+			).status,
+		).toBe(403)
 	})
 
 	it('the config says whether to show the address', async () => {
-		const on = await call('GET', `${BASE}/invoice-inbox/config?locationId=${LOC}`, { token: owner })
+		const on = await call(
+			'GET',
+			`${BASE}/invoice-inbox/config?locationId=${LOC}`,
+			{ token: owner },
+		)
 		expect(on.body).toEqual({ enabled: true, domain: 'in.menuza.test' })
 		clearEnv('INVOICE_INBOX_DOMAIN')
-		const off = await call('GET', `${BASE}/invoice-inbox/config?locationId=${LOC}`, { token: owner })
+		const off = await call(
+			'GET',
+			`${BASE}/invoice-inbox/config?locationId=${LOC}`,
+			{ token: owner },
+		)
 		expect(off.body).toEqual({ enabled: false, domain: null })
-		const flagless = await call('GET', `${BASE}/invoice-inbox/config?locationId=${LOC}`, { token: noFlag })
+		const flagless = await call(
+			'GET',
+			`${BASE}/invoice-inbox/config?locationId=${LOC}`,
+			{ token: noFlag },
+		)
 		expect(flagless.body.enabled).toBe(false)
 		expect([READ, UPDATE]).toBeTruthy()
 	})

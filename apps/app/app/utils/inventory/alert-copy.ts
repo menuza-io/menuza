@@ -138,6 +138,13 @@ function describe(
 					msg`Open Purchasing to review and send before cut-off.` as Message,
 				),
 			}
+		case 'inventory_routine':
+			return {
+				subject: _(msg`A routine has something for you` as Message),
+				step: _(
+					msg`Open Routines to read the summary and see what it drafted.` as Message,
+				),
+			}
 		case 'inventory_order_approval':
 			return {
 				subject: _(

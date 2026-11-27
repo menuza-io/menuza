@@ -304,9 +304,19 @@ describe('inventory permission lists and implied permissions', () => {
 			expect(migration).toContain(`('${id}', `)
 			expect(migration).toContain(`('org_role_admin', '${id}')`)
 		}
-		// Every flag is seeded off at system level.
+		// Every flag is seeded off at system level: the first five by 0040, the
+		// freshness flags (#479, #488, #503, #529) by 0085.
+		const flagMigration = fs.readFileSync(
+			path.join(
+				REPO_ROOT,
+				'packages/database/drizzle/0085_inventory_freshness.sql',
+			),
+			'utf8',
+		)
 		for (const key of INVENTORY_FLAG_KEY_LIST) {
-			expect(migration).toContain(`'${key}', 'false', 'system', NULL, NULL`)
+			expect(`${migration}\n${flagMigration}`).toContain(
+				`'${key}', 'false', 'system', NULL, NULL`,
+			)
 		}
 	})
 

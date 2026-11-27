@@ -365,3 +365,75 @@ describe('what the tablet does with each code of the contract', () => {
 		)
 	})
 })
+
+describe('the freshness routes (#523, #488, #503)', () => {
+	const label = {
+		printed: false,
+		jobs: 0,
+		label: {
+			itemId: 'item_tomato',
+			nameEn: 'Hummus',
+			nameAr: 'حمص',
+			kind: 'made',
+			madeAt: 1,
+			useByAt: 2,
+			madeAtLabel: '2026-11-27 10:00',
+			useByLabel: '2026-11-30 10:00',
+			madeBy: null,
+			quantityLabel: null,
+			storageNote: null,
+			timeZone: 'UTC',
+			copies: 1,
+		},
+	}
+
+	it('asks for a label with one request id per press', async () => {
+		const fetchImpl = respond(label)
+		const result = await api(fetchImpl).printLabel({
+			requestId: 'req_00000001',
+			locationId: 'main',
+			itemId: 'item_tomato',
+			kind: 'made',
+		})
+		expect(result.printed).toBe(false)
+		const [url, init] = fetchImpl.mock.calls[0]!
+		expect(url).toBe('https://api.test/pos/inventory/labels')
+		expect(JSON.parse(String(init.body))).toMatchObject({
+			requestId: 'req_00000001',
+			copies: 1,
+		})
+	})
+
+	it('sends a recording as the raw request body with its own content type, never as JSON', async () => {
+		const proposal = { transcript: 'two kilos', lines: [], questions: [] }
+		const fetchImpl = respond(proposal)
+		const audio = new Blob(['abc'], { type: 'audio/webm' })
+		const got = await api(fetchImpl).voicePropose(audio, 'ar')
+		expect(got.transcript).toBe('two kilos')
+		const [url, init] = fetchImpl.mock.calls[0]!
+		expect(url).toBe('https://api.test/pos/inventory/voice/propose?language=ar')
+		expect(init.body).toBe(audio)
+		expect(init.headers).toMatchObject({ 'Content-Type': 'audio/webm' })
+	})
+
+	it('says when the region has no speech model', async () => {
+		await expect(
+			api(
+				respond({ error: 'voice_not_available' }, { status: 503 }),
+			).voicePropose(new Blob(['x'], { type: 'audio/webm' })),
+		).rejects.toMatchObject({ code: 'voice_not_available', status: 503 })
+	})
+
+	it('posts an invoice photo to the inbox, not to a delivery', async () => {
+		const fetchImpl = respond({ invoices: [], ignored: 0 })
+		await api(fetchImpl).invoicePhoto({
+			clientId: 'inv_00000001',
+			locationId: 'main',
+			contentType: 'image/jpeg',
+			contentBase64: 'AAAA',
+		})
+		expect(fetchImpl.mock.calls[0]![0]).toBe(
+			'https://api.test/pos/inventory/invoice-inbox',
+		)
+	})
+})

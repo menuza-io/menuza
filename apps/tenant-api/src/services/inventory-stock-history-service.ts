@@ -265,6 +265,7 @@ async function loadItemRefs(
 				.where(
 					and(
 						eq(invItemPlaces.locationId, locationId),
+						// bounded: its own statement, one chunk of at most 90 ids
 						inArray(invItemPlaces.itemId, chunk),
 					),
 				),

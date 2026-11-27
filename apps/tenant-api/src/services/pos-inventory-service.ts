@@ -112,6 +112,8 @@ export type CatalogInput = {
 	useByEnabled?: boolean
 	/** `inventory.voice_counts` and a speech model in this node's region (#488). */
 	voiceCountsEnabled?: boolean
+	/** `inventory.invoice_inbox` (#503). */
+	invoiceInboxEnabled?: boolean
 	anyStaffCanReceive: boolean
 	now: number
 }
@@ -339,6 +341,7 @@ export async function buildStationCatalog(
 			...(input.recipesEnabled ? { dishWasteEnabled: true } : {}),
 			...(input.useByEnabled ? { useByEnabled: true } : {}),
 			...(input.voiceCountsEnabled ? { voiceCountsEnabled: true } : {}),
+			...(input.invoiceInboxEnabled ? { invoiceInboxEnabled: true } : {}),
 		},
 		items,
 		areas,

@@ -139,6 +139,10 @@ describe('GET /:orgSlug/inventory-token', () => {
 			recipes: true,
 			prep: false,
 			transfers: false,
+			useBy: false,
+			voiceCounts: false,
+			invoiceInbox: false,
+			routines: false,
 		})
 		const claims = inventoryTokenClaimsSchema.parse(decodeJwt(body.jwt))
 		expect(claims.aud).toBe(INVENTORY_TOKEN_AUDIENCE)

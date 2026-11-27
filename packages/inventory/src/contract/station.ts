@@ -182,6 +182,13 @@ export const INVENTORY_POS_PATHS = {
 	dishWasteLog: '/pos/inventory/waste/dish',
 	/** `POST`: take a dish group back (#517). */
 	undoDishWaste: (id: string) => `/pos/inventory/waste/dishes/${id}/undo`,
+	/** `POST`: a prep or opened-item label (#523). */
+	labels: '/pos/inventory/labels',
+	/** `POST`: an invoice photo with no delivery, to the inbox (#503). */
+	invoiceInbox: '/pos/inventory/invoice-inbox',
+	/** `POST` the recording itself: proposed count lines (#488). */
+	voicePropose: '/pos/inventory/voice/propose',
+	voiceParse: '/pos/inventory/voice/parse',
 } as const
 
 // ── Error codes ─────────────────────────────────────────────────────────────
@@ -534,6 +541,8 @@ export const stationCatalogSchema = z.object({
 		 * false hides it.
 		 */
 		voiceCountsEnabled: z.boolean().optional(),
+		/** `inventory.invoice_inbox` is on: "Photograph an invoice" with no delivery (#503). */
+		invoiceInboxEnabled: z.boolean().optional(),
 	}),
 	items: z.array(stationItemSchema),
 	areas: z.array(stationAreaSchema),

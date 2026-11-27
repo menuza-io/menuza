@@ -321,3 +321,22 @@ describe('promised time and push-back', () => {
 		expect(delayCommand(ticket(), 5)).toBeNull()
 	})
 })
+
+describe('doneBody labels (#523)', () => {
+	it('asks for labels only when the cook did, and never sends them otherwise', async () => {
+		const { doneBody } = await import('./prep-model.ts')
+		const task = {
+			version: 2,
+			countUnit: 'l',
+			batches: 1,
+			plannedQuantity: 1000,
+			baseUnit: 'ml',
+			units: [],
+		} as never
+		const answer = { kind: 'batches' as const, value: 1 }
+		expect(doneBody(task, answer, 'c1')).not.toHaveProperty('labels')
+		expect(doneBody(task, answer, 'c1', { copies: 3 })).toMatchObject({
+			labels: { copies: 3 },
+		})
+	})
+})

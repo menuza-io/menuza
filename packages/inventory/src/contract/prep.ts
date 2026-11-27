@@ -105,6 +105,8 @@ export const prepPlanSchema = z.object({
 	generated: z.boolean(),
 	/** Some made item has a fill-up level, so a plan can be made. */
 	canGenerate: z.boolean(),
+	/** Station only: use-by dates are on, so "Print labels" is offered with Done (#523). */
+	labelsEnabled: z.boolean().optional(),
 	tasks: z.array(prepTaskSchema),
 })
 export type PrepPlan = z.infer<typeof prepPlanSchema>

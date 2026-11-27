@@ -6,6 +6,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
 import { CountScreen } from './CountScreen.tsx'
 import { DeliverySheet } from './DeliverySheet.tsx'
+import { InvoicePhotoButton } from './InvoicePhotoButton.tsx'
+import { LabelsSheet } from './LabelsSheet.tsx'
 import {
 	dropFinishedCounts,
 	isDone,
@@ -26,7 +28,8 @@ import { Toast, type ToastMessage } from '~/ui/motion.tsx'
 import { Badge, Button, cn, Modal } from '~/ui/primitives.tsx'
 
 type View = { kind: 'home' } | { kind: 'count'; localId: string }
-type Sheet = 'count' | 'waste' | 'delivery' | 'transfers' | 'sync' | null
+type Sheet =
+	'count' | 'waste' | 'delivery' | 'transfers' | 'labels' | 'sync' | null
 
 /** An "In progress" card: a count this tablet is working on, or one another device started. */
 type Card = {
@@ -230,6 +233,17 @@ export function Stock({
 					},
 				]
 			: []),
+		// Made and opened labels with the use-by time (#523).
+		...(catalog?.settings.useByEnabled
+			? [
+					{
+						key: 'labels' as const,
+						icon: 'tag' as IconName,
+						title: _(t`Labels`),
+						hint: _(t`Print a made or opened label`),
+					},
+				]
+			: []),
 	]
 
 	return (
@@ -296,7 +310,7 @@ export function Stock({
 							</button>
 						))}
 					</div>
-					<div>
+					<div className="flex flex-wrap items-start gap-3">
 						<Button
 							variant="outline"
 							size="lg"
@@ -309,6 +323,7 @@ export function Stock({
 							<Icon name="shopping-bag" className="size-5" aria-hidden />
 							<Trans>Cash purchase</Trans>
 						</Button>
+						<InvoicePhotoButton stock={stock} onToast={say} />
 					</div>
 					<OverdueDeliveries
 						stock={stock}
@@ -493,6 +508,12 @@ export function Stock({
 			<TransfersSheet
 				stock={stock}
 				open={sheet === 'transfers'}
+				onClose={() => setSheet(null)}
+				onToast={say}
+			/>
+			<LabelsSheet
+				stock={stock}
+				open={sheet === 'labels'}
 				onClose={() => setSheet(null)}
 				onToast={say}
 			/>

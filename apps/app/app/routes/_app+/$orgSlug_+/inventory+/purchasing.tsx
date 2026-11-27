@@ -61,6 +61,7 @@ import {
 	useInventoryRevision,
 	useNotifyInventoryChanged,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import { InvoiceInboxPanel } from '#app/components/inventory/invoice-inbox-panel.tsx'
 import {
 	NewOrderDialog,
 	OpenOrdersPanel,
@@ -165,10 +166,13 @@ export default function InventoryPurchasingRoute() {
 	const layout = useInventoryLayoutData()
 	const {
 		orgSlug,
+		nav,
 		activeLocationId,
 		canEdit,
 		canSeeCost,
 		canManagePurchasing,
+		canManageSettings,
+		isOwner,
 		purchasingEnabled,
 		transfersEnabled,
 		transferPlaces,
@@ -486,6 +490,18 @@ export default function InventoryPurchasingRoute() {
 						/>
 					) : null}
 				</>
+			) : null}
+
+			{nav.invoiceInbox ? (
+				<InvoiceInboxPanel
+					orgSlug={orgSlug}
+					locationId={activeLocationId}
+					canEdit={canEdit}
+					canSeeCost={canSeeCost}
+					canManageSettings={Boolean(canManageSettings || isOwner)}
+					currency={currency}
+					search={search}
+				/>
 			) : null}
 
 			{transfersEnabled && transferPlaces.length > 1 ? (

@@ -4,6 +4,7 @@ import {
 	INVENTORY_CATEGORIES,
 	type InvoiceRead,
 	type InvoiceReadLine,
+	invoiceInboxDetailSchema,
 	invoiceReadSchema,
 	itemDetailSchema,
 	listSuppliersResultSchema,
@@ -140,6 +141,7 @@ export function RecordDeliveryScreen({
 	purchasingEnabled = false,
 	orderId = null,
 	creditForDeliveryId = null,
+	inboxId = null,
 	search,
 }: {
 	orgSlug: string
@@ -155,6 +157,8 @@ export function RecordDeliveryScreen({
 	orderId?: string | null
 	/** Record a credit / return for this delivery (#507). */
 	creditForDeliveryId?: string | null
+	/** Start from this invoice in the "Invoices to match" inbox (#503). */
+	inboxId?: string | null
 	search: string
 }) {
 	const { t, i18n } = useLingui()
@@ -182,6 +186,7 @@ export function RecordDeliveryScreen({
 		quantityOnly,
 		isCredit: Boolean(creditForDeliveryId),
 		creditForDeliveryId,
+		invoiceInboxId: inboxId,
 	})
 	const [meta, setMeta] = useState<Record<string, ItemMeta>>({})
 	const [attempted, setAttempted] = useState(false)
@@ -218,6 +223,31 @@ export function RecordDeliveryScreen({
 		},
 		[photoUrl],
 	)
+
+	// An invoice from the inbox starts the header (#503): number, date, total.
+	const inboxInvoice = useInventoryQuery(
+		inboxId
+			? `/invoice-inbox/${encodeURIComponent(inboxId)}?${new URLSearchParams({ locationId })}`
+			: null,
+		invoiceInboxDetailSchema,
+	)
+	const [inboxSeeded, setInboxSeeded] = useState(false)
+	useEffect(() => {
+		const invoice = inboxInvoice.data
+		if (!invoice || inboxSeeded) return
+		setDraft((current) => ({
+			...current,
+			invoiceInboxId: invoice.id,
+			invoiceNumber: invoice.invoiceNumber ?? current.invoiceNumber,
+			invoiceDate: invoice.invoiceDate ?? current.invoiceDate,
+			invoiceTotalText:
+				!quantityOnly && invoice.totalMinor !== undefined
+					? minorToMajorText(invoice.totalMinor, invoice.currency ?? currency)
+					: current.invoiceTotalText,
+			supplierId: current.supplierId || (invoice.supplierId ?? ''),
+		}))
+		setInboxSeeded(true)
+	}, [inboxInvoice.data, inboxSeeded, quantityOnly, currency])
 
 	const prefill = useInventoryQuery(
 		receiving ? `/orders/${encodeURIComponent(orderId)}/receive-prefill` : null,
@@ -325,16 +355,20 @@ export function RecordDeliveryScreen({
 			...current,
 			lines: [
 				...current.lines,
-				newLineDraft({
-					key,
-					itemId: item.id,
-					itemName: item.name,
-					baseUnit: item.baseUnit,
-					pack,
-					currency,
-					system: quantity.system,
-					previousCostMicro: item.costMicro ?? null,
-				}),
+				{
+					...newLineDraft({
+						key,
+						itemId: item.id,
+						itemName: item.name,
+						baseUnit: item.baseUnit,
+						pack,
+						currency,
+						system: quantity.system,
+						previousCostMicro: item.costMicro ?? null,
+					}),
+					trackByDate: item.trackByDate === true,
+					shelfLifeHours: item.shelfLifeHours ?? null,
+				},
 			],
 		}))
 		// The item's last delivered price is what a price move is measured from.
@@ -1748,6 +1782,33 @@ function DeliveryLine({
 						))}
 					</ToggleGroup>
 				</div>
+			) : null}
+
+			{line.trackByDate ? (
+				<TextField
+					label={<Trans>Use by</Trans>}
+					optional
+					type="date"
+					value={line.useByText ?? ''}
+					onChange={(event) =>
+						onChange((current) => ({
+							...current,
+							useByText: event.target.value,
+						}))
+					}
+					error={
+						problems.includes('useBy') ? t`Choose a real date.` : null
+					}
+					hint={
+						line.shelfLifeHours ? (
+							<Trans>Empty: worked out from the shelf life.</Trans>
+						) : (
+							<Trans>Empty: this stock has no date.</Trans>
+						)
+					}
+					dir="ltr"
+					data-testid={`delivery-line-use-by-${line.key}`}
+				/>
 			) : null}
 
 			{quantityOnly ? null : (

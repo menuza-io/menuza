@@ -41,6 +41,7 @@ import {
 	StockQueueFullError,
 } from './queue.ts'
 import { type StockState } from './useStock.ts'
+import { VoiceCount, type VoiceLineChoice } from './VoiceCount.tsx'
 import { db } from '~/lib/db.ts'
 import { Badge, Button, Chip, cn, Modal, Select } from '~/ui/primitives.tsx'
 
@@ -82,6 +83,7 @@ export function CountScreen({
 	// The key-item second-person check (#525): the region tells this person
 	// whether they count the key items a second time (blind), and whether the
 	// count is waiting for someone else.
+	const [voiceOpen, setVoiceOpen] = useState(false)
 	const [pass, setPass] = useState<1 | 2>(1)
 	const [secondState, setSecondState] = useState<string | null>(null)
 	const serverId = 'id' in record.ref ? record.ref.id : null
@@ -238,7 +240,13 @@ export function CountScreen({
 					saveCountEntry(
 						ctx,
 						record.localId,
-						{ itemId, areaId, amount: entry.amount, unit: entry.unit },
+						{
+							itemId,
+							areaId,
+							amount: entry.amount,
+							unit: entry.unit,
+							...(edit.transcript ? { transcript: edit.transcript } : {}),
+						},
 						{
 							keepUnits: edit.keepUnits,
 							knownUnits: edit.knownUnits,
@@ -266,6 +274,31 @@ export function CountScreen({
 				})
 		},
 		[ctx, record.localId, stock, _],
+	)
+
+	/** Confirmed voice lines (#488) go through the same queue as typed ones, with the words kept on the entry. */
+	const applyVoice = useCallback(
+		(lines: VoiceLineChoice[]) => {
+			for (const line of lines) {
+				const owner =
+					(tab && tab.itemIds.includes(line.itemId) ? tab : null) ??
+					tabs.find((entry) => entry.itemIds.includes(line.itemId)) ??
+					null
+				if (!owner) continue
+				const item = items.get(line.itemId)
+				if (!item) continue
+				const unit = line.unit as UnitRef
+				const before = values[rowKey(line.itemId, owner.areaId)] ?? null
+				commit(line.itemId, owner.areaId, {
+					entry: { amount: line.amount, unit },
+					display: { amount: line.amount, unit },
+					keepUnits: [],
+					knownUnits: before ? lineUnits(before, item.countUnit) : [],
+					transcript: line.heard.slice(0, 1000),
+				})
+			}
+		},
+		[commit, items, tab, tabs, values],
 	)
 
 	async function sendNow() {
@@ -420,6 +453,18 @@ export function CountScreen({
 						) : null}
 					</p>
 				</div>
+				{catalog?.settings.voiceCountsEnabled && !finished ? (
+					<Button
+						variant="secondary"
+						size="lg"
+						onClick={() => setVoiceOpen(true)}
+						disabled={!loaded || !reachable}
+						data-testid="count-by-voice"
+					>
+						<Icon name="mic" className="size-5" />
+						<Trans>Count by voice</Trans>
+					</Button>
+				) : null}
 				<Button
 					variant="primary"
 					size="lg"
@@ -551,6 +596,12 @@ export function CountScreen({
 					</div>
 				</>
 			)}
+			<VoiceCount
+				stock={stock}
+				open={voiceOpen}
+				onClose={() => setVoiceOpen(false)}
+				onConfirm={applyVoice}
+			/>
 			<Modal
 				open={confirming}
 				onClose={() => setConfirming(false)}
@@ -607,6 +658,8 @@ type RowEdit = {
 	keepUnits: UnitRef[]
 	/** Units that had an amount before this change: any that are no longer used get cleared at the region. */
 	knownUnits: UnitRef[]
+	/** The words a voice count heard for this line (#488). */
+	transcript?: string
 }
 
 const MAX_EXTRA_LINES = 2

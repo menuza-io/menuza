@@ -257,6 +257,18 @@ describe('labels on Station', () => {
 		expect((jobs[0]!.payload as any).copies).toBe(2)
 	})
 
+	it('tells the tablet the prep plan can print labels, only with use-by on', async () => {
+		await seedSauce()
+		await cashier('POST', '/pos/inventory/prep/generate', {
+			body: { locationId: STOCK_LOC },
+		})
+		const plan = await cashier(
+			'GET',
+			`/pos/inventory/prep?locationId=${STOCK_LOC}`,
+		)
+		expect(prepPlanSchema.parse(plan.body).labelsEnabled).toBe(true)
+	})
+
 	it('shows the Arabic name when the item has one, and only then', async () => {
 		await seedSauce()
 		await labelPrinter()

@@ -39,6 +39,7 @@ import {
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
 import { ItemCountingSection } from '#app/components/inventory/item-counting-section.tsx'
+import { ItemFreshnessSection } from '#app/components/inventory/item-freshness-section.tsx'
 import { ItemRecipeSections } from '#app/components/inventory/item-recipe-sections.tsx'
 import {
 	MergeBanners,
@@ -214,6 +215,7 @@ export default function InventoryItemSheetRoute() {
 			currency={ctx.currency}
 			recipesEnabled={ctx.nav.recipes}
 			canEditRecipes={ctx.nav.editRecipes}
+			useByEnabled={ctx.nav.useBy}
 		/>
 	)
 }
@@ -241,6 +243,7 @@ function ItemSheetBody({
 	currency,
 	recipesEnabled,
 	canEditRecipes,
+	useByEnabled,
 }: {
 	item: ItemDetail
 	orgSlug: string
@@ -261,6 +264,7 @@ function ItemSheetBody({
 	currency: string
 	recipesEnabled: boolean
 	canEditRecipes: boolean
+	useByEnabled: boolean
 }) {
 	const { t, i18n } = useLingui()
 	const { memberNames } = useLoaderData<typeof loader>()
@@ -764,6 +768,15 @@ function ItemSheetBody({
 				canEdit={canEdit && !item.archived}
 				onChanged={onChanged}
 			/>
+
+			{useByEnabled ? (
+				<ItemFreshnessSection
+					item={item}
+					locationId={locationId}
+					canEdit={canEdit && !item.archived}
+					onChanged={onChanged}
+				/>
+			) : null}
 
 			<UsedInSection
 				itemId={item.id}

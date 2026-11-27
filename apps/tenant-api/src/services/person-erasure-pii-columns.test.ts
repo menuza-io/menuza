@@ -169,6 +169,12 @@ const inventoryActorId =
 
 /** Single columns that look like PII but are not a customer's data. */
 const ALLOWED_COLUMNS: Record<string, string> = {
+	'inv_count_entries.transcript':
+		'the words a stock count was spoken in (#488): item names and amounts the counter said, kept for the review; the recording itself is never stored. Not about a customer',
+	'inv_invoice_inbox.from_address':
+		'the sender address of a supplier invoice email (#503): a supplier business contact, not a customer; the inbox row follows the invoice retention',
+	'inv_invoice_senders.address':
+		'a supplier address the owner allowed to send invoices (#503): a business contact, not a customer',
 	'loyalty_rewards.name': 'reward title written by the operator',
 	'print_devices.name': 'printer title written by the operator (#117)',
 	'delivery_run_positions.lat':

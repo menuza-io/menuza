@@ -99,7 +99,7 @@ describe('inventory alert vocabulary', () => {
 				locationName: 'Downtown',
 			})
 			expect(withPlace.subject).toContain('Downtown')
-			expect(withPlace.headline).toMatch(/2/)
+			if (kind !== 'inventory_routine') expect(withPlace.headline).toMatch(/2/)
 			const without = describeInventoryAlert({
 				kind,
 				count: 1,

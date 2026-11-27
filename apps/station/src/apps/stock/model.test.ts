@@ -253,6 +253,19 @@ describe('delivery lines', () => {
 		})
 	})
 
+	it('carries the use-by date of a tracked item, only when it is a real date (#479)', () => {
+		const lines = linesFromExpected(order)
+		expect(
+			deliveryLines([{ ...lines[0]!, useByDate: '2026-12-01' }])[0],
+		).toMatchObject({ useByDate: '2026-12-01' })
+		expect(
+			deliveryLines([{ ...lines[0]!, useByDate: 'soon' }])[0],
+		).not.toHaveProperty('useByDate')
+		expect(
+			deliveryLines([{ ...lines[0]!, useByDate: '' }])[0],
+		).not.toHaveProperty('useByDate')
+	})
+
 	it('knows when an order is short, which is when "nothing more is coming" matters', () => {
 		const lines = linesFromExpected(order)
 		expect(hasShortLines(lines)).toBe(false)

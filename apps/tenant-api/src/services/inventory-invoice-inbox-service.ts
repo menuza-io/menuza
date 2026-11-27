@@ -34,6 +34,7 @@ import {
 	or,
 	sql,
 } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { fetchNoRedirect } from '../lib/fetch-no-redirect.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
@@ -635,11 +636,14 @@ async function filesOf(
 ): Promise<Map<string, InvInvoiceInboxFileRow[]>> {
 	const map = new Map<string, InvInvoiceInboxFileRow[]>()
 	if (ids.length === 0) return map
-	const rows = await db
-		.select()
-		.from(invInvoiceInboxFiles)
-		.where(inArray(invInvoiceInboxFiles.inboxId, [...ids]))
-		.orderBy(invInvoiceInboxFiles.position)
+	const rows = (
+		await queryInChunks([...ids], (chunk) =>
+			db
+				.select()
+				.from(invInvoiceInboxFiles)
+				.where(inArray(invInvoiceInboxFiles.inboxId, chunk)),
+		)
+	).sort((a, b) => a.position - b.position)
 	for (const row of rows) {
 		const list = map.get(row.inboxId)
 		if (list) list.push(row)
@@ -719,10 +723,9 @@ async function itemsOf(
 	caller: InventoryCaller,
 ): Promise<InvoiceInboxItem[]> {
 	if (ids.length === 0) return []
-	const rows = await db
-		.select()
-		.from(invInvoiceInbox)
-		.where(inArray(invInvoiceInbox.id, [...ids]))
+	const rows = await queryInChunks([...ids], (chunk) =>
+		db.select().from(invInvoiceInbox).where(inArray(invInvoiceInbox.id, chunk)),
+	)
 	const order = new Map(ids.map((id, index) => [id, index]))
 	rows.sort((a, b) => order.get(a.id)! - order.get(b.id)!)
 	const [files, duplicates] = await Promise.all([

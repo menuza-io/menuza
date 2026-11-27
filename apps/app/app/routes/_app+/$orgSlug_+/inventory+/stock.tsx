@@ -37,6 +37,7 @@ import {
 	StockList,
 	StockListSkeleton,
 } from '#app/components/inventory/stock-list.tsx'
+import { StockOnDateDialog } from '#app/components/inventory/stock-on-date-dialog.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import {
 	useInventoryClient,
@@ -91,6 +92,7 @@ export default function InventoryStockRoute() {
 	const filters = parseStockFilters(searchParams)
 	const basePath = `/${orgSlug}/inventory/stock`
 	const [grouping, setGrouping] = useState(false)
+	const [onDateOpen, setOnDateOpen] = useState(false)
 
 	// The search box types freely and writes the URL after a pause. A change
 	// to `q` that did not come from the box (Clear filters) refills the box.
@@ -300,6 +302,13 @@ export default function InventoryStockRoute() {
 									</DropdownMenuItem>
 								</>
 							) : null}
+							<DropdownMenuItem
+								onClick={() => setOnDateOpen(true)}
+								data-testid="stock-on-date-open"
+							>
+								<Icon name="calendar" />
+								<Trans>Stock on a date</Trans>
+							</DropdownMenuItem>
 							{canSetLevels ? (
 								<DropdownMenuItem
 									render={<Link to={`${basePath}/levels${search}`} />}
@@ -313,6 +322,14 @@ export default function InventoryStockRoute() {
 					</DropdownMenu>
 				</InventoryHeaderActions>
 			) : null}
+
+			<StockOnDateDialog
+				open={onDateOpen}
+				onOpenChange={setOnDateOpen}
+				locationId={activeLocationId}
+				canSeeCost={canSeeCost}
+				currency={currency}
+			/>
 
 			<div
 				role="search"

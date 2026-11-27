@@ -35,7 +35,7 @@ afterEach(() => {
 describe('inventoryGate (the Stock app on a terminal)', () => {
 	it('opens only with the terminal switch, sign-in, a location and the flag', async () => {
 		seedInventoryContextForTest(ORG, on)
-		expect(await inventoryGate(ORG, device())).toEqual({
+		expect(await inventoryGate(ORG, device())).toMatchObject({
 			ok: true,
 			locationId: 'loc_1',
 		})

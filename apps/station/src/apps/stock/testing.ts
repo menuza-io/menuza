@@ -226,6 +226,45 @@ export function fakeApi(over: Partial<StockApi> = {}): Recorded {
 				version: 3,
 			})
 		},
+		async printLabel(...args) {
+			const body = args[0] as { itemId: string; kind: 'made' | 'opened' }
+			return record('printLabel', args, {
+				printed: false,
+				jobs: 0,
+				label: {
+					itemId: body.itemId,
+					nameEn: 'Hummus',
+					nameAr: 'حمص',
+					kind: body.kind,
+					madeAt: 1,
+					useByAt: 2,
+					madeAtLabel: '2026-11-27 10:00',
+					useByLabel: '2026-11-30 10:00',
+					madeBy: null,
+					quantityLabel: null,
+					storageNote: null,
+					timeZone: 'UTC',
+					copies: 1,
+				},
+			})
+		},
+		async voicePropose(...args) {
+			return record('voicePropose', args, {
+				transcript: '',
+				lines: [],
+				questions: [],
+			})
+		},
+		async voiceParse(...args) {
+			return record('voiceParse', args, {
+				transcript: '',
+				lines: [],
+				questions: [],
+			})
+		},
+		async invoicePhoto(...args) {
+			return record('invoicePhoto', args, { invoices: [], ignored: 0 })
+		},
 		async dishWaste(...args) {
 			const body = args[0] as { lines: unknown[] }
 			return record('dishWaste', args, {

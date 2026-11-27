@@ -61,6 +61,7 @@ function getWorkflowLabel(
 		'inventory.delivery_due': msg`Inventory: an order is due for delivery`,
 		'inventory.price_rise': msg`Inventory: an item went up in price`,
 		'inventory.sold_out': msg`Inventory: a dish went off the menu because an ingredient ran out`,
+		'inventory.routine': msg`Inventory: a routine has something for you (morning brief, waste summary, cut-off reminder)`,
 		orders_new: msg`Orders: a new online order arrives`,
 		orders_waiting: msg`Orders: an order has been waiting too long`,
 		orders_due_soon: msg`Orders: a scheduled order is due soon and still new`,

@@ -218,6 +218,7 @@ posInventoryRoutes.get(
 				useByEnabled: flags.features.useBy === true,
 				voiceCountsEnabled:
 					flags.features.voiceCounts === true && isSpeechReaderConfigured(),
+				invoiceInboxEnabled: flags.features.invoiceInbox === true,
 				anyStaffCanReceive: settings.anyStaffCanReceive === true,
 				now: posInventoryDeps.now(),
 			})
@@ -546,7 +547,13 @@ posInventoryRoutes.get(
 				stationId: query.stationId,
 				now: posInventoryDeps.now(),
 			})
-			return stationJson(prepPlanSchema.parse(plan))
+			return stationJson(
+				prepPlanSchema.parse({
+					...plan,
+					// "Print labels" with Done (#523) only while use-by dates are on.
+					...(ctx.caller.features?.useBy ? { labelsEnabled: true } : {}),
+				}),
+			)
 		},
 	),
 )

@@ -124,6 +124,13 @@ export function attentionTarget(
 				kind: item.kind,
 				to: `${join(`${base}/today`, search)}#sold-out`,
 			}
+		case 'expired_stock':
+		case 'use_first':
+			// The lists with their one-tap waste sit lower on Today (#479).
+			return {
+				kind: item.kind,
+				to: `${join(`${base}/today`, search)}#freshness`,
+			}
 		case 'runs_out_soon':
 			// The item's sheet shows the days left and the use rate behind it.
 			return {

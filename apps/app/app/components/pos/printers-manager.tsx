@@ -52,6 +52,7 @@ const routesSchema = z.object({
 	isDefault: z.boolean().catch(false),
 	deliveryAddress: z.boolean().catch(false),
 	arabicFont: z.boolean().catch(false),
+	labels: z.boolean().catch(false),
 })
 
 const printerSchema = z.object({
@@ -613,6 +614,7 @@ function AddPrinterDialog({
 	const [isDefault, setIsDefault] = useState(false)
 	const [deliveryAddress, setDeliveryAddress] = useState(false)
 	const [arabicFont, setArabicFont] = useState(false)
+	const [labels, setLabels] = useState(false)
 	const [stations, setStations] = useState<Array<{ id: string; name: string }>>([])
 	const [error, setError] = useState<string | null>(null)
 	const [saving, setSaving] = useState(false)
@@ -649,6 +651,7 @@ function AddPrinterDialog({
 					isDefault,
 					deliveryAddress,
 					arabicFont,
+					labels,
 				},
 			})
 		} catch (failure) {
@@ -773,6 +776,11 @@ function AddPrinterDialog({
 						label={_(t`The printer has an Arabic font`)}
 						checked={arabicFont}
 						onChange={setArabicFont}
+					/>
+					<Row
+						label={_(t`Print food-safety labels here (2 inch)`)}
+						checked={labels}
+						onChange={setLabels}
 					/>
 					{error ? (
 						<p role="alert" className="text-destructive text-sm">
