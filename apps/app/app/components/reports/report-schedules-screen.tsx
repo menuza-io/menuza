@@ -107,7 +107,13 @@ export function ReportSchedulesScreen({
 	initialReport: string | null
 }) {
 	const { t, i18n } = useLingui()
-	const fetcher = useFetcher<{ ok: boolean; error?: string; detail?: string[] }>()
+	const maxSchedules = limits.schedules
+	const maxRecipients = limits.recipients
+	const fetcher = useFetcher<{
+		ok: boolean
+		error?: string
+		detail?: string[]
+	}>()
 	const empty: FormState = {
 		id: null,
 		report: initialReport ?? DAILY_SUMMARY,
@@ -132,9 +138,9 @@ export function ReportSchedulesScreen({
 			case 'report_has_personal_fields':
 				return t`This report shows a customer name, phone or email, so it cannot be emailed on a schedule. Remove those columns or filters first.`
 			case 'too_many_schedules':
-				return t`An organization can have ${limits.schedules} schedules. Delete one first.`
+				return t`An organization can have ${maxSchedules} schedules. Delete one first.`
 			case 'too_many_recipients':
-				return t`A schedule can have ${limits.recipients} recipients.`
+				return t`A schedule can have ${maxRecipients} recipients.`
 			case 'invalid_recipient':
 				return t`Recipients must be members of this organization.`
 			case 'no_recipients':
@@ -151,16 +157,21 @@ export function ReportSchedulesScreen({
 	}
 
 	const weekdayName = (day: number) =>
-		new Intl.DateTimeFormat(i18n.locale, { weekday: 'long', timeZone: 'UTC' }).format(
-			new Date(Date.UTC(2023, 0, 1 + day)),
-		)
+		new Intl.DateTimeFormat(i18n.locale, {
+			weekday: 'long',
+			timeZone: 'UTC',
+		}).format(new Date(Date.UTC(2023, 0, 1 + day)))
 	const hourLabel = (hour: number) => `${String(hour).padStart(2, '0')}:00`
-	const when = (s: ScheduleListItem) =>
-		s.cadence === 'daily'
-			? t`Every day at ${hourLabel(s.hour)} (${s.timeZone})`
+	const when = (s: ScheduleListItem) => {
+		const hour = hourLabel(s.hour)
+		const zone = s.timeZone
+		const weekday = weekdayName(s.weekday ?? 1)
+		return s.cadence === 'daily'
+			? t`Every day at ${hour} (${zone})`
 			: s.cadence === 'weekly'
-				? t`Every ${weekdayName(s.weekday ?? 1)} at ${hourLabel(s.hour)} (${s.timeZone})`
-				: t`On the 1st of each month at ${hourLabel(s.hour)} (${s.timeZone})`
+				? t`Every ${weekday} at ${hour} (${zone})`
+				: t`On the 1st of each month at ${hour} (${zone})`
+	}
 	const date = (iso: string | null) =>
 		iso
 			? new Intl.DateTimeFormat(i18n.locale, {
@@ -175,16 +186,23 @@ export function ReportSchedulesScreen({
 		})
 
 	const reportOptions = [
-		{ value: DAILY_SUMMARY, label: t`Daily summary (yesterday against the same weekday last week)` },
-		...reports.map((report) => ({
-			value: report.id,
-			label: report.personal
-				? t`${report.title} (shows customer details, cannot be scheduled)`
-				: report.title,
-		})),
+		{
+			value: DAILY_SUMMARY,
+			label: t`Daily summary (yesterday against the same weekday last week)`,
+		},
+		...reports.map((report) => {
+			const title = report.title
+			return {
+				value: report.id,
+				label: report.personal
+					? t`${title} (shows customer details, cannot be scheduled)`
+					: title,
+			}
+		}),
 	]
 	const selectedPersonal =
-		form !== null && reports.find((r) => r.id === form.report)?.personal === true
+		form !== null &&
+		reports.find((r) => r.id === form.report)?.personal === true
 
 	return (
 		<WorkspacePage>
@@ -192,14 +210,17 @@ export function ReportSchedulesScreen({
 				title={<Trans>Scheduled reports</Trans>}
 				description={
 					<Trans>
-						Email a saved report, or a daily summary, to members of your team
-						at a set time. Reports are run and sent from the region your data
-						lives in, and never include customer names, phones or emails.
+						Email a saved report, or a daily summary, to members of your team at
+						a set time. Reports are run and sent from the region your data lives
+						in, and never include customer names, phones or emails.
 					</Trans>
 				}
 				actions={
 					<div className="flex flex-wrap gap-2">
-						<Button variant="outline" render={<Link to={`/${orgSlug}/reports`} />}>
+						<Button
+							variant="outline"
+							render={<Link to={`/${orgSlug}/reports`} />}
+						>
 							<Trans>Back to reports</Trans>
 						</Button>
 						{enabled ? (
@@ -219,7 +240,9 @@ export function ReportSchedulesScreen({
 				<Alert data-testid="schedules-off">
 					<Icon name="alert-triangle" />
 					<AlertDescription>
-						<Trans>Scheduled reports are not switched on for this organization yet.</Trans>
+						<Trans>
+							Scheduled reports are not switched on for this organization yet.
+						</Trans>
 					</AlertDescription>
 				</Alert>
 			) : schedules.length === 0 ? (
@@ -227,8 +250,8 @@ export function ReportSchedulesScreen({
 					title={<Trans>No scheduled reports yet</Trans>}
 					description={
 						<Trans>
-							Start with the daily summary: yesterday&apos;s sales, orders,
-							tips and more, every morning.
+							Start with the daily summary: yesterday&apos;s sales, orders, tips
+							and more, every morning.
 						</Trans>
 					}
 					icons={['calendar', 'clock', 'users']}
@@ -238,12 +261,24 @@ export function ReportSchedulesScreen({
 					<Table variant="card" data-testid="schedules-table">
 						<TableHeader>
 							<TableRow>
-								<TableHead><Trans>Report</Trans></TableHead>
-								<TableHead><Trans>When</Trans></TableHead>
-								<TableHead><Trans>Recipients</Trans></TableHead>
-								<TableHead><Trans>Last sent</Trans></TableHead>
-								<TableHead><Trans>Status</Trans></TableHead>
-								<TableHead className="text-end"><Trans>Actions</Trans></TableHead>
+								<TableHead>
+									<Trans>Report</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>When</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Recipients</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Last sent</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Status</Trans>
+								</TableHead>
+								<TableHead className="text-end">
+									<Trans>Actions</Trans>
+								</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -259,11 +294,20 @@ export function ReportSchedulesScreen({
 												<span key={r.userId} className="wrap-anywhere">
 													{r.name || r.email}
 													{r.unsubscribed ? (
-														<span className="text-muted-foreground"> · {t`unsubscribed`}</span>
+														<span className="text-muted-foreground">
+															{' '}
+															· {t`unsubscribed`}
+														</span>
 													) : r.lastStatus === 'skipped_no_access' ? (
-														<span className="text-warning"> · {t`skipped: no access`}</span>
+														<span className="text-warning">
+															{' '}
+															· {t`skipped: no access`}
+														</span>
 													) : r.lastStatus === 'skipped_not_member' ? (
-														<span className="text-warning"> · {t`skipped: no longer a member`}</span>
+														<span className="text-warning">
+															{' '}
+															· {t`skipped: no longer a member`}
+														</span>
 													) : null}
 												</span>
 											))}
@@ -272,8 +316,11 @@ export function ReportSchedulesScreen({
 									<TableCell className="text-sm">
 										{date(s.lastSentAt)}
 										{s.lastError ? (
-											<div className="text-destructive" data-testid={`schedule-error-${s.id}`}>
-												{t`Last error: ${s.lastError}`}
+											<div
+												className="text-destructive"
+												data-testid={`schedule-error-${s.id}`}
+											>
+												<LastError message={s.lastError} />
 											</div>
 										) : null}
 									</TableCell>
@@ -297,7 +344,10 @@ export function ReportSchedulesScreen({
 												variant="outline"
 												disabled={busy}
 												onClick={() =>
-													submit({ intent: s.pausedAt ? 'resume' : 'pause', id: s.id })
+													submit({
+														intent: s.pausedAt ? 'resume' : 'pause',
+														id: s.id,
+													})
 												}
 												data-testid={`schedule-pause-${s.id}`}
 											>
@@ -310,7 +360,9 @@ export function ReportSchedulesScreen({
 												onClick={() =>
 													setForm({
 														id: s.id,
-														report: s.builtIn ? DAILY_SUMMARY : (s.savedReportId ?? DAILY_SUMMARY),
+														report: s.builtIn
+															? DAILY_SUMMARY
+															: (s.savedReportId ?? DAILY_SUMMARY),
 														cadence: s.cadence as FormState['cadence'],
 														weekday: String(s.weekday ?? 1),
 														hour: String(s.hour),
@@ -341,7 +393,10 @@ export function ReportSchedulesScreen({
 				</Frame>
 			)}
 
-			<Dialog open={form !== null} onOpenChange={(open) => !open && setForm(null)}>
+			<Dialog
+				open={form !== null}
+				onOpenChange={(open) => !open && setForm(null)}
+			>
 				<DialogContent data-testid="schedule-dialog">
 					{form ? (
 						<>
@@ -351,8 +406,8 @@ export function ReportSchedulesScreen({
 								</DialogTitle>
 								<DialogDescription>
 									<Trans>
-										The email holds a summary and a link to download the CSV.
-										It is sent at the hour you pick, in the time zone you pick.
+										The email holds a summary and a link to download the CSV. It
+										is sent at the hour you pick, in the time zone you pick.
 									</Trans>
 								</DialogDescription>
 							</DialogHeader>
@@ -366,13 +421,18 @@ export function ReportSchedulesScreen({
 										setForm({
 											...form,
 											report,
-											cadence: report === DAILY_SUMMARY ? 'daily' : form.cadence,
+											cadence:
+												report === DAILY_SUMMARY ? 'daily' : form.cadence,
 										})
 									}
 									testId="schedule-report"
 								/>
 								{selectedPersonal ? (
-									<p role="alert" className="text-destructive text-sm" data-testid="schedule-personal">
+									<p
+										role="alert"
+										className="text-destructive text-sm"
+										data-testid="schedule-personal"
+									>
 										{errorText('report_has_personal_fields')}
 									</p>
 								) : null}
@@ -385,12 +445,18 @@ export function ReportSchedulesScreen({
 												? []
 												: [
 														{ value: 'weekly', label: t`Every week` },
-														{ value: 'monthly', label: t`On the 1st of the month` },
+														{
+															value: 'monthly',
+															label: t`On the 1st of the month`,
+														},
 													]),
 										]}
 										value={form.cadence}
 										onValueChange={(cadence) =>
-											setForm({ ...form, cadence: cadence as FormState['cadence'] })
+											setForm({
+												...form,
+												cadence: cadence as FormState['cadence'],
+											})
 										}
 										testId="schedule-cadence"
 									/>
@@ -444,15 +510,18 @@ export function ReportSchedulesScreen({
 									</legend>
 									<p className="text-muted-foreground text-xs">
 										<Trans>
-											Members only, up to {limits.recipients}. Each person
-											receives only what their own access allows.
+											Members only, up to {maxRecipients}. Each person receives
+											only what their own access allows.
 										</Trans>
 									</p>
 									<div className="max-h-48 overflow-auto rounded-md border p-2">
 										{members.map((member) => {
 											const checked = form.recipients.includes(member.id)
 											return (
-												<label key={member.id} className="flex items-center gap-2 py-1 text-sm">
+												<label
+													key={member.id}
+													className="flex items-center gap-2 py-1 text-sm"
+												>
 													<Checkbox
 														checked={checked}
 														onCheckedChange={(next) =>
@@ -460,7 +529,9 @@ export function ReportSchedulesScreen({
 																...form,
 																recipients: next
 																	? [...form.recipients, member.id]
-																	: form.recipients.filter((id) => id !== member.id),
+																	: form.recipients.filter(
+																			(id) => id !== member.id,
+																		),
 															})
 														}
 														data-testid={`schedule-recipient-${member.id}`}
@@ -475,7 +546,11 @@ export function ReportSchedulesScreen({
 									</div>
 								</fieldset>
 								{failed ? (
-									<p role="alert" className="text-destructive text-sm" data-testid="schedule-error">
+									<p
+										role="alert"
+										className="text-destructive text-sm"
+										data-testid="schedule-error"
+									>
 										{errorText(failed.error)}
 									</p>
 								) : null}
@@ -485,14 +560,18 @@ export function ReportSchedulesScreen({
 									<Trans>Cancel</Trans>
 								</Button>
 								<Button
-									disabled={busy || selectedPersonal || form.recipients.length === 0}
+									disabled={
+										busy || selectedPersonal || form.recipients.length === 0
+									}
 									onClick={() => {
 										submit({
 											intent: form.id ? 'update' : 'create',
 											id: form.id,
-											savedReportId: form.report === DAILY_SUMMARY ? null : form.report,
+											savedReportId:
+												form.report === DAILY_SUMMARY ? null : form.report,
 											cadence: form.cadence,
-											weekday: form.cadence === 'weekly' ? Number(form.weekday) : null,
+											weekday:
+												form.cadence === 'weekly' ? Number(form.weekday) : null,
 											hour: Number(form.hour),
 											timeZone: form.timeZone.trim(),
 											locale: form.locale,
@@ -522,4 +601,8 @@ function CloseOnSuccess({ onClose }: { onClose: () => void }) {
 		return null
 	})
 	return null
+}
+
+function LastError({ message }: { message: string }) {
+	return <Trans>Last error: {message}</Trans>
 }

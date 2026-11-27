@@ -1,8 +1,6 @@
-import { db, eq, PhoneAgent } from '@repo/database'
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import { db, eq, PhoneAgent } from '@repo/database'
 import { LOYALTY_FLAG_KEYS } from '@repo/loyalty'
-import { RESERVATIONS_FLAG_KEYS } from '@repo/reservations'
-import { isFlagOn } from '@repo/staffing'
 import {
 	FIGURES,
 	figureValue,
@@ -14,6 +12,8 @@ import {
 	type FigureValue,
 	type TimeframePreset,
 } from '@repo/reports'
+import { RESERVATIONS_FLAG_KEYS } from '@repo/reservations'
+import { isFlagOn } from '@repo/staffing'
 import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import { loadCachedReviewRecords } from './review-records.server.ts'
 
@@ -65,5 +65,9 @@ export async function reviewFigureValue(input: {
 		})
 		return isReportRunError(result) ? null : result
 	}
-	return figureValue(input.id, run(input.asOf.current), run(input.asOf.previous))
+	return figureValue(
+		input.id,
+		run(input.asOf.current),
+		run(input.asOf.previous),
+	)
 }

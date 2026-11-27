@@ -268,7 +268,9 @@ export function TodayBlock({
 						variant="link"
 						size="sm"
 						className="h-auto self-start p-0"
-						render={<Link to={`/${orgSlug}/reports/schedules?report=daily_summary`} />}
+						render={
+							<Link to={`/${orgSlug}/reports/schedules?report=daily_summary`} />
+						}
 						data-testid="today-email-summary"
 					>
 						<Trans>Email me yesterday&apos;s summary every morning</Trans>

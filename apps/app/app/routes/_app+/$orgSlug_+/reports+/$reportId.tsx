@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { catalogForGrants, definitionAllowed, getCatalog } from '@repo/reports'
 import {
@@ -5,9 +6,8 @@ import {
 	parseDefinition,
 	saveReport,
 } from '@repo/reports/server'
-import { Link, useLoaderData } from 'react-router'
-import { Trans } from '@lingui/macro'
 import { Button } from '@repo/ui/button'
+import { Link, useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -112,7 +112,9 @@ export default function SavedReportRoute() {
 					variant="outline"
 					size="sm"
 					render={
-						<Link to={`/${data.orgSlug}/reports/schedules?report=${data.reportId}`} />
+						<Link
+							to={`/${data.orgSlug}/reports/schedules?report=${data.reportId}`}
+						/>
 					}
 					data-testid="report-schedule-email"
 				>

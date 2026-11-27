@@ -180,12 +180,42 @@ beforeEach(async () => {
 	])
 	// Big: 2 counted orders + one cancelled (not a sale). Mid: one, plus a guest
 	// checkout with the same number written differently (matched by phone).
-	await addOrder({ customerId: 'cus_big', phone: '+14155550101', totalCents: 5000, at: now - 20 * DAY })
-	await addOrder({ customerId: 'cus_big', phone: '+14155550101', totalCents: 2500, at: now - 3 * DAY })
-	await addOrder({ customerId: 'cus_big', phone: '+14155550101', totalCents: 99_999, status: 'cancelled' })
-	await addOrder({ customerId: 'cus_mid', phone: '+14155550102', totalCents: 4000, at: now - 10 * DAY })
-	await addOrder({ customerId: null, phone: '(415) 555-0102', totalCents: 1500, at: now - 2 * DAY })
-	await addOrder({ customerId: 'cus_small', phone: '+14155550103', totalCents: 900, at: now - 8 * DAY })
+	await addOrder({
+		customerId: 'cus_big',
+		phone: '+14155550101',
+		totalCents: 5000,
+		at: now - 20 * DAY,
+	})
+	await addOrder({
+		customerId: 'cus_big',
+		phone: '+14155550101',
+		totalCents: 2500,
+		at: now - 3 * DAY,
+	})
+	await addOrder({
+		customerId: 'cus_big',
+		phone: '+14155550101',
+		totalCents: 99_999,
+		status: 'cancelled',
+	})
+	await addOrder({
+		customerId: 'cus_mid',
+		phone: '+14155550102',
+		totalCents: 4000,
+		at: now - 10 * DAY,
+	})
+	await addOrder({
+		customerId: null,
+		phone: '(415) 555-0102',
+		totalCents: 1500,
+		at: now - 2 * DAY,
+	})
+	await addOrder({
+		customerId: 'cus_small',
+		phone: '+14155550103',
+		totalCents: 900,
+		at: now - 8 * DAY,
+	})
 	await addPoints('cus_big', { balance: 40, used: 10 })
 	await addPoints('cus_small', { balance: 700, used: 600 })
 	await db.insert(customerSubscriptions).values([
@@ -316,9 +346,7 @@ describe('Customers list sorts (#231)', () => {
 		const ordered = await list(
 			`lastOrderFrom=${day(now - 4 * DAY)}&lastOrderTo=${day(now)}`,
 		)
-		expect(ordered.body.people.map((p) => p.key).sort()).toEqual([
-			'c_cus_big',
-		])
+		expect(ordered.body.people.map((p) => p.key).sort()).toEqual(['c_cus_big'])
 	})
 
 	it('refuses spend sorts and order dates without the customers grant', async () => {
@@ -425,7 +453,12 @@ describe('GET /operator/people/export (#231)', () => {
 	})
 
 	it('gives mixed currencies one column each and never adds them', async () => {
-		await addOrder({ customerId: 'cus_big', phone: '+14155550101', totalCents: 1000, currency: 'sar' })
+		await addOrder({
+			customerId: 'cus_big',
+			phone: '+14155550101',
+			totalCents: 1000,
+			currency: 'sar',
+		})
 		const exported = await exportAll('sort=total_spend', 10)
 		expect(exported.header.filter((h) => h.startsWith('Total spend'))).toEqual([
 			'Total spend (SAR)',
@@ -445,21 +478,31 @@ describe('GET /operator/people/export (#231)', () => {
 			canUpdateDining: false,
 			canDelete: false,
 		}
-		const first = await exportPeopleChunk(db, access, {}, {
-			actorId: 'usr_1',
-			chunkRows: 2,
-			maxRows: 3,
-		})
+		const first = await exportPeopleChunk(
+			db,
+			access,
+			{},
+			{
+				actorId: 'usr_1',
+				chunkRows: 2,
+				maxRows: 3,
+			},
+		)
 		expect(first.rows).toHaveLength(2)
 		expect(first.truncated).toBe(true)
 		expect(first.matching).toBe(4)
 		expect(first.total).toBe(3)
-		const second = await exportPeopleChunk(db, access, {}, {
-			actorId: 'usr_1',
-			chunkRows: 2,
-			maxRows: 3,
-			cursor: first.nextCursor!,
-		})
+		const second = await exportPeopleChunk(
+			db,
+			access,
+			{},
+			{
+				actorId: 'usr_1',
+				chunkRows: 2,
+				maxRows: 3,
+				cursor: first.nextCursor!,
+			},
+		)
 		expect(second.rows).toHaveLength(1)
 		expect(second.nextCursor).toBeNull()
 		expect(second.footer?.[0]?.[0]).toContain('cut at 3 rows')

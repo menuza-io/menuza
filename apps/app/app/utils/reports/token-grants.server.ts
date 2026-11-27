@@ -7,7 +7,6 @@ import {
 	SALES_STAFF_FIELD_PERMISSION,
 	type RestrictedReportSubject,
 } from '@repo/reports/token'
-import { isAccountingEnabled } from './accounting-flag.ts'
 import { resolveGiftCardReportAccess } from '#app/utils/gift-cards/report-access.server.ts'
 import { resolveInventoryReportAccess } from '#app/utils/inventory/report-access.server.ts'
 import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
@@ -22,6 +21,7 @@ import {
 	canReadSalesStaffFields,
 	hasAdminReportAccess,
 } from '#app/utils/staffing/report-grants.server.ts'
+import { isAccountingEnabled } from './accounting-flag.ts'
 
 /**
  * What a member's reports token carries: the restricted subjects they may run,

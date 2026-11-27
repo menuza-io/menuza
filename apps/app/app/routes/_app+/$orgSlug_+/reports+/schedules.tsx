@@ -1,11 +1,16 @@
 import { requireUserId } from '@repo/auth'
+import {
+	db,
+	and,
+	asc,
+	eq,
+	SavedReport,
+	User,
+	UserOrganization,
+} from '@repo/database'
+import { personalFieldsUsed, definitionAllowed } from '@repo/reports'
 import { REPORT_SCHEDULE_LIMITS } from '@repo/reports/schedule'
 import { parseDefinition } from '@repo/reports/server'
-import {
-	personalFieldsUsed,
-	definitionAllowed,
-} from '@repo/reports'
-import { db, and, asc, eq, SavedReport, User, UserOrganization } from '@repo/database'
 import { data, useLoaderData } from 'react-router'
 import { ReportSchedulesScreen } from '#app/components/reports/report-schedules-screen.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -27,7 +32,10 @@ import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report
 import { type Route } from './+types/schedules.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-	const userId = await requireUserWithOrganizationPermissionFor(request, params.orgSlug)
+	const userId = await requireUserWithOrganizationPermissionFor(
+		request,
+		params.orgSlug,
+	)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
@@ -37,7 +45,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		enabled ? listReportSchedules(organization.id) : [],
 		defaultReportingTimeZone(organization.id),
 	])
-	const grants = await resolveReportGrantsForRequest(request, userId, organization.id)
+	const grants = await resolveReportGrantsForRequest(
+		request,
+		userId,
+		organization.id,
+	)
 	const { catalog } = await organizationReportCatalog(organization.id)
 	const saved = await db
 		.select()
@@ -50,7 +62,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 		.orderBy(asc(SavedReport.title))
 	const reports = saved
-		.map((report) => ({ report, definition: parseDefinition(report.definition) }))
+		.map((report) => ({
+			report,
+			definition: parseDefinition(report.definition),
+		}))
 		.filter(({ definition }) => definitionAllowed(catalog, definition, grants))
 		.map(({ report, definition }) => ({
 			id: report.id,
@@ -93,7 +108,9 @@ async function requireUserWithOrganizationPermissionFor(
 	request: Request,
 	orgSlug: string | undefined,
 ) {
-	const organization = await requireUserOrganization(request, orgSlug, { id: true })
+	const organization = await requireUserOrganization(request, orgSlug, {
+		id: true,
+	})
 	await requireUserId(request)
 	return requireUserWithOrganizationPermission(
 		request,
@@ -103,7 +120,10 @@ async function requireUserWithOrganizationPermissionFor(
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-	const userId = await requireUserWithOrganizationPermissionFor(request, params.orgSlug)
+	const userId = await requireUserWithOrganizationPermissionFor(
+		request,
+		params.orgSlug,
+	)
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 	})
@@ -123,7 +143,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 		timeZone: String(body.timeZone ?? ''),
 		locale: body.locale === 'ar' ? ('ar' as const) : ('en' as const),
 		recipientUserIds: Array.isArray(body.recipientUserIds)
-			? body.recipientUserIds.filter((id): id is string => typeof id === 'string')
+			? body.recipientUserIds.filter(
+					(id): id is string => typeof id === 'string',
+				)
 			: [],
 	}
 	const id = typeof body.id === 'string' ? body.id : ''

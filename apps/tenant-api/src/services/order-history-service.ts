@@ -271,7 +271,9 @@ export async function queryOrderHistory(input: {
 			data: {
 				orders: page,
 				nextCursor:
-					offset + pageSize < totalCount ? encodeCursor(offset + pageSize) : null,
+					offset + pageSize < totalCount
+						? encodeCursor(offset + pageSize)
+						: null,
 				totalCount,
 			},
 		}

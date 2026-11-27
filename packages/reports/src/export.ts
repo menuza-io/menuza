@@ -172,7 +172,11 @@ export async function runChunkedCsvExport(options: {
 	signal?: AbortSignal
 	onProgress?: (progress: ExportProgress) => void
 	/** The first page: how many rows match and whether the cap cuts them. */
-	onStart?: (info: { total: number; matching: number; truncated: boolean }) => void
+	onStart?: (info: {
+		total: number
+		matching: number
+		truncated: boolean
+	}) => void
 	now?: () => number
 	yieldTurn?: () => Promise<void>
 }): Promise<ChunkedExportResult> {

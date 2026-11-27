@@ -60,7 +60,10 @@ async function token(
 		userId: 'usr_acct',
 		orgId: options.orgId ?? ORG,
 		role: 'operator',
-		subjects: options.subjects ?? [...ORDER_REPORT_SUBJECTS, ACCOUNTING_REPORT_SUBJECT],
+		subjects: options.subjects ?? [
+			...ORDER_REPORT_SUBJECTS,
+			ACCOUNTING_REPORT_SUBJECT,
+		],
 		scopeIds: null,
 		locationIds: options.locationIds === undefined ? null : options.locationIds,
 	})
@@ -144,18 +147,36 @@ afterEach(async () => {
 describe('GET /analytics/accounting-daily (#189)', () => {
 	it('reports a location-day with mixed tax rates and tenders, and every day balances', async () => {
 		// Nov 20 at Main (Chicago): a 15% order paid at handoff and a 5% order paid online.
-		await order({ at: '2026-11-20T18:00:00Z', subtotal: 10_000, discount: 1_000, tax: 1_350, tip: 500 })
-		await order({ at: '2026-11-20T19:00:00Z', subtotal: 4_000, tax: 200, paymentMethod: 'online' })
+		await order({
+			at: '2026-11-20T18:00:00Z',
+			subtotal: 10_000,
+			discount: 1_000,
+			tax: 1_350,
+			tip: 500,
+		})
+		await order({
+			at: '2026-11-20T19:00:00Z',
+			subtotal: 4_000,
+			tax: 200,
+			paymentMethod: 'online',
+		})
 		// Harbor, another location and currency, a day later.
-		await order({ at: '2026-11-21T18:00:00Z', locationId: 'loc-b', zone: 'Asia/Riyadh', subtotal: 20_000, tax: 3_000, currency: 'SAR', paymentMethod: 'online' })
+		await order({
+			at: '2026-11-21T18:00:00Z',
+			locationId: 'loc-b',
+			zone: 'Asia/Riyadh',
+			subtotal: 20_000,
+			tax: 3_000,
+			currency: 'SAR',
+			paymentMethod: 'online',
+		})
 
 		const res = await get('from=2026-11-20&to=2026-11-21', await token())
 		expect(res.status).toBe(200)
 		const { days } = (await res.json()) as DaysBody
-		expect(days.map((d) => `${d.businessDate}/${d.locationId}/${d.currency}`)).toEqual([
-			'2026-11-20/loc-a/USD',
-			'2026-11-21/loc-b/SAR',
-		])
+		expect(
+			days.map((d) => `${d.businessDate}/${d.locationId}/${d.currency}`),
+		).toEqual(['2026-11-20/loc-a/USD', '2026-11-21/loc-b/SAR'])
 		const main = days[0]!
 		expect(main.closed).toBe(true)
 		expect(main.grossMinor).toBe(14_000)
@@ -165,7 +186,9 @@ describe('GET /analytics/accounting-daily (#189)', () => {
 			{ rateBp: 500, minor: 200 },
 			{ rateBp: 1500, minor: 1350 },
 		])
-		const tenders = Object.fromEntries(main.tenders.map((t) => [t.tender, t.minor]))
+		const tenders = Object.fromEntries(
+			main.tenders.map((t) => [t.tender, t.minor]),
+		)
 		expect(tenders).toEqual({ handoff: 10_850, card_online: 4_200 })
 		// Money was never added across currencies.
 		expect(days[1]!.currency).toBe('SAR')
@@ -178,9 +201,18 @@ describe('GET /analytics/accounting-daily (#189)', () => {
 	})
 
 	it('dates a refund the day the money went back, and a late refund changes an exported day', async () => {
-		const id = await order({ at: '2026-11-20T18:00:00Z', subtotal: 10_000, tax: 1_500, paymentMethod: 'online' })
-		const before = await (await get('from=2026-11-20&to=2026-11-22', await token())).json() as DaysBody
-		const exported = buildJournalDay(before.days.find((d) => d.businessDate === '2026-11-20')!)
+		const id = await order({
+			at: '2026-11-20T18:00:00Z',
+			subtotal: 10_000,
+			tax: 1_500,
+			paymentMethod: 'online',
+		})
+		const before = (await (
+			await get('from=2026-11-20&to=2026-11-22', await token())
+		).json()) as DaysBody
+		const exported = buildJournalDay(
+			before.days.find((d) => d.businessDate === '2026-11-20')!,
+		)
 		expect(exported.differenceMinor).toBe(0)
 
 		// A refund of 23.00 (20.00 net + 3.00 tax at 15%) arrives on the 22nd.
@@ -196,18 +228,28 @@ describe('GET /analytics/accounting-daily (#189)', () => {
 			kind: 'record',
 			status: 'succeeded',
 		} as typeof restaurantOrderRefunds.$inferInsert)
-		const after = (await (await get('from=2026-11-20&to=2026-11-22', await token())).json()) as DaysBody
+		const after = (await (
+			await get('from=2026-11-20&to=2026-11-22', await token())
+		).json()) as DaysBody
 		// The 20th itself is unchanged; the refund sits on the 22nd.
-		const same = buildJournalDay(after.days.find((d) => d.businessDate === '2026-11-20')!)
+		const same = buildJournalDay(
+			after.days.find((d) => d.businessDate === '2026-11-20')!,
+		)
 		expect(journalHash(same.lines)).toBe(journalHash(exported.lines))
 		expect(adjustingLines(exported.lines, same.lines)).toEqual([])
 		const refundDay = after.days.find((d) => d.businessDate === '2026-11-22')!
 		expect(refundDay.refundsNetMinor).toBeLessThan(0)
 		const journal = buildJournalDay(refundDay)
 		expect(journal.differenceMinor).toBe(0)
-		expect(journal.lines.find((l) => l.lineKey === 'refunds')!.debitMinor).toBeGreaterThan(0)
+		expect(
+			journal.lines.find((l) => l.lineKey === 'refunds')!.debitMinor,
+		).toBeGreaterThan(0)
 		// A later re-export of the 22nd after a second refund would be an adjusting entry.
-		const entry = adjustingEntry(journal, adjustingLines(exported.lines, journal.lines), 2)
+		const entry = adjustingEntry(
+			journal,
+			adjustingLines(exported.lines, journal.lines),
+			2,
+		)
 		expect(entry.status).toBe('adjustment')
 	})
 
@@ -226,27 +268,56 @@ describe('GET /analytics/accounting-daily (#189)', () => {
 
 	it('refuses a token without the accounting grant, a missing token and a long range', async () => {
 		expect(
-			(await get('from=2026-11-20&to=2026-11-21', await token({ subjects: [...ORDER_REPORT_SUBJECTS] }))).status,
+			(
+				await get(
+					'from=2026-11-20&to=2026-11-21',
+					await token({ subjects: [...ORDER_REPORT_SUBJECTS] }),
+				)
+			).status,
 		).toBe(403)
 		expect((await get('from=2026-11-20&to=2026-11-21', null)).status).toBe(401)
-		expect((await get('from=2026-01-01&to=2026-12-31', await token())).status).toBe(400)
-		expect((await get('from=2026-11-21&to=2026-11-20', await token())).status).toBe(400)
-		expect((await get('from=nope&to=2026-11-20', await token())).status).toBe(400)
+		expect(
+			(await get('from=2026-01-01&to=2026-12-31', await token())).status,
+		).toBe(400)
+		expect(
+			(await get('from=2026-11-21&to=2026-11-20', await token())).status,
+		).toBe(400)
+		expect((await get('from=nope&to=2026-11-20', await token())).status).toBe(
+			400,
+		)
 	})
 
-	it('stays inside the token\'s locations and its own organization', async () => {
+	it("stays inside the token's locations and its own organization", async () => {
 		await order({ at: '2026-11-20T18:00:00Z', subtotal: 1_000, tax: 0 })
-		await order({ at: '2026-11-20T18:00:00Z', locationId: 'loc-b', subtotal: 2_000, tax: 0 })
-		await order({ orgId: ORG_B, at: '2026-11-20T18:00:00Z', subtotal: 9_999, tax: 0 })
+		await order({
+			at: '2026-11-20T18:00:00Z',
+			locationId: 'loc-b',
+			subtotal: 2_000,
+			tax: 0,
+		})
+		await order({
+			orgId: ORG_B,
+			at: '2026-11-20T18:00:00Z',
+			subtotal: 9_999,
+			tax: 0,
+		})
 		const scoped = (await (
-			await get('from=2026-11-20&to=2026-11-20', await token({ locationIds: ['loc-b'] }))
+			await get(
+				'from=2026-11-20&to=2026-11-20',
+				await token({ locationIds: ['loc-b'] }),
+			)
 		).json()) as DaysBody
 		expect(scoped.days.map((d) => d.locationId)).toEqual(['loc-b'])
 		const none = (await (
-			await get('from=2026-11-20&to=2026-11-20', await token({ locationIds: [] }))
+			await get(
+				'from=2026-11-20&to=2026-11-20',
+				await token({ locationIds: [] }),
+			)
 		).json()) as DaysBody
 		expect(none.days).toEqual([])
-		const all = (await (await get('from=2026-11-20&to=2026-11-20', await token())).json()) as DaysBody
+		const all = (await (
+			await get('from=2026-11-20&to=2026-11-20', await token())
+		).json()) as DaysBody
 		expect(JSON.stringify(all)).not.toContain('9999')
 	})
 })

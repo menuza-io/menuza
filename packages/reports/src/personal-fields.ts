@@ -14,22 +14,23 @@ import { referencedFieldIds } from './engine.ts'
  * here: `personal-fields.test.ts` scans the whole catalog and fails when a
  * field that looks personal is in neither this list nor its allowlist.
  */
-export const PERSONAL_REPORT_FIELDS: Readonly<Record<string, readonly string[]>> =
-	{
-		orders: ['customerName', 'customerPhone', 'customerEmail'],
-		shop_orders: ['customerName', 'customerPhone', 'customerEmail'],
-		customers: ['name', 'email', 'phone'],
-		text_subscribers: ['customerName', 'customerPhone'],
-		reviews: ['reviewer'],
-		phone_calls: ['callerPhone'],
-		time_entries: ['employee'],
-		shifts: ['employee'],
-		members: ['name', 'email'],
-		sales: ['staffName'],
-		cancelled_orders: ['staffName', 'guestName'],
-		cash_drawer_shifts: ['cashierName', 'closedByName', 'remoteCloserName'],
-		cash_drawer_movements: ['staffName', 'approvedByName'],
-	}
+export const PERSONAL_REPORT_FIELDS: Readonly<
+	Record<string, readonly string[]>
+> = {
+	orders: ['customerName', 'customerPhone', 'customerEmail'],
+	shop_orders: ['customerName', 'customerPhone', 'customerEmail'],
+	customers: ['name', 'email', 'phone'],
+	text_subscribers: ['customerName', 'customerPhone'],
+	reviews: ['reviewer'],
+	phone_calls: ['callerPhone'],
+	time_entries: ['employee'],
+	shifts: ['employee'],
+	members: ['name', 'email'],
+	sales: ['staffName'],
+	cancelled_orders: ['staffName', 'guestName'],
+	cash_drawer_shifts: ['cashierName', 'closedByName', 'remoteCloserName'],
+	cash_drawer_movements: ['staffName', 'approvedByName'],
+}
 
 export const REPORT_HAS_PERSONAL_FIELDS = 'report_has_personal_fields' as const
 

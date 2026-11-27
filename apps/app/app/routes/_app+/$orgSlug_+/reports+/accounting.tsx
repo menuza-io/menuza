@@ -1,5 +1,10 @@
-import { createForbiddenResponse, requireUserId, userHasOrganizationPermission } from '@repo/auth'
+import {
+	createForbiddenResponse,
+	requireUserId,
+	userHasOrganizationPermission,
+} from '@repo/auth'
 import { ACCOUNTING_LAYOUTS, type AccountingLayout } from '@repo/reports'
+import { localDateKey } from '@repo/reports/schedule'
 import { data, useLoaderData } from 'react-router'
 import { z } from 'zod'
 import { AccountingScreen } from '#app/components/reports/accounting-screen.tsx'
@@ -22,10 +27,12 @@ import {
 import { defaultReportingTimeZone } from '#app/utils/reports/schedules.server.ts'
 import { resolveReportTokenGrants } from '#app/utils/reports/token-grants.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
-import { localDateKey } from '@repo/reports/schedule'
 import { type Route } from './+types/accounting.ts'
 
-async function requireAccounting(request: Request, orgSlug: string | undefined) {
+async function requireAccounting(
+	request: Request,
+	orgSlug: string | undefined,
+) {
 	const userId = await requireUserId(request)
 	const organization = await requireUserOrganization(request, orgSlug, {
 		id: true,
@@ -93,11 +100,12 @@ const rangeSchema = z.object({ from: dateField, to: dateField })
 const layoutSchema = z.enum(ACCOUNTING_LAYOUTS)
 
 export async function action({ request, params }: Route.ActionArgs) {
-	const { userId, organization, grants, canReadPayments } = await requireAccounting(
-		request,
-		params.orgSlug,
-	)
-	const body = (await request.json().catch(() => null)) as Record<string, unknown> | null
+	const { userId, organization, grants, canReadPayments } =
+		await requireAccounting(request, params.orgSlug)
+	const body = (await request.json().catch(() => null)) as Record<
+		string,
+		unknown
+	> | null
 	const intent = typeof body?.intent === 'string' ? body.intent : ''
 	const timeZone = await defaultReportingTimeZone(organization.id)
 
@@ -178,7 +186,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 					.max(200),
 			})
 			.safeParse(body)
-		if (!parsed.success) return data({ ok: false, error: 'invalid' }, { status: 400 })
+		if (!parsed.success)
+			return data({ ok: false, error: 'invalid' }, { status: 400 })
 		await saveAccountMapping(organization.id, parsed.data.rows)
 		return data({ ok: true })
 	}
@@ -186,11 +195,18 @@ export async function action({ request, params }: Route.ActionArgs) {
 		const parsed = z
 			.object({
 				layout: layoutSchema,
-				bookkeeperEmail: z.string().trim().max(254).email().nullable().or(z.literal('')),
+				bookkeeperEmail: z
+					.string()
+					.trim()
+					.max(254)
+					.email()
+					.nullable()
+					.or(z.literal('')),
 				weeklyEmail: z.boolean(),
 			})
 			.safeParse(body)
-		if (!parsed.success) return data({ ok: false, error: 'invalid_email' }, { status: 400 })
+		if (!parsed.success)
+			return data({ ok: false, error: 'invalid_email' }, { status: 400 })
 		const email = parsed.data.bookkeeperEmail || null
 		await saveAccountingSettings(organization.id, {
 			layout: parsed.data.layout as AccountingLayout,

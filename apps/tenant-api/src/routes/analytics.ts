@@ -1291,7 +1291,10 @@ analyticsRoutes.get('/product-mix', async (c) => {
 		: null
 	const { rows, truncated } = await loadProductMixRows(
 		{ db: auth.db, locationIds, now: auth.now },
-		{ fromMs: range.start ? range.start.getTime() : null, toMs: range.end.getTime() },
+		{
+			fromMs: range.start ? range.start.getTime() : null,
+			toMs: range.end.getTime(),
+		},
 		{ channels },
 	)
 	return c.json({

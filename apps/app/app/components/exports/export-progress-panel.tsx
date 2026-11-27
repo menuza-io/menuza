@@ -26,6 +26,11 @@ export function ExportProgressPanel({
 
 	if (state.status === 'running') {
 		const { progress, cut } = state
+		const cutMatching = cut?.matching
+		const cutTotal = cut?.total
+		const percent = progress.percent
+		const rowsDone = progress.rowsDone
+		const rowsTotal = progress.rowsTotal
 		const eta = formatEta(progress.etaMs)
 		return (
 			<div
@@ -35,8 +40,8 @@ export function ExportProgressPanel({
 				{cut ? (
 					<p className="text-warning text-sm" data-testid={`${testId}-cut`}>
 						<Trans>
-							This view has <bdi>{cut.matching}</bdi> rows. The file holds the
-							first <bdi>{cut.total}</bdi>. Narrow the filters to export the
+							This view has <bdi>{cutMatching}</bdi> rows. The file holds the
+							first <bdi>{cutTotal}</bdi>. Narrow the filters to export the
 							rest.
 						</Trans>
 					</p>
@@ -49,9 +54,8 @@ export function ExportProgressPanel({
 				<div className="flex flex-wrap items-center gap-3 text-sm">
 					<span role="status" aria-live="polite" className="tabular-nums">
 						<Trans>
-							Exporting <bdi>{progress.percent}</bdi>% (
-							<bdi>{progress.rowsDone}</bdi> of <bdi>{progress.rowsTotal}</bdi>{' '}
-							rows)
+							Exporting <bdi>{percent}</bdi>% (<bdi>{rowsDone}</bdi> of{' '}
+							<bdi>{rowsTotal}</bdi> rows)
 						</Trans>
 					</span>
 					<span className="text-muted-foreground tabular-nums">
@@ -116,6 +120,9 @@ export function ExportProgressPanel({
 		)
 	}
 
+	const doneCutTotal = state.cut?.total
+	const doneCutMatching = state.cut?.matching
+	const doneRows = state.rowCount
 	return (
 		<p
 			role="status"
@@ -124,13 +131,13 @@ export function ExportProgressPanel({
 		>
 			{state.cut ? (
 				<Trans>
-					Export finished. The file holds the first <bdi>{state.cut.total}</bdi>{' '}
-					of <bdi>{state.cut.matching}</bdi> rows. Narrow the filters to export
-					the rest.
+					Export finished. The file holds the first <bdi>{doneCutTotal}</bdi> of{' '}
+					<bdi>{doneCutMatching}</bdi> rows. Narrow the filters to export the
+					rest.
 				</Trans>
 			) : (
 				<Trans>
-					Export finished (<bdi>{state.rowCount}</bdi> rows).
+					Export finished (<bdi>{doneRows}</bdi> rows).
 				</Trans>
 			)}
 		</p>

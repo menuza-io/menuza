@@ -11,6 +11,8 @@ import { syncEnvFromProcess } from './secrets.ts'
 export function isReportEmailEnabled(): boolean {
 	syncEnvFromProcess()
 	return isEmailSwitchOn(
-		typeof process !== 'undefined' ? process.env.REPORT_EMAIL_ENABLED : undefined,
+		typeof process !== 'undefined'
+			? process.env.REPORT_EMAIL_ENABLED
+			: undefined,
 	)
 }

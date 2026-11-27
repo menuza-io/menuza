@@ -1,4 +1,10 @@
-import { runReport, getCatalog, FIGURES, monthlyAsOf } from '@repo/reports'
+import {
+	FIGURES,
+	getCatalog,
+	monthlyAsOf,
+	runReport,
+	type ReportDefinition,
+} from '@repo/reports'
 import { describe, expect, it, vi } from 'vitest'
 import { fetchMonthlyFigures } from './monthly-client.ts'
 
@@ -20,15 +26,23 @@ function sale(day: string, over: Record<string, unknown> = {}) {
 function region(grants: string[]) {
 	const records = [
 		sale('2026-10-10'),
-		sale('2026-10-11', { currency: 'SAR', netSales: 375, locationTimeZone: 'Asia/Riyadh' }),
+		sale('2026-10-11', {
+			currency: 'SAR',
+			netSales: 375,
+			locationTimeZone: 'Asia/Riyadh',
+		}),
 		sale('2026-09-10', { netSales: 60 }),
 	]
-	const calls: Array<{ url: string; body: any }> = []
+	const calls: Array<{ url: string; body: { asOf: string } }> = []
 	const fetchImpl = vi.fn(async (url: string, init?: RequestInit) => {
 		if (url === '/acme/reports/token') {
 			return Response.json({ token: 'jwt' })
 		}
-		const body = JSON.parse(String(init!.body))
+		const body = JSON.parse(String(init!.body)) as {
+			definition: ReportDefinition
+			asOf: string
+			timeZone: string
+		}
 		calls.push({ url, body })
 		const subject = body.definition.subject as string
 		if (!grants.includes(subject)) return new Response('{}', { status: 403 })
@@ -64,16 +78,26 @@ describe('browser-direct monthly figures (#221)', () => {
 		expect(by.directOrders!.entries).toEqual([{ currency: null, value: 2 }])
 		// Two runs per figure, at the month's two instants, all to the region.
 		expect(calls).toHaveLength(4)
-		expect(calls.every((c) => c.url === 'https://tenant.example.test/analytics/query')).toBe(true)
+		expect(
+			calls.every(
+				(c) => c.url === 'https://tenant.example.test/analytics/query',
+			),
+		).toBe(true)
 		const asOfs = new Set(calls.map((c) => c.body.asOf))
 		expect(asOfs).toEqual(
-			new Set([monthlyAsOf('2026-10').current.toISOString(), monthlyAsOf('2026-10').previous.toISOString()]),
+			new Set([
+				monthlyAsOf('2026-10').current.toISOString(),
+				monthlyAsOf('2026-10').previous.toISOString(),
+			]),
 		)
 		// The figure is exactly the report the engine runs for the same definition.
 		const direct = runReport(
 			getCatalog('organization'),
 			FIGURES.directOrders.definition('last_complete_month'),
-			[sale('2026-10-10'), sale('2026-10-11', { locationTimeZone: 'Asia/Riyadh' })] as never,
+			[
+				sale('2026-10-10'),
+				sale('2026-10-11', { locationTimeZone: 'Asia/Riyadh' }),
+			] as never,
 			monthlyAsOf('2026-10').current,
 			{ timeZone: 'America/Chicago' },
 		)

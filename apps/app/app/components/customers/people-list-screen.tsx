@@ -669,7 +669,9 @@ export function PeopleListScreen({
 											) : null}
 											<TableCell>
 												<div className="flex flex-wrap gap-1">
-													<MarketingBadge marketing={person.marketing ?? null} />
+													<MarketingBadge
+														marketing={person.marketing ?? null}
+													/>
 													{person.tags
 														.filter(
 															(tag) =>
@@ -777,7 +779,11 @@ function DateRangeField({
 }) {
 	const { _ } = useLingui()
 	return (
-		<div className="flex items-center gap-1.5 text-sm" role="group" aria-label={label}>
+		<div
+			className="flex items-center gap-1.5 text-sm"
+			role="group"
+			aria-label={label}
+		>
 			<span className="text-muted-foreground">{label}</span>
 			<Input
 				type="date"

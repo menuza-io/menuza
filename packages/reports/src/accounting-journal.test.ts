@@ -71,11 +71,17 @@ describe('the daily journal (#189)', () => {
 		)
 		expect(day.status).toBe('final')
 		// Mixed tax rates stay on their own lines.
-		expect(day.lines.find((l) => l.lineKey === 'tax:500')!.creditMinor).toBe(300)
-		expect(day.lines.find((l) => l.lineKey === 'tax:1500')!.creditMinor).toBe(600)
+		expect(day.lines.find((l) => l.lineKey === 'tax:500')!.creditMinor).toBe(
+			300,
+		)
+		expect(day.lines.find((l) => l.lineKey === 'tax:1500')!.creditMinor).toBe(
+			600,
+		)
 		// The payout line is the payout figure, and the clearing credit equals payout plus fees.
 		expect(day.lines.find((l) => l.lineKey === 'payout')!.debitMinor).toBe(9000)
-		expect(day.lines.find((l) => l.lineKey === 'payment_clearing')!.creditMinor).toBe(9400)
+		expect(
+			day.lines.find((l) => l.lineKey === 'payment_clearing')!.creditMinor,
+		).toBe(9400)
 	})
 
 	it('balances every consistent day: a property test over 300 random days', () => {
@@ -90,7 +96,8 @@ describe('the daily journal (#189)', () => {
 				label: `Category ${c}`,
 				minor: rand(50_000),
 			}))
-			const items = categories.reduce((s, c) => s + c.minor, 0) + rand(300) - 150 // rounding noise
+			const items =
+				categories.reduce((s, c) => s + c.minor, 0) + rand(300) - 150 // rounding noise
 			const serviceFees = rand(2_000)
 			const gross = Math.max(0, items) + serviceFees
 			const discounts = rand(Math.max(1, Math.floor(gross / 3)))
@@ -105,7 +112,8 @@ describe('the daily journal (#189)', () => {
 			const refundTax = -rand(200)
 			const refundTip = -rand(100)
 			const giftSold = rand(3) === 0 ? rand(20_000) : 0
-			const collected = net + tax + tips + (refundNet + refundTax + refundTip) + giftSold
+			const collected =
+				net + tax + tips + (refundNet + refundTax + refundTip) + giftSold
 			// Split what was collected over tenders.
 			const cash = rand(Math.max(1, collected))
 			const gift = rand(Math.max(1, collected - cash))
@@ -142,7 +150,9 @@ describe('the daily journal (#189)', () => {
 	})
 
 	it('shows the difference when a day does not balance, never hiding it', () => {
-		const day = buildJournalDay(facts({ tenders: [{ tender: 'cash', minor: 1000 }] }))
+		const day = buildJournalDay(
+			facts({ tenders: [{ tender: 'cash', minor: 1000 }] }),
+		)
 		expect(day.differenceMinor).not.toBe(0)
 		const line = day.lines.find((l) => l.kind === 'difference')!
 		expect(line.label).toContain('Difference')
@@ -186,7 +196,10 @@ describe('the daily journal (#189)', () => {
 		const byKey = Object.fromEntries(delta.map((l) => [l.lineKey, l]))
 		expect(byKey.refunds).toMatchObject({ debitMinor: 1000, creditMinor: 0 })
 		expect(byKey['tax:1500']).toMatchObject({ debitMinor: 150, creditMinor: 0 })
-		expect(byKey['tender:cash']).toMatchObject({ debitMinor: 0, creditMinor: 1150 })
+		expect(byKey['tender:cash']).toMatchObject({
+			debitMinor: 0,
+			creditMinor: 1150,
+		})
 		// Nothing changed: nothing to adjust, same hash.
 		const same = buildJournalDay(facts())
 		expect(adjustingLines(first.lines, same.lines)).toEqual([])
@@ -256,7 +269,10 @@ describe('file layouts (#189)', () => {
 
 	it('every layout balances: debits equal credits in the file', () => {
 		for (const layout of ['quickbooks', 'generic'] as const) {
-			const rows = journalToCsv([entry], mapping, layout).trim().split('\n').slice(1)
+			const rows = journalToCsv([entry], mapping, layout)
+				.trim()
+				.split('\n')
+				.slice(1)
 			let debit = 0
 			let credit = 0
 			for (const row of rows) {
@@ -268,8 +284,14 @@ describe('file layouts (#189)', () => {
 			}
 			expect(debit).toBeCloseTo(credit, 2)
 		}
-		const xero = journalToCsv([entry], mapping, 'xero').trim().split('\n').slice(1)
-		expect(xero.reduce((s, r) => s + Number(r.split(',')[5]), 0)).toBeCloseTo(0, 2)
+		const xero = journalToCsv([entry], mapping, 'xero')
+			.trim()
+			.split('\n')
+			.slice(1)
+		expect(xero.reduce((s, r) => s + Number(r.split(',')[5]), 0)).toBeCloseTo(
+			0,
+			2,
+		)
 	})
 
 	it('is formula-safe: an account name starting with = is neutralised', () => {

@@ -138,7 +138,14 @@ export function buildJournalDay(facts: AccountingDayFacts): JournalDay {
 		a.key.localeCompare(b.key),
 	)) {
 		categorised += category.minor
-		push(creditNatured(`sales:${category.key}`, 'sales', `Sales: ${category.label}`, category.minor))
+		push(
+			creditNatured(
+				`sales:${category.key}`,
+				'sales',
+				`Sales: ${category.label}`,
+				category.minor,
+			),
+		)
 	}
 	push(
 		creditNatured(
@@ -148,10 +155,33 @@ export function buildJournalDay(facts: AccountingDayFacts): JournalDay {
 			itemSalesMinor - categorised,
 		),
 	)
-	push(creditNatured('service_fees', 'service_fees', 'Service fees', facts.serviceFeesMinor))
-	push(debitNatured('discounts', 'discounts', 'Discounts', facts.discountsMinor))
-	push(debitNatured('loyalty_rewards', 'loyalty_rewards', 'Loyalty rewards', facts.loyaltyMinor))
-	push(debitNatured('cash_discounts', 'cash_discounts', 'Cash discounts', facts.cashDiscountsMinor))
+	push(
+		creditNatured(
+			'service_fees',
+			'service_fees',
+			'Service fees',
+			facts.serviceFeesMinor,
+		),
+	)
+	push(
+		debitNatured('discounts', 'discounts', 'Discounts', facts.discountsMinor),
+	)
+	push(
+		debitNatured(
+			'loyalty_rewards',
+			'loyalty_rewards',
+			'Loyalty rewards',
+			facts.loyaltyMinor,
+		),
+	)
+	push(
+		debitNatured(
+			'cash_discounts',
+			'cash_discounts',
+			'Cash discounts',
+			facts.cashDiscountsMinor,
+		),
+	)
 	push(creditNatured('refunds', 'refunds', 'Refunds', facts.refundsNetMinor))
 	for (const tax of [...facts.taxByRate].sort((a, b) => a.rateBp - b.rateBp)) {
 		push(
@@ -164,9 +194,18 @@ export function buildJournalDay(facts: AccountingDayFacts): JournalDay {
 		)
 	}
 	push(creditNatured('tips', 'tips', 'Tips payable', facts.tipsMinor))
-	push(creditNatured('gift_cards_sold', 'gift_cards_sold', 'Gift cards sold', facts.giftCardsSoldMinor))
+	push(
+		creditNatured(
+			'gift_cards_sold',
+			'gift_cards_sold',
+			'Gift cards sold',
+			facts.giftCardsSoldMinor,
+		),
+	)
 	// Card money received for gift cards sold is a tender of its own.
-	for (const tender of [...facts.tenders].sort((a, b) => a.tender.localeCompare(b.tender))) {
+	for (const tender of [...facts.tenders].sort((a, b) =>
+		a.tender.localeCompare(b.tender),
+	)) {
 		push(
 			debitNatured(
 				`tender:${tender.tender}`,
@@ -177,8 +216,17 @@ export function buildJournalDay(facts: AccountingDayFacts): JournalDay {
 		)
 	}
 	// Payments clearing: the deposit and the fees leave it together.
-	push(debitNatured('processing_fees', 'processing_fees', 'Payment processing fees', facts.processingFeesMinor))
-	push(debitNatured('payout', 'payout', 'Paid out to the bank', facts.payoutMinor))
+	push(
+		debitNatured(
+			'processing_fees',
+			'processing_fees',
+			'Payment processing fees',
+			facts.processingFeesMinor,
+		),
+	)
+	push(
+		debitNatured('payout', 'payout', 'Paid out to the bank', facts.payoutMinor),
+	)
 	push(
 		creditNatured(
 			'payment_clearing',
@@ -289,7 +337,12 @@ export type JournalEntry = {
 
 export function entryFromDay(day: JournalDay, sequence = 1): JournalEntry {
 	return {
-		reference: referenceFor(day.businessDate, day.locationId, day.currency, sequence),
+		reference: referenceFor(
+			day.businessDate,
+			day.locationId,
+			day.currency,
+			sequence,
+		),
 		locationId: day.locationId,
 		locationName: day.locationName,
 		businessDate: day.businessDate,
@@ -311,7 +364,12 @@ export function adjustingEntry(
 	const debit = delta.reduce((s, l) => s + l.debitMinor, 0)
 	const credit = delta.reduce((s, l) => s + l.creditMinor, 0)
 	return {
-		reference: referenceFor(day.businessDate, day.locationId, day.currency, sequence),
+		reference: referenceFor(
+			day.businessDate,
+			day.locationId,
+			day.currency,
+			sequence,
+		),
 		locationId: day.locationId,
 		locationName: day.locationName,
 		businessDate: day.businessDate,
@@ -325,7 +383,12 @@ export function adjustingEntry(
 	}
 }
 
-function referenceFor(date: string, locationId: string, currency: string, sequence: number) {
+function referenceFor(
+	date: string,
+	locationId: string,
+	currency: string,
+	sequence: number,
+) {
 	const base = `JNL-${date}-${locationId.slice(0, 8)}-${currency}`
 	return sequence > 1 ? `${base}-ADJ${sequence - 1}` : base
 }
@@ -337,7 +400,9 @@ function referenceFor(date: string, locationId: string, currency: string, sequen
 export type AccountMapping = Record<string, { code: string; name: string }>
 
 /** Account names the journal uses until the operator maps a line. */
-export function defaultAccountName(line: Pick<JournalLine, 'kind' | 'label'>): string {
+export function defaultAccountName(
+	line: Pick<JournalLine, 'kind' | 'label'>,
+): string {
 	switch (line.kind) {
 		case 'sales':
 		case 'service_fees':
@@ -365,7 +430,10 @@ export function accountFor(line: JournalLine, mapping: AccountMapping) {
 	const mapped = mapping[line.lineKey]
 	return {
 		code: mapped?.code ?? '',
-		name: mapped?.name && mapped.name.length > 0 ? mapped.name : defaultAccountName(line),
+		name:
+			mapped?.name && mapped.name.length > 0
+				? mapped.name
+				: defaultAccountName(line),
 		mapped: Boolean(mapped?.name),
 	}
 }
@@ -374,7 +442,11 @@ export const ACCOUNTING_LAYOUTS = ['quickbooks', 'xero', 'generic'] as const
 export type AccountingLayout = (typeof ACCOUNTING_LAYOUTS)[number]
 
 function major(minor: number, currency: string): string {
-	const digits = ['KWD', 'BHD', 'OMR', 'JOD', 'TND'].includes(currency) ? 3 : currency === 'JPY' ? 0 : 2
+	const digits = ['KWD', 'BHD', 'OMR', 'JOD', 'TND'].includes(currency)
+		? 3
+		: currency === 'JPY'
+			? 0
+			: 2
 	return (minor / 10 ** digits).toFixed(digits)
 }
 

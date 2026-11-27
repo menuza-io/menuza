@@ -102,9 +102,7 @@ export async function runReportInRegion(input: {
 		return { ok: false, kind: 'no_access', reason: 'forbidden_subject' }
 	}
 	const body = (await response.json().catch(() => null)) as
-		| ReportResult
-		| { error?: string }
-		| null
+		ReportResult | { error?: string } | null
 	if (!response.ok || !body || isReportRunError(body as never)) {
 		const code =
 			body && typeof (body as { error?: unknown }).error === 'string'
@@ -141,7 +139,11 @@ function localeDate(dateKey: string, locale: EmailLocale) {
 	}).format(new Date(Date.UTC(y, m - 1, d)))
 }
 
-function periodText(result: ReportResult, timeZone: string, locale: EmailLocale) {
+function periodText(
+	result: ReportResult,
+	timeZone: string,
+	locale: EmailLocale,
+) {
 	if (!result.period) return null
 	const fmt = (iso: string) =>
 		new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone }).format(
@@ -323,9 +325,10 @@ export async function sendScheduledReport(
 		const key = grantsKey(recipient.grants)
 		let promise = built.get(key)
 		if (!promise) {
-			promise = buildForGrants(runSpec, recipient.grants).catch(
-				(): Built => ({ kind: 'failed', reason: 'run_error' }),
-			)
+			promise = buildForGrants(runSpec, recipient.grants).catch((): Built => ({
+				kind: 'failed',
+				reason: 'run_error',
+			}))
 			built.set(key, promise)
 		}
 		const content = await promise
@@ -397,7 +400,11 @@ export async function sendScheduledReport(
 			})
 			results.push(
 				sent.status === 'error'
-					? { userId: recipient.userId, status: 'failed', reason: 'email_error' }
+					? {
+							userId: recipient.userId,
+							status: 'failed',
+							reason: 'email_error',
+						}
 					: { userId: recipient.userId, status: 'sent' },
 			)
 		} catch {

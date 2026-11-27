@@ -4,15 +4,12 @@ import {
 	eq,
 	MonthlyResultsDelivery,
 	Organization,
-	User,
-	UserOrganization,
 } from '@repo/database'
 import { sendEmail } from '@repo/email'
 import {
 	DEFAULT_DELIVERY_COMMISSION_BP,
 	figureLabels,
 	FIGURES,
-	figureValue,
 	formatFigureEntry,
 	keptByOrderingDirect,
 	MONTHLY_FIGURES,
@@ -44,8 +41,8 @@ import {
 	monthlyResultsEmailEnabled,
 	reportUnsubscribeUrl,
 } from './report-unsubscribe.server.ts'
-import { resolveReportTokenGrantsForMember } from './token-grants.server.ts'
 import { defaultReportingTimeZone } from './schedules.server.ts'
+import { resolveReportTokenGrantsForMember } from './token-grants.server.ts'
 
 /**
  * Monthly results (#221), App side: which figures a viewer sees, the email on
@@ -131,7 +128,9 @@ export function monthlyEmailLines(input: {
 		const estimate = input.locale === 'ar' ? 'تقدير' : 'Estimate'
 		lines.push({
 			label:
-				input.locale === 'ar' ? 'ما وفّره الطلب المباشر' : 'Kept by ordering direct',
+				input.locale === 'ar'
+					? 'ما وفّره الطلب المباشر'
+					: 'Kept by ordering direct',
 			values: (kept.length > 0 ? kept : [{ currency: null, value: 0 }]).map(
 				(entry) => formatFigureEntry(entry, 'currency', input.locale),
 			),
@@ -282,7 +281,9 @@ async function sendOrganizationMonthly(input: {
 			grants: {
 				subjects,
 				scopeIds: token.scopeIds,
-				...(token.locationIds === undefined ? {} : { locationIds: token.locationIds }),
+				...(token.locationIds === undefined
+					? {}
+					: { locationIds: token.locationIds }),
 				modules,
 			},
 		})
@@ -290,11 +291,19 @@ async function sendOrganizationMonthly(input: {
 
 	// One region request per distinct set of grants.
 	const groupKey = (grants: Grants) =>
-		JSON.stringify([[...grants.subjects].sort(), grants.scopeIds, grants.locationIds, grants.modules])
+		JSON.stringify([
+			[...grants.subjects].sort(),
+			grants.scopeIds,
+			grants.locationIds,
+			grants.modules,
+		])
 	const groups = new Map<string, Grants>()
-	for (const person of people) groups.set(groupKey(person.grants), person.grants)
+	for (const person of people)
+		groups.set(groupKey(person.grants), person.grants)
 	const keys = [...groups.keys()]
-	const regionIds = MONTHLY_FIGURES.filter((id) => FIGURES[id].source === 'region')
+	const regionIds = MONTHLY_FIGURES.filter(
+		(id) => FIGURES[id].source === 'region',
+	)
 	const request: ReportFiguresRequest = {
 		orgId: org.id,
 		month,
@@ -302,7 +311,9 @@ async function sendOrganizationMonthly(input: {
 		groups: keys.map((key, index) => ({
 			key: `g${index}`,
 			grants: groups.get(key)!,
-			figureIds: [...regionIds] as ReportFiguresRequest['groups'][number]['figureIds'],
+			figureIds: [
+				...regionIds,
+			] as ReportFiguresRequest['groups'][number]['figureIds'],
 		})),
 	}
 	let regional: Map<string, FigureValue[]>
@@ -351,7 +362,10 @@ async function sendOrganizationMonthly(input: {
 			)
 		}
 		const order = new Map(MONTHLY_FIGURES.map((id, i) => [id, i] as const))
-		figures.sort((a, b) => (order.get(a.id as FigureId) ?? 0) - (order.get(b.id as FigureId) ?? 0))
+		figures.sort(
+			(a, b) =>
+				(order.get(a.id as FigureId) ?? 0) - (order.get(b.id as FigureId) ?? 0),
+		)
 		if (figures.length === 0) {
 			counts.skipped += 1
 			continue
@@ -377,7 +391,8 @@ async function sendOrganizationMonthly(input: {
 			organizationName: org.name,
 			title: locale === 'ar' ? 'نتائج الشهر' : 'Monthly results',
 			subtitle: monthLabel(month, locale),
-			compareLabel: locale === 'ar' ? 'مقارنة بالشهر السابق' : 'vs the month before',
+			compareLabel:
+				locale === 'ar' ? 'مقارنة بالشهر السابق' : 'vs the month before',
 			lines: monthlyEmailLines({
 				figures,
 				commissionBp: org.commissionBp ?? DEFAULT_DELIVERY_COMMISSION_BP,
@@ -394,7 +409,11 @@ async function sendOrganizationMonthly(input: {
 		// Claim the month first so two overlapping runs cannot both send.
 		const claimed = await db
 			.insert(MonthlyResultsDelivery)
-			.values({ organizationId: org.id, userId: person.recipient.userId, month })
+			.values({
+				organizationId: org.id,
+				userId: person.recipient.userId,
+				month,
+			})
 			.onConflictDoNothing()
 			.returning({ id: MonthlyResultsDelivery.id })
 		if (claimed.length === 0) {
@@ -420,4 +439,3 @@ async function sendOrganizationMonthly(input: {
 	}
 	return counts
 }
-

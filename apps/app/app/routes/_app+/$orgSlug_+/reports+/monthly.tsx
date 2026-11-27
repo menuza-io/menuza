@@ -17,10 +17,13 @@ import { MonthlyResultsScreen } from '#app/components/reports/monthly-results-sc
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import {
+	resolveFigureModules,
+	reviewFigureValue,
+} from '#app/utils/reports/modules.server.ts'
+import {
 	partialMonthFor,
 	planMonthlyFigures,
 } from '#app/utils/reports/monthly.server.ts'
-import { resolveFigureModules, reviewFigureValue } from '#app/utils/reports/modules.server.ts'
 import { defaultReportingTimeZone } from '#app/utils/reports/schedules.server.ts'
 import { resolveReportTokenGrants } from '#app/utils/reports/token-grants.server.ts'
 import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
@@ -47,7 +50,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const latest = lastCompleteMonthKey(new Date())
 	const asked = new URL(request.url).searchParams.get('month')
 	// A month that has not finished has no summary yet; anything earlier is fine.
-	const month = asked && MONTH_KEY.test(asked) && asked <= latest ? asked : latest
+	const month =
+		asked && MONTH_KEY.test(asked) && asked <= latest ? asked : latest
 	const subjectGrants = await resolveReportGrantsForRequest(
 		request,
 		userId,
@@ -109,4 +113,3 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 export default function MonthlyResultsRoute() {
 	return <MonthlyResultsScreen data={useLoaderData<typeof loader>()} />
 }
-

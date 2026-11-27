@@ -444,20 +444,29 @@ describe('PeopleListScreen', () => {
 		it('exports the current view page by page and saves one file', async () => {
 			const { client: c, calls } = exportClient(3)
 			renderStaff(
-				<PeopleListScreen client={c} orgSlug="acme" access={FULL} canBook={false} />,
+				<PeopleListScreen
+					client={c}
+					orgSlug="acme"
+					access={FULL}
+					canBook={false}
+				/>,
 			)
 			await screen.findByTestId('person-row-c_1')
 			fireEvent.click(screen.getByTestId('customers-view-top-guests'))
 			await waitFor(() =>
-				expect(screen.getByTestId('customers-export')).not.toBeDisabled(),
+				expect(screen.getByTestId('customers-export')).toBeEnabled(),
 			)
 			fireEvent.click(screen.getByTestId('customers-export'))
 			await waitFor(() => expect(created).toHaveLength(1))
 			expect(calls).toHaveLength(3)
 			// The export asks for the same sort as the view.
 			expect(calls[0]).toMatchObject({ sort: 'total_spend' })
-			expect(await readBlob(created[0]!)).toBe('Name\nGuest 0\nGuest 1\nGuest 2\n')
-			expect(await screen.findByTestId('customers-export-done')).toBeInTheDocument()
+			expect(await readBlob(created[0]!)).toBe(
+				'Name\nGuest 0\nGuest 1\nGuest 2\n',
+			)
+			expect(
+				await screen.findByTestId('customers-export-done'),
+			).toBeInTheDocument()
 		})
 
 		it('shows progress while it runs and cancel leaves no file', async () => {
@@ -475,7 +484,9 @@ describe('PeopleListScreen', () => {
 							await new Promise<void>((_resolve, reject) => {
 								release = () => reject(new Error('unused'))
 								options?.signal?.addEventListener('abort', () =>
-									reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+									reject(
+										Object.assign(new Error('aborted'), { name: 'AbortError' }),
+									),
 								)
 							})
 						}
@@ -507,12 +518,18 @@ describe('PeopleListScreen', () => {
 			)
 			await screen.findByTestId('person-row-c_1')
 			fireEvent.click(screen.getByTestId('customers-export'))
-			expect(await screen.findByTestId('customers-export-progress')).toBeInTheDocument()
+			expect(
+				await screen.findByTestId('customers-export-progress'),
+			).toBeInTheDocument()
 			await waitFor(() =>
-				expect(screen.getByTestId('customers-export-progress')).toHaveTextContent('25'),
+				expect(
+					screen.getByTestId('customers-export-progress'),
+				).toHaveTextContent('25'),
 			)
 			fireEvent.click(screen.getByTestId('customers-export-cancel'))
-			expect(await screen.findByTestId('customers-export-cancelled')).toBeInTheDocument()
+			expect(
+				await screen.findByTestId('customers-export-cancelled'),
+			).toBeInTheDocument()
 			expect(created).toHaveLength(0)
 			expect(release).not.toBeNull()
 		})

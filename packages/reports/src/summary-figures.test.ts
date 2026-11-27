@@ -21,10 +21,7 @@ import {
 const catalog = getCatalog('organization')
 
 type Row = Record<string, unknown>
-function sale(
-	at: string,
-	over: Row = {},
-): Row {
+function sale(at: string, over: Row = {}): Row {
 	return {
 		occurredAt: new Date(at),
 		locationTimeZone: 'America/Chicago',
@@ -43,11 +40,17 @@ function sale(
 	}
 }
 
-function run(id: FigureId, records: Row[], asOf: Date, zone = 'America/Chicago') {
+function run(
+	id: FigureId,
+	records: Row[],
+	asOf: Date,
+	zone = 'America/Chicago',
+) {
 	const spec = FIGURES[id]
-	const preset = MONTHLY_FIGURES.includes(id) && !DAILY_SUMMARY_FIGURES.includes(id)
-		? MONTHLY_PRESET
-		: DAILY_SUMMARY_PRESET
+	const preset =
+		MONTHLY_FIGURES.includes(id) && !DAILY_SUMMARY_FIGURES.includes(id)
+			? MONTHLY_PRESET
+			: DAILY_SUMMARY_PRESET
 	return runReport(catalog, spec.definition(preset), records as never, asOf, {
 		timeZone: zone,
 	})
@@ -95,12 +98,24 @@ describe('summary figures (#121, #221)', () => {
 			sale('2026-11-25T18:00:00Z', { netSales: 999 }), // another weekday
 		]
 		const asOf = dailyAsOf(now)
-		const current = runPreset('netSales', DAILY_SUMMARY_PRESET, records, asOf.current)
-		const previous = runPreset('netSales', DAILY_SUMMARY_PRESET, records, asOf.previous)
+		const current = runPreset(
+			'netSales',
+			DAILY_SUMMARY_PRESET,
+			records,
+			asOf.current,
+		)
+		const previous = runPreset(
+			'netSales',
+			DAILY_SUMMARY_PRESET,
+			records,
+			asOf.previous,
+		)
 		const value = figureValue('netSales', current, previous)
 		expect(value.entries).toEqual([{ currency: 'USD', value: 150 }])
 		expect(value.previous).toEqual([{ currency: 'USD', value: 80 }])
-		expect(figureChangePercent(value.entries[0]!, value.previous)).toBeCloseTo(87.5)
+		expect(figureChangePercent(value.entries[0]!, value.previous)).toBeCloseTo(
+			87.5,
+		)
 		const orders = figureValue(
 			'orders',
 			runPreset('orders', DAILY_SUMMARY_PRESET, records, asOf.current),
@@ -110,7 +125,7 @@ describe('summary figures (#121, #221)', () => {
 		expect(orders.previous).toEqual([{ currency: null, value: 1 }])
 	})
 
-	it('cuts each location\'s own day and month in its own zone', () => {
+	it("cuts each location's own day and month in its own zone", () => {
 		// 2026-11-01 03:00Z is Oct 31, 22:00 in Chicago but Nov 1, 06:00 in Riyadh.
 		const records = [
 			sale('2026-11-01T03:00:00Z', {
@@ -128,7 +143,12 @@ describe('summary figures (#121, #221)', () => {
 			}),
 		]
 		const nov = monthlyAsOf('2026-11')
-		const current = runPreset('directSales', MONTHLY_PRESET, records, nov.current)
+		const current = runPreset(
+			'directSales',
+			MONTHLY_PRESET,
+			records,
+			nov.current,
+		)
 		const value = figureValue('directSales', current, null)
 		// Chicago's Oct 31 sale is October's; Riyadh's is November's.
 		expect(value.entries).toEqual([
@@ -151,7 +171,12 @@ describe('summary figures (#121, #221)', () => {
 		]
 		const value = figureValue(
 			'directSales',
-			runPreset('directSales', MONTHLY_PRESET, records, monthlyAsOf('2026-11').current),
+			runPreset(
+				'directSales',
+				MONTHLY_PRESET,
+				records,
+				monthlyAsOf('2026-11').current,
+			),
 			null,
 		)
 		expect(value.entries).toHaveLength(2)
@@ -162,17 +187,21 @@ describe('summary figures (#121, #221)', () => {
 		const records = [
 			sale('2026-11-10T12:00:00Z'),
 			sale('2026-11-11T12:00:00Z', { customerType: 'returning' }),
-			sale('2026-11-12T12:00:00Z', { customerType: 'station', channel: 'station_counter' }),
+			sale('2026-11-12T12:00:00Z', {
+				customerType: 'station',
+				channel: 'station_counter',
+			}),
 		]
 		const asOf = monthlyAsOf('2026-11').current
 		const at = (id: FigureId) =>
-			figureValue(id, runPreset(id, MONTHLY_PRESET, records, asOf), null).entries[0]!.value
+			figureValue(id, runPreset(id, MONTHLY_PRESET, records, asOf), null)
+				.entries[0]!.value
 		expect(at('directOrders')).toBe(3)
 		expect(at('newGuestOrders')).toBe(1)
 		expect(at('returningGuestOrders')).toBe(1)
 	})
 
-	it('estimates what ordering direct kept from the owner\'s rate, per currency', () => {
+	it("estimates what ordering direct kept from the owner's rate, per currency", () => {
 		const online = [
 			{ currency: 'USD', value: 1000 },
 			{ currency: 'SAR', value: 400 },
@@ -188,12 +217,20 @@ describe('summary figures (#121, #221)', () => {
 		const records = [
 			sale('2026-11-10T12:00:00Z', { channel: 'online_menu', netSales: 100 }),
 			sale('2026-11-10T13:00:00Z', { channel: 'qr_table', netSales: 40 }),
-			sale('2026-11-10T14:00:00Z', { channel: 'station_counter', netSales: 60 }),
+			sale('2026-11-10T14:00:00Z', {
+				channel: 'station_counter',
+				netSales: 60,
+			}),
 			sale('2026-11-10T15:00:00Z', { channel: 'drop', netSales: 10 }),
 		]
 		const value = figureValue(
 			'onlineSales',
-			runPreset('onlineSales', MONTHLY_PRESET, records, monthlyAsOf('2026-11').current),
+			runPreset(
+				'onlineSales',
+				MONTHLY_PRESET,
+				records,
+				monthlyAsOf('2026-11').current,
+			),
 			null,
 		)
 		expect(value.entries).toEqual([{ currency: 'USD', value: 110 }])
@@ -218,7 +255,11 @@ describe('summary figures (#121, #221)', () => {
 	it('month helpers', () => {
 		expect(previousMonthKey('2026-01')).toBe('2025-12')
 		expect(previousMonthKey('2026-11')).toBe('2026-10')
-		expect(lastCompleteMonthKey(new Date('2026-11-02T12:00:00Z'))).toBe('2026-10')
-		expect(lastCompleteMonthKey(new Date('2026-01-02T12:00:00Z'))).toBe('2025-12')
+		expect(lastCompleteMonthKey(new Date('2026-11-02T12:00:00Z'))).toBe(
+			'2026-10',
+		)
+		expect(lastCompleteMonthKey(new Date('2026-01-02T12:00:00Z'))).toBe(
+			'2025-12',
+		)
 	})
 })

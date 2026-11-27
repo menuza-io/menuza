@@ -50,13 +50,16 @@ export function KeptByDirectCard({ view }: { view: KeptByDirectView }) {
 				if (controller.signal.aborted) return
 				const online = figures.find((f) => f.id === 'onlineSales')
 				// No sales grant on this token: nothing to show (hidden, not zero).
-				setKept(online ? keptByOrderingDirect(online.entries, view.commissionBp) : [])
+				setKept(
+					online ? keptByOrderingDirect(online.entries, view.commissionBp) : [],
+				)
 			})
 			.catch(() => {
 				if (!controller.signal.aborted) setKept('error')
 			})
 		return () => controller.abort()
 	}, [view])
+	const ratePercent = view.commissionBp / 100
 	if (kept === null || kept === 'error') return null
 	if (kept.length === 0) return null
 	return (
@@ -66,7 +69,7 @@ export function KeptByDirectCard({ view }: { view: KeptByDirectView }) {
 					<Trans>Kept by ordering direct last month</Trans>
 					<Badge variant="outline" data-testid="billing-kept-estimate">
 						<Trans>
-							Estimate at <bdi>{view.commissionBp / 100}</bdi>% commission
+							Estimate at <bdi>{ratePercent}</bdi>% commission
 						</Trans>
 					</Badge>
 				</CardTitle>
@@ -80,7 +83,10 @@ export function KeptByDirectCard({ view }: { view: KeptByDirectView }) {
 			<CardContent className="flex flex-col gap-2">
 				<div className="text-2xl font-semibold tabular-nums">
 					{kept.map((entry) => (
-						<div key={entry.currency} data-testid={`billing-kept-${entry.currency}`}>
+						<div
+							key={entry.currency}
+							data-testid={`billing-kept-${entry.currency}`}
+						>
 							{new Intl.NumberFormat(i18n.locale, {
 								style: 'currency',
 								currency: entry.currency ?? 'USD',

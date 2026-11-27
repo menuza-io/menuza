@@ -77,8 +77,16 @@ export async function loadAccountingFacts(input: {
 	now?: Date
 }): Promise<{ days: AccountingDayFacts[]; truncated: boolean }> {
 	const now = input.now ?? new Date()
-	const [fy, fm, fd] = input.fromDate.split('-').map(Number) as [number, number, number]
-	const [ty, tm, td] = input.toDate.split('-').map(Number) as [number, number, number]
+	const [fy, fm, fd] = input.fromDate.split('-').map(Number) as [
+		number,
+		number,
+		number,
+	]
+	const [ty, tm, td] = input.toDate.split('-').map(Number) as [
+		number,
+		number,
+		number,
+	]
 	const fromMs = Date.UTC(fy, fm - 1, fd) - DAY
 	const toMs = Date.UTC(ty, tm - 1, td) + 2 * DAY
 	const subject = getSubject(activeReportCatalog(), 'sales')!
@@ -193,7 +201,9 @@ export async function loadAccountingFacts(input: {
 	})
 	for (const sale of lines.sales) {
 		const currency = sale.currency.toUpperCase()
-		const bucket = buckets.get(JSON.stringify([sale.locationId, sale.businessDate, currency]))
+		const bucket = buckets.get(
+			JSON.stringify([sale.locationId, sale.businessDate, currency]),
+		)
 		if (!bucket) continue
 		for (const line of sale.lines) {
 			const category = line.placement
@@ -240,8 +250,13 @@ export async function loadAccountingFacts(input: {
 		const date = dateKey(row.at, zone)
 		if (date < input.fromDate || date > input.toDate) continue
 		const currency = row.currency.toUpperCase()
-		bucketOf(locationId, known?.name ?? locationId, date, currency, zone).giftSold +=
-			row.amountMinor
+		bucketOf(
+			locationId,
+			known?.name ?? locationId,
+			date,
+			currency,
+			zone,
+		).giftSold += row.amountMinor
 	}
 	// Cards paid for are money received: a tender line of their own.
 	for (const bucket of buckets.values()) {
@@ -261,7 +276,10 @@ export async function loadAccountingFacts(input: {
 			(todayByZone.set(bucket.zone, dateKey(now.getTime(), bucket.zone)),
 			todayByZone.get(bucket.zone)!)
 		const itemSales = bucket.gross - bucket.serviceFees
-		const catTotal = [...bucket.categories.values()].reduce((s, c) => s + c.net, 0)
+		const catTotal = [...bucket.categories.values()].reduce(
+			(s, c) => s + c.net,
+			0,
+		)
 		const ordered = [...bucket.categories.entries()].sort(
 			(a, b) => b[1].net - a[1].net || a[0].localeCompare(b[0]),
 		)

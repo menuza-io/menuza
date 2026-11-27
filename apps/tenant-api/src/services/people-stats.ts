@@ -265,7 +265,9 @@ export function phoneKeySql(column: string): SQL {
 		(expr, ch) => `replace(${expr}, '${ch}', '')`,
 		column,
 	)
-	return sql.raw(`CASE WHEN length(${digits}) >= 6 THEN substr(${digits}, -9) END`)
+	return sql.raw(
+		`CASE WHEN length(${digits}) >= 6 THEN substr(${digits}, -9) END`,
+	)
 }
 
 /**

@@ -49,11 +49,7 @@ export type FigureId =
 
 /** The modules a figure can need switched on (their flag off hides the figure). */
 export type FigureModule =
-	| 'staffing_labor'
-	| 'reservations'
-	| 'phone_agent'
-	| 'marketing'
-	| 'loyalty'
+	'staffing_labor' | 'reservations' | 'phone_agent' | 'marketing' | 'loyalty'
 
 export type FigureSpec = {
 	id: FigureId
@@ -168,7 +164,12 @@ const COUNTED_ORDER: FilterCondition = {
 export const FIGURES: Readonly<Record<FigureId, FigureSpec>> = {
 	netSales: salesFigure('netSales', 'Net sales', 'netSales'),
 	orders: SALE_COUNT('orders', 'Orders'),
-	averageSale: salesFigure('averageSale', 'Average sale', 'averageSale', 'ratio'),
+	averageSale: salesFigure(
+		'averageSale',
+		'Average sale',
+		'averageSale',
+		'ratio',
+	),
 	tips: salesFigure('tips', 'Tips', 'tips'),
 	refunds: salesFigure('refunds', 'Refunds', 'refunds'),
 	laborCost: {
@@ -245,7 +246,12 @@ export const FIGURES: Readonly<Record<FigureId, FigureSpec>> = {
 		subject: 'reviews',
 		source: 'control-plane',
 		definition: (preset) =>
-			figure({ subject: 'reviews', title: 'New reviews', preset, measure: 'count' }),
+			figure({
+				subject: 'reviews',
+				title: 'New reviews',
+				preset,
+				measure: 'count',
+			}),
 	},
 	averageRating: {
 		id: 'averageRating',
@@ -264,11 +270,17 @@ export const FIGURES: Readonly<Record<FigureId, FigureSpec>> = {
 	},
 	directSales: salesFigure('directSales', 'Direct sales', 'netSales'),
 	directOrders: SALE_COUNT('directOrders', 'Direct orders'),
-	onlineSales: salesFigure('onlineSales', 'Direct online sales', 'netSales', 'sum', {
-		filters: [
-			{ field: 'channel', operator: 'in', value: DIRECT_ONLINE_CHANNELS },
-		],
-	}),
+	onlineSales: salesFigure(
+		'onlineSales',
+		'Direct online sales',
+		'netSales',
+		'sum',
+		{
+			filters: [
+				{ field: 'channel', operator: 'in', value: DIRECT_ONLINE_CHANNELS },
+			],
+		},
+	),
 	newGuestOrders: SALE_COUNT('newGuestOrders', 'Orders from new guests', [
 		{ field: 'customerType', operator: 'eq', value: 'new' },
 	]),
@@ -305,7 +317,9 @@ export const FIGURES: Readonly<Record<FigureId, FigureSpec>> = {
 				title: 'Calls handled without staff',
 				preset,
 				measure: 'count',
-				filters: [{ field: 'resolvedByAssistant', operator: 'eq', value: 'true' }],
+				filters: [
+					{ field: 'resolvedByAssistant', operator: 'eq', value: 'true' },
+				],
 			}),
 	},
 	attributedSales: {
@@ -325,7 +339,11 @@ export const FIGURES: Readonly<Record<FigureId, FigureSpec>> = {
 				byCurrency: true,
 				filters: [
 					COUNTED_ORDER,
-					{ field: 'attributedChannel', operator: 'in', value: ['email', 'sms'] },
+					{
+						field: 'attributedChannel',
+						operator: 'in',
+						value: ['email', 'sms'],
+					},
 				],
 			}),
 	},
@@ -344,7 +362,11 @@ export const FIGURES: Readonly<Record<FigureId, FigureSpec>> = {
 				measure: 'count',
 				filters: [
 					COUNTED_ORDER,
-					{ field: 'attributedChannel', operator: 'in', value: ['email', 'sms'] },
+					{
+						field: 'attributedChannel',
+						operator: 'in',
+						value: ['email', 'sms'],
+					},
 				],
 			}),
 	},
@@ -445,7 +467,10 @@ export type FigureValue = {
 	previous: FigureEntry[]
 }
 
-function entriesOf(spec: FigureSpec, result: ReportResult | null): FigureEntry[] {
+function entriesOf(
+	spec: FigureSpec,
+	result: ReportResult | null,
+): FigureEntry[] {
 	if (!result) return []
 	if (spec.format === 'currency' || spec.format === 'percent') {
 		// Grouped by currency: one segment each. The engine names the currency on
@@ -525,9 +550,8 @@ export function keptByOrderingDirect(
 ): FigureEntry[] {
 	return onlineSales.map((entry) => ({
 		currency: entry.currency,
-		value: Math.round((entry.value * commissionBp) / 10_000 * 100) / 100,
+		value: Math.round(((entry.value * commissionBp) / 10_000) * 100) / 100,
 	}))
 }
 
 export const DEFAULT_DELIVERY_COMMISSION_BP = 2500
-

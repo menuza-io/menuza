@@ -60,7 +60,9 @@ export function useChunkedExport(save: typeof saveBlob = saveBlob) {
 	const cancel = useCallback(() => controller.current?.abort(), [])
 
 	const start = useCallback(
-		async (options: StartChunkedExport): Promise<ChunkedExportResult | null> => {
+		async (
+			options: StartChunkedExport,
+		): Promise<ChunkedExportResult | null> => {
 			if (controller.current) return null
 			const own = new AbortController()
 			controller.current = own

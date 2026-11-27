@@ -47,7 +47,9 @@ describe('personal report fields (#121)', () => {
 
 	it('names only fields that exist', () => {
 		for (const [subjectId, fields] of Object.entries(PERSONAL_REPORT_FIELDS)) {
-			const subject = organizationCatalog.subjects.find((s) => s.id === subjectId)
+			const subject = organizationCatalog.subjects.find(
+				(s) => s.id === subjectId,
+			)
 			expect(subject, subjectId).toBeDefined()
 			for (const field of fields) {
 				expect(

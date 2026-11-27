@@ -38,9 +38,11 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
-import { DeliveryCommissionCard } from '#app/components/settings/cards/organization/delivery-commission-card.tsx'
 import { CuisinePriceCard } from '#app/components/settings/cards/organization/cuisine-price-card.tsx'
+import { CustomerAppCard } from '#app/components/settings/cards/organization/customer-app-card.tsx'
 import DangerZoneCard from '#app/components/settings/cards/organization/danger-zone-card.tsx'
+import { DeliveryCommissionCard } from '#app/components/settings/cards/organization/delivery-commission-card.tsx'
+import { EmailSendingCard } from '#app/components/settings/cards/organization/email-sending-card.tsx'
 import { GeneralSettingsCard } from '#app/components/settings/cards/organization/general-settings-card.tsx'
 import {
 	uploadOrgPhotoActionIntent,
@@ -52,8 +54,6 @@ import {
 	s3StorageActionIntent,
 	startS3MigrationActionIntent,
 } from '#app/components/settings/cards/organization/s3-storage-card.tsx'
-import { CustomerAppCard } from '#app/components/settings/cards/organization/customer-app-card.tsx'
-import { EmailSendingCard } from '#app/components/settings/cards/organization/email-sending-card.tsx'
 import TeamSizeCard, {
 	TeamSizeSchema,
 } from '#app/components/settings/cards/organization/team-size-card.tsx'

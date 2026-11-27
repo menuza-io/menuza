@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import {
 	and,
 	AccountingExport,
@@ -7,7 +8,9 @@ import {
 	desc,
 	eq,
 	inArray,
+	Organization,
 } from '@repo/database'
+import { sendEmail } from '@repo/email'
 import {
 	ACCOUNTING_LAYOUTS,
 	adjustingEntry,
@@ -21,9 +24,25 @@ import {
 	type AccountMapping,
 	type JournalEntry,
 	type JournalLine,
+	renderTableEmail,
 } from '@repo/reports'
+import { localDateKey } from '@repo/reports/schedule'
 import { localParts } from '@repo/staffing'
+import { ENV } from 'varlock/env'
+import { readLiveEnv } from '#app/utils/env.server.ts'
+import {
+	getOrganizationPayoutDetail,
+	getOrganizationPayoutsSnapshot,
+} from '#app/utils/payments/payouts.server.ts'
+import { normalizeShopProcessor } from '#app/utils/shop.types.ts'
+import {
+	accountingDaysSchema,
+	mergeAccountingDays,
+	providerDayFacts as toProviderFacts,
+} from './accounting-days.ts'
 import { isAccountingEnabled } from './accounting-flag.ts'
+import { postRegionalReports } from './regional-reports.server.ts'
+import { defaultReportingTimeZone } from './schedules.server.ts'
 
 /**
  * The accounting export, App side (#189). The region reports each location's
@@ -38,7 +57,12 @@ import { isAccountingEnabled } from './accounting-flag.ts'
  * changed, nothing goes out.
  */
 
-export { mergeAccountingDays, providerDayFacts, PROVIDER_LOCATION_ID, type ProviderPayout } from './accounting-days.ts'
+export {
+	mergeAccountingDays,
+	providerDayFacts,
+	PROVIDER_LOCATION_ID,
+	type ProviderPayout,
+} from './accounting-days.ts'
 
 export { ACCOUNTING_FLAG, isAccountingEnabled } from './accounting-flag.ts'
 
@@ -109,7 +133,9 @@ export async function loadAccountingSettings(
 		.where(eq(AccountingSettings.organizationId, organizationId))
 		.limit(1)
 	return {
-		layout: (ACCOUNTING_LAYOUTS as readonly string[]).includes(row?.layout ?? '')
+		layout: (ACCOUNTING_LAYOUTS as readonly string[]).includes(
+			row?.layout ?? '',
+		)
 			? (row!.layout as AccountingLayout)
 			: 'generic',
 		bookkeeperEmail: row?.bookkeeperEmail ?? null,
@@ -263,23 +289,6 @@ export async function prepareAccountingExport(input: {
 // Fetching: the region's days, the provider's payouts, and the weekly email
 // ---------------------------------------------------------------------------
 
-import { createHmac, timingSafeEqual } from 'node:crypto'
-import { Organization } from '@repo/database'
-import { sendEmail } from '@repo/email'
-import { renderTableEmail } from '@repo/reports'
-import { accountingDaysSchema, mergeAccountingDays } from './accounting-days.ts'
-import { postRegionalReports } from './regional-reports.server.ts'
-import { defaultReportingTimeZone } from './schedules.server.ts'
-import { localDateKey } from '@repo/reports/schedule'
-import { ENV } from 'varlock/env'
-import { readLiveEnv } from '#app/utils/env.server.ts'
-import {
-	getOrganizationPayoutDetail,
-	getOrganizationPayoutsSnapshot,
-} from '#app/utils/payments/payouts.server.ts'
-import { normalizeShopProcessor } from '#app/utils/shop.types.ts'
-import { providerDayFacts as toProviderFacts } from './accounting-days.ts'
-
 export type AccountingOrg = {
 	id: string
 	name: string
@@ -326,10 +335,15 @@ export async function loadProviderAccountingDays(input: {
 }): Promise<AccountingDayFacts[]> {
 	const org = input.org
 	const isUs = (org.dataRegion || 'us') === 'us'
-	const normalized = isUs ? normalizeShopProcessor(org.shopPaymentProvider) : 'checkout'
-	const provider: 'connect' | 'checkout' = normalized === 'checkout' ? 'checkout' : 'connect'
+	const normalized = isUs
+		? normalizeShopProcessor(org.shopPaymentProvider)
+		: 'checkout'
+	const provider: 'connect' | 'checkout' =
+		normalized === 'checkout' ? 'checkout' : 'connect'
 	const connectedAccountId =
-		provider === 'checkout' ? org.checkoutSubEntityId : org.stripeConnectAccountId
+		provider === 'checkout'
+			? org.checkoutSubEntityId
+			: org.stripeConnectAccountId
 	const { snapshot } = await getOrganizationPayoutsSnapshot({
 		organizationId: org.id,
 		provider,
@@ -355,7 +369,8 @@ export async function loadProviderAccountingDays(input: {
 				currency: payout.currency,
 			})
 			feeCents = detail.transactions.reduce(
-				(sum, t) => sum + Math.abs(t.providerFeeCents) + Math.abs(t.platformFeeCents),
+				(sum, t) =>
+					sum + Math.abs(t.providerFeeCents) + Math.abs(t.platformFeeCents),
 				0,
 			)
 		} catch {
@@ -404,18 +419,25 @@ export type AccountingLink = {
 }
 
 function linkKey() {
-	return createHmac('sha256', String(ENV.SESSION_SECRET ?? '')).update(LINK_PURPOSE).digest()
+	return createHmac('sha256', String(ENV.SESSION_SECRET ?? ''))
+		.update(LINK_PURPOSE)
+		.digest()
 }
 
 export function signAccountingLink(link: AccountingLink, now = Date.now()) {
 	const payload = Buffer.from(
 		JSON.stringify({ ...link, exp: now + LINK_TTL_MS }),
 	).toString('base64url')
-	const mac = createHmac('sha256', linkKey()).update(payload).digest('base64url')
+	const mac = createHmac('sha256', linkKey())
+		.update(payload)
+		.digest('base64url')
 	return `${payload}.${mac}`
 }
 
-export function verifyAccountingLink(token: string, now = Date.now()): AccountingLink | null {
+export function verifyAccountingLink(
+	token: string,
+	now = Date.now(),
+): AccountingLink | null {
 	const [payload, mac, extra] = token.split('.')
 	if (!payload || !mac || extra !== undefined || token.length > 800) return null
 	const expected = createHmac('sha256', linkKey()).update(payload).digest()
@@ -425,9 +447,12 @@ export function verifyAccountingLink(token: string, now = Date.now()): Accountin
 	} catch {
 		return null
 	}
-	if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null
+	if (given.length !== expected.length || !timingSafeEqual(given, expected))
+		return null
 	try {
-		const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as AccountingLink & { exp: number }
+		const parsed = JSON.parse(
+			Buffer.from(payload, 'base64url').toString('utf8'),
+		) as AccountingLink & { exp: number }
 		if (
 			typeof parsed.exp !== 'number' ||
 			parsed.exp < now ||
@@ -438,7 +463,12 @@ export function verifyAccountingLink(token: string, now = Date.now()): Accountin
 		) {
 			return null
 		}
-		return { organizationId: parsed.organizationId, from: parsed.from, to: parsed.to, layout: parsed.layout }
+		return {
+			organizationId: parsed.organizationId,
+			from: parsed.from,
+			to: parsed.to,
+			layout: parsed.layout,
+		}
 	} catch {
 		return null
 	}
@@ -446,7 +476,9 @@ export function verifyAccountingLink(token: string, now = Date.now()): Accountin
 
 function money(minor: number, currency: string) {
 	try {
-		return new Intl.NumberFormat('en', { style: 'currency', currency }).format(minor / 100)
+		return new Intl.NumberFormat('en', { style: 'currency', currency }).format(
+			minor / 100,
+		)
 	} catch {
 		return `${(minor / 100).toFixed(2)} ${currency}`
 	}
@@ -457,7 +489,12 @@ export type RunWeeklyDeps = {
 	post?: typeof postRegionalReports
 	sendEmailImpl?: typeof sendEmail
 	/** Tests inject the provider's days; production reads the payout data. */
-	providerDays?: (input: { org: AccountingOrg; from: string; to: string; timeZone: string }) => Promise<AccountingDayFacts[]>
+	providerDays?: (input: {
+		org: AccountingOrg
+		from: string
+		to: string
+		timeZone: string
+	}) => Promise<AccountingDayFacts[]>
 }
 
 /**
@@ -503,12 +540,22 @@ export async function runWeeklyAccountingEmails(deps: RunWeeklyDeps = {}) {
 		const from = shiftDay(today, -7)
 		const to = shiftDay(today, -1)
 		try {
-			const regional = await fetchRegionalAccountingDays({ org, from, to, post: deps.post })
-			const providerDays = deps.providerDays ?? ((input) => loadProviderAccountingDays({ ...input, now }))
-			const provider = await providerDays({ org, from, to, timeZone }).catch(() => [])
+			const regional = await fetchRegionalAccountingDays({
+				org,
+				from,
+				to,
+				post: deps.post,
+			})
+			const providerDays =
+				deps.providerDays ??
+				((input) => loadProviderAccountingDays({ ...input, now }))
+			const provider = await providerDays({ org, from, to, timeZone }).catch(
+				() => [],
+			)
 			const days = mergeAccountingDays(regional, provider)
-			const mapping = await loadAccountMapping(org.id)
-			const layout = (ACCOUNTING_LAYOUTS as readonly string[]).includes(row.layout)
+			const layout = (ACCOUNTING_LAYOUTS as readonly string[]).includes(
+				row.layout,
+			)
 				? (row.layout as AccountingLayout)
 				: 'generic'
 			const base = readLiveEnv('BASE_URL').replace(/\/$/u, '')

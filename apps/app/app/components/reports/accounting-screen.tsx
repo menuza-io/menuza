@@ -13,7 +13,13 @@ import {
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/card'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@repo/ui/card'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
@@ -28,7 +34,11 @@ import { mergeAccountingDays } from '#app/utils/reports/accounting-days.ts'
 type Props = {
 	orgSlug: string
 	mapping: AccountMapping
-	settings: { layout: AccountingLayout; bookkeeperEmail: string | null; weeklyEmail: boolean }
+	settings: {
+		layout: AccountingLayout
+		bookkeeperEmail: string | null
+		weeklyEmail: boolean
+	}
 	timeZone: string
 	canReadPayments: boolean
 	defaultFrom: string
@@ -45,7 +55,10 @@ const LAYOUT_LABELS = {
 
 function money(minor: number, currency: string, locale: string) {
 	try {
-		return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(minor / 100)
+		return new Intl.NumberFormat(locale, {
+			style: 'currency',
+			currency,
+		}).format(minor / 100)
 	} catch {
 		return `${(minor / 100).toFixed(2)} ${currency}`
 	}
@@ -99,23 +112,32 @@ export function AccountingScreen(props: Props) {
 				{ headers: { Authorization: `Bearer ${tokenBody.token}` } },
 			)
 			if (!response.ok) {
-				const body = (await response.json().catch(() => ({}))) as { message?: string }
+				const body = (await response.json().catch(() => ({}))) as {
+					message?: string
+				}
 				throw new Error(body.message ?? 'region')
 			}
-			const regional = ((await response.json()) as { days: AccountingDayFacts[] }).days
+			const regional = (
+				(await response.json()) as { days: AccountingDayFacts[] }
+			).days
 			// The payout and its fees are the Payments page's own data.
-			const providerResponse = await fetch(`/${props.orgSlug}/reports/accounting`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ intent: 'provider', from, to }),
-			})
+			const providerResponse = await fetch(
+				`/${props.orgSlug}/reports/accounting`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ intent: 'provider', from, to }),
+				},
+			)
 			const providerBody = (await providerResponse.json()) as {
 				provider?: AccountingDayFacts[]
 				payoutsHidden?: boolean
 			}
 			setPayoutsHidden(providerBody.payoutsHidden === true)
 			setDays(
-				mergeAccountingDays(regional, providerBody.provider ?? []).map(buildJournalDay),
+				mergeAccountingDays(regional, providerBody.provider ?? []).map(
+					buildJournalDay,
+				),
 			)
 		} catch (failure) {
 			setDays(null)
@@ -127,7 +149,15 @@ export function AccountingScreen(props: Props) {
 
 	const entries = (days ?? []).map((day) => entryFromDay(day))
 	const lines = mappableLines(entries)
-	const done = exporter.state === 'idle' && exporter.data?.ok ? exporter.data : null
+	const done =
+		exporter.state === 'idle' && exporter.data?.ok ? exporter.data : null
+	const exportedFilename = done?.filename
+	const exportedEntries = done?.entries
+	const exportedAdjustments = done?.adjustments
+	const exportedUnchanged = done?.unchanged
+	const exportedProvisional = done?.provisional
+	const differenceText = (day: JournalDay) =>
+		money(Math.abs(day.differenceMinor), day.currency, i18n.locale)
 
 	return (
 		<WorkspacePage>
@@ -136,13 +166,16 @@ export function AccountingScreen(props: Props) {
 				description={
 					<Trans>
 						Your daily sales as a journal for your accounting software: one
-						entry per location and day that balances, with the account each
-						line goes to. Figures are totals from your own region; no guest
-						names or contact details are in the file.
+						entry per location and day that balances, with the account each line
+						goes to. Figures are totals from your own region; no guest names or
+						contact details are in the file.
 					</Trans>
 				}
 				actions={
-					<Button variant="outline" render={<Link to={`/${props.orgSlug}/reports`} />}>
+					<Button
+						variant="outline"
+						render={<Link to={`/${props.orgSlug}/reports`} />}
+					>
 						<Trans>Back to reports</Trans>
 					</Button>
 				}
@@ -150,11 +183,14 @@ export function AccountingScreen(props: Props) {
 
 			<Card>
 				<CardHeader>
-					<CardTitle><Trans>Pick the days</Trans></CardTitle>
+					<CardTitle>
+						<Trans>Pick the days</Trans>
+					</CardTitle>
 					<CardDescription>
 						<Trans>
 							A day is the location&apos;s own business day. Days that are not
-							over yet are shown as provisional and are never marked as exported.
+							over yet are shown as provisional and are never marked as
+							exported.
 						</Trans>
 					</CardDescription>
 				</CardHeader>
@@ -185,7 +221,11 @@ export function AccountingScreen(props: Props) {
 						onValueChange={(next) => setLayout(next as AccountingLayout)}
 						testId="accounting-layout"
 					/>
-					<Button onClick={() => void run()} disabled={loading} data-testid="accounting-preview">
+					<Button
+						onClick={() => void run()}
+						disabled={loading}
+						data-testid="accounting-preview"
+					>
 						<Trans>Preview journal</Trans>
 					</Button>
 				</CardContent>
@@ -204,8 +244,8 @@ export function AccountingScreen(props: Props) {
 					<Icon name="info" />
 					<AlertDescription>
 						<Trans>
-							You do not have access to payments, so the payout and processing fee
-							lines are left out.
+							You do not have access to payments, so the payout and processing
+							fee lines are left out.
 						</Trans>
 					</AlertDescription>
 				</Alert>
@@ -214,25 +254,36 @@ export function AccountingScreen(props: Props) {
 			{days ? (
 				<div className="flex flex-col gap-4" data-testid="accounting-days">
 					{days.length === 0 ? (
-						<p className="text-muted-foreground text-sm"><Trans>No sales in these days.</Trans></p>
+						<p className="text-muted-foreground text-sm">
+							<Trans>No sales in these days.</Trans>
+						</p>
 					) : null}
 					{days.map((day) => (
-						<Card key={`${day.locationId}|${day.businessDate}|${day.currency}`} data-testid={`accounting-day-${day.businessDate}-${day.locationId}-${day.currency}`}>
+						<Card
+							key={`${day.locationId}|${day.businessDate}|${day.currency}`}
+							data-testid={`accounting-day-${day.businessDate}-${day.locationId}-${day.currency}`}
+						>
 							<CardHeader>
 								<CardTitle className="flex flex-wrap items-center gap-2">
 									{day.locationName} · {day.businessDate} · {day.currency}
-									<Badge variant={day.status === 'final' ? 'success' : 'outline'}>
-										{day.status === 'final' ? _(msg`Final`) : _(msg`Provisional`)}
+									<Badge
+										variant={day.status === 'final' ? 'success' : 'outline'}
+									>
+										{day.status === 'final'
+											? _(msg`Final`)
+											: _(msg`Provisional`)}
 									</Badge>
 									{day.differenceMinor !== 0 ? (
-										<Badge variant="destructive" data-testid={`accounting-difference-${day.businessDate}`}>
-											<Trans>
-												Out of balance by{' '}
-												{money(Math.abs(day.differenceMinor), day.currency, i18n.locale)}
-											</Trans>
+										<Badge
+											variant="destructive"
+											data-testid={`accounting-difference-${day.businessDate}`}
+										>
+											<OutOfBalance amount={differenceText(day)} />
 										</Badge>
 									) : (
-										<Badge variant="success"><Trans>Balanced</Trans></Badge>
+										<Badge variant="success">
+											<Trans>Balanced</Trans>
+										</Badge>
 									)}
 								</CardTitle>
 							</CardHeader>
@@ -240,9 +291,15 @@ export function AccountingScreen(props: Props) {
 								<table className="w-full text-sm">
 									<thead>
 										<tr className="text-muted-foreground text-start">
-											<th className="text-start font-medium"><Trans>Line</Trans></th>
-											<th className="text-end font-medium"><Trans>Debit</Trans></th>
-											<th className="text-end font-medium"><Trans>Credit</Trans></th>
+											<th className="text-start font-medium">
+												<Trans>Line</Trans>
+											</th>
+											<th className="text-end font-medium">
+												<Trans>Debit</Trans>
+											</th>
+											<th className="text-end font-medium">
+												<Trans>Credit</Trans>
+											</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -250,17 +307,27 @@ export function AccountingScreen(props: Props) {
 											<tr key={line.lineKey}>
 												<td>{line.label}</td>
 												<td className="text-end tabular-nums">
-													{line.debitMinor ? money(line.debitMinor, day.currency, i18n.locale) : ''}
+													{line.debitMinor
+														? money(line.debitMinor, day.currency, i18n.locale)
+														: ''}
 												</td>
 												<td className="text-end tabular-nums">
-													{line.creditMinor ? money(line.creditMinor, day.currency, i18n.locale) : ''}
+													{line.creditMinor
+														? money(line.creditMinor, day.currency, i18n.locale)
+														: ''}
 												</td>
 											</tr>
 										))}
 										<tr className="font-medium">
-											<td><Trans>Total</Trans></td>
-											<td className="text-end tabular-nums">{money(day.debitMinor, day.currency, i18n.locale)}</td>
-											<td className="text-end tabular-nums">{money(day.creditMinor, day.currency, i18n.locale)}</td>
+											<td>
+												<Trans>Total</Trans>
+											</td>
+											<td className="text-end tabular-nums">
+												{money(day.debitMinor, day.currency, i18n.locale)}
+											</td>
+											<td className="text-end tabular-nums">
+												{money(day.creditMinor, day.currency, i18n.locale)}
+											</td>
 										</tr>
 									</tbody>
 								</table>
@@ -270,10 +337,13 @@ export function AccountingScreen(props: Props) {
 					<div className="flex flex-wrap items-center gap-3">
 						<Button
 							onClick={() =>
-								void exporter.submit({ intent: 'export', from, to, layout } as never, {
-									method: 'post',
-									encType: 'application/json',
-								})
+								void exporter.submit(
+									{ intent: 'export', from, to, layout } as never,
+									{
+										method: 'post',
+										encType: 'application/json',
+									},
+								)
 							}
 							disabled={exporter.state !== 'idle' || days.length === 0}
 							data-testid="accounting-export"
@@ -284,18 +354,28 @@ export function AccountingScreen(props: Props) {
 						{done?.csv ? (
 							<Button
 								variant="outline"
-								onClick={() => saveBlob(new Blob([done.csv!], { type: 'text/csv;charset=utf-8' }), done.filename ?? 'journal.csv')}
+								onClick={() =>
+									saveBlob(
+										new Blob([done.csv!], { type: 'text/csv;charset=utf-8' }),
+										done.filename ?? 'journal.csv',
+									)
+								}
 								data-testid="accounting-download"
 							>
-								<Trans>Download {done.filename}</Trans>
+								<Trans>Download {exportedFilename}</Trans>
 							</Button>
 						) : null}
 					</div>
 					{done ? (
-						<p role="status" className="text-sm" data-testid="accounting-export-result">
+						<p
+							role="status"
+							className="text-sm"
+							data-testid="accounting-export-result"
+						>
 							<Trans>
-								Exported {done.entries} entries. {done.adjustments} adjusting,{' '}
-								{done.unchanged} unchanged since the last export, {done.provisional} provisional.
+								Exported {exportedEntries} entries. {exportedAdjustments}{' '}
+								adjusting, {exportedUnchanged} unchanged since the last export,{' '}
+								{exportedProvisional} provisional.
 							</Trans>
 						</p>
 					) : null}
@@ -305,7 +385,9 @@ export function AccountingScreen(props: Props) {
 			{lines.length > 0 ? (
 				<Card>
 					<CardHeader>
-						<CardTitle><Trans>Accounts</Trans></CardTitle>
+						<CardTitle>
+							<Trans>Accounts</Trans>
+						</CardTitle>
 						<CardDescription>
 							<Trans>
 								Name the account each line goes to, once. A line with no name
@@ -314,35 +396,47 @@ export function AccountingScreen(props: Props) {
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-2">
-						{lines.map((line) => (
-							<div key={line.lineKey} className="grid gap-2 sm:grid-cols-[1fr_8rem_1fr] sm:items-center">
-								<span className="text-sm">{line.label}</span>
-								<Input
-									aria-label={_(msg`Account code for ${line.label}`)}
-									placeholder={_(msg`Code`)}
-									value={mapping[line.lineKey]?.code ?? ''}
-									onChange={(event) =>
-										setMapping({
-											...mapping,
-											[line.lineKey]: { code: event.target.value, name: mapping[line.lineKey]?.name ?? '' },
-										})
-									}
-									data-testid={`accounting-code-${line.lineKey}`}
-								/>
-								<Input
-									aria-label={_(msg`Account name for ${line.label}`)}
-									placeholder={line.defaultName}
-									value={mapping[line.lineKey]?.name ?? ''}
-									onChange={(event) =>
-										setMapping({
-											...mapping,
-											[line.lineKey]: { code: mapping[line.lineKey]?.code ?? '', name: event.target.value },
-										})
-									}
-									data-testid={`accounting-name-${line.lineKey}`}
-								/>
-							</div>
-						))}
+						{lines.map((line) => {
+							const lineLabel = line.label
+							return (
+								<div
+									key={line.lineKey}
+									className="grid gap-2 sm:grid-cols-[1fr_8rem_1fr] sm:items-center"
+								>
+									<span className="text-sm">{line.label}</span>
+									<Input
+										aria-label={_(msg`Account code for ${lineLabel}`)}
+										placeholder={_(msg`Code`)}
+										value={mapping[line.lineKey]?.code ?? ''}
+										onChange={(event) =>
+											setMapping({
+												...mapping,
+												[line.lineKey]: {
+													code: event.target.value,
+													name: mapping[line.lineKey]?.name ?? '',
+												},
+											})
+										}
+										data-testid={`accounting-code-${line.lineKey}`}
+									/>
+									<Input
+										aria-label={_(msg`Account name for ${lineLabel}`)}
+										placeholder={line.defaultName}
+										value={mapping[line.lineKey]?.name ?? ''}
+										onChange={(event) =>
+											setMapping({
+												...mapping,
+												[line.lineKey]: {
+													code: mapping[line.lineKey]?.code ?? '',
+													name: event.target.value,
+												},
+											})
+										}
+										data-testid={`accounting-name-${line.lineKey}`}
+									/>
+								</div>
+							)
+						})}
 						<Button
 							className="self-start"
 							disabled={mappingFetcher.state !== 'idle'}
@@ -364,7 +458,9 @@ export function AccountingScreen(props: Props) {
 							<Trans>Save accounts</Trans>
 						</Button>
 						{mappingFetcher.state === 'idle' && mappingFetcher.data?.ok ? (
-							<p role="status" className="text-muted-foreground text-sm"><Trans>Saved.</Trans></p>
+							<p role="status" className="text-muted-foreground text-sm">
+								<Trans>Saved.</Trans>
+							</p>
 						) : null}
 					</CardContent>
 				</Card>
@@ -372,11 +468,13 @@ export function AccountingScreen(props: Props) {
 
 			<Card>
 				<CardHeader>
-					<CardTitle><Trans>Weekly email to your bookkeeper</Trans></CardTitle>
+					<CardTitle>
+						<Trans>Weekly email to your bookkeeper</Trans>
+					</CardTitle>
 					<CardDescription>
 						<Trans>
-							Every Monday, last week&apos;s journal as a table with a link to the
-							file. The address is only used for this email.
+							Every Monday, last week&apos;s journal as a table with a link to
+							the file. The address is only used for this email.
 						</Trans>
 					</CardDescription>
 				</CardHeader>
@@ -386,7 +484,11 @@ export function AccountingScreen(props: Props) {
 						type="email"
 						value={email}
 						onChange={(event) => setEmail(event.target.value)}
-						error={settingsFetcher.data?.ok === false ? _(msg`Enter a valid email address.`) : null}
+						error={
+							settingsFetcher.data?.ok === false
+								? _(msg`Enter a valid email address.`)
+								: null
+						}
 						data-testid="accounting-bookkeeper"
 					/>
 					<label className="flex items-center gap-2 text-sm">
@@ -402,7 +504,12 @@ export function AccountingScreen(props: Props) {
 						disabled={settingsFetcher.state !== 'idle'}
 						onClick={() =>
 							void settingsFetcher.submit(
-								{ intent: 'save-settings', layout, bookkeeperEmail: email.trim(), weeklyEmail: weekly } as never,
+								{
+									intent: 'save-settings',
+									layout,
+									bookkeeperEmail: email.trim(),
+									weeklyEmail: weekly,
+								} as never,
 								{ method: 'post', encType: 'application/json' },
 							)
 						}
@@ -414,4 +521,8 @@ export function AccountingScreen(props: Props) {
 			</Card>
 		</WorkspacePage>
 	)
+}
+
+function OutOfBalance({ amount }: { amount: string }) {
+	return <Trans>Out of balance by {amount}</Trans>
 }

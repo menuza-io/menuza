@@ -619,7 +619,10 @@ export async function queryPeople(
 		)
 	}
 	const now = input.now ?? Date.now()
-	const limit = Math.min(Math.max(input.limit ?? PEOPLE_PAGE_SIZE, 1), opts.limitCap)
+	const limit = Math.min(
+		Math.max(input.limit ?? PEOPLE_PAGE_SIZE, 1),
+		opts.limitCap,
+	)
 	const spec = SORT_SPECS[input.sort ?? 'recent']
 	const filters = listFilters(access, input, now)
 	const where =
@@ -925,7 +928,8 @@ export async function resolveGuestId(
 // Profile
 // ---------------------------------------------------------------------------
 
-export type LastOrderChannel = ReturnType<typeof restaurantSalesChannel> | 'shop'
+export type LastOrderChannel =
+	ReturnType<typeof restaurantSalesChannel> | 'shop'
 
 async function ordersSummary(
 	db: DbOrTx,
@@ -1253,7 +1257,11 @@ export async function updatePerson(
 	// One write: a rejected dining update (stale version, merged guest) must
 	// not leave the customer's name or email already changed.
 	await withSetupWrite(db, async (tx) => {
-		if (customer && (editsContact || editsBirthday) && access.canUpdateCustomers) {
+		if (
+			customer &&
+			(editsContact || editsBirthday) &&
+			access.canUpdateCustomers
+		) {
 			await tx
 				.update(customers)
 				.set({

@@ -381,7 +381,9 @@ describe('order history search, filter and CSV export (#224)', () => {
 		if (!second.ok) throw new Error('chunk failed')
 		expect(second.data.rows).toHaveLength(1)
 		expect(second.data.nextCursor).toBeNull()
-		expect(second.data.footer?.flat().join(' ')).toContain('truncated to 3 rows')
+		expect(second.data.footer?.flat().join(' ')).toContain(
+			'truncated to 3 rows',
+		)
 
 		const scoped = await exportOrderHistoryChunk({
 			orgId,

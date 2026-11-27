@@ -110,7 +110,9 @@ export type PeopleExportChunk = {
 async function exportCurrencies(db: TenantDatabase): Promise<string[]> {
 	// The same sales rule as the spend CTE: only counted orders have a currency here.
 	const rows = await db
-		.selectDistinct({ currency: sql<string>`upper(${restaurantOrders.currency})` })
+		.selectDistinct({
+			currency: sql<string>`upper(${restaurantOrders.currency})`,
+		})
 		.from(restaurantOrders)
 		.where(countedOrderCondition())
 		.orderBy(sql`1`)
@@ -129,7 +131,10 @@ export async function exportPeopleChunk(
 	},
 ): Promise<PeopleExportChunk> {
 	requireCustomersFacet(access)
-	const cap = Math.min(opts.maxRows ?? PEOPLE_EXPORT_MAX_ROWS, PEOPLE_EXPORT_MAX_ROWS)
+	const cap = Math.min(
+		opts.maxRows ?? PEOPLE_EXPORT_MAX_ROWS,
+		PEOPLE_EXPORT_MAX_ROWS,
+	)
 	const chunkRows = Math.min(
 		Math.max(opts.chunkRows ?? EXPORT_CHUNK_ROWS, 1),
 		EXPORT_CHUNK_ROWS,

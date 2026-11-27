@@ -43,8 +43,7 @@ const COPY = {
 		unsubscribe: 'إلغاء الاشتراك في هذا البريد',
 		because: (org: string) => `تصلك هذه الرسالة لأنك عضو في ${org}.`,
 		csvNote: 'رابط ملف CSV يعمل لمدة 7 أيام.',
-		cut: (n: number) =>
-			`يعرض أول ${n} صفًا. نزّل ملف CSV لبقية الصفوف.`,
+		cut: (n: number) => `يعرض أول ${n} صفًا. نزّل ملف CSV لبقية الصفوف.`,
 		noData: 'لا توجد بيانات لهذه الفترة.',
 		same: 'بلا تغيير',
 		up: (p: string) => `ارتفاع ${p}`,
@@ -151,11 +150,7 @@ function footer(
 	}</p>`
 }
 
-function links(
-	locale: EmailLocale,
-	reportUrl: string,
-	csvUrl?: string | null,
-) {
+function links(locale: EmailLocale, reportUrl: string, csvUrl?: string | null) {
 	const copy = emailCopy(locale)
 	const a = (href: string, text: string) =>
 		`<a href="${escapeXml(href)}" style="display:inline-block;margin-inline-end:12px;color:#0b57d0;">${escapeXml(text)}</a>`
@@ -293,7 +288,9 @@ export function summaryLines(
 			values: entries.map((entry) =>
 				formatFigureEntry(entry, value.format, locale),
 			),
-			changes: entries.map((entry) => changeText(entry, value.previous, locale)),
+			changes: entries.map((entry) =>
+				changeText(entry, value.previous, locale),
+			),
 		}
 	})
 }
@@ -329,6 +326,9 @@ export function figureLabel(id: FigureId, locale: EmailLocale): string {
 
 export function figureLabels(locale: EmailLocale): Record<FigureId, string> {
 	return Object.fromEntries(
-		(Object.keys(FIGURES) as FigureId[]).map((id) => [id, figureLabel(id, locale)]),
+		(Object.keys(FIGURES) as FigureId[]).map((id) => [
+			id,
+			figureLabel(id, locale),
+		]),
 	) as Record<FigureId, string>
 }

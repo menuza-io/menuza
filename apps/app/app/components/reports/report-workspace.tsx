@@ -45,8 +45,10 @@ export function AppReportWorkspace(props: ReportWorkspaceProps) {
 				})
 				if (definition) {
 					query.set('preset', definition.timeframe.preset)
-					if (definition.timeframe.start) query.set('start', definition.timeframe.start)
-					if (definition.timeframe.end) query.set('end', definition.timeframe.end)
+					if (definition.timeframe.start)
+						query.set('start', definition.timeframe.start)
+					if (definition.timeframe.end)
+						query.set('end', definition.timeframe.end)
 				}
 				return [
 					{

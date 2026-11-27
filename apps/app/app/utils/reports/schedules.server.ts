@@ -1,3 +1,4 @@
+import { getFeatureFlag } from '@repo/common/feature-flags'
 import {
 	and,
 	asc,
@@ -15,7 +16,6 @@ import {
 	User,
 	UserOrganization,
 } from '@repo/database'
-import { getFeatureFlag } from '@repo/common/feature-flags'
 import { sendEmail } from '@repo/email'
 import {
 	DAILY_SUMMARY_PRESET,
@@ -25,7 +25,6 @@ import {
 	REPORT_HAS_PERSONAL_FIELDS,
 	type ReportDefinition,
 } from '@repo/reports'
-import { reportSendResponseSchema } from '@repo/reports/send-contract'
 import {
 	dueRunKey,
 	DAILY_SUMMARY_BUILT_IN,
@@ -35,15 +34,16 @@ import {
 	reportScheduleInputSchema,
 	type ReportScheduleInput,
 } from '@repo/reports/schedule'
+import { reportSendResponseSchema } from '@repo/reports/send-contract'
 import { parseDefinition } from '@repo/reports/server'
 import { isFlagOn, zonedLocalToUtc } from '@repo/staffing'
 import { readLiveEnv } from '#app/utils/env.server.ts'
-import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
-import { resolveReportTokenGrantsForMember } from './token-grants.server.ts'
+import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { reviewFigureValue, resolveFigureModules } from './modules.server.ts'
 import { postRegionalReports } from './regional-reports.server.ts'
 import { reportUnsubscribeUrl } from './report-unsubscribe.server.ts'
+import { resolveReportTokenGrantsForMember } from './token-grants.server.ts'
 
 /**
  * Scheduled report emails (#121), App side. The control plane keeps the
@@ -63,7 +63,9 @@ import { reportUnsubscribeUrl } from './report-unsubscribe.server.ts'
 export const REPORT_SCHEDULES_FLAG = 'reports.schedules'
 
 export async function isReportSchedulesEnabled(organizationId: string) {
-	return isFlagOn(await getFeatureFlag(REPORT_SCHEDULES_FLAG, { organizationId }))
+	return isFlagOn(
+		await getFeatureFlag(REPORT_SCHEDULES_FLAG, { organizationId }),
+	)
 }
 
 export type ScheduleInput = ReportScheduleInput & {
@@ -87,8 +89,7 @@ export type ScheduleError =
 	| typeof REPORT_HAS_PERSONAL_FIELDS
 
 export type ScheduleResult<T = { id: string }> =
-	| { ok: true; data: T }
-	| { ok: false; error: ScheduleError; detail?: string[] }
+	{ ok: true; data: T } | { ok: false; error: ScheduleError; detail?: string[] }
 
 /** The organization's reporting zone: its first location's, UTC without one. */
 export async function defaultReportingTimeZone(organizationId: string) {
@@ -126,7 +127,8 @@ async function validateReport(input: {
 	request: Request
 	savedReportId: string | null
 }): Promise<ScheduleResult<{ definition: ReportDefinition | null }>> {
-	if (input.savedReportId === null) return { ok: true, data: { definition: null } }
+	if (input.savedReportId === null)
+		return { ok: true, data: { definition: null } }
 	const [report] = await db
 		.select()
 		.from(SavedReport)
@@ -212,7 +214,9 @@ export async function createReportSchedule(input: {
 		.select({ n: count() })
 		.from(ReportSchedule)
 		.where(eq(ReportSchedule.organizationId, input.organizationId))
-	if (Number(counted?.n ?? 0) >= REPORT_SCHEDULE_LIMITS.schedulesPerOrganization) {
+	if (
+		Number(counted?.n ?? 0) >= REPORT_SCHEDULE_LIMITS.schedulesPerOrganization
+	) {
 		return { ok: false, error: 'too_many_schedules' }
 	}
 	const [created] = await db
@@ -232,7 +236,9 @@ export async function createReportSchedule(input: {
 		.returning({ id: ReportSchedule.id })
 	await db
 		.insert(ReportScheduleRecipient)
-		.values(recipients.data.map((userId) => ({ scheduleId: created!.id, userId })))
+		.values(
+			recipients.data.map((userId) => ({ scheduleId: created!.id, userId })),
+		)
 	return { ok: true, data: { id: created!.id } }
 }
 
@@ -257,7 +263,10 @@ export async function updateReportSchedule(input: {
 	scheduleId: string
 	schedule: Omit<ScheduleInput, 'savedReportId'>
 }): Promise<ScheduleResult> {
-	const existing = await loadOwnedSchedule(input.organizationId, input.scheduleId)
+	const existing = await loadOwnedSchedule(
+		input.organizationId,
+		input.scheduleId,
+	)
 	if (!existing) return { ok: false, error: 'not_found' }
 	const timing = parseInput({
 		...input.schedule,
@@ -326,7 +335,10 @@ export async function setReportSchedulePaused(input: {
 	scheduleId: string
 	paused: boolean
 }): Promise<ScheduleResult> {
-	const existing = await loadOwnedSchedule(input.organizationId, input.scheduleId)
+	const existing = await loadOwnedSchedule(
+		input.organizationId,
+		input.scheduleId,
+	)
 	if (!existing) return { ok: false, error: 'not_found' }
 	await db
 		.update(ReportSchedule)
@@ -350,7 +362,10 @@ export async function deleteReportSchedule(input: {
 	organizationId: string
 	scheduleId: string
 }): Promise<ScheduleResult> {
-	const existing = await loadOwnedSchedule(input.organizationId, input.scheduleId)
+	const existing = await loadOwnedSchedule(
+		input.organizationId,
+		input.scheduleId,
+	)
 	if (!existing) return { ok: false, error: 'not_found' }
 	await db.delete(ReportSchedule).where(eq(ReportSchedule.id, existing.id))
 	return { ok: true, data: { id: existing.id } }
@@ -478,7 +493,10 @@ export async function setMemberReportEmail(input: {
 	organizationId: string
 	subscribed: boolean
 }) {
-	const schedule = await loadOwnedSchedule(input.organizationId, input.scheduleId)
+	const schedule = await loadOwnedSchedule(
+		input.organizationId,
+		input.scheduleId,
+	)
 	if (!schedule) return false
 	await db
 		.update(ReportScheduleRecipient)
@@ -697,9 +715,7 @@ async function scheduleTitle(schedule: typeof ReportSchedule.$inferSelect) {
 }
 
 type RunOutcome =
-	| { kind: 'sent' }
-	| { kind: 'skipped' }
-	| { kind: 'failed'; reason: string }
+	{ kind: 'sent' } | { kind: 'skipped' } | { kind: 'failed'; reason: string }
 
 async function runOneSchedule(input: {
 	schedule: typeof ReportSchedule.$inferSelect
@@ -781,7 +797,9 @@ async function runOneSchedule(input: {
 			}
 		}
 		const canReadReviews = !definition
-			? (await resolveReportGrantsForRequest(placeholder, row.userId, org.id)).includes('reviews')
+			? (
+					await resolveReportGrantsForRequest(placeholder, row.userId, org.id)
+				).includes('reviews')
 			: false
 		recipients.push({
 			userId: row.userId,
@@ -807,7 +825,10 @@ async function runOneSchedule(input: {
 	}
 	const instant = runInstant(runKey, schedule.hour, schedule.timeZone)
 	let reviews: { count: number; previousCount: number } | null = null
-	if (!definition && recipients.some((r) => r.grants.subjects.includes('reviews'))) {
+	if (
+		!definition &&
+		recipients.some((r) => r.grants.subjects.includes('reviews'))
+	) {
 		const value = await reviewFigureValue({
 			organizationId: org.id,
 			id: 'newReviews',
@@ -873,7 +894,10 @@ async function runOneSchedule(input: {
 	return anySent ? { kind: 'sent' } : { kind: 'skipped' }
 }
 
-async function recordStatuses(scheduleId: string, statuses: Map<string, string>) {
+async function recordStatuses(
+	scheduleId: string,
+	statuses: Map<string, string>,
+) {
 	for (const [userId, status] of statuses) {
 		await db
 			.update(ReportScheduleRecipient)

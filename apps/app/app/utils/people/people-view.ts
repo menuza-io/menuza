@@ -98,5 +98,7 @@ const LAST_ORDER_CHANNEL_LABELS: Record<string, MessageDescriptor> = {
 
 /** Where a customer's last order came from (#231); an unknown value reads as the online menu. */
 export function lastOrderChannelLabel(channel: string): MessageDescriptor {
-	return LAST_ORDER_CHANNEL_LABELS[channel] ?? LAST_ORDER_CHANNEL_LABELS.online_menu!
+	return (
+		LAST_ORDER_CHANNEL_LABELS[channel] ?? LAST_ORDER_CHANNEL_LABELS.online_menu!
+	)
 }

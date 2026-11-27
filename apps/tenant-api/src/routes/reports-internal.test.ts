@@ -2,7 +2,11 @@ import crypto from 'node:crypto'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { createReportDefinition, monthlyAsOf, templatesFor } from '@repo/reports'
+import {
+	createReportDefinition,
+	monthlyAsOf,
+	templatesFor,
+} from '@repo/reports'
 import {
 	destroyTenantDb,
 	getTenantDb,
@@ -14,7 +18,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type PublishedOrganization } from '../lib/origin.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { runReportInRegion } from '../services/scheduled-report-service.ts'
-import { reportsInternalRoutes, reportsPublicRoutes } from './reports-internal.ts'
+import {
+	reportsInternalRoutes,
+	reportsPublicRoutes,
+} from './reports-internal.ts'
 
 /**
  * Scheduled report emails in the region (#121): the App's job posts a send
@@ -80,7 +87,14 @@ async function sale(orgId: string, at: number, cents: number, tipCents = 0) {
 }
 
 const SALES_GRANTS = {
-	subjects: ['orders', 'order_items', 'order_options', 'sales', 'order_refunds', 'reviews'],
+	subjects: [
+		'orders',
+		'order_items',
+		'order_options',
+		'sales',
+		'order_refunds',
+		'reviews',
+	],
 	scopeIds: null,
 	locationIds: null,
 	modules: [] as string[],
@@ -120,7 +134,9 @@ async function post(body: unknown, token: string | null = INTERNAL) {
 	})
 }
 
-type SendResult = { results: Array<{ userId: string; status: string; reason?: string }> }
+type SendResult = {
+	results: Array<{ userId: string; status: string; reason?: string }>
+}
 const emailMock = vi.mocked(sendTenantEmail)
 
 beforeEach(async () => {
@@ -164,11 +180,13 @@ afterEach(async () => {
 describe('POST /internal/reports/send: daily summary (#121)', () => {
 	it('refuses a missing or wrong internal token', async () => {
 		expect((await post(request(), null)).status).toBe(401)
-		expect((await post(request(), 'wrong-token-wrong-token-wrong')).status).toBe(401)
+		expect(
+			(await post(request(), 'wrong-token-wrong-token-wrong')).status,
+		).toBe(401)
 		expect(emailMock).not.toHaveBeenCalled()
 	})
 
-	it('emails yesterday\'s numbers against the same weekday last week, with a CSV link and one-click unsubscribe', async () => {
+	it("emails yesterday's numbers against the same weekday last week, with a CSV link and one-click unsubscribe", async () => {
 		const res = await post(request())
 		expect(res.status).toBe(200)
 		expect(((await res.json()) as SendResult).results).toEqual([
@@ -195,9 +213,10 @@ describe('POST /internal/reports/send: daily summary (#121)', () => {
 		expect(sent.html + sent.text).not.toMatch(/Layla|layla@|5551234567/)
 
 		// The CSV link rebuilds the same figures.
-		const csvUrl = /https:\/\/tenant\.example\.test\/reports\/csv\/[^\s"]+/.exec(
-			sent.text,
-		)![0]
+		const csvUrl =
+			/https:\/\/tenant\.example\.test\/reports\/csv\/[^\s"]+/.exec(
+				sent.text,
+			)![0]
 		const url = new URL(csvUrl)
 		const csv = await app.request(`${url.pathname}${url.search}`)
 		expect(csv.status).toBe(200)
@@ -227,7 +246,11 @@ describe('POST /internal/reports/send: daily summary (#121)', () => {
 		)
 		const body = (await res.json()) as SendResult
 		expect(body.results).toEqual([
-			{ userId: 'usr_viewer', status: 'skipped_no_access', reason: 'no_access' },
+			{
+				userId: 'usr_viewer',
+				status: 'skipped_no_access',
+				reason: 'no_access',
+			},
 			{ userId: 'usr_owner', status: 'sent' },
 		])
 		expect(emailMock).toHaveBeenCalledTimes(1)
@@ -264,7 +287,9 @@ describe('POST /internal/reports/send: daily summary (#121)', () => {
 		} as typeof restaurantOrders.$inferInsert)
 		await post(request())
 		const text = emailMock.mock.calls[0]![0].text
-		expect(text).toMatch(/Net sales: .*\$150\.00.*\/.*SAR|Net sales: .*SAR.*\/.*\$150\.00/)
+		expect(text).toMatch(
+			/Net sales: .*\$150\.00.*\/.*SAR|Net sales: .*SAR.*\/.*\$150\.00/,
+		)
 	})
 
 	it('drops the send when the node kill switch is off', async () => {
@@ -329,7 +354,13 @@ describe('POST /internal/reports/send: saved reports (#121)', () => {
 
 	it('runs the saved definition with the analytics engine and emails the table', async () => {
 		const res = await post(
-			request({ report: { kind: 'saved', title: 'Sales by channel', definition: salesReport } }),
+			request({
+				report: {
+					kind: 'saved',
+					title: 'Sales by channel',
+					definition: salesReport,
+				},
+			}),
 		)
 		expect(((await res.json()) as SendResult).results[0]).toEqual({
 			userId: 'usr_owner',
@@ -350,7 +381,9 @@ describe('POST /internal/reports/send: saved reports (#121)', () => {
 			settings: { title: 'Orders with phones', timezone: 'user' },
 		})
 		const res = await post(
-			request({ report: { kind: 'saved', title: 'Orders', definition: personal } }),
+			request({
+				report: { kind: 'saved', title: 'Orders', definition: personal },
+			}),
 		)
 		expect(res.status).toBe(422)
 		expect(((await res.json()) as { error: string }).error).toBe(
@@ -359,10 +392,14 @@ describe('POST /internal/reports/send: saved reports (#121)', () => {
 		expect(emailMock).not.toHaveBeenCalled()
 	})
 
-	it('skips a recipient who lost the grant for the report\'s subject', async () => {
+	it("skips a recipient who lost the grant for the report's subject", async () => {
 		const res = await post(
 			request({
-				report: { kind: 'saved', title: 'Sales by channel', definition: salesReport },
+				report: {
+					kind: 'saved',
+					title: 'Sales by channel',
+					definition: salesReport,
+				},
 				recipients: [
 					{
 						userId: 'usr_lost',
@@ -398,7 +435,9 @@ describe('region and link rules (#121)', () => {
 	it('answers 404 to a forged, expired or other-organization CSV link', async () => {
 		await post(request())
 		const text = emailMock.mock.calls[0]![0].text
-		const url = new URL(/https:\/\/tenant\.example\.test\/reports\/csv\/[^\s"]+/.exec(text)![0])
+		const url = new URL(
+			/https:\/\/tenant\.example\.test\/reports\/csv\/[^\s"]+/.exec(text)![0],
+		)
 		const token = url.searchParams.get('t')!
 		const [payload, mac] = token.split('.')
 		const forged = `${payload}.${'0'.repeat(mac!.length)}`
@@ -414,9 +453,11 @@ describe('region and link rules (#121)', () => {
 	})
 })
 
-
 describe('POST /internal/reports/figures: the monthly totals (#221)', () => {
-	async function figures(body: Record<string, unknown>, token: string | null = INTERNAL) {
+	async function figures(
+		body: Record<string, unknown>,
+		token: string | null = INTERNAL,
+	) {
 		return app.request('/internal/reports/figures', {
 			method: 'POST',
 			headers: {
@@ -503,7 +544,7 @@ describe('POST /internal/reports/figures: the monthly totals (#221)', () => {
 		} as typeof restaurantOrders.$inferInsert)
 	}
 
-	it('answers each location\'s own month, currencies apart, and equals the matching report templates', async () => {
+	it("answers each location's own month, currencies apart, and equals the matching report templates", async () => {
 		await seedOctober()
 		const res = await figures({
 			orgId: ORG,
@@ -527,15 +568,22 @@ describe('POST /internal/reports/figures: the monthly totals (#221)', () => {
 			{ currency: 'USD', value: 150 },
 		])
 		// September (set against it): Chicago's Sep 12 and Sep 30 sales.
-		expect(by.directSales!.previous).toEqual([{ currency: 'USD', value: 27.77 }])
+		expect(by.directSales!.previous).toEqual([
+			{ currency: 'USD', value: 27.77 },
+		])
 		expect(by.directOrders!.entries).toEqual([{ currency: null, value: 3 }])
 
 		// The same month through the existing "Total orders" template, run by the
 		// same route: counted orders, each location's own month.
-		const template = templatesFor('organization').find((t) => t.id === 'orders-total')!
+		const template = templatesFor('organization').find(
+			(t) => t.id === 'orders-total',
+		)!
 		const definition = {
 			...template.definition,
-			timeframe: { ...template.definition.timeframe, preset: 'last_complete_month' as const },
+			timeframe: {
+				...template.definition.timeframe,
+				preset: 'last_complete_month' as const,
+			},
 		}
 		const report = await runReportInRegion({
 			orgId: ORG,
@@ -555,13 +603,23 @@ describe('POST /internal/reports/figures: the monthly totals (#221)', () => {
 			month: '2026-10',
 			timeZone: 'America/Chicago',
 			groups: [
-				{ key: 'none', grants: grants([]), figureIds: ['directSales', 'callsAnswered'] },
-				{ key: 'sales', grants: grants(['sales']), figureIds: ['directSales', 'bookings'] },
+				{
+					key: 'none',
+					grants: grants([]),
+					figureIds: ['directSales', 'callsAnswered'],
+				},
+				{
+					key: 'sales',
+					grants: grants(['sales']),
+					figureIds: ['directSales', 'bookings'],
+				},
 			],
 		})
 		const body = (await res.json()) as FiguresBody
 		expect(body.groups.find((g) => g.key === 'none')!.figures).toEqual([])
-		const ids = body.groups.find((g) => g.key === 'sales')!.figures.map((f) => f.id)
+		const ids = body.groups
+			.find((g) => g.key === 'sales')!
+			.figures.map((f) => f.id)
 		// Sales granted; bookings need the reservations subject and module.
 		expect(ids).toEqual(['directSales'])
 	})
@@ -574,7 +632,9 @@ describe('POST /internal/reports/figures: the monthly totals (#221)', () => {
 					orgId: ORG,
 					month: '2026-10',
 					timeZone: 'UTC',
-					groups: [{ key: 'a', grants: grants(['sales']), figureIds: ['newReviews'] }],
+					groups: [
+						{ key: 'a', grants: grants(['sales']), figureIds: ['newReviews'] },
+					],
 				})
 			).status,
 		).toBe(400)
@@ -584,7 +644,9 @@ describe('POST /internal/reports/figures: the monthly totals (#221)', () => {
 					orgId: KSA_ORG,
 					month: '2026-10',
 					timeZone: 'UTC',
-					groups: [{ key: 'a', grants: grants(['sales']), figureIds: ['directSales'] }],
+					groups: [
+						{ key: 'a', grants: grants(['sales']), figureIds: ['directSales'] },
+					],
 				})
 			).status,
 		).toBe(409)

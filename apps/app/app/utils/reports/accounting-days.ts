@@ -89,7 +89,6 @@ export function mergeAccountingDays(
 	)
 }
 
-
 const minorField = z.number().int()
 /** The region's answer (`POST /internal/reports/accounting`), parsed before use. */
 export const accountingDaysSchema = z.object({

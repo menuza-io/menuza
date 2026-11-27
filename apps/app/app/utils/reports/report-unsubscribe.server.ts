@@ -1,4 +1,11 @@
-import { and, db, eq, MonthlyResultsDelivery, NotificationPreference, ReportScheduleRecipient } from '@repo/database'
+import {
+	and,
+	db,
+	eq,
+	MonthlyResultsDelivery,
+	NotificationPreference,
+	ReportScheduleRecipient,
+} from '@repo/database'
 import {
 	signReportUnsubscribeToken,
 	verifyReportUnsubscribeToken,
@@ -22,8 +29,7 @@ export function reportUnsubscribeUrl(target: ReportUnsubscribeTarget): string {
 }
 
 export type UnsubscribeResult =
-	| { ok: true; kind: ReportUnsubscribeTarget['kind'] }
-	| { ok: false }
+	{ ok: true; kind: ReportUnsubscribeTarget['kind'] } | { ok: false }
 
 /**
  * Switches one recipient's report email off from a signed token (the link in

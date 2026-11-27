@@ -57,7 +57,8 @@ function respond(c: Context, status: number, body: Record<string, unknown>) {
 
 function authorize(c: Context): Response | null {
 	const internalToken = getInternalCommandToken()
-	if (internalToken.length < 16) return respond(c, 503, { error: 'not_configured' })
+	if (internalToken.length < 16)
+		return respond(c, 503, { error: 'not_configured' })
 	const presented = getBearerToken(c.req.header('Authorization'))
 	if (!presented || !timingSafeEqualString(presented, internalToken)) {
 		return respond(c, 401, { error: 'unauthorized' })
@@ -137,7 +138,11 @@ const accountingRequestSchema = z.object({
 	from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 	to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 	/** Limits the figures to these locations (a location-scoped caller); null is all. */
-	locationIds: z.array(z.string().min(1).max(64)).max(500).nullable().default(null),
+	locationIds: z
+		.array(z.string().min(1).max(64))
+		.max(500)
+		.nullable()
+		.default(null),
 })
 
 /**
@@ -183,7 +188,9 @@ reportsInternalRoutes.post('/accounting', async (c) => {
 	}
 })
 
-const csvParamsSchema = z.object({ orgId: z.string().regex(TENANT_ORG_ID_PATTERN) })
+const csvParamsSchema = z.object({
+	orgId: z.string().regex(TENANT_ORG_ID_PATTERN),
+})
 const csvSpecSchema = z.object({
 	req: reportRunSpecSchema,
 	grants: reportGrantsSchema,
@@ -197,7 +204,8 @@ reportsPublicRoutes.get('/csv/:orgId', async (c) => {
 	const payload = verifyReportCsvToken(token)
 	if (!payload || payload.o !== params.data.orgId) return notFound()
 	const spec = csvSpecSchema.safeParse(payload.spec)
-	if (!spec.success || spec.data.req.orgId !== params.data.orgId) return notFound()
+	if (!spec.success || spec.data.req.orgId !== params.data.orgId)
+		return notFound()
 	const organization = await findActiveOrganizationById(params.data.orgId)
 	if (
 		!organization ||

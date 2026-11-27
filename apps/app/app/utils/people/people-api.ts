@@ -395,9 +395,17 @@ export async function fetchPeopleExportChunk(
 	cursor: string | null,
 	signal?: AbortSignal,
 ): Promise<ExportChunk> {
-	const { cursor: ignoredCursor, limit: ignoredLimit, ...filters } = listQuery(params)
+	const {
+		cursor: ignoredCursor,
+		limit: ignoredLimit,
+		...filters
+	} = listQuery(params)
 	const raw = await client.request<Partial<ExportChunk>>('/export', {
-		query: { ...filters, chunk: EXPORT_CHUNK_ROWS, cursor: cursor ?? undefined },
+		query: {
+			...filters,
+			chunk: EXPORT_CHUNK_ROWS,
+			cursor: cursor ?? undefined,
+		},
 		signal,
 	})
 	return {

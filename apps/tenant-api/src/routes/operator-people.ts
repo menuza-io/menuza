@@ -136,7 +136,9 @@ function dayBound(endOfDay: boolean) {
 		.optional()
 		.transform((value, ctx) => {
 			if (value === undefined) return undefined
-			const ms = Date.parse(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`)
+			const ms = Date.parse(
+				`${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`,
+			)
 			if (Number.isNaN(ms)) {
 				ctx.addIssue({ code: 'custom', message: 'invalid_date' })
 				return z.NEVER

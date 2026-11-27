@@ -20,17 +20,25 @@ const daily = (over: Partial<ScheduleTiming> = {}): ScheduleTiming => ({
 })
 
 describe('report schedule timing (#121)', () => {
-	it('sends at the chosen hour in the schedule\'s own zone, once per local day', () => {
+	it("sends at the chosen hour in the schedule's own zone, once per local day", () => {
 		// 08:00 Chicago = 14:00Z in November (CST, UTC-6).
 		expect(dueRunKey(daily(), new Date('2026-11-27T13:00:00Z'))).toBeNull()
-		expect(dueRunKey(daily(), new Date('2026-11-27T14:00:00Z'))).toBe('2026-11-27')
-		expect(dueRunKey(daily(), new Date('2026-11-27T14:45:00Z'))).toBe('2026-11-27')
+		expect(dueRunKey(daily(), new Date('2026-11-27T14:00:00Z'))).toBe(
+			'2026-11-27',
+		)
+		expect(dueRunKey(daily(), new Date('2026-11-27T14:45:00Z'))).toBe(
+			'2026-11-27',
+		)
 		// The same key all morning: the caller sends once per key.
-		expect(dueRunKey(daily(), new Date('2026-11-27T15:10:00Z'))).toBe('2026-11-27')
+		expect(dueRunKey(daily(), new Date('2026-11-27T15:10:00Z'))).toBe(
+			'2026-11-27',
+		)
 	})
 
 	it('catches up a missed tick within a few hours, then skips the day', () => {
-		expect(dueRunKey(daily(), new Date('2026-11-27T18:30:00Z'))).toBe('2026-11-27')
+		expect(dueRunKey(daily(), new Date('2026-11-27T18:30:00Z'))).toBe(
+			'2026-11-27',
+		)
 		expect(dueRunKey(daily(), new Date('2026-11-27T21:00:00Z'))).toBeNull()
 	})
 
@@ -42,14 +50,18 @@ describe('report schedule timing (#121)', () => {
 
 	it('weekly runs on the chosen weekday, monthly on the 1st', () => {
 		const weekly = daily({ cadence: 'weekly', weekday: 1 }) // Monday
-		expect(dueRunKey(weekly, new Date('2026-11-30T14:00:00Z'))).toBe('2026-11-30')
+		expect(dueRunKey(weekly, new Date('2026-11-30T14:00:00Z'))).toBe(
+			'2026-11-30',
+		)
 		expect(dueRunKey(weekly, new Date('2026-12-01T14:00:00Z'))).toBeNull()
 		const monthly = daily({ cadence: 'monthly' })
-		expect(dueRunKey(monthly, new Date('2026-12-01T14:00:00Z'))).toBe('2026-12-01')
+		expect(dueRunKey(monthly, new Date('2026-12-01T14:00:00Z'))).toBe(
+			'2026-12-01',
+		)
 		expect(dueRunKey(monthly, new Date('2026-12-02T14:00:00Z'))).toBeNull()
 	})
 
-	it('uses the zone\'s date, not UTC\'s (Riyadh is ahead)', () => {
+	it("uses the zone's date, not UTC's (Riyadh is ahead)", () => {
 		const t = daily({ timeZone: 'Asia/Riyadh', hour: 7 })
 		// 07:00 Riyadh Nov 28 = 04:00Z Nov 28
 		expect(dueRunKey(t, new Date('2026-11-28T04:00:00Z'))).toBe('2026-11-28')
@@ -114,12 +126,23 @@ describe('report unsubscribe tokens (#121)', () => {
 		)
 		const [payload, mac] = token.split('.')
 		const forged = Buffer.from(
-			JSON.stringify({ kind: 'schedule', scheduleId: 'sch_1', userId: 'usr_2' }),
+			JSON.stringify({
+				kind: 'schedule',
+				scheduleId: 'sch_1',
+				userId: 'usr_2',
+			}),
 		).toString('base64url')
 		expect(verifyReportUnsubscribeToken(`${forged}.${mac}`, SECRET)).toBeNull()
 		expect(verifyReportUnsubscribeToken(`${payload}.AAAA`, SECRET)).toBeNull()
 		expect(verifyReportUnsubscribeToken(token, `${SECRET}-other`)).toBeNull()
-		for (const junk of ['', 'x', 'a.b.c', `${payload}`, '.'.repeat(5), 'z'.repeat(700)]) {
+		for (const junk of [
+			'',
+			'x',
+			'a.b.c',
+			`${payload}`,
+			'.'.repeat(5),
+			'z'.repeat(700),
+		]) {
 			expect(verifyReportUnsubscribeToken(junk, SECRET)).toBeNull()
 		}
 	})

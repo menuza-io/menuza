@@ -326,12 +326,12 @@ describe('PersonProfileScreen: last order (#231)', () => {
 				},
 			},
 		})
-		expect(await screen.findByTestId('person-stat-last-order')).toHaveTextContent(
-			/2026/,
-		)
-		expect(screen.getByTestId('person-stat-last-order-channel')).toHaveTextContent(
-			'Table QR code',
-		)
+		expect(
+			await screen.findByTestId('person-stat-last-order'),
+		).toHaveTextContent(/2026/)
+		expect(
+			screen.getByTestId('person-stat-last-order-channel'),
+		).toHaveTextContent('Table QR code')
 	})
 
 	it('shows a dash when the customer has no orders', async () => {

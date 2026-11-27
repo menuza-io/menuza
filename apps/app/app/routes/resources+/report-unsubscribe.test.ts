@@ -1,8 +1,16 @@
-import { db, eq, ReportSchedule, ReportScheduleRecipient, SavedReport } from '@repo/database'
+import {
+	db,
+	eq,
+	ReportSchedule,
+	ReportScheduleRecipient,
+	SavedReport,
+} from '@repo/database'
 import { createReportDefinition } from '@repo/reports'
 import { describe, expect, it } from 'vitest'
-import { reportUnsubscribeUrl } from '#app/utils/reports/report-unsubscribe.server.ts'
-import { monthlyResultsEmailEnabled } from '#app/utils/reports/report-unsubscribe.server.ts'
+import {
+	reportUnsubscribeUrl,
+	monthlyResultsEmailEnabled,
+} from '#app/utils/reports/report-unsubscribe.server.ts'
 import { setupTestOrgWithUser } from '#tests/test-utils.ts'
 import { action, loader } from './report-unsubscribe.ts'
 
@@ -20,7 +28,11 @@ async function seedSchedule() {
 				createReportDefinition({
 					subject: 'sales',
 					timeframe: { field: 'occurredAt', preset: 'yesterday' },
-					visualization: { chartStyle: 'single_number', measure: 'sum', valueField: 'netSales' },
+					visualization: {
+						chartStyle: 'single_number',
+						measure: 'sum',
+						valueField: 'netSales',
+					},
 					settings: { title: 'Net sales', timezone: 'user' },
 				}),
 			),
@@ -68,7 +80,7 @@ describe('one-click unsubscribe from a report email (#121, #221)', () => {
 		expect(row!.unsubscribedAt).not.toBeNull()
 	})
 
-	it('accepts the mail client\'s one-click POST', async () => {
+	it("accepts the mail client's one-click POST", async () => {
 		const { user, schedule } = await seedSchedule()
 		const url = reportUnsubscribeUrl({
 			kind: 'schedule',
@@ -118,7 +130,9 @@ describe('one-click unsubscribe from a report email (#121, #221)', () => {
 
 	it('switches the monthly results email off from its own link', async () => {
 		const { user, organization } = await seedSchedule()
-		expect(await monthlyResultsEmailEnabled(user.id, organization.id)).toBe(true)
+		expect(await monthlyResultsEmailEnabled(user.id, organization.id)).toBe(
+			true,
+		)
 		const url = reportUnsubscribeUrl({
 			kind: 'monthly',
 			organizationId: organization.id,
@@ -130,6 +144,8 @@ describe('one-click unsubscribe from a report email (#121, #221)', () => {
 			context: {},
 		} as never)
 		expect(response.status).toBe(200)
-		expect(await monthlyResultsEmailEnabled(user.id, organization.id)).toBe(false)
+		expect(await monthlyResultsEmailEnabled(user.id, organization.id)).toBe(
+			false,
+		)
 	})
 })

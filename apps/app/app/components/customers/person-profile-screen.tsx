@@ -473,7 +473,11 @@ export function PersonProfileScreen({
 									label={<Trans>Last order from</Trans>}
 									value={
 										customer.orders.lastOrderChannel
-											? _(lastOrderChannelLabel(customer.orders.lastOrderChannel))
+											? _(
+													lastOrderChannelLabel(
+														customer.orders.lastOrderChannel,
+													),
+												)
 											: '—'
 									}
 								/>

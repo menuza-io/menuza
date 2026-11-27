@@ -15,7 +15,11 @@ const REGION_FIGURE_IDS = (Object.keys(FIGURES) as FigureId[]).filter(
 ) as [FigureId, ...FigureId[]]
 
 export const reportFiguresRequestSchema = z.object({
-	orgId: z.string().min(1).max(64).regex(/^[\w-]+$/),
+	orgId: z
+		.string()
+		.min(1)
+		.max(64)
+		.regex(/^[\w-]+$/),
 	/** `YYYY-MM`: each location's own calendar month in its own zone. */
 	month: z.string().regex(MONTH_KEY),
 	timeZone: z.string().min(1).max(64),

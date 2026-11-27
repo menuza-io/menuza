@@ -103,7 +103,10 @@ async function setup() {
 	return { user, organization, report: report! }
 }
 
-const baseInput = (savedReportId: string | null, recipientUserIds: string[]) => ({
+const baseInput = (
+	savedReportId: string | null,
+	recipientUserIds: string[],
+) => ({
 	cadence: 'daily' as const,
 	weekday: null,
 	hour: 8,
@@ -114,22 +117,27 @@ const baseInput = (savedReportId: string | null, recipientUserIds: string[]) => 
 })
 
 function fakeRegion(
-	statusFor: (userId: string) => 'sent' | 'failed' | 'skipped_no_access' = () => 'sent',
+	statusFor: (userId: string) => 'sent' | 'failed' | 'skipped_no_access' = () =>
+		'sent',
 ) {
 	const calls: Array<{ path: string; body: Record<string, any> }> = []
-	const post = vi.fn(async (input: { path: string; body: Record<string, unknown> }) => {
-		calls.push({ path: input.path, body: input.body as Record<string, any> })
-		const recipients = input.body.recipients as Array<{ userId: string }>
-		return Response.json(
-			reportSendResponseSchema.parse({
-				results: recipients.map((r) => ({
-					userId: r.userId,
-					status: statusFor(r.userId),
-					...(statusFor(r.userId) === 'failed' ? { reason: 'email_error' } : {}),
-				})),
-			}),
-		)
-	})
+	const post = vi.fn(
+		async (input: { path: string; body: Record<string, unknown> }) => {
+			calls.push({ path: input.path, body: input.body as Record<string, any> })
+			const recipients = input.body.recipients as Array<{ userId: string }>
+			return Response.json(
+				reportSendResponseSchema.parse({
+					results: recipients.map((r) => ({
+						userId: r.userId,
+						status: statusFor(r.userId),
+						...(statusFor(r.userId) === 'failed'
+							? { reason: 'email_error' }
+							: {}),
+					})),
+				}),
+			)
+		},
+	)
 	return { post: post as never, calls }
 }
 
@@ -266,7 +274,12 @@ describe('creating a schedule (#121)', () => {
 			userId: user.id,
 			request,
 			scheduleId: created.data.id,
-			schedule: { ...baseInput(null, [user.id]), hour: 6, cadence: 'weekly', weekday: 1 },
+			schedule: {
+				...baseInput(null, [user.id]),
+				hour: 6,
+				cadence: 'weekly',
+				weekday: 1,
+			},
 		})
 		expect(edited.ok).toBe(true)
 		;[row] = await listReportSchedules(organization.id)
@@ -343,7 +356,7 @@ describe('the hourly job (#121)', () => {
 		expect(row!.recipients[0]!.lastStatus).toBe('sent')
 	})
 
-	it('offers the daily summary on a schedule with the organization\'s modules', async () => {
+	it("offers the daily summary on a schedule with the organization's modules", async () => {
 		const { user, organization } = await setup()
 		const created = await createReportSchedule({
 			organizationId: organization.id,
@@ -387,9 +400,9 @@ describe('the hourly job (#121)', () => {
 			)
 		const region = fakeRegion()
 		await runDueReportSchedules({ now: NOW, post: region.post })
-		expect(region.calls[0]!.body.recipients.map((r: { userId: string }) => r.userId)).toEqual([
-			user.id,
-		])
+		expect(
+			region.calls[0]!.body.recipients.map((r: { userId: string }) => r.userId),
+		).toEqual([user.id])
 		const [row] = await listReportSchedules(organization.id)
 		const status = Object.fromEntries(
 			row!.recipients.map((r) => [r.userId, r.lastStatus]),
@@ -413,16 +426,31 @@ describe('the hourly job (#121)', () => {
 		const at = (iso: string) => new Date(iso)
 		// Attempt 1 at 08:00; retry after 30 minutes (next hourly tick), then 2 hours.
 		await runDueReportSchedules({ now: NOW, post: region.post })
-		await runDueReportSchedules({ now: at('2027-01-05T14:20:00Z'), post: region.post })
+		await runDueReportSchedules({
+			now: at('2027-01-05T14:20:00Z'),
+			post: region.post,
+		})
 		expect(region.calls).toHaveLength(1)
-		await runDueReportSchedules({ now: at('2027-01-05T15:00:00Z'), post: region.post })
+		await runDueReportSchedules({
+			now: at('2027-01-05T15:00:00Z'),
+			post: region.post,
+		})
 		expect(region.calls).toHaveLength(2)
-		await runDueReportSchedules({ now: at('2027-01-05T15:30:00Z'), post: region.post })
+		await runDueReportSchedules({
+			now: at('2027-01-05T15:30:00Z'),
+			post: region.post,
+		})
 		expect(region.calls).toHaveLength(2)
-		await runDueReportSchedules({ now: at('2027-01-05T17:30:00Z'), post: region.post })
+		await runDueReportSchedules({
+			now: at('2027-01-05T17:30:00Z'),
+			post: region.post,
+		})
 		expect(region.calls).toHaveLength(3)
 		// No fourth attempt that day, and the error is recorded.
-		await runDueReportSchedules({ now: at('2027-01-05T20:00:00Z'), post: region.post })
+		await runDueReportSchedules({
+			now: at('2027-01-05T20:00:00Z'),
+			post: region.post,
+		})
 		expect(region.calls).toHaveLength(3)
 		const [row] = await listReportSchedules(organization.id)
 		expect(row).toMatchObject({ lastError: 'email_error', failureDays: 1 })
@@ -442,7 +470,9 @@ describe('the hourly job (#121)', () => {
 		if (!created.ok) throw new Error('create failed')
 		await backdate(created.data.id)
 		const region = fakeRegion(() => 'failed')
-		const send = vi.fn().mockResolvedValue({ status: 'success', data: { id: 'x' } })
+		const send = vi
+			.fn()
+			.mockResolvedValue({ status: 'success', data: { id: 'x' } })
 		for (const day of ['05', '06', '07']) {
 			for (const hour of ['14:00', '15:00', '17:30']) {
 				await runDueReportSchedules({
@@ -489,7 +519,10 @@ describe('the hourly job (#121)', () => {
 		})
 		const token = new URL(link).searchParams.get('token')!
 		expect(await applyReportUnsubscribe(`${token}x`)).toEqual({ ok: false })
-		expect(await applyReportUnsubscribe(token)).toEqual({ ok: true, kind: 'schedule' })
+		expect(await applyReportUnsubscribe(token)).toEqual({
+			ok: true,
+			kind: 'schedule',
+		})
 		const [recipient] = await db
 			.select()
 			.from(ReportScheduleRecipient)

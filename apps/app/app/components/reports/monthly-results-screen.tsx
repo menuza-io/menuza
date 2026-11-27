@@ -108,7 +108,9 @@ function monthTitle(month: string, locale: string) {
 export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 	const { _, i18n } = useLingui()
 	const [state, setState] = useState<
-		{ kind: 'loading' } | { kind: 'ready'; figures: FigureValue[] } | { kind: 'error' }
+		| { kind: 'loading' }
+		| { kind: 'ready'; figures: FigureValue[] }
+		| { kind: 'error' }
 	>({ kind: 'loading' })
 	useEffect(() => {
 		const controller = new AbortController()
@@ -133,7 +135,13 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 				if (!controller.signal.aborted) setState({ kind: 'error' })
 			})
 		return () => controller.abort()
-	}, [data.month, data.regionIds, data.timeZone, data.tenantApiUrl, data.tokenUrl])
+	}, [
+		data.month,
+		data.regionIds,
+		data.timeZone,
+		data.tenantApiUrl,
+		data.tokenUrl,
+	])
 
 	const figures =
 		state.kind === 'ready' ? [...state.figures, ...data.reviews] : data.reviews
@@ -152,7 +160,9 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 		}
 		if (f.format === 'percent') return `${entry.value.toFixed(1)}%`
 		if (f.format === 'rating') return entry.value.toFixed(2)
-		return new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 0 }).format(entry.value)
+		return new Intl.NumberFormat(i18n.locale, {
+			maximumFractionDigits: 0,
+		}).format(entry.value)
 	}
 	const change = (entry: FigureEntry, f: FigureValue) => {
 		const pct = figureChangePercent(entry, f.previous)
@@ -161,8 +171,13 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 		if (rounded === 0) return _(msg`no change`)
 		return pct > 0 ? _(msg`up ${rounded}%`) : _(msg`down ${rounded}%`)
 	}
+	const partialSince = data.partialSince
+	const ratePercent = data.commissionBp / 100
 	const online = byId.get('onlineSales')
-	const kept = data.showKept && online ? keptByOrderingDirect(online.entries, data.commissionBp) : null
+	const kept =
+		data.showKept && online
+			? keptByOrderingDirect(online.entries, data.commissionBp)
+			: null
 
 	return (
 		<WorkspacePage>
@@ -179,7 +194,11 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 						<Button
 							variant="outline"
 							size="sm"
-							render={<Link to={`/${data.orgSlug}/reports/monthly?month=${data.previousMonth}`} />}
+							render={
+								<Link
+									to={`/${data.orgSlug}/reports/monthly?month=${data.previousMonth}`}
+								/>
+							}
 							data-testid="monthly-previous"
 						>
 							<Icon name="chevron-left" />
@@ -189,7 +208,11 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 							<Button
 								variant="outline"
 								size="sm"
-								render={<Link to={`/${data.orgSlug}/reports/monthly?month=${data.nextMonth}`} />}
+								render={
+									<Link
+										to={`/${data.orgSlug}/reports/monthly?month=${data.nextMonth}`}
+									/>
+								}
 								data-testid="monthly-next"
 							>
 								<Trans>Later month</Trans>
@@ -208,7 +231,7 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 					<AlertDescription>
 						<Trans>
 							This is your first month, so it covers a partial month: from{' '}
-							<bdi>{data.partialSince}</bdi>.
+							<bdi>{partialSince}</bdi>.
 						</Trans>
 					</AlertDescription>
 				</Alert>
@@ -217,14 +240,19 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 				<Alert variant="destructive" data-testid="monthly-error">
 					<Icon name="alert-triangle" />
 					<AlertDescription>
-						<Trans>The monthly figures could not be loaded. Try again later.</Trans>
+						<Trans>
+							The monthly figures could not be loaded. Try again later.
+						</Trans>
 					</AlertDescription>
 				</Alert>
 			) : null}
 			{state.kind === 'loading' && data.regionIds.length > 0 ? (
 				<Skeleton className="h-48 rounded-lg" aria-hidden="true" />
 			) : (
-				<div className="grid gap-4 md:grid-cols-2" data-testid="monthly-sections">
+				<div
+					className="grid gap-4 md:grid-cols-2"
+					data-testid="monthly-sections"
+				>
 					{kept ? (
 						<Card className="md:col-span-2" data-testid="monthly-kept">
 							<CardHeader>
@@ -232,24 +260,34 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 									<Trans>Kept by ordering direct</Trans>
 									<Badge variant="outline" data-testid="monthly-kept-estimate">
 										<Trans>
-											Estimate at <bdi>{data.commissionBp / 100}</bdi>% commission
+											Estimate at <bdi>{ratePercent}</bdi>% commission
 										</Trans>
 									</Badge>
 								</CardTitle>
 							</CardHeader>
 							<CardContent className="flex flex-col gap-2">
 								<div className="text-2xl font-semibold tabular-nums">
-									{kept.length === 0 ? '—' : kept.map((entry) => (
-										<div key={entry.currency} data-testid={`monthly-kept-${entry.currency}`}>
-											{format(entry, { id: 'onlineSales', format: 'currency', entries: [], previous: [] })}
-										</div>
-									))}
+									{kept.length === 0
+										? '—'
+										: kept.map((entry) => (
+												<div
+													key={entry.currency}
+													data-testid={`monthly-kept-${entry.currency}`}
+												>
+													{format(entry, {
+														id: 'onlineSales',
+														format: 'currency',
+														entries: [],
+														previous: [],
+													})}
+												</div>
+											))}
 								</div>
 								<p className="text-muted-foreground text-sm">
 									<Trans>
-										Your direct online sales times the delivery-app commission rate
-										you set. An estimate of what the same orders would have cost
-										on a delivery app, not real money.
+										Your direct online sales times the delivery-app commission
+										rate you set. An estimate of what the same orders would have
+										cost on a delivery app, not real money.
 									</Trans>
 									{data.canEditRate ? (
 										<>
@@ -272,18 +310,35 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 							.filter((f): f is FigureValue => Boolean(f))
 						if (present.length === 0) return null
 						return (
-							<Card key={section.title.id} data-testid={`monthly-section-${section.ids[0]}`}>
+							<Card
+								key={section.title.id}
+								data-testid={`monthly-section-${section.ids[0]}`}
+							>
 								<CardHeader>
 									<CardTitle>{_(section.title)}</CardTitle>
 								</CardHeader>
 								<CardContent className="flex flex-col gap-3">
 									{present.map((f) => (
-										<div key={f.id} className="flex items-baseline justify-between gap-3" data-testid={`monthly-figure-${f.id}`}>
-											<span className="text-sm">{_(FIGURE_MESSAGES[f.id as FigureId])}</span>
+										<div
+											key={f.id}
+											className="flex items-baseline justify-between gap-3"
+											data-testid={`monthly-figure-${f.id}`}
+										>
+											<span className="text-sm">
+												{_(FIGURE_MESSAGES[f.id as FigureId])}
+											</span>
 											<span className="text-end tabular-nums">
-												{(f.entries.length > 0 ? f.entries : [{ currency: null, value: 0 }]).map((entry) => (
-													<div key={entry.currency ?? 'n'} data-testid={`monthly-value-${f.id}-${entry.currency ?? 'n'}`}>
-														<span className="font-medium">{format(entry, f)}</span>{' '}
+												{(f.entries.length > 0
+													? f.entries
+													: [{ currency: null, value: 0 }]
+												).map((entry) => (
+													<div
+														key={entry.currency ?? 'n'}
+														data-testid={`monthly-value-${f.id}-${entry.currency ?? 'n'}`}
+													>
+														<span className="font-medium">
+															{format(entry, f)}
+														</span>{' '}
 														<span className="text-muted-foreground text-xs">
 															{change(entry, f)}
 														</span>
@@ -299,7 +354,10 @@ export function MonthlyResultsScreen({ data }: { data: MonthlyResultsData }) {
 				</div>
 			)}
 			{data.off.length > 0 ? (
-				<ul className="text-muted-foreground flex flex-col gap-1 text-sm" data-testid="monthly-off">
+				<ul
+					className="text-muted-foreground flex flex-col gap-1 text-sm"
+					data-testid="monthly-off"
+				>
 					{data.off.map((module) => (
 						<li key={module}>
 							{_(MODULE_MESSAGES[module])}:{' '}

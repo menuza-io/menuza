@@ -40,7 +40,10 @@ function day(over: Partial<AccountingDayFacts> = {}): AccountingDayFacts {
 
 describe('the payout line (#189, #168)', () => {
 	it('equals the payout report: the same payouts, summed per arrival day and currency', () => {
-		const snapshot = buildMockPayoutsSnapshot({ provider: 'connect', currency: 'USD' })
+		const snapshot = buildMockPayoutsSnapshot({
+			provider: 'connect',
+			currency: 'USD',
+		})
 		expect(snapshot.payouts.length).toBeGreaterThan(0)
 		const dates = snapshot.payouts.map((p) => p.arrivalDate.slice(0, 10)).sort()
 		const facts = providerDayFacts({
@@ -64,12 +67,15 @@ describe('the payout line (#189, #168)', () => {
 			expected.set(key, (expected.get(key) ?? 0) + p.amountCents)
 		}
 		for (const fact of facts) {
-			expect(fact.payoutMinor).toBe(expected.get(`${fact.businessDate}|${fact.currency}`))
+			expect(fact.payoutMinor).toBe(
+				expected.get(`${fact.businessDate}|${fact.currency}`),
+			)
 			// The provider's day balances on its own: bank debit against clearing.
 			expect(buildJournalDay(fact).differenceMinor).toBe(0)
-			expect(buildJournalDay(fact).lines.find((l) => l.lineKey === 'payout')!.debitMinor).toBe(
-				fact.payoutMinor,
-			)
+			expect(
+				buildJournalDay(fact).lines.find((l) => l.lineKey === 'payout')!
+					.debitMinor,
+			).toBe(fact.payoutMinor)
 		}
 		expect(facts.reduce((s, f) => s + f.payoutMinor, 0)).toBe(
 			[...expected.values()].reduce((s, v) => s + v, 0),
@@ -79,8 +85,20 @@ describe('the payout line (#189, #168)', () => {
 	it('takes fees with the payout and ignores failed payouts', () => {
 		const facts = providerDayFacts({
 			payouts: [
-				{ arrivalDate: '2026-11-21T10:00:00Z', currency: 'usd', amountCents: 9000, status: 'paid', feeCents: 400 },
-				{ arrivalDate: '2026-11-21T11:00:00Z', currency: 'usd', amountCents: 5000, status: 'failed', feeCents: 100 },
+				{
+					arrivalDate: '2026-11-21T10:00:00Z',
+					currency: 'usd',
+					amountCents: 9000,
+					status: 'paid',
+					feeCents: 400,
+				},
+				{
+					arrivalDate: '2026-11-21T11:00:00Z',
+					currency: 'usd',
+					amountCents: 5000,
+					status: 'failed',
+					feeCents: 100,
+				},
 			],
 			from: '2026-11-20',
 			to: '2026-11-22',
@@ -88,7 +106,11 @@ describe('the payout line (#189, #168)', () => {
 			today: '2026-11-25',
 		})
 		expect(facts).toHaveLength(1)
-		expect(facts[0]).toMatchObject({ payoutMinor: 9000, processingFeesMinor: 400, closed: true })
+		expect(facts[0]).toMatchObject({
+			payoutMinor: 9000,
+			processingFeesMinor: 400,
+			closed: true,
+		})
 	})
 })
 
@@ -96,8 +118,16 @@ describe('mapping and export (#189)', () => {
 	it('saves each line once and reads it back; an empty name removes it', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		await saveAccountMapping(organization.id, [
-			{ lineKey: 'sales:mains', accountCode: '4000', accountName: 'Food sales' },
-			{ lineKey: 'tax:1500', accountCode: '2200', accountName: 'Sales tax payable' },
+			{
+				lineKey: 'sales:mains',
+				accountCode: '4000',
+				accountName: 'Food sales',
+			},
+			{
+				lineKey: 'tax:1500',
+				accountCode: '2200',
+				accountName: 'Sales tax payable',
+			},
 			{ lineKey: 'not a key!', accountCode: '1', accountName: 'x' },
 		])
 		expect(await loadAccountMapping(organization.id)).toEqual({
@@ -107,7 +137,9 @@ describe('mapping and export (#189)', () => {
 		await saveAccountMapping(organization.id, [
 			{ lineKey: 'tax:1500', accountCode: '', accountName: '' },
 		])
-		expect(Object.keys(await loadAccountMapping(organization.id))).toEqual(['sales:mains'])
+		expect(Object.keys(await loadAccountMapping(organization.id))).toEqual([
+			'sales:mains',
+		])
 	})
 
 	it('exports a closed day once as final, then nothing if unchanged', async () => {
@@ -177,7 +209,17 @@ describe('mapping and export (#189)', () => {
 		expect(adjusted.csv).toContain('Refunds')
 		// Exporting that same state again is quiet; a second change is ADJ2.
 		expect((await run([changed])).entries).toEqual([])
-		const again = await run([day({ ...changed, refundsNetMinor: -1500, taxByRate: [{ rateBp: 1500, minor: 1275 }], tenders: [{ tender: 'cash', minor: 4000 - 1725 }, { tender: 'card_till', minor: 7500 }] })])
+		const again = await run([
+			day({
+				...changed,
+				refundsNetMinor: -1500,
+				taxByRate: [{ rateBp: 1500, minor: 1275 }],
+				tenders: [
+					{ tender: 'cash', minor: 4000 - 1725 },
+					{ tender: 'card_till', minor: 7500 },
+				],
+			}),
+		])
 		expect(again.entries[0]!.reference).toMatch(/-ADJ2$/)
 		const rows = await db
 			.select()
@@ -219,11 +261,22 @@ describe('mapping and export (#189)', () => {
 		expect(result.csv).toContain('Difference (needs review)')
 	})
 
-	it('merges a location\'s day with the provider\'s and keeps currencies apart', () => {
+	it("merges a location's day with the provider's and keeps currencies apart", () => {
 		const merged = mergeAccountingDays(
-			[day(), day({ currency: 'SAR', locationId: 'loc_ruh', locationName: 'Riyadh' })],
+			[
+				day(),
+				day({ currency: 'SAR', locationId: 'loc_ruh', locationName: 'Riyadh' }),
+			],
 			providerDayFacts({
-				payouts: [{ arrivalDate: '2026-11-20T10:00:00Z', currency: 'USD', amountCents: 500, status: 'paid', feeCents: 10 }],
+				payouts: [
+					{
+						arrivalDate: '2026-11-20T10:00:00Z',
+						currency: 'USD',
+						amountCents: 500,
+						status: 'paid',
+						feeCents: 10,
+					},
+				],
 				from: '2026-11-20',
 				to: '2026-11-20',
 				timeZone: 'UTC',
@@ -235,6 +288,8 @@ describe('mapping and export (#189)', () => {
 			'loc_ruh/SAR',
 			'provider/USD',
 		])
-		expect(new Set(merged.map((d) => d.currency))).toEqual(new Set(['USD', 'SAR']))
+		expect(new Set(merged.map((d) => d.currency))).toEqual(
+			new Set(['USD', 'SAR']),
+		)
 	})
 })

@@ -9,7 +9,11 @@ import { reportDefinitionSchema } from './dsl.ts'
  * answer is a status per recipient and nothing regional.
  */
 
-const id = z.string().min(1).max(64).regex(/^[\w-]+$/)
+const id = z
+	.string()
+	.min(1)
+	.max(64)
+	.regex(/^[\w-]+$/)
 
 export const REPORT_FIGURE_MODULES = [
 	'staffing_labor',
@@ -72,7 +76,9 @@ export const reportSendRequestSchema = z.object({
 export type ReportSendRequest = z.infer<typeof reportSendRequestSchema>
 
 /** A request without its recipients: what a CSV download link rebuilds a report from. */
-export const reportRunSpecSchema = reportSendRequestSchema.omit({ recipients: true })
+export const reportRunSpecSchema = reportSendRequestSchema.omit({
+	recipients: true,
+})
 export type ReportRunSpec = z.infer<typeof reportRunSpecSchema>
 
 export const REPORT_SEND_STATUSES = [

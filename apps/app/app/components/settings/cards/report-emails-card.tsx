@@ -80,12 +80,18 @@ export function ReportEmailsCard({
 					>
 						<span>
 							{row.builtIn ? t`Daily summary` : (row.title ?? t`Report`)}{' '}
-							<span className="text-muted-foreground">({cadence(row.cadence)})</span>
+							<span className="text-muted-foreground">
+								({cadence(row.cadence)})
+							</span>
 						</span>
 						<Switch
 							checked={row.subscribed}
 							onCheckedChange={(next) =>
-								send({ intent: 'schedule', scheduleId: row.scheduleId, subscribed: next })
+								send({
+									intent: 'schedule',
+									scheduleId: row.scheduleId,
+									subscribed: next,
+								})
 							}
 							aria-label={t`Receive this report by email`}
 							data-testid={`report-email-${row.scheduleId}`}

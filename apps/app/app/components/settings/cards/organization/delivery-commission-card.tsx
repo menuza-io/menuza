@@ -29,7 +29,8 @@ export function DeliveryCommissionCard({
 	const fetcher = useFetcher<{ ok: boolean; error?: string }>()
 	const [percent, setPercent] = useState(String(commissionBp / 100))
 	const value = Number(percent)
-	const valid = percent.trim() !== '' && Number.isFinite(value) && value >= 0 && value <= 50
+	const valid =
+		percent.trim() !== '' && Number.isFinite(value) && value >= 0 && value <= 50
 	return (
 		<Card data-testid="delivery-commission-card">
 			<CardHeader>

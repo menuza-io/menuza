@@ -34,7 +34,10 @@ export const REPORT_SCHEDULE_FAILED_DAYS_TO_PAUSE = 3
  * minutes and the second after 2 hours, then the error is recorded. The
  * hourly job picks each retry up on its next tick.
  */
-export const REPORT_SEND_RETRY_BACKOFF_MS = [30 * 60_000, 2 * 3_600_000] as const
+export const REPORT_SEND_RETRY_BACKOFF_MS = [
+	30 * 60_000,
+	2 * 3_600_000,
+] as const
 
 /**
  * A tick that missed the chosen hour (the job was down) still sends within
@@ -49,7 +52,11 @@ export const reportScheduleInputSchema = z
 		/** 0 = Sunday ... 6 = Saturday; only for weekly. */
 		weekday: z.number().int().min(0).max(6).nullable().default(null),
 		hour: z.number().int().min(0).max(23),
-		timeZone: z.string().min(1).max(64).refine(isValidTimeZone, 'invalid_time_zone'),
+		timeZone: z
+			.string()
+			.min(1)
+			.max(64)
+			.refine(isValidTimeZone, 'invalid_time_zone'),
 	})
 	.refine((value) => value.cadence !== 'weekly' || value.weekday !== null, {
 		message: 'weekday_required',
@@ -139,9 +146,12 @@ export function signReportUnsubscribeToken(
 	target: ReportUnsubscribeTarget,
 	secret: string,
 ): string {
-	if (secret.length < 16) throw new Error('Unsubscribe secret is not configured')
+	if (secret.length < 16)
+		throw new Error('Unsubscribe secret is not configured')
 	const payload = b64(JSON.stringify(target))
-	const mac = createHmac('sha256', unsubscribeKey(secret)).update(payload).digest()
+	const mac = createHmac('sha256', unsubscribeKey(secret))
+		.update(payload)
+		.digest()
 	return `${payload}.${b64(mac)}`
 }
 
