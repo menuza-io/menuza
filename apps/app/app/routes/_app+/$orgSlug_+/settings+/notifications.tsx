@@ -14,6 +14,7 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { AlertSettingsCard } from '#app/components/settings/cards/alert-settings-card.tsx'
 import { GuestMessagesCard } from '#app/components/settings/cards/guest-messages-card.tsx'
 import { NotificationPreferencesCard } from '#app/components/settings/cards/notification-preferences-card.tsx'
+import { ReportEmailsCard } from '#app/components/settings/cards/report-emails-card.tsx'
 import { availablePushCategories } from '#app/utils/alerts/settings.server.ts'
 import {
 	isGuestMessagesEnabled,
@@ -26,6 +27,8 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import { monthlyResultsEmailEnabled } from '#app/utils/reports/report-unsubscribe.server.ts'
+import { listMemberReportEmails } from '#app/utils/reports/schedules.server.ts'
 import { reservationAlertVisibleOrgIds } from '#app/utils/reservations/notification-visibility.server.ts'
 import {
 	isStaffingFeatureEnabled,
@@ -77,7 +80,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
 	const org = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
+		slug: true,
 	})
+	// Report emails (#121, #221): the member's own scheduled reports, and the
+	// monthly results email for the people it goes to (those who run settings).
+	const reportSchedules = await listMemberReportEmails({
+		userId,
+		organizationId: org.id,
+	})
+	const receivesMonthly = await userHasOrganizationPermission(
+		userId,
+		org.id,
+		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+	)
+	const reportEmails = {
+		orgSlug: org.slug,
+		schedules: reportSchedules,
+		monthly: receivesMonthly
+			? { on: await monthlyResultsEmailEnabled(userId, org.id) }
+			: null,
+	}
 	// Time clock alerts are offered only where they can arrive: the time clock
 	// flag is on and this member can read timesheets (what the alerts open).
 	const showStaffingAlerts =
@@ -137,6 +159,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		: null
 	return {
 		organizationId: org.id,
+		reportEmails,
 		guestMessages,
 		showStaffingAlerts,
 		showScheduleAlerts,
@@ -153,6 +176,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function NotificationSettings() {
 	const {
 		organizationId,
+		reportEmails,
 		guestMessages,
 		showStaffingAlerts,
 		showScheduleAlerts,
@@ -183,6 +207,15 @@ export default function NotificationSettings() {
 			<AnnotatedSection>
 				<AlertSettingsCard organizationId={organizationId} />
 			</AnnotatedSection>
+			{reportEmails.schedules.length > 0 || reportEmails.monthly ? (
+				<AnnotatedSection>
+					<ReportEmailsCard
+						orgSlug={reportEmails.orgSlug}
+						schedules={reportEmails.schedules}
+						monthly={reportEmails.monthly}
+					/>
+				</AnnotatedSection>
+			) : null}
 			{guestMessages ? (
 				<AnnotatedSection>
 					<GuestMessagesCard

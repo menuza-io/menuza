@@ -31,6 +31,7 @@ import {
 	isInventoryReportSubject,
 	isReservationsReportSubject,
 	isStaffingReportSubject,
+	ACCOUNTING_REPORT_SUBJECT,
 	operatorTokenAllowsSubject,
 	STAFF_PAY_REPORT_PERMISSION,
 	verifyOperatorAnalyticsToken,
@@ -131,6 +132,10 @@ import {
 	INVENTORY_DELIVERIES_REPORT_MAX_ROWS,
 	loadInventoryDeliveryRecords,
 } from '../services/inventory-deliveries-report.ts'
+import {
+	ACCOUNTING_MAX_DAYS,
+	loadAccountingFacts,
+} from '../services/accounting-daily-records.ts'
 import { loadFinancialPeriodSummary } from '../services/financial-summary-records.ts'
 import { loadLocationScorecard } from '../services/location-scorecard-records.ts'
 
@@ -140,7 +145,21 @@ const querySchema = z.object({
 	definition: reportDefinitionSchema,
 	/** The viewer's IANA zone, used when the report follows the user's zone. */
 	timeZone: z.string().max(64).optional(),
+	/**
+	 * Read the report as of an earlier instant instead of now (#121, #221): the
+	 * "yesterday" of a week ago, or a past month's `last_complete_month`. Only
+	 * ever moves the clock back (a later value is clamped to now), so it cannot
+	 * show anything a run at that time could not have.
+	 */
+	asOf: z.string().datetime().optional(),
 })
+
+/** The instant a run reads as of: `asOf` when it is in the past, else now. */
+export function queryClock(asOf: string | undefined, now = new Date()): Date {
+	if (!asOf) return now
+	const at = new Date(asOf)
+	return Number.isNaN(at.getTime()) || at > now ? now : at
+}
 
 const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'orders',
@@ -490,7 +509,7 @@ analyticsRoutes.post('/query', async (c) => {
 		)
 	}
 
-	const now = new Date()
+	const now = queryClock(parsed.data.asOf)
 	const timeZone = resolveReportTimeZone(
 		definition.settings.timezone,
 		parsed.data.timeZone,
@@ -1066,6 +1085,66 @@ async function requireSalesAnalytics(c: Context) {
 	return { claims, db, now: new Date() }
 }
 
+const accountingQuerySchema = z.object({
+	from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+
+/**
+ * The accounting export's daily figures (#189): one entry per location,
+ * business day and currency, totals only (never a guest or an order). Needs the
+ * `accounting_daily` grant the App lists on the token only while the flag
+ * `reports.accounting` is on, and is limited to the token's locations. At most
+ * `ACCOUNTING_MAX_DAYS` days a request.
+ */
+analyticsRoutes.get('/accounting-daily', async (c) => {
+	const auth = await requireSalesAnalytics(c)
+	if ('error' in auth) return auth.error
+	if (!operatorTokenAllowsSubject(auth.claims, ACCOUNTING_REPORT_SUBJECT)) {
+		return c.json(
+			{
+				error: 'forbidden_subject',
+				message: 'You do not have permission to export accounting data.',
+			},
+			403,
+		)
+	}
+	const parsed = accountingQuerySchema.safeParse({
+		from: c.req.query('from'),
+		to: c.req.query('to'),
+	})
+	const span = parsed.success
+		? (Date.parse(parsed.data.to) - Date.parse(parsed.data.from)) / 86_400_000
+		: NaN
+	if (!parsed.success || !(span >= 0) || span + 1 > ACCOUNTING_MAX_DAYS) {
+		return c.json(
+			{
+				error: 'invalid_request',
+				message: `Pick a date range of at most ${ACCOUNTING_MAX_DAYS} days.`,
+			},
+			400,
+		)
+	}
+	const facts = await loadAccountingFacts({
+		db: auth.db,
+		orgId: auth.claims.orgId,
+		locationIds: auth.claims.locationIds,
+		fromDate: parsed.data.from,
+		toDate: parsed.data.to,
+		now: auth.now,
+	})
+	if (facts.truncated) {
+		return c.json(
+			{
+				error: 'range_too_large',
+				message: 'That range holds too many sales. Pick a shorter one.',
+			},
+			422,
+		)
+	}
+	return c.json({ days: facts.days })
+})
+
 analyticsRoutes.get('/financial-summary', async (c) => {
 	const auth = await requireSalesAnalytics(c)
 	if ('error' in auth) return auth.error
@@ -1212,7 +1291,10 @@ analyticsRoutes.get('/product-mix', async (c) => {
 		: null
 	const { rows, truncated } = await loadProductMixRows(
 		{ db: auth.db, locationIds, now: auth.now },
-		{ fromMs: range.start ? range.start.getTime() : null, toMs: range.end.getTime() },
+		{
+			fromMs: range.start ? range.start.getTime() : null,
+			toMs: range.end.getTime(),
+		},
 		{ channels },
 	)
 	return c.json({

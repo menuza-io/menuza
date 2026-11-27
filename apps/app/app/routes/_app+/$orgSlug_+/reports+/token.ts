@@ -1,37 +1,14 @@
+import { createForbiddenResponse, requireUserId } from '@repo/auth'
 import {
-	createForbiddenResponse,
-	isImpersonating,
-	requireUserId,
-	userHasOrganizationPermission,
-} from '@repo/auth'
-import {
-	DELIVERY_REPORT_SUBJECTS,
 	mintOperatorAnalyticsToken,
-	ORDER_REPORT_SUBJECTS,
-	ORG_WIDE_REPORT_SUBJECTS,
 	resolveOperatorAnalyticsSecret,
-	SALES_STAFF_FIELD_PERMISSION,
-	type RestrictedReportSubject,
 } from '@repo/reports/token'
 import { isInsecureSecret, isProductionLike } from '@repo/security'
 import { data } from 'react-router'
 import { ENV } from 'varlock/env'
-import { resolveGiftCardReportAccess } from '#app/utils/gift-cards/report-access.server.ts'
-import { resolveInventoryReportAccess } from '#app/utils/inventory/report-access.server.ts'
-import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
-import { resolveReservationsLocationIds } from '#app/utils/reservations/access.server.ts'
-import {
-	intersectScopeIds,
-	resolveReservationsReportAccess,
-} from '#app/utils/reservations/report-access.server.ts'
-import { resolveStaffReportAccess } from '#app/utils/staffing/report-access.server.ts'
-import {
-	canReadSalesStaffFields,
-	hasAdminReportAccess,
-	REPORT_ADMIN_PERMISSIONS,
-} from '#app/utils/staffing/report-grants.server.ts'
+import { resolveReportTokenGrants } from '#app/utils/reports/token-grants.server.ts'
+import { REPORT_ADMIN_PERMISSIONS } from '#app/utils/staffing/report-grants.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/token.ts'
 
@@ -47,97 +24,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// Analytics, settings, or website admin permission opens the
 	// organization-wide subjects (customers, text subscribers, shop orders).
 	// Without any of them, only the restricted module subjects (staff,
-	// Reservations) below can be granted, each by its own permission and limited
-	// to the person's scopes or locations, so a manager holding only module
-	// report grants still gets a token. A person with none gets a 403.
-	const impersonated = await isImpersonating(request)
-	const hasAdminAccess = await hasAdminReportAccess(userId, organization.id)
-	// Call reports include caller numbers, so they also need call access.
-	// Order reports follow the orders page, which menu access covers (and, as
-	// before, only for people who can run reports at all).
-	const [canReadPhoneCalls, canReadOrders] = await Promise.all([
-		hasAdminAccess &&
-			userHasOrganizationPermission(
-				userId,
-				organization.id,
-				ORG_PERMISSIONS.READ_PHONE_CALL_ANY,
-			),
-		hasAdminAccess &&
-			userHasOrganizationPermission(
-				userId,
-				organization.id,
-				ORG_PERMISSIONS.READ_MENU_ANY,
-			),
-	])
-	const canReadSalesStaff =
-		canReadOrders &&
-		(await canReadSalesStaffFields(userId, organization.id, impersonated))
-	// Staff reports (time cards, shifts, daily labor, applications) follow the
-	// staffing flags, the staffing permissions, and the person's scope grants.
-	const staff = await resolveStaffReportAccess({
-		userId,
-		organizationId: organization.id,
-		impersonated,
-	})
-	// Bookings, waitlist and pacing reports need the reservation report grant
-	// and the master Reservations flag, limited to the person's locations.
-	const reservations = await resolveReservationsReportAccess({
-		request,
-		userId,
-		organizationId: organization.id,
-	})
-	// Gift card reports follow the gift_cards.enabled flag and
-	// `read:gift_card:any`, limited to the person's locations.
-	const giftCards = await resolveGiftCardReportAccess({
-		request,
-		userId,
-		organizationId: organization.id,
-	})
-	const inventory = await resolveInventoryReportAccess({
-		request,
-		userId,
-		organizationId: organization.id,
-	})
-	if (
-		!hasAdminAccess &&
-		staff.subjects.length === 0 &&
-		reservations.subjects.length === 0 &&
-		giftCards.subjects.length === 0 &&
-		inventory.subjects.length === 0
-	) {
+	// Reservations) can be granted, each by its own permission and limited to
+	// the person's scopes or locations, so a manager holding only module report
+	// grants still gets a token. A person with none gets a 403.
+	const { hasAnyGrant, subjects, scopeIds, locationIds } =
+		await resolveReportTokenGrants({
+			request,
+			userId,
+			organizationId: organization.id,
+		})
+	if (!hasAnyGrant) {
 		throw createForbiddenResponse(REPORT_ADMIN_PERMISSIONS.join(' or '))
 	}
-	// Each module that grants subjects limits the token to its own scopes; the
-	// token carries the narrowest of them. With none granted, staff's (empty).
-	const scoped = [staff, reservations, giftCards, inventory].filter(
-		(module) => module.subjects.length > 0,
-	)
-	const scopeIds =
-		scoped.length === 0
-			? staff.scopeIds
-			: scoped
-					.map((module) => module.scopeIds)
-					.reduce<string[] | null>(
-						(narrow, next, index) =>
-							index === 0 ? next : intersectScopeIds(narrow, next),
-						null,
-					)
-	// Own-driver delivery reports (#324): only with `delivery.in_house` on, and
-	// for members who may read orders. The driver's name rides on the staff grant.
-	const canReadDeliveries =
-		canReadOrders && (await isInHouseDeliveryEnabled(organization.id))
-	const subjects: RestrictedReportSubject[] = [
-		// A module-only grant never lists the organization-wide subjects.
-		...(hasAdminAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
-		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
-		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
-		...(canReadDeliveries ? DELIVERY_REPORT_SUBJECTS : []),
-		...(canReadSalesStaff ? [SALES_STAFF_FIELD_PERMISSION] : []),
-		...staff.subjects,
-		...reservations.subjects,
-		...giftCards.subjects,
-		...inventory.subjects,
-	]
 
 	// A production build on localhost (E2E, build + preview) may keep the schema
 	// default; a real deploy may not. tenant-api applies its own rule (it has no
@@ -157,10 +55,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			{ status: 503 },
 		)
 	}
-	// Sales subjects need a location limit on the token (same ids as Reservations).
-	const locationIds = canReadOrders
-		? await resolveReservationsLocationIds(userId, organization.id)
-		: undefined
 	const minted = await mintOperatorAnalyticsToken({
 		signingSecret,
 		userId,

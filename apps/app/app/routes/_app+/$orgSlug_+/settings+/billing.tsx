@@ -1,6 +1,7 @@
 import { requireUserId } from '@repo/auth'
 import { db, eq, Organization } from '@repo/database'
 import { smsUsageByLocation } from '@repo/marketing/server/sms-allowance'
+import { lastCompleteMonthKey } from '@repo/reports'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
 	type ActionFunctionArgs,
@@ -10,6 +11,10 @@ import {
 
 import { BillingCard } from '#app/components/settings/cards/organization/billing-card.tsx'
 import { InvoicesCard } from '#app/components/settings/cards/organization/invoices-card.tsx'
+import {
+	KeptByDirectCard,
+	type KeptByDirectView,
+} from '#app/components/settings/cards/organization/kept-by-direct-card.tsx'
 import { MarketingTextsCard } from '#app/components/settings/cards/organization/marketing-texts-card.tsx'
 
 import { getLaunchStatus } from '#app/utils/env.server.ts'
@@ -25,9 +30,12 @@ import {
 	getOrganizationInvoices,
 	hasLiveSubscription,
 } from '#app/utils/payments.server.ts'
+import { defaultReportingTimeZone } from '#app/utils/reports/schedules.server.ts'
+import { resolveReportTokenGrants } from '#app/utils/reports/token-grants.server.ts'
+import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
@@ -39,6 +47,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		stripeProductId: true,
 		planName: true,
 		subscriptionStatus: true,
+		dataRegion: true,
+		hasProvisionedDb: true,
+		deliveryCommissionBp: true,
 	})
 
 	// Block access to billing page for PUBLIC_BETA and CLOSED_BETA
@@ -103,6 +114,29 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		locations,
 	}
 
+	// What ordering direct kept last month (#221), next to the plan price: only
+	// for members whose reports token covers sales, read from the region by the
+	// browser. An estimate; the rate is the organization's own.
+	let keptByDirect: KeptByDirectView | null = null
+	if (organization.hasProvisionedDb) {
+		const grants = await resolveReportTokenGrants({
+			request,
+			userId,
+			organizationId: organization.id,
+		})
+		if (grants.subjects.includes('sales')) {
+			keptByDirect = {
+				orgSlug: organization.slug,
+				month: lastCompleteMonthKey(new Date()),
+				timeZone: await defaultReportingTimeZone(organization.id),
+				tokenUrl: `/${organization.slug}/reports/token`,
+				tenantApiUrl: resolveRegionalTenantApiUrls(organization.dataRegion)
+					.tenantApiUrl,
+				commissionBp: organization.deliveryCommissionBp,
+			}
+		}
+	}
+
 	return {
 		organization,
 		plansAndPrices,
@@ -111,6 +145,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		invoicesUnavailable,
 		currentPriceId,
 		smsUsage,
+		keptByDirect,
 	}
 }
 
@@ -182,6 +217,7 @@ export default function BillingSettings() {
 		invoicesUnavailable,
 		currentPriceId,
 		smsUsage,
+		keptByDirect,
 	} = useLoaderData<typeof loader>()
 
 	return (
@@ -194,6 +230,12 @@ export default function BillingSettings() {
 					currentPriceId={currentPriceId}
 				/>
 			</AnnotatedSection>
+
+			{keptByDirect ? (
+				<AnnotatedSection>
+					<KeptByDirectCard view={keptByDirect} />
+				</AnnotatedSection>
+			) : null}
 
 			<AnnotatedSection>
 				<MarketingTextsCard usage={smsUsage} />

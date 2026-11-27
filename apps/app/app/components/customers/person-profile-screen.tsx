@@ -104,6 +104,7 @@ import {
 	formatBusinessDate,
 	formatInstantDate,
 	formatLocalMinutes,
+	lastOrderChannelLabel,
 	personTagName,
 } from '#app/utils/people/people-view.ts'
 import { CHANNEL_LABELS, enumLabel } from '#app/utils/reservations/labels.ts'
@@ -465,6 +466,19 @@ export function PersonProfileScreen({
 											customer.orders.lastOrderAt,
 											i18n.locale,
 										) ?? '—'
+									}
+								/>
+								<Stat
+									testId="person-stat-last-order-channel"
+									label={<Trans>Last order from</Trans>}
+									value={
+										customer.orders.lastOrderChannel
+											? _(
+													lastOrderChannelLabel(
+														customer.orders.lastOrderChannel,
+													),
+												)
+											: '—'
 									}
 								/>
 							</dl>

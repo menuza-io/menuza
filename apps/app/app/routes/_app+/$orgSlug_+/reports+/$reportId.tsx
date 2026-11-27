@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/macro'
 import { requireUserId } from '@repo/auth'
 import { catalogForGrants, definitionAllowed, getCatalog } from '@repo/reports'
 import {
@@ -5,7 +6,8 @@ import {
 	parseDefinition,
 	saveReport,
 } from '@repo/reports/server'
-import { useLoaderData } from 'react-router'
+import { Button } from '@repo/ui/button'
+import { Link, useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -47,6 +49,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		scopeWording,
 		catalog: catalogForGrants(fullCatalog, grants),
 		definition,
+		reportId: report.id,
 		orgSlug: organization.slug,
 		hasProvisionedDb: organization.hasProvisionedDb,
 		tenantApiUrl: resolveRegionalTenantApiUrls(organization.dataRegion)
@@ -104,6 +107,20 @@ export default function SavedReportRoute() {
 
 	return (
 		<ScopeWordingProvider wording={data.scopeWording}>
+			<div className="mx-auto flex w-full max-w-5xl justify-end px-4 pt-4">
+				<Button
+					variant="outline"
+					size="sm"
+					render={
+						<Link
+							to={`/${data.orgSlug}/reports/schedules?report=${data.reportId}`}
+						/>
+					}
+					data-testid="report-schedule-email"
+				>
+					<Trans>Schedule email</Trans>
+				</Button>
+			</div>
 			<AppReportWorkspace
 				catalog={data.catalog}
 				scope="organization"

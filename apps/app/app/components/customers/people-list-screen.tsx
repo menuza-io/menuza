@@ -25,12 +25,17 @@ import {
 } from '#app/components/customers/people-summary-row.tsx'
 import { PersonTagBadge } from '#app/components/customers/person-tag-badge.tsx'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { ExportProgressPanel } from '#app/components/exports/export-progress-panel.tsx'
+import { useChunkedExport } from '#app/components/exports/use-chunked-export.ts'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
+import { formatMoney } from '#app/utils/orders/order-model.ts'
 import { customersHref } from '#app/utils/people/customers-link.ts'
 import { type PeopleAccess } from '#app/utils/people/people-access.ts'
 import {
+	fetchPeopleExportChunk,
 	fetchPeoplePage,
 	type PeopleClient,
+	type PeopleListParams,
 	type PeopleQuickFilter,
 	type PeopleSort,
 	PEOPLE_SORTS,
@@ -95,6 +100,12 @@ export function PeopleListScreen({
 		new Set<PeopleQuickFilter>(),
 	)
 	const [group, setGroup] = useState<PeopleSummaryGroup | null>(null)
+	const [dates, setDates] = useState({
+		joinedFrom: '',
+		joinedTo: '',
+		lastOrderFrom: '',
+		lastOrderTo: '',
+	})
 	const [people, setPeople] = useState<PersonRow[]>([])
 	const [nextCursor, setNextCursor] = useState<string | null>(null)
 	const [total, setTotal] = useState(0)
@@ -127,6 +138,7 @@ export function PeopleListScreen({
 						returning: group === 'returning',
 						subscribed:
 							group === 'email' || group === 'sms' ? group : undefined,
+						...dates,
 					},
 					signal,
 				)
@@ -147,7 +159,7 @@ export function PeopleListScreen({
 				}
 			}
 		},
-		[client, debouncedQuery, filters, group, sort],
+		[client, debouncedQuery, dates, filters, group, sort],
 	)
 
 	useEffect(() => {
@@ -192,12 +204,42 @@ export function PeopleListScreen({
 				]
 			: []),
 	]
+	const datesActive = Object.values(dates).some((value) => value !== '')
 	const filtering =
-		debouncedQuery.trim() !== '' || filters.size > 0 || group !== null
-	const sortOptions = PEOPLE_SORTS.filter(
-		(value) => dining || (value !== 'visits' && value !== 'last_visit'),
-	).map((value) => ({ value, label: _(PEOPLE_SORT_LABELS[value]) }))
+		debouncedQuery.trim() !== '' ||
+		filters.size > 0 ||
+		group !== null ||
+		datesActive
+
+	// Export CSV (#231, #386): the current view, page by page from the region,
+	// with progress and Cancel; the file is saved after the last page.
+	const chunkedExport = useChunkedExport()
+	const exportParams: PeopleListParams = {
+		q: debouncedQuery,
+		filters,
+		sort,
+		returning: group === 'returning',
+		subscribed: group === 'email' || group === 'sms' ? group : undefined,
+		...dates,
+	}
+	const startExport = () => {
+		void chunkedExport.start({
+			filename: 'customers.csv',
+			fetchChunk: (cursor, signal) =>
+				fetchPeopleExportChunk(client, exportParams, cursor, signal),
+		})
+	}
+	const setDate = (key: keyof typeof dates, value: string) =>
+		setDates((prev) => ({ ...prev, [key]: value }))
+	const sortOptions = PEOPLE_SORTS.filter((value) => {
+		if (value === 'visits' || value === 'last_visit') return dining
+		if (value === 'total_spend' || value === 'points_used') {
+			return access.customers
+		}
+		return true
+	}).map((value) => ({ value, label: _(PEOPLE_SORT_LABELS[value]) }))
 	const showOrders = hasOrders && access.customers
+	const showMoney = access.customers
 	const shownCount = people.length
 
 	return (
@@ -248,6 +290,34 @@ export function PeopleListScreen({
 								data-testid="customers-search"
 							/>
 						</div>
+						{access.customers ? (
+							<div
+								role="group"
+								aria-label={_(msg`Saved views`)}
+								className="flex flex-wrap gap-1.5"
+							>
+								<Button
+									type="button"
+									variant={sort === 'total_spend' ? 'secondary' : 'outline'}
+									className="h-11 md:h-8"
+									aria-pressed={sort === 'total_spend'}
+									onClick={() => setSort('total_spend')}
+									data-testid="customers-view-top-guests"
+								>
+									<Trans>Top guests</Trans>
+								</Button>
+								<Button
+									type="button"
+									variant={sort === 'points_used' ? 'secondary' : 'outline'}
+									className="h-11 md:h-8"
+									aria-pressed={sort === 'points_used'}
+									onClick={() => setSort('points_used')}
+									data-testid="customers-view-top-rewards"
+								>
+									<Trans>Top rewards members</Trans>
+								</Button>
+							</div>
+						) : null}
 						<FilterSelect
 							label={_(msg`Sort by`)}
 							options={sortOptions}
@@ -274,6 +344,43 @@ export function PeopleListScreen({
 								</Button>
 							))}
 						</div>
+						<div
+							role="group"
+							aria-label={_(msg`Date filters`)}
+							className="flex flex-wrap items-center gap-2"
+						>
+							<DateRangeField
+								label={_(msg`Joined`)}
+								from={dates.joinedFrom}
+								to={dates.joinedTo}
+								onFrom={(value) => setDate('joinedFrom', value)}
+								onTo={(value) => setDate('joinedTo', value)}
+								testId="customers-joined"
+							/>
+							{access.customers ? (
+								<DateRangeField
+									label={_(msg`Last order`)}
+									from={dates.lastOrderFrom}
+									to={dates.lastOrderTo}
+									onFrom={(value) => setDate('lastOrderFrom', value)}
+									onTo={(value) => setDate('lastOrderTo', value)}
+									testId="customers-last-order"
+								/>
+							) : null}
+						</div>
+						{access.customers ? (
+							<Button
+								type="button"
+								variant="outline"
+								className="h-11 md:h-8"
+								disabled={chunkedExport.running || people.length === 0}
+								onClick={startExport}
+								data-testid="customers-export"
+							>
+								<Icon name="download" />
+								<Trans>Export CSV</Trans>
+							</Button>
+						) : null}
 						{filtering ? (
 							<Button
 								type="button"
@@ -284,6 +391,12 @@ export function PeopleListScreen({
 									setDebouncedQuery('')
 									setFilters(new Set<PeopleQuickFilter>())
 									setGroup(null)
+									setDates({
+										joinedFrom: '',
+										joinedTo: '',
+										lastOrderFrom: '',
+										lastOrderTo: '',
+									})
 								}}
 								data-testid="customers-clear-filters"
 							>
@@ -303,6 +416,12 @@ export function PeopleListScreen({
 						</p>
 					) : null}
 				</WorkspaceToolbar>
+
+				<ExportProgressPanel
+					state={chunkedExport.state}
+					onCancel={chunkedExport.cancel}
+					testId="customers-export"
+				/>
 
 				{error === 'denied' ? (
 					<Alert variant="destructive" data-testid="customers-denied">
@@ -429,6 +548,16 @@ export function PeopleListScreen({
 												<Trans>Orders</Trans>
 											</TableHead>
 										) : null}
+										{showMoney ? (
+											<>
+												<TableHead className="text-end">
+													<Trans>Total spend</Trans>
+												</TableHead>
+												<TableHead className="text-end">
+													<Trans>Points used</Trans>
+												</TableHead>
+											</>
+										) : null}
 										<TableHead>
 											<Trans>Flags</Trans>
 										</TableHead>
@@ -504,8 +633,45 @@ export function PeopleListScreen({
 													)}
 												</TableCell>
 											) : null}
+											{showMoney ? (
+												<>
+													<TableCell
+														className="text-end tabular-nums"
+														data-testid={`person-spend-${person.key}`}
+													>
+														{person.spend && person.spend.length > 0 ? (
+															<div className="flex flex-col items-end">
+																{person.spend.map((entry) => (
+																	<bdi key={entry.currency}>
+																		{formatMoney(
+																			entry.minor,
+																			entry.currency,
+																			i18n.locale,
+																		)}
+																	</bdi>
+																))}
+															</div>
+														) : (
+															'—'
+														)}
+													</TableCell>
+													<TableCell
+														className="text-end tabular-nums"
+														data-testid={`person-points-used-${person.key}`}
+													>
+														{person.points ? (
+															<bdi>{person.points.used}</bdi>
+														) : (
+															'—'
+														)}
+													</TableCell>
+												</>
+											) : null}
 											<TableCell>
 												<div className="flex flex-wrap gap-1">
+													<MarketingBadge
+														marketing={person.marketing ?? null}
+													/>
 													{person.tags
 														.filter(
 															(tag) =>
@@ -558,5 +724,85 @@ export function PeopleListScreen({
 				) : null}
 			</div>
 		</WorkspacePage>
+	)
+}
+
+/** Subscribed to email, text, both, or none (#231); hidden without the customers facet. */
+export function MarketingBadge({
+	marketing,
+}: {
+	marketing: { email: boolean; sms: boolean } | null
+}) {
+	if (!marketing) return null
+	if (marketing.email && marketing.sms) {
+		return (
+			<Badge variant="success" data-testid="person-marketing-both">
+				<Trans>Email + text</Trans>
+			</Badge>
+		)
+	}
+	if (marketing.email) {
+		return (
+			<Badge variant="success" data-testid="person-marketing-email">
+				<Trans>Email</Trans>
+			</Badge>
+		)
+	}
+	if (marketing.sms) {
+		return (
+			<Badge variant="success" data-testid="person-marketing-sms">
+				<Trans>Text</Trans>
+			</Badge>
+		)
+	}
+	return (
+		<Badge variant="outline" data-testid="person-marketing-none">
+			<Trans>Not subscribed</Trans>
+		</Badge>
+	)
+}
+
+function DateRangeField({
+	label,
+	from,
+	to,
+	onFrom,
+	onTo,
+	testId,
+}: {
+	label: string
+	from: string
+	to: string
+	onFrom: (value: string) => void
+	onTo: (value: string) => void
+	testId: string
+}) {
+	const { _ } = useLingui()
+	return (
+		<div
+			className="flex items-center gap-1.5 text-sm"
+			role="group"
+			aria-label={label}
+		>
+			<span className="text-muted-foreground">{label}</span>
+			<Input
+				type="date"
+				value={from}
+				max={to || undefined}
+				onChange={(event) => onFrom(event.target.value)}
+				aria-label={_(msg`${label} from`)}
+				className="h-11 w-36 md:h-8"
+				data-testid={`${testId}-from`}
+			/>
+			<Input
+				type="date"
+				value={to}
+				min={from || undefined}
+				onChange={(event) => onTo(event.target.value)}
+				aria-label={_(msg`${label} to`)}
+				className="h-11 w-36 md:h-8"
+				data-testid={`${testId}-to`}
+			/>
+		</div>
 	)
 }

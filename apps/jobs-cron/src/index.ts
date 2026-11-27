@@ -155,6 +155,10 @@ const RESTAURANT_ORDER_REFUNDS_RECONCILE_PATH =
 // Hourly App job: fetches the status of shipped print orders whose vendor
 // webhook may have been missed.
 const PRINT_SYNC_PATH = '/resources/jobs/print-sync'
+// Hourly App job: scheduled report emails (#121), the monthly results email on
+// the 2nd (#221) and the weekly accounting email (#189). Each runs when its own
+// local time says so; the job is idempotent.
+const REPORT_SCHEDULES_PATH = '/resources/jobs/report-schedules'
 // Hourly App job: ends expired impersonation sessions and writes their END
 // audit entries (a session lasts 15 minutes, so a daily sweep would be late).
 const IMPERSONATION_CLEANUP_PATH = '/resources/jobs/impersonation-cleanup'
@@ -1279,6 +1283,10 @@ export default {
 				[
 					'Print order sync',
 					(jobEnv: Env) => invokeJob(jobEnv, PRINT_SYNC_PATH),
+				],
+				[
+					'Report emails',
+					(jobEnv: Env) => invokeJob(jobEnv, REPORT_SCHEDULES_PATH),
 				],
 				// Scheduled social posts are woken on time by SocialPostWorkflow;
 				// this sweep only catches a wake-up that could not be started.

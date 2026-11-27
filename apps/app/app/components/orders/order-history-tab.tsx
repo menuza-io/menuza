@@ -1,5 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { EXPORT_CHUNK_ROWS, type ExportChunk } from '@repo/reports/export'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -7,6 +8,8 @@ import { Input } from '@repo/ui/input'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { z } from 'zod'
+import { ExportProgressPanel } from '#app/components/exports/export-progress-panel.tsx'
+import { useChunkedExport } from '#app/components/exports/use-chunked-export.ts'
 import {
 	formatMoney,
 	orderSchema,
@@ -68,8 +71,6 @@ export function OrderHistoryTab({
 	const [totalCount, setTotalCount] = useState<number>(0)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
-	const [exporting, setExporting] = useState(false)
-	const [exportNotice, setExportNotice] = useState<string | null>(null)
 
 	const from = searchParams.get('from') ?? ''
 	const to = searchParams.get('to') ?? ''
@@ -158,42 +159,33 @@ export function OrderHistoryTab({
 		return () => controller.abort()
 	}, [load])
 
-	const handleExport = async () => {
-		setExporting(true)
-		setExportNotice(null)
-		try {
-			const qs = buildApiQuery()
-			const authHeader = getAuthHeader ? await getAuthHeader() : null
-			const res = await fetch(`${tenantApiUrl}/operator/orders/export?${qs}`, {
-				headers: authHeader ? { Authorization: authHeader } : undefined,
-				cache: 'no-store',
-			})
-			if (!res.ok) {
-				setExportNotice(
-					_(msg`Export failed. Narrow your date range and try again.`),
+	// Export (#224, #386): read page by page, browser-direct, with progress
+	// and Cancel; the file is saved only after the last page.
+	const chunkedExport = useChunkedExport()
+	const handleExport = () => {
+		const base = new URLSearchParams(buildApiQuery())
+		base.delete('limit')
+		base.delete('cursor')
+		base.set('chunk', '1')
+		base.set('chunkRows', String(EXPORT_CHUNK_ROWS))
+		void chunkedExport.start({
+			filename: 'orders-history.csv',
+			fetchChunk: async (pageCursor, signal) => {
+				const params = new URLSearchParams(base)
+				if (pageCursor) params.set('cursor', pageCursor)
+				const authHeader = getAuthHeader ? await getAuthHeader() : null
+				const res = await fetch(
+					`${tenantApiUrl}/operator/orders/export?${params.toString()}`,
+					{
+						headers: authHeader ? { Authorization: authHeader } : undefined,
+						cache: 'no-store',
+						signal,
+					},
 				)
-				return
-			}
-			const truncated = res.headers.get('X-Export-Truncated') === 'true'
-			const blob = await res.blob()
-			const url = URL.createObjectURL(blob)
-			const a = document.createElement('a')
-			a.href = url
-			a.download = 'orders-history.csv'
-			a.click()
-			URL.revokeObjectURL(url)
-			if (truncated) {
-				setExportNotice(
-					_(
-						msg`Export was capped at 50,000 rows. Narrow your filters to export all matching orders.`,
-					),
-				)
-			}
-		} catch {
-			setExportNotice(_(msg`Could not export CSV.`))
-		} finally {
-			setExporting(false)
-		}
+				if (!res.ok) throw new Error('export_failed')
+				return (await res.json()) as ExportChunk
+			},
+		})
 	}
 
 	const money = (cents: number, currency: string) =>
@@ -352,8 +344,8 @@ export function OrderHistoryTab({
 					<Button
 						type="button"
 						variant="outline"
-						disabled={exporting}
-						onClick={() => void handleExport()}
+						disabled={chunkedExport.running}
+						onClick={handleExport}
 					>
 						<Icon name="download" className="size-4" />
 						<Trans>Export CSV</Trans>
@@ -361,11 +353,11 @@ export function OrderHistoryTab({
 				</div>
 			</div>
 
-			{exportNotice ? (
-				<p role="status" className="text-muted-foreground text-sm">
-					{exportNotice}
-				</p>
-			) : null}
+			<ExportProgressPanel
+				state={chunkedExport.state}
+				onCancel={chunkedExport.cancel}
+				testId="orders-export"
+			/>
 			{error ? (
 				<p role="alert" className="text-destructive text-sm">
 					{error}

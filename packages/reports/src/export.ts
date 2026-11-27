@@ -53,17 +53,209 @@ export function csvLines(rows: string[][]): string {
 	return `${rows.map((row) => row.map(csvCell).join(',')).join('\n')}\n`
 }
 
-export function reportToCsv(
+// ---------------------------------------------------------------------------
+// Chunked exports (#386)
+// ---------------------------------------------------------------------------
+
+/**
+ * Large exports are read page by page from the region, so the browser can
+ * show a percentage, an estimated time left and a Cancel button. One writer
+ * serves every guest-level or row-level CSV export (order history, customer
+ * list); each of them only supplies `fetchChunk`.
+ */
+
+/** Rows one export request carries. */
+export const EXPORT_CHUNK_ROWS = 2_000
+
+/** The most rows one export ever holds; past it the file is cut and says so. */
+export const EXPORT_MAX_ROWS = 50_000
+
+/** One page of an export, as the region answers it. */
+export type ExportChunk = {
+	/**
+	 * The file's header row. The first page decides it (it can depend on the
+	 * caller's grants or on the currencies in the data); later pages repeat it.
+	 */
+	header?: string[]
+	rows: string[][]
+	/** Opaque cursor of the next page; null on the last one. */
+	nextCursor: string | null
+	/** Rows this export will hold (after the cap). */
+	total: number
+	/** Rows the filters matched before the cap. */
+	matching: number
+	/** The cap cut the result. */
+	truncated: boolean
+	/** Rows appended once, after the last page (totals, the cut-off note). */
+	footer?: string[][] | null
+}
+
+export type ExportProgress = {
+	rowsDone: number
+	rowsTotal: number
+	/** 0 to 100, whole numbers; 100 only once the file is complete. */
+	percent: number
+	elapsedMs: number
+	/** Estimated time left; null until the first page has come back. */
+	etaMs: number | null
+}
+
+export function exportProgress(input: {
+	rowsDone: number
+	rowsTotal: number
+	startedAt: number
+	now: number
+	complete?: boolean
+}): ExportProgress {
+	const rowsTotal = Math.max(0, input.rowsTotal)
+	const rowsDone = Math.min(Math.max(0, input.rowsDone), rowsTotal)
+	const elapsedMs = Math.max(0, input.now - input.startedAt)
+	const ratio = rowsTotal === 0 ? 1 : rowsDone / rowsTotal
+	const percent = input.complete ? 100 : Math.min(99, Math.floor(ratio * 100))
+	const etaMs =
+		input.complete || ratio >= 1
+			? 0
+			: rowsDone > 0
+				? Math.round((elapsedMs / rowsDone) * (rowsTotal - rowsDone))
+				: null
+	return { rowsDone, rowsTotal, percent, elapsedMs, etaMs }
+}
+
+/** "about 12 seconds", "under a minute": the words the progress line uses. */
+export function formatEta(etaMs: number | null): {
+	unit: 'unknown' | 'seconds' | 'minutes'
+	value: number
+} {
+	if (etaMs === null) return { unit: 'unknown', value: 0 }
+	const seconds = Math.max(1, Math.ceil(etaMs / 1000))
+	return seconds < 60
+		? { unit: 'seconds', value: seconds }
+		: { unit: 'minutes', value: Math.ceil(seconds / 60) }
+}
+
+export type ChunkedExportResult =
+	| {
+			status: 'done'
+			/** The finished file, built only after the last page arrived. */
+			blob: Blob
+			rowCount: number
+			matching: number
+			truncated: boolean
+	  }
+	| { status: 'cancelled' }
+
+function isAbort(error: unknown): boolean {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		(error as { name?: unknown }).name === 'AbortError'
+	)
+}
+
+/** Lets the browser paint between pages, so a big export never blocks the page. */
+const yieldToEventLoop = () => new Promise<void>((r) => setTimeout(r, 0))
+
+/**
+ * Reads an export page by page and builds the CSV in memory. Cancelling (the
+ * `signal`) stops before the next request, aborts the one in flight, throws
+ * away every page read so far and returns `cancelled`: the file is only ever
+ * built after the last page, so no partial file exists. Any other error is
+ * rethrown the same way, with nothing kept.
+ */
+export async function runChunkedCsvExport(options: {
+	/** Used when the first page names no header of its own. */
+	header?: string[]
+	fetchChunk: (
+		cursor: string | null,
+		signal: AbortSignal,
+	) => Promise<ExportChunk>
+	signal?: AbortSignal
+	onProgress?: (progress: ExportProgress) => void
+	/** The first page: how many rows match and whether the cap cuts them. */
+	onStart?: (info: {
+		total: number
+		matching: number
+		truncated: boolean
+	}) => void
+	now?: () => number
+	yieldTurn?: () => Promise<void>
+}): Promise<ChunkedExportResult> {
+	const now = options.now ?? Date.now
+	const yieldTurn = options.yieldTurn ?? yieldToEventLoop
+	const controller = new AbortController()
+	const onOuterAbort = () => controller.abort()
+	if (options.signal?.aborted) return { status: 'cancelled' }
+	options.signal?.addEventListener('abort', onOuterAbort, { once: true })
+
+	let parts: string[] | null = []
+	const startedAt = now()
+	let rowCount = 0
+	let total = 0
+	let matching = 0
+	let truncated = false
+	let cursor: string | null = null
+	let first = true
+	try {
+		for (;;) {
+			if (controller.signal.aborted) return { status: 'cancelled' }
+			const chunk: ExportChunk = await options.fetchChunk(
+				cursor,
+				controller.signal,
+			)
+			if (controller.signal.aborted) return { status: 'cancelled' }
+			if (first) {
+				first = false
+				total = chunk.total
+				matching = chunk.matching
+				truncated = chunk.truncated
+				options.onStart?.({ total, matching, truncated })
+				const header = chunk.header ?? options.header
+				if (header) parts.push(csvLines([header]))
+			}
+			if (chunk.rows.length > 0) parts.push(csvLines(chunk.rows))
+			rowCount += chunk.rows.length
+			cursor = chunk.nextCursor
+			const done = cursor === null
+			if (done && chunk.footer && chunk.footer.length > 0) {
+				parts.push(csvLines(chunk.footer))
+			}
+			options.onProgress?.(
+				exportProgress({
+					rowsDone: rowCount,
+					rowsTotal: Math.max(total, rowCount),
+					startedAt,
+					now: now(),
+					complete: done,
+				}),
+			)
+			if (done) break
+			await yieldTurn()
+		}
+		const blob = new Blob(parts, { type: 'text/csv;charset=utf-8' })
+		return { status: 'done', blob, rowCount, matching, truncated }
+	} catch (error) {
+		if (controller.signal.aborted || isAbort(error)) {
+			return { status: 'cancelled' }
+		}
+		throw error
+	} finally {
+		parts = null
+		options.signal?.removeEventListener('abort', onOuterAbort)
+	}
+}
+
+/** The rows of a report's CSV (header first), before CSV quoting. */
+export function reportToRows(
 	definition: ReportDefinition,
 	result: ReportResult,
-): string {
+): string[][] {
 	if (isListReport(definition) && result.columns && result.rows) {
-		return csvLines([
+		return [
 			result.columns.map((column) => column.label),
 			...result.rows.map((row) =>
 				result.columns!.map((column) => row[column.id] ?? ''),
 			),
-		])
+		]
 	}
 
 	const columns = segmentTableColumns(
@@ -103,7 +295,14 @@ export function reportToCsv(
 			? [`${segmentPercent(segment, result).toFixed(1)}%`]
 			: []),
 	])
-	return csvLines([header, ...body])
+	return [header, ...body]
+}
+
+export function reportToCsv(
+	definition: ReportDefinition,
+	result: ReportResult,
+): string {
+	return csvLines(reportToRows(definition, result))
 }
 
 /** The value column's header, naming the unit its plain digits are in. */

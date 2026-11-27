@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PeopleListScreen } from '#app/components/customers/people-list-screen.tsx'
 import { type PeopleAccess } from '#app/utils/people/people-access.ts'
 import {
@@ -93,6 +93,14 @@ function renderList(
 	)
 	return request
 }
+
+/** jsdom's Blob has no `.text()`. */
+const readBlob = (blob: Blob) =>
+	new Promise<string>((resolve) => {
+		const reader = new FileReader()
+		reader.onload = () => resolve(String(reader.result))
+		reader.readAsText(blob)
+	})
 
 const listCalls = (request: ReturnType<typeof vi.fn>) =>
 	request.mock.calls.filter((call) => call[0] !== '/summary')
@@ -346,6 +354,184 @@ describe('PeopleListScreen', () => {
 			expect(
 				await screen.findByTestId('customers-summary-scoped'),
 			).toHaveTextContent('Totals for your locations')
+		})
+	})
+	it('sorts and filters by spend, points and dates on the server (#231)', async () => {
+		const request = renderList([
+			row('c_1', 'Big Spender', {
+				spend: [{ currency: 'USD', minor: 7500 }],
+				points: { balance: 40, used: 10 },
+				marketing: { email: true, sms: true },
+			}),
+		])
+		await screen.findByTestId('person-row-c_1')
+		expect(screen.getByTestId('person-spend-c_1')).toHaveTextContent('$75.00')
+		expect(screen.getByTestId('person-points-used-c_1')).toHaveTextContent('10')
+		expect(screen.getByTestId('person-marketing-both')).toBeInTheDocument()
+
+		fireEvent.click(screen.getByTestId('customers-view-top-guests'))
+		await waitFor(() => expect(lastQuery(request).sort).toBe('total_spend'))
+		fireEvent.click(screen.getByTestId('customers-view-top-rewards'))
+		await waitFor(() => expect(lastQuery(request).sort).toBe('points_used'))
+
+		fireEvent.change(screen.getByTestId('customers-joined-from'), {
+			target: { value: '2026-01-01' },
+		})
+		fireEvent.change(screen.getByTestId('customers-last-order-to'), {
+			target: { value: '2026-02-01' },
+		})
+		await waitFor(() => {
+			expect(lastQuery(request).joinedFrom).toBe('2026-01-01')
+			expect(lastQuery(request).lastOrderTo).toBe('2026-02-01')
+		})
+	})
+
+	it('hides spend, points, saved views and export without the customers grant', async () => {
+		renderList([row('g_1', 'Gus Guest')], {
+			access: { ...FULL, customers: false },
+		})
+		await screen.findByTestId('person-row-g_1')
+		expect(screen.queryByTestId('customers-export')).toBeNull()
+		expect(screen.queryByTestId('customers-view-top-guests')).toBeNull()
+		expect(screen.queryByTestId('person-spend-g_1')).toBeNull()
+		expect(screen.queryByTestId('customers-last-order-from')).toBeNull()
+	})
+
+	describe('export (#231, #386)', () => {
+		const created: Blob[] = []
+		beforeEach(() => {
+			created.length = 0
+			URL.createObjectURL = vi.fn((blob: Blob) => {
+				created.push(blob)
+				return 'blob:test'
+			})
+			URL.revokeObjectURL = vi.fn()
+			HTMLAnchorElement.prototype.click = vi.fn()
+		})
+
+		function exportClient(pages: number) {
+			const calls: Array<Record<string, unknown>> = []
+			const request = vi.fn(
+				async (
+					path: string,
+					options?: { query?: Record<string, unknown>; signal?: AbortSignal },
+				) => {
+					if (path === '/summary') return SUMMARY
+					if (path === '/export') {
+						calls.push(options?.query ?? {})
+						const index = Number(options?.query?.cursor ?? 0)
+						return {
+							header: ['Name'],
+							rows: [[`Guest ${index}`]],
+							nextCursor: index + 1 < pages ? String(index + 1) : null,
+							total: pages,
+							matching: pages,
+							truncated: false,
+							footer: null,
+						}
+					}
+					return {
+						people: [row('c_1', 'Vera Signed')],
+						nextCursor: null,
+						total: 1,
+						meta: { hasOrders: false, walkInCount: 0 },
+					}
+				},
+			)
+			return { client: { request } as unknown as PeopleClient, calls }
+		}
+
+		it('exports the current view page by page and saves one file', async () => {
+			const { client: c, calls } = exportClient(3)
+			renderStaff(
+				<PeopleListScreen
+					client={c}
+					orgSlug="acme"
+					access={FULL}
+					canBook={false}
+				/>,
+			)
+			await screen.findByTestId('person-row-c_1')
+			fireEvent.click(screen.getByTestId('customers-view-top-guests'))
+			await waitFor(() =>
+				expect(screen.getByTestId('customers-export')).toBeEnabled(),
+			)
+			fireEvent.click(screen.getByTestId('customers-export'))
+			await waitFor(() => expect(created).toHaveLength(1))
+			expect(calls).toHaveLength(3)
+			// The export asks for the same sort as the view.
+			expect(calls[0]).toMatchObject({ sort: 'total_spend' })
+			expect(await readBlob(created[0]!)).toBe(
+				'Name\nGuest 0\nGuest 1\nGuest 2\n',
+			)
+			expect(
+				await screen.findByTestId('customers-export-done'),
+			).toBeInTheDocument()
+		})
+
+		it('shows progress while it runs and cancel leaves no file', async () => {
+			let release: (() => void) | null = null
+			const request = vi.fn(
+				async (
+					path: string,
+					options?: { query?: Record<string, unknown>; signal?: AbortSignal },
+				) => {
+					if (path === '/summary') return SUMMARY
+					if (path === '/export') {
+						const cursor = Number(options?.query?.cursor ?? 0)
+						if (cursor === 1) {
+							// The second page never arrives until cancelled.
+							await new Promise<void>((_resolve, reject) => {
+								release = () => reject(new Error('unused'))
+								options?.signal?.addEventListener('abort', () =>
+									reject(
+										Object.assign(new Error('aborted'), { name: 'AbortError' }),
+									),
+								)
+							})
+						}
+						return {
+							rows: [['Guest']],
+							header: ['Name'],
+							nextCursor: '1',
+							total: 4,
+							matching: 4,
+							truncated: false,
+							footer: null,
+						}
+					}
+					return {
+						people: [row('c_1', 'Vera Signed')],
+						nextCursor: null,
+						total: 1,
+						meta: { hasOrders: false, walkInCount: 0 },
+					}
+				},
+			)
+			renderStaff(
+				<PeopleListScreen
+					client={{ request } as unknown as PeopleClient}
+					orgSlug="acme"
+					access={FULL}
+					canBook={false}
+				/>,
+			)
+			await screen.findByTestId('person-row-c_1')
+			fireEvent.click(screen.getByTestId('customers-export'))
+			expect(
+				await screen.findByTestId('customers-export-progress'),
+			).toBeInTheDocument()
+			await waitFor(() =>
+				expect(
+					screen.getByTestId('customers-export-progress'),
+				).toHaveTextContent('25'),
+			)
+			fireEvent.click(screen.getByTestId('customers-export-cancel'))
+			expect(
+				await screen.findByTestId('customers-export-cancelled'),
+			).toBeInTheDocument()
+			expect(created).toHaveLength(0)
+			expect(release).not.toBeNull()
 		})
 	})
 })

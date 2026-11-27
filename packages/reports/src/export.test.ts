@@ -1,13 +1,18 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
 	buildSingleNumberSvg,
 	canExportReport,
 	clampExportSize,
 	composeExportSvg,
+	EXPORT_CHUNK_ROWS,
 	EXPORT_MAX_SIZE,
 	EXPORT_MIN_SIZE,
+	exportProgress,
+	formatEta,
 	jpegToPdf,
 	reportToCsv,
+	runChunkedCsvExport,
+	type ExportChunk,
 	slugFilename,
 	TITLE_BAR_HEIGHT,
 } from './export.ts'
@@ -387,5 +392,171 @@ describe('reportToCsv formula safety', () => {
 			rows: [{ name: '-12.5' }],
 		} as unknown as ReportResult
 		expect(reportToCsv(tableDefinition(), result)).toContain('\n-12.5\n')
+	})
+})
+
+describe('runChunkedCsvExport (#386)', () => {
+	const header = ['Name', 'Spend']
+
+	function pagedSource(total: number, pageSize: number, matching = total) {
+		const calls: Array<string | null> = []
+		const fetchChunk = async (cursor: string | null): Promise<ExportChunk> => {
+			calls.push(cursor)
+			const start = cursor ? Number(cursor) : 0
+			const end = Math.min(start + pageSize, total)
+			return {
+				rows: Array.from({ length: end - start }, (_, i) => [
+					`guest ${start + i}`,
+					String(start + i),
+				]),
+				nextCursor: end < total ? String(end) : null,
+				total,
+				matching,
+				truncated: matching > total,
+				footer: end >= total && matching > total ? [['cut']] : null,
+			}
+		}
+		return { fetchChunk, calls }
+	}
+
+	it('reports progress for a 50,000-row export and builds one file', async () => {
+		const { fetchChunk, calls } = pagedSource(50_000, EXPORT_CHUNK_ROWS)
+		const seen: number[] = []
+		let tick = 0
+		const result = await runChunkedCsvExport({
+			header,
+			fetchChunk,
+			onProgress: (p) => seen.push(p.percent),
+			now: () => (tick += 100),
+			yieldTurn: async () => {},
+		})
+		expect(result.status).toBe('done')
+		if (result.status !== 'done') return
+		expect(calls).toHaveLength(25)
+		expect(result.rowCount).toBe(50_000)
+		expect(seen.length).toBe(25)
+		expect(seen[0]).toBeGreaterThan(0)
+		expect(seen.at(-1)).toBe(100)
+		expect(seen.every((p, i) => i === 0 || p >= seen[i - 1]!)).toBe(true)
+		const text = await result.blob.text()
+		expect(text.split('\n')).toHaveLength(50_002) // header + rows + trailing
+	})
+
+	it('estimates the time left from the pages read so far', () => {
+		expect(
+			exportProgress({ rowsDone: 0, rowsTotal: 100, startedAt: 0, now: 5 })
+				.etaMs,
+		).toBeNull()
+		const half = exportProgress({
+			rowsDone: 50,
+			rowsTotal: 100,
+			startedAt: 0,
+			now: 10_000,
+		})
+		expect(half.percent).toBe(50)
+		expect(half.etaMs).toBe(10_000)
+		expect(formatEta(10_000)).toEqual({ unit: 'seconds', value: 10 })
+		expect(formatEta(130_000)).toEqual({ unit: 'minutes', value: 3 })
+		expect(formatEta(null).unit).toBe('unknown')
+	})
+
+	it('cancel mid-export stops the requests and returns no file', async () => {
+		const controller = new AbortController()
+		const { fetchChunk, calls } = pagedSource(10_000, 1_000)
+		const result = await runChunkedCsvExport({
+			header,
+			signal: controller.signal,
+			fetchChunk: (cursor, signal) => {
+				if (calls.length === 2) controller.abort()
+				return fetchChunk(cursor).then((chunk) => {
+					if (signal.aborted) {
+						throw Object.assign(new Error('aborted'), { name: 'AbortError' })
+					}
+					return chunk
+				})
+			},
+			yieldTurn: async () => {},
+		})
+		expect(result).toEqual({ status: 'cancelled' })
+		// Nothing after the abort was requested.
+		expect(calls.length).toBeLessThanOrEqual(3)
+	})
+
+	it('cancelling before the first request never calls the region', async () => {
+		const controller = new AbortController()
+		controller.abort()
+		const fetchChunk = vi.fn()
+		const result = await runChunkedCsvExport({
+			header,
+			signal: controller.signal,
+			fetchChunk,
+		})
+		expect(result).toEqual({ status: 'cancelled' })
+		expect(fetchChunk).not.toHaveBeenCalled()
+	})
+
+	it('aborts the request in flight when cancelled', async () => {
+		const controller = new AbortController()
+		let seenSignal: AbortSignal | null = null
+		const promise = runChunkedCsvExport({
+			header,
+			signal: controller.signal,
+			fetchChunk: (_cursor, signal) => {
+				seenSignal = signal
+				return new Promise((_resolve, reject) => {
+					signal.addEventListener('abort', () =>
+						reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+					)
+				})
+			},
+		})
+		await new Promise((r) => setTimeout(r, 0))
+		controller.abort()
+		expect(await promise).toEqual({ status: 'cancelled' })
+		expect(seenSignal!.aborted).toBe(true)
+	})
+
+	it('warns up front when the cap cuts the result and keeps the footer note', async () => {
+		const { fetchChunk } = pagedSource(3, 2, 7)
+		let start: { total: number; matching: number; truncated: boolean } | null =
+			null
+		const result = await runChunkedCsvExport({
+			header,
+			fetchChunk,
+			onStart: (info) => (start = info),
+			yieldTurn: async () => {},
+		})
+		expect(start).toEqual({ total: 3, matching: 7, truncated: true })
+		if (result.status !== 'done') throw new Error('expected done')
+		expect(result.truncated).toBe(true)
+		expect((await result.blob.text()).trimEnd().split('\n').at(-1)).toBe('cut')
+	})
+
+	it('rethrows a real failure and keeps nothing', async () => {
+		await expect(
+			runChunkedCsvExport({
+				header,
+				fetchChunk: async () => {
+					throw new Error('boom')
+				},
+			}),
+		).rejects.toThrow('boom')
+	})
+
+	it('keeps cells formula-safe across chunks', async () => {
+		const result = await runChunkedCsvExport({
+			header,
+			fetchChunk: async () => ({
+				rows: [['=HYPERLINK("x")', '@cmd']],
+				nextCursor: null,
+				total: 1,
+				matching: 1,
+				truncated: false,
+			}),
+		})
+		if (result.status !== 'done') throw new Error('expected done')
+		const text = await result.blob.text()
+		expect(text).not.toMatch(/(^|,|\n)=/)
+		expect(text).not.toMatch(/(^|,|\n)@/)
 	})
 })

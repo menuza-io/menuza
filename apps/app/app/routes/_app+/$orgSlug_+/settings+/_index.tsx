@@ -1,6 +1,6 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { parseFormData } from '@mjackson/form-data-parser'
-import { requireUserId } from '@repo/auth'
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
 import { organizationSlugSchema } from '@repo/common'
 import { CUSTOMER_APP_FLAGS } from '@repo/common/customer-app'
@@ -39,7 +39,10 @@ import {
 import { z } from 'zod'
 
 import { CuisinePriceCard } from '#app/components/settings/cards/organization/cuisine-price-card.tsx'
+import { CustomerAppCard } from '#app/components/settings/cards/organization/customer-app-card.tsx'
 import DangerZoneCard from '#app/components/settings/cards/organization/danger-zone-card.tsx'
+import { DeliveryCommissionCard } from '#app/components/settings/cards/organization/delivery-commission-card.tsx'
+import { EmailSendingCard } from '#app/components/settings/cards/organization/email-sending-card.tsx'
 import { GeneralSettingsCard } from '#app/components/settings/cards/organization/general-settings-card.tsx'
 import {
 	uploadOrgPhotoActionIntent,
@@ -51,8 +54,6 @@ import {
 	s3StorageActionIntent,
 	startS3MigrationActionIntent,
 } from '#app/components/settings/cards/organization/s3-storage-card.tsx'
-import { CustomerAppCard } from '#app/components/settings/cards/organization/customer-app-card.tsx'
-import { EmailSendingCard } from '#app/components/settings/cards/organization/email-sending-card.tsx'
 import TeamSizeCard, {
 	TeamSizeSchema,
 } from '#app/components/settings/cards/organization/team-size-card.tsx'
@@ -118,6 +119,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		cuisines: true,
 		priceRange: true,
 		dataRegion: true,
+		deliveryCommissionBp: true,
 	})
 	// The TXT record to publish for a pending claim; the token itself only
 	// travels inside that record value.
@@ -183,11 +185,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		latestMigration,
 		mediaFileCount,
 		canDeleteOrganization,
+		canUpdateSettings,
 	] = await Promise.all([
 		getActiveStorageMigration(organization.id),
 		getLatestStorageMigration(organization.id),
 		countOrgMediaObjectKeys(organization.id),
 		userIsOrganizationAdmin(userId, organization.id),
+		userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		),
 	])
 
 	return {
@@ -205,6 +213,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		latestMigration,
 		mediaFileCount,
 		canDeleteOrganization,
+		canUpdateSettings,
 	}
 }
 
@@ -1014,6 +1023,7 @@ export default function GeneralSettings() {
 		latestMigration,
 		mediaFileCount,
 		canDeleteOrganization,
+		canUpdateSettings,
 		cuisine,
 		emailSending,
 		customerApp,
@@ -1028,6 +1038,11 @@ export default function GeneralSettings() {
 					<GeneralSettingsCard organization={organization} />
 					<TeamSizeCard organization={organization} actionData={actionData} />
 					<CuisinePriceCard organization={cuisine} />
+					<DeliveryCommissionCard
+						orgSlug={organization.slug}
+						commissionBp={organization.deliveryCommissionBp}
+						canEdit={canUpdateSettings}
+					/>
 				</div>
 			</AnnotatedSection>
 

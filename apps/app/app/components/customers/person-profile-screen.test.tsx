@@ -311,3 +311,33 @@ describe('PersonProfileScreen', () => {
 		).not.toHaveAttribute('aria-disabled', 'true')
 	})
 })
+
+describe('PersonProfileScreen: last order (#231)', () => {
+	it('shows the last order date and the channel it came from', async () => {
+		const base = profile()
+		render({
+			...base,
+			customer: {
+				...base.customer!,
+				orders: {
+					count: 3,
+					lastOrderAt: Date.UTC(2026, 10, 20),
+					lastOrderChannel: 'qr_table',
+				},
+			},
+		})
+		expect(
+			await screen.findByTestId('person-stat-last-order'),
+		).toHaveTextContent(/2026/)
+		expect(
+			screen.getByTestId('person-stat-last-order-channel'),
+		).toHaveTextContent('Table QR code')
+	})
+
+	it('shows a dash when the customer has no orders', async () => {
+		render(profile())
+		expect(
+			await screen.findByTestId('person-stat-last-order-channel'),
+		).toHaveTextContent('—')
+	})
+})

@@ -188,6 +188,10 @@ const PUBLIC_ROUTES: Record<string, string> = {
 		'public published promotional popups and the funnel flag; coupon re-checked per request; rate limited',
 	'resources+/sites.events.ts':
 		'public published website events (#184); rate limited, 404 unless published and website.events is on',
+	'resources+/report-unsubscribe.ts':
+		'one-click unsubscribe from a report email (#121, #221); a signed token names one recipient and one thing to switch off, forged or edited tokens change nothing',
+	'resources+/accounting-export.ts':
+		"the bookkeeper's file link (#189); a signed token names the organization, range and layout and expires after 7 days, 404 for anything forged or with the flag off",
 	'resources+/sites.reservations.ts':
 		'public booking-flow flags; rate limited, 404 unless published and on',
 	'resources+/sites.app-tap.ts':

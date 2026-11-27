@@ -22,6 +22,26 @@
       "import": "./src/ui/index.ts",
       "default": "./src/ui/index.ts"
     },
+    "./figures-contract": {
+      "types": "./src/report-figures-contract.ts",
+      "import": "./src/report-figures-contract.ts",
+      "default": "./src/report-figures-contract.ts"
+    },
+    "./send-contract": {
+      "types": "./src/report-send-contract.ts",
+      "import": "./src/report-send-contract.ts",
+      "default": "./src/report-send-contract.ts"
+    },
+    "./schedule": {
+      "types": "./src/report-schedule.ts",
+      "import": "./src/report-schedule.ts",
+      "default": "./src/report-schedule.ts"
+    },
+    "./unsubscribe-token": {
+      "types": "./src/report-unsubscribe-token.ts",
+      "import": "./src/report-unsubscribe-token.ts",
+      "default": "./src/report-unsubscribe-token.ts"
+    },
     "./token": {
       "types": "./src/operator-token.ts",
       "import": "./src/operator-token.ts",

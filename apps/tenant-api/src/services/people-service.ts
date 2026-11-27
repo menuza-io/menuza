@@ -6,16 +6,22 @@ import {
 	shopOrders,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import { restaurantSalesChannel } from '@repo/common/sales-report-facts'
 import { and, count, desc, eq, isNull, max, sql, type SQL } from 'drizzle-orm'
 import { badRequest, conflict, forbidden, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
 	inScopePredicate,
 	loadEmailConsentMatches,
+	loadMarketingFlags,
+	loadSpendByCurrency,
+	peopleMetricsCtes,
 	peopleStatsCtes,
 	returningPredicate,
 	subscribedPredicate,
+	type MarketingFlags,
 	type PeopleLocationScope,
+	type PersonSpend,
 	type SubscribedChannel,
 } from './people-stats.ts'
 import {
@@ -75,7 +81,14 @@ export type PeopleAccess = {
 }
 
 export const PEOPLE_PAGE_SIZE = 50
-export const PEOPLE_SORTS = ['recent', 'name', 'visits', 'last_visit'] as const
+export const PEOPLE_SORTS = [
+	'recent',
+	'name',
+	'visits',
+	'last_visit',
+	'total_spend',
+	'points_used',
+] as const
 export type PeopleSort = (typeof PEOPLE_SORTS)[number]
 export const PEOPLE_ACCOUNT_FILTERS = ['signed_in', 'guest_only'] as const
 export type PeopleAccountFilter = (typeof PEOPLE_ACCOUNT_FILTERS)[number]
@@ -188,6 +201,12 @@ export type PeopleListInput = {
 	 * the plain list stays organization-wide as before (see `listPeople`).
 	 */
 	locationIds?: PeopleLocationScope
+	/** Joined between these instants (ms, inclusive). The date a person was first added. */
+	joinedFrom?: number
+	joinedTo?: number
+	/** Last order between these instants (ms, inclusive); people without orders never match. */
+	lastOrderFrom?: number
+	lastOrderTo?: number
 	sort?: PeopleSort
 	cursor?: string
 	limit?: number
@@ -207,6 +226,18 @@ const SORT_SPECS: Record<
 	visits: { expr: sql`COALESCE(p.visits, 0)`, dir: 'desc', text: false },
 	last_visit: {
 		expr: sql`COALESCE(p.last_visit_at, 0)`,
+		dir: 'desc',
+		text: false,
+	},
+	// Money and points come from the metrics CTEs (`peopleMetricsCtes`), joined
+	// into `p` as `spend_minor` / `points_used`. Both need the customers facet.
+	total_spend: {
+		expr: sql`COALESCE(p.spend_minor, 0)`,
+		dir: 'desc',
+		text: false,
+	},
+	points_used: {
+		expr: sql`COALESCE(p.points_used, 0)`,
 		dir: 'desc',
 		text: false,
 	},
@@ -248,7 +279,9 @@ export function peopleCte(
 	access: PeopleAccess,
 	now: number,
 	extra?: SQL | null,
+	opts?: { metrics?: boolean },
 ): SQL {
+	const metrics = opts?.metrics === true && access.customers
 	const dining = hasDiningFacet(access)
 	const halves: SQL[] = []
 	if (access.customers) {
@@ -280,10 +313,14 @@ export function peopleCte(
 				${guestCols},
 				ord.n AS order_count, ord.last_at AS last_order_at,
 				0 AS walk_in,
-				c.id AS consent_customer_id
+				c.id AS consent_customer_id,
+				${metrics ? sql`COALESCE(sp.cents, 0)` : sql`NULL`} AS spend_minor,
+				${metrics ? sql`pt.balance` : sql`NULL`} AS points_balance,
+				${metrics ? sql`pt.used` : sql`NULL`} AS points_used
 			FROM customers c
 			${guestJoin}
 			LEFT JOIN ord ON ord.customer_id = c.id
+			${metrics ? sql`LEFT JOIN spend_primary sp ON sp.customer_id = c.id LEFT JOIN pts pt ON pt.customer_id = c.id` : sql``}
 			WHERE 1 = 1 ${shadow}`)
 	}
 	if (dining) {
@@ -300,7 +337,8 @@ export function peopleCte(
 				g.phone_e164 AS guest_phone, g.email_norm AS guest_email,
 				NULL AS order_count, NULL AS last_order_at,
 				${WALK_IN_EXPR('g')} AS walk_in,
-				${CONSENT_SHADOW_EXPR('g')} AS consent_customer_id
+				${CONSENT_SHADOW_EXPR('g')} AS consent_customer_id,
+				NULL AS spend_minor, NULL AS points_balance, NULL AS points_used
 			FROM rsv_guests g
 			LEFT JOIN nb ON nb.guest_id = g.id
 			WHERE ${GUEST_LIVE('g')} ${access.customers ? sql`AND g.customer_id IS NULL` : sql``}`)
@@ -316,7 +354,7 @@ export function peopleCte(
 				UNION ALL
 				SELECT customer_id, created_at * 1000 AS ts FROM shop_orders WHERE customer_id IS NOT NULL
 			) GROUP BY customer_id
-		), p AS (
+		)${metrics ? sql`, ${peopleMetricsCtes()}` : sql``}, p AS (
 			${sql.join(halves, sql` UNION ALL `)}
 		)${extra ? sql`, ${extra}` : sql``}`
 }
@@ -379,6 +417,23 @@ export function listFilters(
 		filters.push(sql`p.no_shows >= ${FREQUENT_NO_SHOW_THRESHOLD}`)
 	}
 	if (input.hasDining) filters.push(sql`p.guest_id IS NOT NULL`)
+	if (input.joinedFrom !== undefined) {
+		filters.push(sql`p.created_at >= ${input.joinedFrom}`)
+	}
+	if (input.joinedTo !== undefined) {
+		filters.push(sql`p.created_at <= ${input.joinedTo}`)
+	}
+	if (input.lastOrderFrom !== undefined || input.lastOrderTo !== undefined) {
+		// Orders belong to the customers facet; a host-only token has no dates.
+		requireCustomersFacet(access)
+		filters.push(sql`p.last_order_at IS NOT NULL`)
+		if (input.lastOrderFrom !== undefined) {
+			filters.push(sql`p.last_order_at >= ${input.lastOrderFrom}`)
+		}
+		if (input.lastOrderTo !== undefined) {
+			filters.push(sql`p.last_order_at <= ${input.lastOrderTo}`)
+		}
+	}
 	if (input.account === 'signed_in') filters.push(sql`p.signed_in = 1`)
 	if (input.account === 'guest_only') filters.push(sql`p.kind = 'g'`)
 
@@ -430,6 +485,10 @@ type RawPerson = {
 	is_vip: number | null
 	has_allergy: number | null
 	walk_in: number
+	consent_customer_id: string | null
+	spend_minor: number | null
+	points_balance: number | null
+	points_used: number | null
 	sort_key: string | number
 }
 
@@ -464,6 +523,15 @@ export type PersonRow = {
 	} | null
 	/** Orders placed while signed in; separate from visits, never summed. */
 	orders: { count: number; lastOrderAt: number | null } | null
+	/**
+	 * Lifetime spend on orders that count toward sales, one entry per currency
+	 * (never added together; the reports' "Total spent"). Customers facet only.
+	 */
+	spend: PersonSpend[] | null
+	/** Loyalty points (`balance`, and `used`: redeemed net of restored). Customers facet only. */
+	points: { balance: number; used: number } | null
+	/** Subscribed to marketing email and/or text. Customers facet only. */
+	marketing: MarketingFlags | null
 	flags: {
 		vip: boolean
 		/** `null` when the caller lacks the guest read grant. */
@@ -524,13 +592,36 @@ export async function listPeople(
 	access: PeopleAccess,
 	input: PeopleListInput,
 ): Promise<PeoplePage> {
+	return queryPeople(db, access, input, { limitCap: PEOPLE_PAGE_SIZE })
+}
+
+/**
+ * The one people query: the list page and the export chunks read it, so an
+ * exported row is exactly a listed row. `lean` (export) skips what a file
+ * does not need: the tags, the tile meta and, past the first page, the count.
+ */
+export async function queryPeople(
+	db: TenantDatabase,
+	access: PeopleAccess,
+	input: PeopleListInput,
+	opts: { limitCap: number; lean?: boolean },
+): Promise<PeoplePage> {
 	if (!access.customers && access.dining === 'none') {
 		throw forbidden('insufficient_permissions', 'No people access')
+	}
+	if (
+		(input.sort === 'total_spend' || input.sort === 'points_used') &&
+		!access.customers
+	) {
+		throw forbidden(
+			'insufficient_permissions',
+			'Sorting by spend or points needs the customer read grant',
+		)
 	}
 	const now = input.now ?? Date.now()
 	const limit = Math.min(
 		Math.max(input.limit ?? PEOPLE_PAGE_SIZE, 1),
-		PEOPLE_PAGE_SIZE,
+		opts.limitCap,
 	)
 	const spec = SORT_SPECS[input.sort ?? 'recent']
 	const filters = listFilters(access, input, now)
@@ -540,12 +631,16 @@ export async function listPeople(
 		access,
 		now,
 		await listStatsCtes(db, access, input, now),
+		{ metrics: access.customers },
 	)
 
-	const totalRows = await db.all<{ n: number }>(
-		sql`${cte} SELECT COUNT(*) AS n FROM p ${where}`,
-	)
-	const total = Number(totalRows[0]?.n ?? 0)
+	let total = 0
+	if (!(opts.lean && input.cursor)) {
+		const totalRows = await db.all<{ n: number }>(
+			sql`${cte} SELECT COUNT(*) AS n FROM p ${where}`,
+		)
+		total = Number(totalRows[0]?.n ?? 0)
+	}
 
 	const cursor = decodeCursor(input.cursor)
 	const cursorFilter = cursor
@@ -571,9 +666,25 @@ export async function listPeople(
 	const guestIds = page
 		.map((r) => r.guest_id)
 		.filter((id): id is string => typeof id === 'string')
-	const tagsMap = await loadGuestTagsMap(db, guestIds, {
-		canReadSensitive: access.dining === 'full',
-	})
+	const tagsMap = opts.lean
+		? new Map<string, SerializedGuestTag[]>()
+		: await loadGuestTagsMap(db, guestIds, {
+				canReadSensitive: access.dining === 'full',
+			})
+	const customerIds = page
+		.map((r) => r.customer_id)
+		.filter((id): id is string => typeof id === 'string')
+	const spendMap = access.customers
+		? await loadSpendByCurrency(db, cte, customerIds)
+		: new Map<string, PersonSpend[]>()
+	const marketingMap = access.customers
+		? await loadMarketingFlags(
+				db,
+				page
+					.map((r) => r.consent_customer_id)
+					.filter((id): id is string => typeof id === 'string'),
+			)
+		: new Map<string, MarketingFlags>()
 
 	const people: PersonRow[] = page.map((r) => {
 		const signedIn = Number(r.signed_in) === 1
@@ -612,6 +723,23 @@ export async function listPeople(
 				access.customers && r.kind === 'c'
 					? { count: Number(r.order_count ?? 0), lastOrderAt }
 					: null,
+			spend:
+				access.customers && r.kind === 'c'
+					? (spendMap.get(r.customer_id!) ?? [])
+					: null,
+			points:
+				access.customers && r.kind === 'c'
+					? {
+							balance: Number(r.points_balance ?? 0),
+							used: Number(r.points_used ?? 0),
+						}
+					: null,
+			marketing: access.customers
+				? (marketingMap.get(r.consent_customer_id ?? '') ?? {
+						email: false,
+						sms: false,
+					})
+				: null,
 			flags: {
 				vip: Number(r.is_vip ?? 0) === 1,
 				allergy:
@@ -633,14 +761,14 @@ export async function listPeople(
 	})
 
 	let hasOrders = false
-	if (access.customers) {
+	if (access.customers && !opts.lean) {
 		const o = await db.all<{ n: number }>(
 			sql`SELECT (EXISTS (SELECT 1 FROM restaurant_orders WHERE customer_id IS NOT NULL) OR EXISTS (SELECT 1 FROM shop_orders WHERE customer_id IS NOT NULL)) AS n`,
 		)
 		hasOrders = Number(o[0]?.n ?? 0) === 1
 	}
 	let walkInCount: number | null = null
-	if (hasDiningFacet(access)) {
+	if (hasDiningFacet(access) && !opts.lean) {
 		const w = await db.all<{ n: number }>(
 			sql`SELECT COUNT(*) AS n FROM rsv_guests g WHERE ${GUEST_LIVE('g')} AND ${WALK_IN_EXPR('g')} = 1 ${access.customers ? sql`AND g.customer_id IS NULL` : sql``}`,
 		)
@@ -800,10 +928,18 @@ export async function resolveGuestId(
 // Profile
 // ---------------------------------------------------------------------------
 
+export type LastOrderChannel =
+	ReturnType<typeof restaurantSalesChannel> | 'shop'
+
 async function ordersSummary(
 	db: DbOrTx,
 	customerId: string,
-): Promise<{ count: number; lastOrderAt: number | null }> {
+): Promise<{
+	count: number
+	lastOrderAt: number | null
+	/** Where the last order came from (#231); null without orders. */
+	lastOrderChannel: LastOrderChannel | null
+}> {
 	const [restaurant] = await db
 		.select({ n: count(), last: max(restaurantOrders.createdAt) })
 		.from(restaurantOrders)
@@ -817,12 +953,30 @@ async function ordersSummary(
 		if (typeof value === 'number') return value * 1000
 		return null
 	}
-	const lasts = [stamp(restaurant?.last), stamp(shop?.last)].filter(
+	const restaurantLast = stamp(restaurant?.last)
+	const shopLast = stamp(shop?.last)
+	const lasts = [restaurantLast, shopLast].filter(
 		(v): v is number => v !== null,
 	)
+	let lastOrderChannel: LastOrderChannel | null = null
+	if (restaurantLast !== null && restaurantLast >= (shopLast ?? 0)) {
+		const [latest] = await db
+			.select({
+				source: restaurantOrders.source,
+				dropId: restaurantOrders.dropId,
+			})
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.customerId, customerId))
+			.orderBy(desc(restaurantOrders.createdAt))
+			.limit(1)
+		if (latest) lastOrderChannel = restaurantSalesChannel(latest)
+	} else if (shopLast !== null) {
+		lastOrderChannel = 'shop'
+	}
 	return {
 		count: Number(restaurant?.n ?? 0) + Number(shop?.n ?? 0),
 		lastOrderAt: lasts.length > 0 ? Math.max(...lasts) : null,
+		lastOrderChannel,
 	}
 }
 
@@ -860,7 +1014,11 @@ export async function getPersonProfile(
 		createdAt: number
 		/** `MM-DD` (#151); null when not given. Personal: never exported or logged. */
 		birthMonthDay: string | null
-		orders: { count: number; lastOrderAt: number | null }
+		orders: {
+			count: number
+			lastOrderAt: number | null
+			lastOrderChannel: LastOrderChannel | null
+		}
 	} | null = null
 	if (customer && access.customers) {
 		customerFacet = {
@@ -1099,7 +1257,11 @@ export async function updatePerson(
 	// One write: a rejected dining update (stale version, merged guest) must
 	// not leave the customer's name or email already changed.
 	await withSetupWrite(db, async (tx) => {
-		if (customer && (editsContact || editsBirthday) && access.canUpdateCustomers) {
+		if (
+			customer &&
+			(editsContact || editsBirthday) &&
+			access.canUpdateCustomers
+		) {
 			await tx
 				.update(customers)
 				.set({

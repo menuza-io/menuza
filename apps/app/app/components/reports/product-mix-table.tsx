@@ -65,7 +65,10 @@ export function ProductMixTable({
 			? Math.round(tree.total.salesMinor / tree.total.quantity)
 			: null
 	return (
-		<div className="overflow-x-auto" data-testid={`product-mix-${tree.currency}`}>
+		<div
+			className="overflow-x-auto"
+			data-testid={`product-mix-${tree.currency}`}
+		>
 			<Table>
 				<TableHeader>
 					<TableRow>
@@ -147,7 +150,10 @@ export function ProductMixTable({
 							<>
 								<TableCell className="text-end tabular-nums">
 									<strong>
-										{formatPercent(tree.total.quantity > 0 ? 100 : null, locale)}
+										{formatPercent(
+											tree.total.quantity > 0 ? 100 : null,
+											locale,
+										)}
 									</strong>
 								</TableCell>
 								<TableCell className="text-end tabular-nums">
@@ -192,4 +198,3 @@ export function useLevelLabels(): (level: ProductMixLevel) => string {
 		}
 	}
 }
-
