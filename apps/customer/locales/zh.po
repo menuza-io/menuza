@@ -13,6 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: item.calories
+#: components/ordering/menu-screen.tsx:345
+msgid "{0} Cal"
+msgstr "{0} 卡"
+
 #: lib/loyalty/labels.ts:35
 msgid "{amount} held for an order in progress"
 msgstr "已为进行中的订单预留 {amount}"
@@ -29,7 +34,7 @@ msgstr "还差 {amount} 即可升至 {tier}"
 msgid "{amount} more to unlock {reward}"
 msgstr "再获得 {amount} 即可兑换 {reward}"
 
-#: components/ordering/menu-screen.tsx:417
+#: components/ordering/menu-screen.tsx:420
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "立减 {amount}"
@@ -62,11 +67,11 @@ msgstr "{n, plural, other {{count} 积分}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, other {{count} 颗星}}"
 
-#: components/ordering/menu-screen.tsx:400
+#: components/ordering/menu-screen.tsx:403
 msgid "{name} (limit {count} per order)"
 msgstr "{name}（每单限 {count} 件）"
 
-#: components/ordering/menu-screen.tsx:396
+#: components/ordering/menu-screen.tsx:399
 msgid "{name} (up to {amount} off)"
 msgstr "{name}（最高减 {amount}）"
 
@@ -74,7 +79,7 @@ msgstr "{name}（最高减 {amount}）"
 msgid "{percent} off"
 msgstr "优惠 {percent}"
 
-#: components/ordering/menu-screen.tsx:409
+#: components/ordering/menu-screen.tsx:412
 msgid "{percentText} off"
 msgstr "优惠 {percentText}"
 
@@ -405,7 +410,7 @@ msgstr "复制邀请链接"
 msgid "Cost"
 msgstr "所需"
 
-#: components/ordering/menu-screen.tsx:446
+#: components/ordering/menu-screen.tsx:449
 msgid "Dairy-free"
 msgstr "不含乳制品"
 
@@ -434,7 +439,7 @@ msgid "Declined: {reward}."
 msgstr "已拒绝：{reward}。"
 
 #: components/ordering/menu-screen.tsx:319
-#: components/ordering/menu-screen.tsx:345
+#: components/ordering/menu-screen.tsx:348
 msgid "Delivery price {deliveryPriceText}"
 msgstr "外送价格 {deliveryPriceText}"
 
@@ -564,7 +569,7 @@ msgstr "如此人数的团体，请致电 {phone}。"
 msgid "Free {item}"
 msgstr "免费 {item}"
 
-#: components/ordering/menu-screen.tsx:427
+#: components/ordering/menu-screen.tsx:430
 msgid "Free delivery"
 msgstr "免配送费"
 
@@ -621,11 +626,11 @@ msgstr "礼品卡暂不可用，请稍后再试。"
 msgid "Give a friend {friendReward}, get {referrerPoints} after their first paid order."
 msgstr "赠送好友 {friendReward}，好友完成首笔付款订单后您可获得 {referrerPoints}。"
 
-#: components/ordering/menu-screen.tsx:444
+#: components/ordering/menu-screen.tsx:447
 msgid "Gluten-free"
 msgstr "无麸质"
 
-#: components/ordering/menu-screen.tsx:438
+#: components/ordering/menu-screen.tsx:441
 msgid "Halal"
 msgstr "清真"
 
@@ -880,7 +885,7 @@ msgstr "手机设置中已关闭通知。请在设置中开启，以便了解您
 msgid "Notifications from {name}"
 msgstr "来自 {name} 的通知"
 
-#: components/ordering/menu-screen.tsx:448
+#: components/ordering/menu-screen.tsx:451
 msgid "Nut-free"
 msgstr "不含坚果"
 
@@ -930,7 +935,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "将在浏览器中打开。在那里下单时可使用您的积分和奖励。"
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:368
+#: components/ordering/menu-screen.tsx:371
 msgid "Opens the website"
 msgstr "打开网站"
 
@@ -1197,7 +1202,7 @@ msgstr "提交申请"
 msgid "Send code"
 msgstr "发送验证码"
 
-#: components/ordering/menu-screen.tsx:425
+#: components/ordering/menu-screen.tsx:428
 msgid "Set price {amount}"
 msgstr "固定价 {amount}"
 
@@ -1286,7 +1291,7 @@ msgstr "使用 {points} 抵扣 {amount}"
 msgid "Spent"
 msgstr "已使用"
 
-#: components/ordering/menu-screen.tsx:450
+#: components/ordering/menu-screen.tsx:453
 msgid "Spicy"
 msgstr "辣"
 
@@ -1525,11 +1530,11 @@ msgstr "在收银台使用"
 msgid "Use code {code}"
 msgstr "使用优惠码 {code}"
 
-#: components/ordering/menu-screen.tsx:440
+#: components/ordering/menu-screen.tsx:443
 msgid "Vegan"
 msgstr "纯素"
 
-#: components/ordering/menu-screen.tsx:442
+#: components/ordering/menu-screen.tsx:445
 msgid "Vegetarian"
 msgstr "素食"
 

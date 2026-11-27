@@ -877,6 +877,8 @@ export async function applySetupImport(
 							kind: 'bought',
 							baseUnit: itemInput.baseUnit,
 							notes: null,
+							allergens: '[]',
+							allergensConfirmed: false,
 							batchCounted: false,
 							autoSoldOut: false,
 							isDraft: false,

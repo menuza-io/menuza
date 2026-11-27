@@ -632,6 +632,10 @@ export type PublicMenuData = {
 	internalName: string | null
 	menuType: string
 	nutritionalInfo: boolean
+	/** Resolved calorie display (#285). Absent on an older published menu. */
+	showCalories?: boolean
+	calorieGaps?: number
+	dailyIntake?: 'us' | 'ksa' | null
 	specialInstructions: boolean
 	availabilityStatus: string
 	channels?: readonly string[] | string | null
@@ -792,6 +796,7 @@ export type PublicDropData = {
 			id: string
 			displayName: string
 			specialInstructions: boolean
+			showCalories?: boolean
 		}
 	}
 	pickupWindows: Array<{

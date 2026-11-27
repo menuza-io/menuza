@@ -113,6 +113,15 @@ const MODIFIER_GROUP_FILTER_FIELDS: FilterField[] = [
 	},
 
 	{
+		id: 'usage',
+		label: 'Usage',
+		type: 'multiselect',
+		defaultOperator: 'has_any_of',
+		searchable: false,
+		icon: <Icon name="search" className="size-3.5" />,
+		options: [{ value: 'not_used_by_dish', label: 'Not used by any dish' }],
+	},
+	{
 		id: 'status',
 		label: 'Status',
 		type: 'select',
@@ -252,6 +261,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		where: eq(OrganizationMenuModifierGroup.organizationId, organization.id),
 		with: {
 			optionAssignments: true,
+			itemAssignments: true,
 		},
 		orderBy: [
 			asc(OrganizationMenuModifierGroup.position),
@@ -275,6 +285,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				? g.unavailableUntil.toISOString()
 				: null,
 			optionsCount: g.optionAssignments.length,
+			itemCount: g.itemAssignments.length,
 			updatedAt: g.updatedAt.toISOString(),
 			parentOptions: nestedParentMap.get(g.id) ?? [],
 			childSubGroups: groupChildSubGroupsMap.get(g.id) ?? [],
@@ -314,6 +325,8 @@ export default function ModifiersIndexRoute() {
 					return group.selectionType
 				case 'status':
 					return group.availabilityStatus
+				case 'usage':
+					return group.itemCount === 0 ? ['not_used_by_dish'] : []
 				default:
 					return ''
 			}

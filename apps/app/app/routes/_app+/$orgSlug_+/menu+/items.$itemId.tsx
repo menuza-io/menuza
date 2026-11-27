@@ -47,6 +47,7 @@ import {
 } from '#app/utils/menu/access.server.ts'
 import { effectiveIsPopularForMode } from '#app/utils/menu/auto-popular.server.ts'
 import { deleteMenuEntityReferences } from '#app/utils/menu/cleanup.server.ts'
+import { deleteExclusiveModifiers } from '#app/utils/menu/unused-records.server.ts'
 import {
 	dailyLimitColumn,
 	dailyLimitLocationIds,
@@ -363,6 +364,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		} catch (error) {
 			if (error instanceof PosFieldLockedError) return error.toResponse()
 			throw error
+		}
+		if (formData.get('alsoDeleteUnused') === 'true') {
+			await deleteExclusiveModifiers({
+				organizationId: organization.id,
+				userId,
+				removedItemIds: [itemId],
+			})
 		}
 		await db.transaction(async (tx) => {
 			await tx

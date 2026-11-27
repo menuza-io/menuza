@@ -106,6 +106,15 @@ const OPTION_FILTER_FIELDS: FilterField[] = [
 		icon: <Icon name="tag" className="size-3.5" />,
 	},
 	{
+		id: 'usage',
+		label: 'Usage',
+		type: 'multiselect',
+		defaultOperator: 'has_any_of',
+		searchable: false,
+		icon: <Icon name="search" className="size-3.5" />,
+		options: [{ value: 'not_in_group', label: 'Not in any group' }],
+	},
+	{
 		id: 'status',
 		label: 'Status',
 		type: 'select',
@@ -323,6 +332,8 @@ export default function OptionsIndexRoute() {
 					return option.internalName ?? ''
 				case 'status':
 					return option.availabilityStatus
+				case 'usage':
+					return option.assignedGroups.length === 0 ? ['not_in_group'] : []
 				case 'attributes':
 					return [
 						...(option.isTopping ? ['topping'] : []),

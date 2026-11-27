@@ -309,6 +309,7 @@ function cardProps(item: OrderingItem) {
 }
 
 function caloriesFor(item: OrderingItem): string | null {
+	if (drop.menu.showCalories === false) return null
 	if (!item.calorieMin) return null
 	if (item.calorieMax && item.calorieMax !== item.calorieMin) {
 		return translate(i18n, msg`{min}–{max} Cal`, {

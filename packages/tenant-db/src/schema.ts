@@ -9241,6 +9241,19 @@ export const invItems = sqliteTable(
 		// Fixed once the item has a movement (trigger): history is in this unit.
 		baseUnit: text('base_unit', { enum: INV_BASE_UNIT_VALUES }).notNull(),
 		notes: text('notes'),
+		/**
+		 * Confirmed allergens (#496), JSON array of the menu's allergen keys.
+		 * Names are not translated here; the menu's list supplies the words.
+		 */
+		allergens: text('allergens').notNull().default('[]'),
+		/**
+		 * False while the list is a name suggestion the operator has not
+		 * confirmed ("Suggested, check the label"). Unconfirmed values never
+		 * roll up onto a dish.
+		 */
+		allergensConfirmed: integer('allergens_confirmed', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		// "We make this in batches and count it" (made items only, trigger):
 		// off, a sale uses the item's ingredients; on, a sale uses the made
 		// item itself and recording a batch adds it and uses its ingredients.

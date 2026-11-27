@@ -13,6 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: item.calories
+#: components/ordering/menu-screen.tsx:345
+msgid "{0} Cal"
+msgstr "{0} kcal"
+
 #: lib/loyalty/labels.ts:35
 msgid "{amount} held for an order in progress"
 msgstr "{amount} für eine laufende Bestellung reserviert"
@@ -29,7 +34,7 @@ msgstr "Noch {amount} bis {tier}"
 msgid "{amount} more to unlock {reward}"
 msgstr "Noch {amount} bis {reward}"
 
-#: components/ordering/menu-screen.tsx:417
+#: components/ordering/menu-screen.tsx:420
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "{amount} Rabatt"
@@ -62,11 +67,11 @@ msgstr "{n, plural, one {{count} Punkt} other {{count} Punkte}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, one {{count} Stern} other {{count} Sterne}}"
 
-#: components/ordering/menu-screen.tsx:400
+#: components/ordering/menu-screen.tsx:403
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (max. {count} pro Bestellung)"
 
-#: components/ordering/menu-screen.tsx:396
+#: components/ordering/menu-screen.tsx:399
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (bis zu {amount} Rabatt)"
 
@@ -74,7 +79,7 @@ msgstr "{name} (bis zu {amount} Rabatt)"
 msgid "{percent} off"
 msgstr "{percent} Rabatt"
 
-#: components/ordering/menu-screen.tsx:409
+#: components/ordering/menu-screen.tsx:412
 msgid "{percentText} off"
 msgstr "{percentText} Rabatt"
 
@@ -405,7 +410,7 @@ msgstr "Einladungslink kopieren"
 msgid "Cost"
 msgstr "Kosten"
 
-#: components/ordering/menu-screen.tsx:446
+#: components/ordering/menu-screen.tsx:449
 msgid "Dairy-free"
 msgstr "Milchfrei"
 
@@ -434,7 +439,7 @@ msgid "Declined: {reward}."
 msgstr "Abgelehnt: {reward}."
 
 #: components/ordering/menu-screen.tsx:319
-#: components/ordering/menu-screen.tsx:345
+#: components/ordering/menu-screen.tsx:348
 msgid "Delivery price {deliveryPriceText}"
 msgstr "Lieferpreis {deliveryPriceText}"
 
@@ -564,7 +569,7 @@ msgstr "Für eine Gruppe dieser Größe rufen Sie bitte {phone} an."
 msgid "Free {item}"
 msgstr "{item} gratis"
 
-#: components/ordering/menu-screen.tsx:427
+#: components/ordering/menu-screen.tsx:430
 msgid "Free delivery"
 msgstr "Kostenlose Lieferung"
 
@@ -621,11 +626,11 @@ msgstr "Geschenkgutscheine sind derzeit nicht verfügbar. Bitte versuchen Sie es
 msgid "Give a friend {friendReward}, get {referrerPoints} after their first paid order."
 msgstr "Schenke einem Freund {friendReward} und erhalte {referrerPoints} nach seiner ersten bezahlten Bestellung."
 
-#: components/ordering/menu-screen.tsx:444
+#: components/ordering/menu-screen.tsx:447
 msgid "Gluten-free"
 msgstr "Glutenfrei"
 
-#: components/ordering/menu-screen.tsx:438
+#: components/ordering/menu-screen.tsx:441
 msgid "Halal"
 msgstr "Halal"
 
@@ -880,7 +885,7 @@ msgstr "Benachrichtigungen sind in den Einstellungen deines Telefons ausgeschalt
 msgid "Notifications from {name}"
 msgstr "Benachrichtigungen von {name}"
 
-#: components/ordering/menu-screen.tsx:448
+#: components/ordering/menu-screen.tsx:451
 msgid "Nut-free"
 msgstr "Nussfrei"
 
@@ -930,7 +935,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "Öffnet sich in Ihrem Browser. Ihre Punkte und Prämien gelten, wenn Sie dort bestellen."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:368
+#: components/ordering/menu-screen.tsx:371
 msgid "Opens the website"
 msgstr "Öffnet die Website"
 
@@ -1197,7 +1202,7 @@ msgstr "Anfrage senden"
 msgid "Send code"
 msgstr "Code senden"
 
-#: components/ordering/menu-screen.tsx:425
+#: components/ordering/menu-screen.tsx:428
 msgid "Set price {amount}"
 msgstr "Festpreis {amount}"
 
@@ -1286,7 +1291,7 @@ msgstr "Löst {points} für {amount} Rabatt ein"
 msgid "Spent"
 msgstr "Eingelöst"
 
-#: components/ordering/menu-screen.tsx:450
+#: components/ordering/menu-screen.tsx:453
 msgid "Spicy"
 msgstr "Scharf"
 
@@ -1525,11 +1530,11 @@ msgstr "An der Kasse verwenden"
 msgid "Use code {code}"
 msgstr "Code {code} verwenden"
 
-#: components/ordering/menu-screen.tsx:440
+#: components/ordering/menu-screen.tsx:443
 msgid "Vegan"
 msgstr "Vegan"
 
-#: components/ordering/menu-screen.tsx:442
+#: components/ordering/menu-screen.tsx:445
 msgid "Vegetarian"
 msgstr "Vegetarisch"
 

@@ -94,6 +94,7 @@ import {
 	useCanCreateModifierGroup,
 	type QuickCreatedModifierGroup,
 } from './quick-modifier-group-sheet.tsx'
+import { RecipeAllergenNotice } from './recipe-allergen-notice.tsx'
 
 export interface ItemFormData {
 	displayName: string
@@ -169,6 +170,23 @@ interface ItemFormProps {
 	dailyLimitsEnabled?: boolean
 	/** POS field ownership & override state (#93). */
 	posLock?: PosEntityLockInfo
+	/** Confirmed recipe ingredients (#496). Empty when inventory recipes are off. */
+	recipeIngredients?: Array<{
+		id: string
+		name: string
+		allergens: Array<
+			| 'dairy'
+			| 'eggs'
+			| 'fish'
+			| 'gluten'
+			| 'mango'
+			| 'peanuts'
+			| 'sesame'
+			| 'shellfish'
+			| 'soy'
+			| 'tree_nuts'
+		>
+	}>
 	isSubmitting: boolean
 	pageTitle: string
 }
@@ -223,6 +241,7 @@ function ItemFormBody({
 	posLock,
 	isSubmitting,
 	pageTitle,
+	recipeIngredients,
 	onDiscard,
 }: ItemFormProps & { onDiscard: () => void }) {
 	const { _ } = useLingui()
@@ -293,6 +312,7 @@ function ItemFormBody({
 	)
 	const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+	const [alsoDeleteUnused, setAlsoDeleteUnused] = useState(false)
 	const deleteFetcher = useFetcher()
 	const formActionUrl = useFormAction('.')
 
@@ -927,7 +947,16 @@ function ItemFormBody({
 									dataRegion={dataRegion}
 									priceMajor={price}
 									variants={recipeVariants}
+									menuAllergens={[...allergens]}
+									onApplyAllergens={(next) => setAllergens(new Set(next))}
 								/>
+								{recipeIngredients && recipeIngredients.length > 0 ? (
+									<RecipeAllergenNotice
+										ingredients={recipeIngredients}
+										menuAllergens={[...allergens]}
+										onApply={(next) => setAllergens(new Set(next))}
+									/>
+								) : null}
 
 								{/* Modifier Groups Assignment Frame */}
 								<AssignedSortableList
@@ -1343,6 +1372,21 @@ function ItemFormBody({
 									)}
 								</AlertDialogDescription>
 							</AlertDialogHeader>
+							<label className="flex items-start gap-2 text-sm">
+								<input
+									type="checkbox"
+									className="mt-1"
+									checked={alsoDeleteUnused}
+									onChange={(event) =>
+										setAlsoDeleteUnused(event.currentTarget.checked)
+									}
+								/>
+								<span>
+									<Trans>
+										Also delete option groups and options that nothing else uses
+									</Trans>
+								</span>
+							</label>
 							<AlertDialogFooter>
 								<AlertDialogCancel>
 									<Trans>Cancel</Trans>
@@ -1355,7 +1399,10 @@ function ItemFormBody({
 									onClick={() => {
 										if (posLock?.deleteLocked) return
 										void deleteFetcher.submit(
-											{ intent: 'delete-item' },
+											{
+												intent: 'delete-item',
+												alsoDeleteUnused: alsoDeleteUnused ? 'true' : 'false',
+											},
 											{ method: 'POST', action: formActionUrl },
 										)
 										setDeleteDialogOpen(false)

@@ -1,6 +1,7 @@
 ---
 import { actionAnchor } from '~/lib/action-targets'
 import { msg } from '@lingui/core/macro'
+import { translate } from '~/lib/translate'
 import { normalizeFocalPoint } from '@repo/common/image-focal'
 import { dietaryTagsOf } from '@repo/common/menu-types'
 import { getLocaleHref, pickLocalized } from '@repo/common/site-locales'
@@ -63,6 +64,17 @@ const name = dish ? pickLocalized(dish.item.displayName, locale, defaultLocale) 
 const description = dish?.item.description
 	? pickLocalized(dish.item.description, locale, defaultLocale)
 	: ''
+const dishMenuShowsCalories = (menu?.menus ?? []).every(
+	(entry) => entry.showCalories !== false,
+)
+const dishCalories = dishMenuShowsCalories && dish?.item.calorieMin
+	? dish.item.calorieMax && dish.item.calorieMax !== dish.item.calorieMin
+		? translate(i18n, msg`{min}–{max} Cal`, {
+				min: dish.item.calorieMin,
+				max: dish.item.calorieMax,
+			})
+		: translate(i18n, msg`{count} Cal`, { count: dish.item.calorieMin })
+	: null
 const imageUrl = dish ? resolveMediaUrl(dish.item.imageUrl) : null
 // Every photo with its own focal point (#394): `imageFocals` runs parallel to
 // `imageUrls`, so the focal travels with its photo through the de-duplication.
@@ -189,6 +201,9 @@ const fullMenu = i18n._(msg`See the full menu`)
 					<h1 class="mt-1 text-3xl font-bold tracking-tight text-foreground sm:text-4xl" dir="auto">{name}</h1>
 					{price !== null && price > 0 ? (
 						<p class="price mt-2 text-xl font-semibold text-foreground">{formatMoney(price, currency, locale)}</p>
+					) : null}
+					{dishCalories ? (
+						<p class="mt-1 text-sm text-muted-foreground">{dishCalories}</p>
 					) : null}
 					<DietaryBadges
 						class="mt-3"

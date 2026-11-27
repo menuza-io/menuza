@@ -94,6 +94,7 @@ describe('diffMenuSnapshots', () => {
 				internalName: null,
 				menuType: 'online_pos_kiosk',
 				nutritionalInfo: true,
+				calorieDisplay: null,
 				specialInstructions: true,
 				availabilityHours: null,
 				availabilityStatus: 'available',

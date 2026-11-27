@@ -120,8 +120,12 @@ describe('menu health loaders', () => {
 		expect(data.health.itemCount).toBe(2)
 		expect(data.health.grade).toMatch(/^[ABCDF]$/)
 		expect(data.health.score).toBeLessThan(100)
-		// no_photo (1) + empty categories (2).
-		expect(data.health.fixCount).toBe(3)
+		// no_photo (1) + empty categories (2) + both dishes are on no published menu (2).
+		expect(data.health.fixCount).toBe(5)
+		expect(checkOf(data, 'dishes_guests_cannot_see')).toMatchObject({
+			entityType: 'item',
+			count: 2,
+		})
 		expect(checkOf(data, 'no_photo')).toMatchObject({
 			key: 'no_photo',
 			severity: 'warning',
@@ -189,9 +193,8 @@ describe('menu health loaders', () => {
 
 	it('does not delete a stale dismissal that was saved again with a new fingerprint', async () => {
 		const orgId = setup.organization.id
-		const { deleteStaleDismissals } = await import(
-			'#app/utils/menu/menu-health.server.ts'
-		)
+		const { deleteStaleDismissals } =
+			await import('#app/utils/menu/menu-health.server.ts')
 		const [row] = await db
 			.insert(MenuCheckDismissal)
 			.values({

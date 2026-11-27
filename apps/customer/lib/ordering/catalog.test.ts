@@ -373,6 +373,68 @@ describe('presentMenu prices and dietary tags (#412, #388, #335)', () => {
 		...extra,
 	})
 
+	it('hides calories when the menu is set to never and shows them when it is not', () => {
+		const hidden = presentMenu(
+			payload({
+				menus: [
+					{
+						id: 'menu_1',
+						displayName: 'Lunch',
+						showCalories: false,
+						categories: [
+							{
+								id: 'cat_1',
+								displayName: 'Mains',
+								items: [
+									{
+										id: 'soup',
+										displayName: 'Soup',
+										price: 10,
+										calorieMin: 180,
+										calorieMax: 220,
+									},
+								],
+							},
+						],
+					},
+				],
+			}),
+			'en',
+			'en',
+		)
+		expect(hidden.sections[0]?.items[0]?.calories ?? null).toBeNull()
+		const shown = presentMenu(
+			payload({
+				menus: [
+					{
+						id: 'menu_1',
+						displayName: 'Lunch',
+						showCalories: true,
+						dailyIntake: 'us',
+						categories: [
+							{
+								id: 'cat_1',
+								displayName: 'Mains',
+								items: [
+									{
+										id: 'soup',
+										displayName: 'Soup',
+										price: 10,
+										calorieMin: 180,
+										calorieMax: 220,
+									},
+								],
+							},
+						],
+					},
+				],
+			}),
+			'en',
+			'en',
+		)
+		expect(shown.sections[0]?.items[0]?.calories).toBe('180–220')
+	})
+
 	it('prices for pickup, adds the delivery price only when it differs, and reads tags safely', () => {
 		const [section] = presentMenu(payload(), 'en', 'en').sections
 		expect(section!.items[0]).toMatchObject({

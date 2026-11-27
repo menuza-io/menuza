@@ -62,6 +62,7 @@ msgstr "{count, plural, one {Se aplica a un máximo de # artículo por pedido} o
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "{count} Cal"
 msgstr "{count} cal"
 
@@ -109,6 +110,7 @@ msgstr "De {min} a {max} personas"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3
+#: src/pages/menu/[dish].astro.ts:3
 msgid "{min}–{max} Cal"
 msgstr "{min}–{max} cal"
 
@@ -283,6 +285,10 @@ msgstr "1 persona"
 msgid "1 item is no longer available and was left out."
 msgstr "1 artículo ya no está disponible y se ha omitido."
 
+#: src/pages/menu.astro.ts:3
+msgid "2,000 calories a day is used for general nutrition advice."
+msgstr "2.000 calorías al día es la referencia general de nutrición."
+
 #: src/lib/catering/labels.ts:50
 msgid "A {percent}% deposit is due now. You pay the balance later."
 msgstr "Se paga ahora un depósito del {percent}%. El resto se paga más tarde."
@@ -431,6 +437,10 @@ msgstr "Ajustado"
 #: src/lib/loyalty/labels.ts:245
 msgid "Adjusted by staff"
 msgstr "Ajuste del equipo"
+
+#: src/pages/menu.astro.ts:3
+msgid "Adults need about 2,000 kcal a day."
+msgstr "Los adultos necesitan unas 2.000 kcal al día."
 
 #: src/lib/ordering-labels.ts:230
 msgid "After address"

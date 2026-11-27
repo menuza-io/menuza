@@ -4271,6 +4271,12 @@ export const Organization = sqliteTable(
 		 * `ksa`. Null follows the data region; Marketing, Settings overrides it.
 		 */
 		marketingMarket: text(),
+		/**
+		 * Show calories on guest menus (#285): `always`, `complete` (only when
+		 * every dish on that menu has them) or `never`. A menu may override it.
+		 * Display only: stored calorie values stay.
+		 */
+		calorieDisplay: text().default('always').notNull(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
@@ -4987,6 +4993,11 @@ export const OrganizationMenu = sqliteTable(
 		internalName: text(),
 		menuType: text().default('online_pos_kiosk').notNull(),
 		nutritionalInfo: integer({ mode: 'boolean' }).default(true).notNull(),
+		/**
+		 * Per-menu calorie display (#285). Null inherits the organization
+		 * setting. `always` | `complete` | `never`.
+		 */
+		calorieDisplay: text(),
 		specialInstructions: integer({ mode: 'boolean' }).default(true).notNull(),
 		availabilityHours: text(),
 		availabilityStatus: text().default('available').notNull(),

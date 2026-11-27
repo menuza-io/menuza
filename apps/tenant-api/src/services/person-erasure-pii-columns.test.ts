@@ -256,6 +256,10 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'inv_storage_areas.name': inventoryOperatorName,
 	'inv_items.name': inventoryOperatorName,
 	'inv_items.notes': inventoryStockNote,
+	'inv_items.allergens':
+		'food allergen keys on a stock ingredient in the inventory catalog (#496), not a person’s data',
+	'inv_items.allergens_confirmed':
+		'boolean flag showing whether the operator confirmed a stock ingredient’s allergens (#496), not personal data',
 	'inv_item_units.name': inventoryOperatorName,
 	'inv_count_lists.name': inventoryOperatorName,
 	'inv_movements.note': inventoryStockNote,

@@ -12,6 +12,12 @@
  * anyone other than authenticated org members previewing.
  */
 
+import {
+	dailyIntakeMarket,
+	isCalorieDisplayMode,
+	resolveCalorieDisplay,
+	type DailyIntakeMarket,
+} from '@repo/common/calorie-display'
 import { focalPointOf, type FocalPoint } from '@repo/common/image-focal'
 import { type LocationAddress } from '@repo/common/location-types'
 import { parseMenuChannels, type MenuChannel } from '@repo/common/menu-channels'
@@ -22,6 +28,7 @@ import {
 	db,
 	eq,
 	inArray,
+	Organization,
 	OrganizationMediaAsset,
 	OrganizationMenu,
 	OrganizationMenuCategory,
@@ -91,6 +98,9 @@ export interface PublicSiteDropPayload {
 			id: string
 			displayName: string
 			specialInstructions: boolean
+			showCalories?: boolean
+			calorieGaps?: number
+			dailyIntake?: DailyIntakeMarket | null
 			channels?: MenuChannel[]
 		}
 	}
@@ -350,8 +360,31 @@ export async function buildPublicSiteDropPayload(
 			id: true,
 			displayName: true,
 			specialInstructions: true,
+			nutritionalInfo: true,
+			calorieDisplay: true,
 			channels: true,
 		},
+	})
+	const [orgCalories] = await db
+		.select({
+			calorieDisplay: Organization.calorieDisplay,
+			dataRegion: Organization.dataRegion,
+		})
+		.from(Organization)
+		.where(eq(Organization.id, org.id))
+		.limit(1)
+	const calorieGaps = formattedCategories.reduce((count, category) => {
+		return (
+			count + category.items.filter((item) => item.calorieMin == null).length
+		)
+	}, 0)
+	const calorieDisplay = resolveCalorieDisplay({
+		orgMode: isCalorieDisplayMode(orgCalories?.calorieDisplay)
+			? orgCalories.calorieDisplay
+			: 'always',
+		menuMode: menu?.calorieDisplay,
+		nutritionalInfo: menu ? menu.nutritionalInfo : true,
+		missingCount: calorieGaps,
 	})
 
 	// Format pickup windows with generated slots
@@ -417,6 +450,11 @@ export async function buildPublicSiteDropPayload(
 				id: drop.menuId,
 				displayName: menu?.displayName ?? '',
 				specialInstructions: menu ? Boolean(menu.specialInstructions) : true,
+				showCalories: calorieDisplay.show,
+				calorieGaps: calorieDisplay.missingCount,
+				dailyIntake: calorieDisplay.show
+					? dailyIntakeMarket(orgCalories?.dataRegion)
+					: null,
 				channels: parseMenuChannels(menu?.channels),
 			},
 		},

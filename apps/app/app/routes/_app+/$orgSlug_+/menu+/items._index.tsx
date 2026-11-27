@@ -173,6 +173,19 @@ const ITEM_FILTER_FIELDS: FilterField[] = [
 		],
 	},
 	{
+		id: 'usage',
+		label: 'Usage',
+		type: 'multiselect',
+		defaultOperator: 'has_any_of',
+		searchable: false,
+		icon: <Icon name="search" className="size-3.5" />,
+		options: [
+			{ value: 'not_in_category', label: 'Not in any category' },
+			{ value: 'no_option_groups', label: 'No option groups' },
+			{ value: 'missing_calories', label: 'Missing calories' },
+		],
+	},
+	{
 		id: 'channels',
 		label: 'Channels',
 		type: 'multiselect',
@@ -495,6 +508,9 @@ function ItemsIndexContent() {
 	const [bulkOpen, setBulkOpen] = useState(false)
 	const [duplicateEntity, setDuplicateEntity] =
 		useState<MenuDuplicateEntity | null>(null)
+	const missingCalorieCount = allItems.filter(
+		(item) => item.calorieMin == null,
+	).length
 	const items = useMemo(() => {
 		if (!healthFilter) return allItems
 		const ids = new Set(healthFilter.itemIds)
@@ -532,6 +548,12 @@ function ItemsIndexContent() {
 					]
 				case 'channels':
 					return item.channels
+				case 'usage':
+					return [
+						...(item.categories.length === 0 ? ['not_in_category'] : []),
+						...(item.modifierGroupsCount === 0 ? ['no_option_groups'] : []),
+						...(item.calorieMin == null ? ['missing_calories'] : []),
+					]
 				default:
 					return ''
 			}
@@ -560,7 +582,13 @@ function ItemsIndexContent() {
 				foodCost.rowFor,
 				periodMargins,
 			),
-		[filteredItems, foodCost.visible, foodCost.rowFor, foodCostSort, periodMargins],
+		[
+			filteredItems,
+			foodCost.visible,
+			foodCost.rowFor,
+			foodCostSort,
+			periodMargins,
+		],
 	)
 
 	const {
@@ -608,6 +636,20 @@ function ItemsIndexContent() {
 				}
 			/>
 
+			{missingCalorieCount > 0 ? (
+				<p className="text-muted-foreground text-sm">
+					<Trans>{missingCalorieCount} dishes are missing calories.</Trans>{' '}
+					{menuBulkEditEnabled ? (
+						<Link
+							to={`/${organization.slug}/menu/spreadsheet`}
+							className="text-primary underline underline-offset-4"
+						>
+							<Trans>Bulk edit</Trans>
+						</Link>
+					) : null}
+				</p>
+			) : null}
+
 			{healthFilter ? (
 				<MenuHealthFilterNotice
 					checkKey={healthFilter.key}
@@ -644,7 +686,10 @@ function ItemsIndexContent() {
 							sort={foodCostSort}
 							onSortChange={setFoodCostSort}
 							locations={bulkLocations}
-							items={allItems.map((item) => ({ id: item.id, price: item.price }))}
+							items={allItems.map((item) => ({
+								id: item.id,
+								price: item.price,
+							}))}
 							onPeriodMargins={setPeriodMargins}
 						/>
 						{posOwnershipEnabled &&

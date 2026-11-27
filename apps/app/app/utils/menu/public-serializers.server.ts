@@ -246,6 +246,10 @@ export interface PublicMenuData {
 	internalName: string | null
 	menuType: string
 	nutritionalInfo: boolean
+	/** Resolved calorie display (#285). Stored numbers stay on each dish. */
+	showCalories: boolean
+	calorieGaps: number
+	dailyIntake: 'us' | 'ksa' | null
 	specialInstructions: boolean
 	availabilityStatus: string
 	channels?: MenuChannel[]
