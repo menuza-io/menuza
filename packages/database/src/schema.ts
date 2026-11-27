@@ -4500,6 +4500,13 @@ export const OrganizationLocation = sqliteTable(
 		 * The online menu never shows the number. Default 5.
 		 */
 		fewLeftThreshold: integer().notNull().default(5),
+		/**
+		 * Short random code in the location's supplier invoice address
+		 * (`invoices+<code>@<inbox domain>`, #503). Lets the regional node that
+		 * receives a mail find the organization and location; the mail itself
+		 * never reaches the control plane.
+		 */
+		invoiceInboxCode: text(),
 		createdAt: integer({ mode: 'timestamp_ms' })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -4510,6 +4517,9 @@ export const OrganizationLocation = sqliteTable(
 	},
 	(table) => [
 		index('OrganizationLocation_organizationId_idx').on(table.organizationId),
+		uniqueIndex('OrganizationLocation_invoiceInboxCode_key')
+			.on(table.invoiceInboxCode)
+			.where(sql`${table.invoiceInboxCode} is not null`),
 		uniqueIndex('OrganizationLocation_organizationId_slug_key').on(
 			table.organizationId,
 			table.slug,

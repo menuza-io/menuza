@@ -9170,6 +9170,49 @@ export const INV_ORDER_APPROVAL_STATUS_VALUES = [
 	'approved',
 	'rejected',
 ] as const
+// Kitchen freshness (0076_inventory_freshness).
+export const INV_STOCK_LOT_SOURCE_VALUES = [
+	'delivery',
+	'batch',
+	'confirm',
+] as const
+export const INV_LOT_TAKE_REASON_VALUES = [
+	'expired_waste',
+	'delivery_cancel',
+] as const
+export const INV_INVOICE_INBOX_SOURCE_VALUES = [
+	'email',
+	'upload',
+	'station',
+] as const
+export const INV_INVOICE_INBOX_STATUS_VALUES = [
+	'new',
+	'matched',
+	'delivered',
+	'dismissed',
+] as const
+export const INV_INVOICE_SENDER_STATE_VALUES = [
+	'known',
+	'allowed',
+	'unknown',
+] as const
+export const INV_INVOICE_READ_STATE_VALUES = [
+	'pending',
+	'read',
+	'failed',
+	'not_configured',
+] as const
+export const INV_ROUTINE_KEY_VALUES = [
+	'count_low_stock',
+	'weekly_waste',
+	'morning_brief',
+	'supplier_cutoff',
+] as const
+export const INV_ROUTINE_RUN_STATUS_VALUES = [
+	'done',
+	'nothing_to_do',
+	'failed',
+] as const
 
 // Organization-wide settings: one row (`id = 'default'`), created on the first
 // save. Until then the API answers defaults (version 0).
@@ -9292,6 +9335,19 @@ export const invItems = sqliteTable(
 		// Grams of a full and of an empty bottle, for counting by weight.
 		fullBottleWeightG: integer('full_bottle_weight_g'),
 		emptyBottleWeightG: integer('empty_bottle_weight_g'),
+		// Use-by dates (#479): receiving asks for the date (or derives it from the
+		// shelf life) and stock is shown, and used, oldest date first.
+		trackByDate: integer('track_by_date', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// How long the item keeps, in hours (#479 stock items, #523 made items).
+		// Whole days are stored as a multiple of 24.
+		shelfLifeHours: integer('shelf_life_hours'),
+		// "Keep refrigerated at 4 C or below" and the like, printed on labels.
+		storageNote: text('storage_note'),
+		// The name printed on a label beside the English one (#523). Optional and
+		// used only on labels: inventory screens keep one plain name per item.
+		nameAr: text('name_ar'),
 		// Set when this duplicate was merged into another item (#493): history
 		// stays here, readers follow the link. Cleared by an undo.
 		mergedIntoId: text('merged_into_id'),
@@ -9626,6 +9682,9 @@ export const invCountEntries = sqliteTable(
 		// 1 = the count; 2 = the second person's blind count of key items (#525),
 		// never summed into the counted quantity.
 		pass: integer('pass').notNull().default(1),
+		// What was said, for an entry that came from the microphone (#488). Only
+		// the words are kept; the audio is never stored.
+		transcript: text('transcript'),
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
@@ -11662,6 +11721,298 @@ export const invRepeatOrderRuns = sqliteTable(
 		),
 	],
 )
+
+// ==========================================
+// KITCHEN FRESHNESS (#479 #523 #521 #488 #503 #529, 0076_inventory_freshness)
+// ==========================================
+
+// A quantity received (or made) with a use-by date (#479). Append-only
+// (triggers): the ledger stays the one stock record. What is left of a lot is
+// read, never stored: stock is used oldest date first, so the dated stock that
+// remains is the newest lots up to the ledger's on-hand figure (see
+// `remainingLots` in `@repo/inventory`). `confirm` lots (a person checked the
+// dates on the shelf) start a new baseline: older lots no longer count.
+export const invStockLots = sqliteTable(
+	'inv_stock_lots',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		itemId: text('item_id')
+			.notNull()
+			.references(() => invItems.id),
+		// `YYYY-MM-DD` in the location's calendar: the last day to use it.
+		useByDate: text('use_by_date').notNull(),
+		// Base thousandths received with this date.
+		quantity: integer('quantity').notNull(),
+		sourceType: text('source_type', {
+			enum: INV_STOCK_LOT_SOURCE_VALUES,
+		}).notNull(),
+		// A delivery line or batch id; `<confirm id>:<date>` for a confirmation.
+		sourceId: text('source_id').notNull(),
+		baseline: integer('baseline', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_stock_lots_source').on(
+			table.sourceType,
+			table.sourceId,
+		),
+		index('idx_inv_stock_lots_item').on(
+			table.locationId,
+			table.itemId,
+			table.useByDate,
+		),
+		check('chk_inv_stock_lots_quantity', sql`${table.quantity} > 0`),
+		check(
+			'chk_inv_stock_lots_source',
+			oneOf(table.sourceType, INV_STOCK_LOT_SOURCE_VALUES),
+		),
+		check(
+			'chk_inv_stock_lots_date',
+			sql`${table.useByDate} glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`,
+		),
+	],
+)
+
+// Stock taken from one lot on purpose (waste of expired stock, a cancelled
+// delivery) rather than oldest first. Append-only (triggers).
+export const invLotTakes = sqliteTable(
+	'inv_lot_takes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		lotId: text('lot_id')
+			.notNull()
+			.references(() => invStockLots.id),
+		quantity: integer('quantity').notNull(),
+		reason: text('reason', { enum: INV_LOT_TAKE_REASON_VALUES }).notNull(),
+		// The waste entry or delivery line the take belongs to.
+		sourceId: text('source_id').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_lot_takes_source').on(table.lotId, table.sourceId),
+		index('idx_inv_lot_takes_lot').on(table.lotId),
+		check('chk_inv_lot_takes_quantity', sql`${table.quantity} > 0`),
+		check(
+			'chk_inv_lot_takes_reason',
+			oneOf(table.reason, INV_LOT_TAKE_REASON_VALUES),
+		),
+	],
+)
+
+export type InvInvoiceReadLine = {
+	/** The words on the invoice line. */
+	description: string
+	/** The matched item, when the reader's words matched one. */
+	itemId: string | null
+	quantity: number | null
+	unit: string | null
+	lineTotalMinor: number | null
+}
+
+// Supplier invoices waiting to be matched (#503): emailed to the location's
+// invoice address, uploaded in the App, or photographed on Station. Files go to
+// the region's storage; the control plane keeps only the location code.
+export const invInvoiceInbox = sqliteTable(
+	'inv_invoice_inbox',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		source: text('source', { enum: INV_INVOICE_INBOX_SOURCE_VALUES }).notNull(),
+		// The mail's Message-ID: one row per message and location.
+		messageId: text('message_id'),
+		fromAddress: text('from_address'),
+		subject: text('subject'),
+		// A key of the stored email body (text), when there was one.
+		bodyKey: text('body_key'),
+		sizeBytes: integer('size_bytes').notNull().default(0),
+		senderState: text('sender_state', {
+			enum: INV_INVOICE_SENDER_STATE_VALUES,
+		})
+			.notNull()
+			.default('known'),
+		status: text('status', { enum: INV_INVOICE_INBOX_STATUS_VALUES })
+			.notNull()
+			.default('new'),
+		readState: text('read_state', { enum: INV_INVOICE_READ_STATE_VALUES })
+			.notNull()
+			.default('not_configured'),
+		// What the reader found (all optional; a person checks them).
+		supplierId: text('supplier_id').references(() => invSuppliers.id),
+		supplierName: text('supplier_name'),
+		invoiceNumber: text('invoice_number'),
+		invoiceDate: text('invoice_date'),
+		totalMinor: integer('total_minor'),
+		currency: text('currency'),
+		linesJson: text('lines_json', { mode: 'json' }).$type<
+			InvInvoiceReadLine[]
+		>(),
+		// Another inbox invoice with the same supplier and number.
+		duplicateOfId: text('duplicate_of_id'),
+		orderId: text('order_id').references(() => invOrders.id),
+		deliveryId: text('delivery_id').references(() => invDeliveries.id),
+		addedByKind: text('added_by_kind', { enum: INV_ACTOR_KIND_VALUES }),
+		addedById: text('added_by_id'),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_invoice_inbox_message')
+			.on(table.locationId, table.messageId)
+			.where(sql`${table.messageId} is not null`),
+		index('idx_inv_invoice_inbox_location').on(
+			table.locationId,
+			table.status,
+			table.receivedAt,
+		),
+		index('idx_inv_invoice_inbox_number').on(
+			table.supplierId,
+			table.invoiceNumber,
+		),
+		check(
+			'chk_inv_invoice_inbox_source',
+			oneOf(table.source, INV_INVOICE_INBOX_SOURCE_VALUES),
+		),
+		check(
+			'chk_inv_invoice_inbox_status',
+			oneOf(table.status, INV_INVOICE_INBOX_STATUS_VALUES),
+		),
+		check(
+			'chk_inv_invoice_inbox_sender',
+			oneOf(table.senderState, INV_INVOICE_SENDER_STATE_VALUES),
+		),
+		check(
+			'chk_inv_invoice_inbox_read',
+			oneOf(table.readState, INV_INVOICE_READ_STATE_VALUES),
+		),
+	],
+)
+
+export const invInvoiceInboxFiles = sqliteTable(
+	'inv_invoice_inbox_files',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		inboxId: text('inbox_id')
+			.notNull()
+			.references(() => invInvoiceInbox.id),
+		storageKey: text('storage_key').notNull(),
+		contentType: text('content_type').notNull(),
+		sizeBytes: integer('size_bytes').notNull(),
+		// The sender's file name with anything but letters, digits and . _ - removed.
+		fileName: text('file_name'),
+		position: integer('position').notNull().default(0),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_inv_invoice_inbox_files_inbox').on(table.inboxId, table.position),
+	],
+)
+
+// Senders the owner allowed to email invoices (#503), by address.
+export const invInvoiceSenders = sqliteTable(
+	'inv_invoice_senders',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		address: text('address').notNull(),
+		supplierId: text('supplier_id').references(() => invSuppliers.id),
+		allowedByKind: text('allowed_by_kind', {
+			enum: INV_ACTOR_KIND_VALUES,
+		}).notNull(),
+		allowedById: text('allowed_by_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [uniqueIndex('uniq_inv_invoice_senders_address').on(table.address)],
+)
+
+// A ready-made back-of-house routine, on or off at one location (#529).
+export const invRoutines = sqliteTable(
+	'inv_routines',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		key: text('key', { enum: INV_ROUTINE_KEY_VALUES }).notNull(),
+		enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+		version: integer('version').notNull().default(1),
+		enabledAt: integer('enabled_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_routines_location_key').on(
+			table.locationId,
+			table.key,
+		),
+		check('chk_inv_routines_key', oneOf(table.key, INV_ROUTINE_KEY_VALUES)),
+	],
+)
+
+// One run of a routine and what it did. `run_key` makes a run happen once: a
+// count id, a date, or a date and supplier. A routine drafts and tells a person;
+// it never sends anything itself.
+export const invRoutineRuns = sqliteTable(
+	'inv_routine_runs',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		routineId: text('routine_id')
+			.notNull()
+			.references(() => invRoutines.id),
+		locationId: text('location_id').notNull(),
+		key: text('key', { enum: INV_ROUTINE_KEY_VALUES }).notNull(),
+		runKey: text('run_key').notNull(),
+		status: text('status', { enum: INV_ROUTINE_RUN_STATUS_VALUES }).notNull(),
+		// Counts, ids and names of this region; never leaves it except as a count.
+		summaryJson: text('summary_json', { mode: 'json' })
+			.$type<Record<string, unknown>>()
+			.notNull()
+			.default(sql`'{}'`),
+		alertStatus: text('alert_status', {
+			enum: INV_ALERT_DELIVERY_STATUS_VALUES,
+		})
+			.notNull()
+			.default('sent'),
+		alertAttempts: integer('alert_attempts').notNull().default(0),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_inv_routine_runs_key').on(
+			table.locationId,
+			table.key,
+			table.runKey,
+		),
+		index('idx_inv_routine_runs_routine').on(table.routineId, table.createdAt),
+		index('idx_inv_routine_runs_alert').on(table.alertStatus, table.createdAt),
+		check(
+			'chk_inv_routine_runs_status',
+			oneOf(table.status, INV_ROUTINE_RUN_STATUS_VALUES),
+		),
+		check('chk_inv_routine_runs_summary', sql`json_valid(${table.summaryJson})`),
+	],
+)
+
+export type InvStockLotRow = typeof invStockLots.$inferSelect
+export type InvLotTakeRow = typeof invLotTakes.$inferSelect
+export type InvInvoiceInboxRow = typeof invInvoiceInbox.$inferSelect
+export type InvInvoiceInboxFileRow = typeof invInvoiceInboxFiles.$inferSelect
+export type InvRoutineRow = typeof invRoutines.$inferSelect
+export type InvRoutineRunRow = typeof invRoutineRuns.$inferSelect
 
 export type InvRepeatOrderRow = typeof invRepeatOrders.$inferSelect
 export type InvRepeatOrderRunRow = typeof invRepeatOrderRuns.$inferSelect
