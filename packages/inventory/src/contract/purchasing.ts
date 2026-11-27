@@ -219,6 +219,16 @@ export const deliveryLineInputSchema = z
 		orderLineId: inventoryIdSchema.nullable().optional(),
 		/** What the screen showed as ordered, base thousandths (phase 2, informational). */
 		orderedQuantity: z.number().int().min(0).nullable().optional(),
+		/**
+		 * The last day to use it (#479). Used for an item tracked by date; when
+		 * absent the item's shelf life gives it, and with neither the stock is
+		 * undated. Ignored while `inventory.use_by` is off.
+		 */
+		useByDate: z
+			.string()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date')
+			.nullable()
+			.optional(),
 	})
 	.strict()
 
@@ -256,6 +266,11 @@ export const recordDeliveryBaseSchema = z
 		closeOrder: z.boolean().optional(),
 		/** Cash purchase from built-in "Market / cash" supplier (#466); always marked paid. */
 		isCashPurchase: z.boolean().optional(),
+		/**
+		 * The invoice in the inbox this delivery is made from (#503): it is marked
+		 * delivered and points at the delivery. Needs `inventory.invoice_inbox`.
+		 */
+		invoiceInboxId: inventoryIdSchema.nullable().optional(),
 		/** Supplier credit note or return (#507): appears as negative amounts in exports/reports. */
 		isCredit: z.boolean().optional(),
 		creditForDeliveryId: inventoryIdSchema.nullable().optional(),

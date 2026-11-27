@@ -1,4 +1,4 @@
-import { type PrepPlan, type PrepTask } from '@repo/inventory'
+import { type LabelResult, type PrepPlan, type PrepTask } from '@repo/inventory'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StockApiError } from '../stock/api.ts'
 import { stockApiFor } from '../stock/sync.ts'
@@ -24,7 +24,8 @@ export type PrepState = {
 		task: PrepTask,
 		answer: { kind: 'batches' | 'amount'; value: number },
 		clientId: string,
-	) => Promise<boolean>
+		labels?: { copies: number; quantityLabel?: string },
+	) => Promise<{ ok: boolean; label: LabelResult | null }>
 }
 
 /** Codes that mean prep is simply not there for this organization (not a fault to show). */
@@ -138,9 +139,16 @@ export function usePrep(
 				api.prepSkip(task.id, { expectedVersion: task.version }),
 			)
 		},
-		done: (task, answer, clientId) =>
-			write(task.id, () =>
-				api.prepDone(task.id, doneBody(task, answer, clientId)),
-			),
+		done: async (task, answer, clientId, labels) => {
+			let label: LabelResult | null = null
+			const ok = await write(task.id, async () => {
+				const result = await api.prepDone(
+					task.id,
+					doneBody(task, answer, clientId, labels),
+				)
+				label = result.label ?? null
+			})
+			return { ok, label }
+		},
 	}
 }

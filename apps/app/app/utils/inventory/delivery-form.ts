@@ -90,9 +90,15 @@ export type DeliveryLineDraft = {
 	rawInvoiceText?: string | null
 	/** Warnings from the invoice reader (#504). */
 	warnings?: InvoiceLineWarning[]
+	/** The item is tracked by use-by date (#479): receiving asks for the date. */
+	trackByDate?: boolean
+	/** Shelf life in hours, to suggest the date. */
+	shelfLifeHours?: number | null
+	/** `YYYY-MM-DD` typed for a tracked item; empty uses the shelf life. */
+	useByText?: string
 }
 
-export type LineProblem = 'packs' | 'price' | 'weight' | 'total'
+export type LineProblem = 'packs' | 'price' | 'weight' | 'total' | 'useBy'
 
 export type ComputedLine = {
 	packs: number | null
@@ -281,6 +287,8 @@ export type DeliveryDraft = {
 	/** Supplier credit note or return (#507). */
 	isCredit?: boolean
 	creditForDeliveryId?: string | null
+	/** Made from an invoice in the inbox (#503): that invoice is marked delivered. */
+	invoiceInboxId?: string | null
 }
 
 export type DeliveryHeaderField =
@@ -356,6 +364,15 @@ export function buildRecordDelivery(
 	if (draft.invoiceDate !== '' && !DATE.test(draft.invoiceDate)) {
 		header.push('invoiceDate')
 	}
+	// A use-by date has to be a real date; an empty one lets the shelf life decide.
+	for (const line of sent) {
+		if (line.useByText && !DATE.test(line.useByText)) {
+			lineProblems[line.key] = [
+				...(lineProblems[line.key] ?? []),
+				'useBy' as LineProblem,
+			]
+		}
+	}
 	const vatMinor =
 		quantityOnly || draft.vatText.trim() === ''
 			? null
@@ -395,6 +412,7 @@ export function buildRecordDelivery(
 		...(draft.creditForDeliveryId
 			? { creditForDeliveryId: draft.creditForDeliveryId }
 			: {}),
+		...(draft.invoiceInboxId ? { invoiceInboxId: draft.invoiceInboxId } : {}),
 		...(orderId !== null
 			? {
 					orderId,
@@ -427,6 +445,9 @@ export function buildRecordDelivery(
 							orderLineId: line.order.orderLineId,
 							orderedQuantity: line.order.orderedQuantity,
 						}
+					: {}),
+				...(line.trackByDate && line.useByText
+					? { useByDate: line.useByText }
 					: {}),
 			}
 		}),
@@ -507,6 +528,8 @@ export function linesFromPrefill(
 			weightText: '',
 			weightUnit: defaultEntryUnit(line.baseUnit, null, [], input.system),
 			totalText: '',
+			trackByDate: line.trackByDate === true,
+			shelfLifeHours: line.shelfLifeHours ?? null,
 			previousCostMicro:
 				supplierPrice === null || supplierPrice <= 0
 					? null

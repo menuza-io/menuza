@@ -17,6 +17,7 @@ import {
 	STOCK_ALLERGEN_KEYS,
 	stockStatus,
 	type InventoryBaseUnit,
+	type InventoryFeatures,
 	type ItemDetail,
 	type StockItem,
 	type StockStatus,
@@ -102,6 +103,8 @@ export type InventoryCaller = {
 	recipe?: boolean
 	/** The `inventory.recipes` flag is on in the token (absent: off). */
 	recipesEnabled?: boolean
+	/** The organization's inventory flags (absent: all off). */
+	features?: InventoryFeatures
 	/** The member holds `update:settings:any` (absent: no). */
 	canManageSettings?: boolean
 	/** The member's org role is `org_role_admin` (owner; absent: no). */
@@ -367,6 +370,10 @@ export function toStockItem(row: StockRow, cost: boolean): StockItem {
 		isDraft: row.item.isDraft,
 		isKey: row.item.isKey,
 		bottle: itemBottleOf(row.item),
+		trackByDate: row.item.trackByDate,
+		shelfLifeHours: row.item.shelfLifeHours,
+		storageNote: row.item.storageNote,
+		nameAr: row.item.nameAr,
 		onHand: row.onHand,
 		countUnit: row.place?.countUnit ? wireUnit(row.place.countUnit) : null,
 		units: row.units.map(toItemUnit),
@@ -852,6 +859,44 @@ async function writePlace(
 	}
 }
 
+/**
+ * The freshness columns a request names (#479, #523). Changing one without the
+ * `inventory.use_by` flag is 403 `feature_disabled` (`assertUseByFlag`); a form
+ * that resends the current values never needs it.
+ */
+function freshnessColumns(
+	body: {
+		trackByDate?: boolean
+		shelfLifeHours?: number | null
+		storageNote?: string | null
+		nameAr?: string | null
+	},
+): Partial<
+	Pick<
+		typeof invItems.$inferInsert,
+		'trackByDate' | 'shelfLifeHours' | 'storageNote' | 'nameAr'
+	>
+> {
+	const columns: ReturnType<typeof freshnessColumns> = {}
+	if (body.trackByDate !== undefined) columns.trackByDate = body.trackByDate
+	if (body.shelfLifeHours !== undefined) {
+		columns.shelfLifeHours = body.shelfLifeHours
+	}
+	if (body.storageNote !== undefined) {
+		columns.storageNote = body.storageNote?.length ? body.storageNote : null
+	}
+	if (body.nameAr !== undefined) {
+		columns.nameAr = body.nameAr?.length ? body.nameAr : null
+	}
+	return columns
+}
+
+function assertUseByFlag(caller: InventoryCaller): void {
+	if (!caller.features?.useBy) {
+		throw new InventoryError('feature_disabled', 403, { feature: 'useBy' })
+	}
+}
+
 export async function createItem(
 	caller: InventoryCaller,
 	input: {
@@ -876,6 +921,9 @@ export async function createItem(
 				notes: body.notes?.length ? body.notes : null,
 				isKey: body.isKey === true,
 				...bottleColumns(body.baseUnit, body.bottle ?? null),
+				...(Object.keys(freshnessColumns(body)).length > 0
+					? (assertUseByFlag(caller), freshnessColumns(body))
+					: {}),
 				createdAt: ctx.now,
 				updatedAt: ctx.now,
 			})
@@ -1030,6 +1078,17 @@ export async function updateItem(
 			}
 			set.baseUnit = body.baseUnit
 			changed.push('baseUnit')
+		}
+		const freshness = freshnessColumns(body)
+		const freshnessChanged = Object.keys(freshness).filter(
+			(key) =>
+				freshness[key as keyof typeof freshness] !==
+				item[key as keyof typeof freshness],
+		)
+		if (freshnessChanged.length > 0) {
+			assertUseByFlag(caller)
+			Object.assign(set, freshness)
+			changed.push(...freshnessChanged)
 		}
 		// Counted by bottle (#470): the spec follows the item's final base unit,
 		// and changing the base unit away from ml drops it.

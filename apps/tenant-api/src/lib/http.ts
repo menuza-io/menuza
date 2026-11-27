@@ -61,10 +61,19 @@ export async function readCappedRequestText(
 	request: Request,
 	maxBytes: number,
 ): Promise<string | null> {
+	const bytes = await readCappedRequestBytes(request, maxBytes)
+	return bytes === null ? null : new TextDecoder().decode(bytes)
+}
+
+/** The body as bytes, read as a stream and cut off the moment it passes `maxBytes` (null), whatever `content-length` says. */
+export async function readCappedRequestBytes(
+	request: Request,
+	maxBytes: number,
+): Promise<Uint8Array | null> {
 	const declared = Number(request.headers.get('content-length') ?? 0)
 	if (Number.isFinite(declared) && declared > maxBytes) return null
 	const stream = request.body
-	if (!stream) return ''
+	if (!stream) return new Uint8Array(0)
 	const reader = stream.getReader()
 	const chunks: Uint8Array[] = []
 	let total = 0
@@ -84,7 +93,7 @@ export async function readCappedRequestText(
 		bytes.set(chunk, offset)
 		offset += chunk.byteLength
 	}
-	return new TextDecoder().decode(bytes)
+	return bytes
 }
 
 export async function readJsonBody<S extends ZodTypeAny>(

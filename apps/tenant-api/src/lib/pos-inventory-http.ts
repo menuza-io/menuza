@@ -86,8 +86,12 @@ const POS_CODE_OF: Partial<Record<InventoryErrorCode, InventoryPosErrorCode>> =
 		reason_not_allowed: 'reason_not_allowed',
 		unit_mismatch: 'unit_mismatch',
 		upload_not_configured: 'upload_not_configured',
+		reader_not_configured: 'voice_not_available',
+		reader_failed: 'voice_failed',
 		inventory_unavailable: 'inventory_unavailable',
 		inventory_disabled: 'inventory_disabled',
+		// A feature behind its own flag (use-by dates, labels) that is off.
+		feature_disabled: 'inventory_disabled',
 		invalid_request: 'invalid_request',
 		// A delivery against an order is never refused on the tablet, and the
 		// operator-only states cannot be reached from it; if one slips through it
@@ -280,6 +284,7 @@ export function stationRoute<S extends ZodTypeAny = ZodNull>(
 						locationIds: [gate.locationId],
 						cost: false,
 						purchasing: false,
+						features: gate.features,
 					},
 				},
 				input.data,

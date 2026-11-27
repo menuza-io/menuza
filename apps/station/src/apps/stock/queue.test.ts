@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { type StationOutboxKind } from '@repo/inventory'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { localCounts, localValues, saveLocalCounts } from './local.ts'
 import {
 	canRetry,
@@ -65,6 +65,41 @@ describe('the Stock outbox', () => {
 		const seqs = (await stockRows(ORIGIN)).map((row) => row.seq)
 		expect(seqs).toEqual([...seqs].sort((a, b) => a - b))
 		expect(new Set(seqs).size).toBe(seqs.length)
+	})
+
+	it('keeps the words of a voice line on its entry, and drops them when the row is typed over (#488)', async () => {
+		const record = await startCount(ctx, { id: 'list_weekly', name: 'Weekly' })
+		await saveCountEntry(ctx, record.localId, {
+			itemId: 'item_tomato',
+			areaId: null,
+			amount: 3,
+			unit: 'kg',
+			transcript: 'three kilos of tomatoes',
+		})
+		const [, voiced] = await stockRows(ORIGIN)
+		expect(
+			voiced!.kind === 'count_entry' && voiced!.payload.entry,
+		).toMatchObject({
+			amount: 3,
+			transcript: 'three kilos of tomatoes',
+		})
+		// Typing over it before it was ever tried replaces the amount and forgets the words.
+		await saveCountEntry(ctx, record.localId, {
+			itemId: 'item_tomato',
+			areaId: null,
+			amount: 4,
+			unit: 'kg',
+		})
+		const typed = (await stockRows(ORIGIN)).filter(
+			(row) => row.kind === 'count_entry',
+		)
+		expect(typed).toHaveLength(1)
+		expect(
+			typed[0]!.kind === 'count_entry' && typed[0]!.payload.entry,
+		).toMatchObject({ amount: 4 })
+		expect(
+			typed[0]!.kind === 'count_entry' && typed[0]!.payload.entry,
+		).not.toHaveProperty('transcript')
 	})
 
 	it('names a count started offline by the clientId of its start, until the server answers', async () => {

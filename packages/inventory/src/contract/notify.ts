@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { inventoryLocationIdSchema } from '../token.ts'
+import { routineAlertSchema } from './routines.ts'
 
 /**
  * Phase 2, notifications and the tick: the two internal (machine to machine)
@@ -51,6 +52,8 @@ export const INVENTORY_ALL_NOTIFY_KINDS = [
 	'inventory_order_approval',
 	/** #491: a scheduled count was not started an hour after it was due. */
 	'inventory_count_overdue',
+	/** #529: a ready-made routine ran (its summary stays in the region). */
+	'inventory_routine',
 ] as const
 export type InventoryNotifyKind = (typeof INVENTORY_ALL_NOTIFY_KINDS)[number]
 export const inventoryNotifyKindSchema = z.enum(INVENTORY_ALL_NOTIFY_KINDS)
@@ -169,6 +172,8 @@ export const inventoryNotifyEventSchema = z
 		orderApproval: orderApprovalAlertSchema.optional(),
 		/** Overdue scheduled count details on `inventory_count_overdue` (#491). */
 		countOverdue: countOverdueAlertSchema.optional(),
+		/** Which routine ran, on `inventory_routine` (#529; ids only). */
+		routine: routineAlertSchema.optional(),
 	})
 	.strict()
 export type InventoryNotifyEvent = z.infer<typeof inventoryNotifyEventSchema>
@@ -235,6 +240,8 @@ export const inventoryTickResultSchema = z.object({
 	countOverdueAlerts: z.number().int().nonnegative().optional(),
 	/** Quick counts closed as not finished (#490; absent from older nodes). */
 	countsNotFinished: z.number().int().nonnegative().optional(),
+	/** Routine runs made (#529; absent from older nodes). */
+	routineRuns: z.number().int().nonnegative().optional(),
 	/** Phase 3: sale-usage outbox rows settled (0 before). */
 	salesSettled: z.number().int().nonnegative(),
 	errors: z.number().int().nonnegative(),

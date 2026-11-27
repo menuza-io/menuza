@@ -55,7 +55,7 @@ export type TicketBlock =
 
 export type TicketDoc = {
 	v: typeof TICKET_DOC_VERSION
-	kind: 'kitchen' | 'receipt' | 'test' | 'drawer'
+	kind: 'kitchen' | 'receipt' | 'test' | 'drawer' | 'label'
 	widthMm: TicketWidthMm
 	copies: number
 	blocks: TicketBlock[]
@@ -152,6 +152,11 @@ const WORDS = {
 		drawerTest: 'Drawer test',
 		deliverTo: 'Deliver to',
 		taken: 'Taken off',
+		labelMade: 'Made',
+		labelOpened: 'Opened',
+		labelUseBy: 'Use by',
+		labelMadeBy: 'By',
+		labelQuantity: 'Qty',
 	},
 	ar: {
 		kitchenTicket: 'تذكرة المطبخ',
@@ -198,6 +203,11 @@ const WORDS = {
 		drawerTest: 'اختبار الدرج',
 		deliverTo: 'التوصيل إلى',
 		taken: 'تمت إزالته',
+		labelMade: 'تاريخ التحضير',
+		labelOpened: 'تاريخ الفتح',
+		labelUseBy: 'يستخدم قبل',
+		labelMadeBy: 'بواسطة',
+		labelQuantity: 'الكمية',
 	},
 } satisfies Record<TicketLocale, Record<string, string>>
 
@@ -722,6 +732,67 @@ export function buildTestTicket(input: {
 	doc.rule()
 	doc.text(words.testBody, { align: 'center' })
 	return doc.finish('test', 1, { drawer: input.drawer === true })
+}
+
+/**
+ * A time as a label shows it: day, month and 24-hour time in the location's
+ * time zone, with Latin digits so a printer without an Arabic font reads it.
+ */
+export function formatLabelTime(at: number, timeZone: string): string {
+	const parts = new Intl.DateTimeFormat('en-GB', {
+		timeZone,
+		day: '2-digit',
+		month: 'short',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false,
+	}).formatToParts(new Date(at))
+	const get = (type: string) =>
+		parts.find((part) => part.type === type)?.value ?? ''
+	const hour = get('hour') === '24' ? '00' : get('hour')
+	return `${get('day')} ${get('month')} ${hour}:${get('minute')}`
+}
+
+/**
+ * A food-safety label (#523): what is in the container, when it was made (or
+ * opened) and when to throw it out. The name is printed in English and, when the
+ * item has one, in Arabic. 2 inch labels are the 58 mm layout (32 columns).
+ * Never carries a person's phone or any money.
+ */
+export function buildLabelDoc(input: {
+	nameEn: string
+	nameAr?: string | null
+	kind: 'made' | 'opened'
+	madeAtLabel: string
+	useByLabel?: string | null
+	madeBy?: string | null
+	quantityLabel?: string | null
+	storageNote?: string | null
+	widthMm?: TicketWidthMm
+	copies?: number
+	locale?: string | null
+}): TicketDoc {
+	const words = ticketWords(input.locale)
+	const doc = new DocBuilder(input.widthMm ?? 58)
+	doc.text(input.nameEn, { align: 'center', bold: true, large: true })
+	if (input.nameAr) {
+		doc.text(input.nameAr, { align: 'center', bold: true, large: true })
+	}
+	doc.rule()
+	doc.row(
+		input.kind === 'opened' ? words.labelOpened : words.labelMade,
+		input.madeAtLabel,
+	)
+	if (input.useByLabel) {
+		doc.row(words.labelUseBy, input.useByLabel, true)
+	}
+	if (input.madeBy) doc.row(words.labelMadeBy, input.madeBy)
+	if (input.quantityLabel) doc.row(words.labelQuantity, input.quantityLabel)
+	if (input.storageNote) {
+		doc.rule()
+		doc.text(input.storageNote, { align: 'center' })
+	}
+	return doc.finish('label', input.copies ?? 1, { cut: true })
 }
 
 /** A job that only opens the cash drawer (#426). */

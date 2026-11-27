@@ -46,6 +46,10 @@ describe('computeInventoryNavAccess', () => {
 			purchasing: true,
 			prep: false,
 			waste: true,
+			useBy: false,
+			voiceCounts: false,
+			invoiceInbox: false,
+			routines: false,
 		})
 	})
 
@@ -69,6 +73,38 @@ describe('computeInventoryNavAccess', () => {
 		// The Waste page is still a tab as far as the path goes.
 		expect(inventoryTabFromPath('/acme/inventory/waste', 'acme')).toBe('waste')
 		expect(inventoryTabFromPath('/acme/inventory/prep', 'acme')).toBe('prep')
+	})
+})
+
+describe('computeInventoryNavAccess freshness flags (#479, #488, #503, #529)', () => {
+	const grants = new Set([P.READ_INVENTORY])
+
+	it('turns each page or tool on with its own flag, and none without the master flag', () => {
+		const all = foldInventoryFeatures({
+			enabled: true,
+			useBy: true,
+			voiceCounts: true,
+			invoiceInbox: true,
+			routines: true,
+		})
+		expect(computeInventoryNavAccess(all, grants)).toMatchObject({
+			useBy: true,
+			voiceCounts: true,
+			invoiceInbox: true,
+			routines: true,
+		})
+		const noMaster = foldInventoryFeatures({
+			enabled: false,
+			useBy: true,
+			routines: true,
+		})
+		expect(computeInventoryNavAccess(noMaster, grants)).toEqual(
+			HIDDEN_INVENTORY_NAV,
+		)
+		expect(computeInventoryNavAccess(ON, grants)).toMatchObject({
+			useBy: false,
+			routines: false,
+		})
 	})
 })
 

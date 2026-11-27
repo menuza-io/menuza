@@ -103,6 +103,7 @@ describe('invoice-reader', () => {
 		expect(imgRes).toEqual({
 			supplierName: 'Fresh Farms',
 			invoiceNumber: 'INV-101',
+			invoiceDate: null,
 			total: 125.5,
 			lines: [
 				{

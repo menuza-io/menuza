@@ -2589,6 +2589,11 @@ export async function getReceivePrefill(
 				outstandingQuantity: outstanding,
 				outstandingPacks: milliToPacks(outstandingMilli),
 			}
+			// Use-by dates (#479): the receiving screen asks for a date on tracked items.
+			if (caller.features?.useBy && item) {
+				out.trackByDate = item.trackByDate === true
+				out.shelfLifeHours = item.shelfLifeHours ?? null
+			}
 			const price = line.supplierProductId
 				? (productById.get(line.supplierProductId)?.priceMinor ?? null)
 				: null

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
 	buildDrawerJob,
+	buildLabelDoc,
+	formatLabelTime,
 	buildKitchenTicket,
 	buildReceipt,
 	buildTestTicket,
@@ -265,5 +267,63 @@ describe('the test ticket and the drawer job (#426)', () => {
 		expect(doc.blocks).toEqual([])
 		expect(doc.drawer).toBe(true)
 		expect(doc.cut).toBe(false)
+	})
+})
+
+describe('food-safety labels (#523)', () => {
+	const base = {
+		nameEn: 'Garlic sauce',
+		kind: 'made' as const,
+		madeAtLabel: '27 Nov 14:05',
+		useByLabel: '30 Nov 14:05',
+		madeBy: 'Sara',
+		quantityLabel: '2 L',
+		storageNote: 'Keep at 4 C',
+	}
+
+	it('prints the name, made time, use-by time, maker and quantity on 2 inch stock', () => {
+		const doc = buildLabelDoc(base)
+		expect(doc.kind).toBe('label')
+		expect(doc.widthMm).toBe(58)
+		expect(texts(doc)).toEqual([
+			'Garlic sauce',
+			'Made|27 Nov 14:05',
+			'Use by|30 Nov 14:05',
+			'By|Sara',
+			'Qty|2 L',
+			'Keep at 4 C',
+		])
+		expect(doc.rtl).toBeUndefined()
+		expect(docMentionsPhone(doc)).toBe(false)
+	})
+
+	it('shows the Arabic name when the item has one, and asks for a picture without an Arabic font', () => {
+		const doc = buildLabelDoc({ ...base, nameAr: 'صلصة الثوم' })
+		expect(texts(doc).slice(0, 2)).toEqual(['Garlic sauce', 'صلصة الثوم'])
+		expect(doc.rtl).toBe(true)
+		expect(needsPicture(doc, { arabicFont: false })).toBe(true)
+		expect(needsPicture(doc, { arabicFont: true })).toBe(false)
+		expect(texts(buildLabelDoc(base))).not.toContain('صلصة الثوم')
+	})
+
+	it('says Opened for a stock item and leaves out what it does not know', () => {
+		const doc = buildLabelDoc({
+			nameEn: 'Tahini',
+			kind: 'opened',
+			madeAtLabel: '27 Nov 09:00',
+			copies: 3,
+		})
+		expect(texts(doc)).toEqual(['Tahini', 'Opened|27 Nov 09:00'])
+		expect(doc.copies).toBe(3)
+	})
+
+	it('formats a time in the location zone with Latin digits', () => {
+		// 20:30 UTC is 23:30 in Riyadh and 15:30 in New York.
+		const at = Date.UTC(2026, 10, 27, 20, 30)
+		expect(formatLabelTime(at, 'Asia/Riyadh')).toBe('27 Nov 23:30')
+		expect(formatLabelTime(at, 'America/New_York')).toBe('27 Nov 15:30')
+		expect(formatLabelTime(Date.UTC(2026, 10, 27, 21, 0), 'Asia/Riyadh')).toBe(
+			'28 Nov 00:00',
+		)
 	})
 })

@@ -38,6 +38,7 @@ export function doneBody(
 	task: PrepTask,
 	answer: { kind: 'batches' | 'amount'; value: number },
 	clientId: string,
+	labels?: { copies: number; quantityLabel?: string },
 ): DoneTask {
 	return {
 		expectedVersion: task.version,
@@ -46,6 +47,7 @@ export function doneBody(
 			answer.kind === 'batches'
 				? { kind: 'batches', count: answer.value }
 				: { kind: 'amount', amount: answer.value, unit: task.countUnit },
+		...(labels ? { labels } : {}),
 	}
 }
 

@@ -34,6 +34,7 @@ import {
 import { type RecordBatchInput } from './inventory-contract-types.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
 import { getLocationCurrency } from './inventory-location-settings.ts'
+import { recordLotForReceipt } from './inventory-lots-service.ts'
 import { loadItemCosts, loadVersionsAt } from './inventory-recipe-store.ts'
 
 /**
@@ -272,6 +273,17 @@ export async function recordBatch(
 				currency: priced > 0 ? currency : null,
 				kind: 'batch_made',
 				eventKey: `${eventPrefix}:made`,
+			})
+			// A made item tracked by date keeps for its shelf life (#479, #523).
+			await recordLotForReceipt(tx, {
+				caller,
+				locationId: body.locationId,
+				item,
+				quantity: madeQuantity,
+				sourceType: 'batch',
+				sourceId: madeId,
+				receivedAt: ctx.now,
+				now: ctx.now,
 			})
 			await recordInventoryAudit(tx, {
 				actorKind: caller.actor.kind,

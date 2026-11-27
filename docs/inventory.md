@@ -25,13 +25,17 @@ folded config flags (`0040_inventory`), and menu item availability overrides.
 `inventory.enabled` is the parent switch; every child flag is folded with
 `inventory.enabled` in `getInventoryFeatureState(orgId)`:
 
-| Flag                   | Controls                                                                               |
-| ---------------------- | -------------------------------------------------------------------------------------- |
-| `inventory.enabled`    | Master switch for the organization (Today, Items, Counts, Waste, Deliveries, Settings) |
-| `inventory.purchasing` | Par levels, suggested orders, purchase orders (`GET/PUT /levels*`, `/orders*`)         |
-| `inventory.recipes`    | Dish & option recipes, batch production, theoretical usage from sales, auto sold-out   |
-| `inventory.prep`       | Daily prep list, weekday prep targets, cook task actions (`/prep*`)                    |
-| `inventory.transfers`  | Multi-location comparison and stock transfers (`/compare`, `/transfers*`)              |
+| Flag                      | Controls                                                                                              |
+| ------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `inventory.enabled`       | Master switch for the organization (Today, Items, Counts, Waste, Deliveries, Settings)                |
+| `inventory.purchasing`    | Par levels, suggested orders, purchase orders (`GET/PUT /levels*`, `/orders*`)                        |
+| `inventory.recipes`       | Dish & option recipes, batch production, theoretical usage from sales, auto sold-out                  |
+| `inventory.prep`          | Daily prep list, weekday prep targets, cook task actions (`/prep*`)                                   |
+| `inventory.transfers`     | Multi-location comparison and stock transfers (`/compare`, `/transfers*`)                             |
+| `inventory.use_by`        | Use-by dates, "Use first" and "Expired", prep and opened labels, stock on any date (#479, #523, #521) |
+| `inventory.voice_counts`  | The microphone on count screens (also needs a speech model on the node) (#488)                        |
+| `inventory.invoice_inbox` | The invoice address, the Invoices to match inbox and Station invoice photos (#503)                    |
+| `inventory.routines`      | The Routines page and the routine runs on the tick (#529)                                             |
 
 ### Operator permissions
 
@@ -365,6 +369,134 @@ then Station (Station sends nothing new to an older region: its new routes need
 this tenant-api). The Station inventory contract stays at version 2 (new
 catalogue fields and routes are optional/additive); `POS_CONTRACT_VERSION` is
 unchanged at 11.
+
+---
+
+## Kitchen freshness and stock history (#479, #523, #521, #488, #503, #529)
+
+One tenant migration (`0076_inventory_freshness`) and one control-plane
+migration (`0085_inventory_freshness`: `OrganizationLocation.invoiceInboxCode`
+and the four flag rows, all `false`). The Station inventory contract stays at
+**2** and `POS_CONTRACT_VERSION` at **13**: new catalogue fields, request fields
+and routes are optional and additive. Every new route is a row of
+`inventory-security.test.ts` / `pos-inventory-security.test.ts` (forged,
+wrong-audience, grantless, cross-organization, flag-off cases).
+
+### Use-by dates and oldest-first use (#479)
+
+- Flag `inventory.use_by`. An item can be **tracked by date** (`track_by_date`),
+  with a **shelf life** in hours and a **storage note**. Receiving a tracked
+  item asks for a use-by date (the shelf life suggests one); a batch records its
+  use-by from the recipe item's shelf life.
+- Dated stock is **derived lots** (`inv_stock_lots`, append-only), never a
+  second stock. The ledger (`inv_movements`) is still the one balance; a lot is
+  "this much arrived with this date". Takes from a lot are append-only
+  (`inv_lot_takes`, a trigger keeps a take within its lot). A sale, waste or
+  transfer takes **oldest date first** (`@repo/inventory` `lots.ts`,
+  `services/inventory-lots-service.ts`); stock the dates do not explain is
+  "undated" and is used first.
+- Today lists **Use first** and **Expired** (twenty each, soonest first, with
+  the cost grant for values). One tap on an expired lot
+  (`POST /lots/:lotId/waste`) records waste with the reason `expired` against
+  that lot's date. "I checked the shelf" (`POST /items/:id/lots/confirm`) sets
+  the dates as the new baseline.
+- Routes: `GET /freshness`, `GET /items/:id/lots`,
+  `POST /items/:id/lots/confirm`, `POST /lots/:lotId/waste` (operator,
+  `routes/operator-inventory-freshness.ts`).
+
+### Prep and opened labels (#523)
+
+- The one print path: `buildLabelDoc` in `@repo/common/print-ticket` (a `label`
+  job kind, English name with the Arabic name under it, made time, use-by time,
+  made by, quantity, storage note) queued by `queueJob` for the location's cloud
+  printers that take labels (`labels` route flag in `print-devices.ts`). There
+  is no second print path.
+- Station: **Done** on a prep task can print labels
+  (`labels: { copies, quantityLabel }` in the done body; best effort, never
+  undoes the task). **Stock > Labels** prints a made label for a made item or an
+  opened label for a stock item, one `requestId` per press. When no label
+  printer is online the answer carries the label (`printed: false`) and the
+  tablet prints it itself through the browser
+  (`apps/station/src/lib/label-print.ts`, 50 mm page).
+- `nameAr` is a label-only Arabic name (never an inventory name).
+
+### Stock and stock value on any past date (#521)
+
+- `GET /stock/on-date?date=` (stock and, with the cost grant, value, from the
+  ledger up to the end of that business day, in the location's zone),
+  `GET /stock/day?date=` (what moved that day, item by item) and
+  `GET /stock/value-export` (month-end CSV through the shared chunked exporter:
+  `runChunkedCsvExport`, App `useChunkedExport`). Value needs
+  `read:inventory_cost:any`; the export is refused without it.
+- A past date is read from the append-only ledger, so history never changes; a
+  unit change is applied by `quantityInCurrentUnit` as everywhere else.
+
+### Counting by voice (#488)
+
+- Flag `inventory.voice_counts` **and** a speech model on this node in its own
+  region (`SPEECH_COUNT_*`; `SPEECH_COUNT_DATA_REGION` must equal
+  `DATA_REGION`). Otherwise the microphone is hidden: the App reads `GET /voice`
+  (`{ available }`), Station reads `settings.voiceCountsEnabled`.
+- A recording is the request body of `POST /voice/propose` (Station:
+  `/pos/inventory/voice/propose`), is held in memory for the call and **never
+  stored**; only the transcript is kept, on the confirmed count entry
+  (`inv_count_entries.transcript`). `POST /voice/parse` does the same matching
+  for typed or corrected words. Both only **propose** lines and never write; the
+  person reads, edits, removes and answers "which one?" before confirming, and
+  the confirmed lines go through the ordinary count entry route (and, on
+  Station, the offline queue). The matcher is `@repo/inventory` `voice-count.ts`
+  (English and Arabic numbers and units, exact and close matches, never a guess
+  without asking).
+
+### Supplier invoices by email (#503)
+
+- Flag `inventory.invoice_inbox`. Each location has an address
+  `invoices+<code>@<INVOICE_INBOX_DOMAIN>` (`invoiceInboxCode`, control plane: a
+  code only). The inbound mail provider posts the normalized message to
+  `POST /webhooks/invoice-mail` (bearer `INVOICE_INBOX_WEBHOOK_SECRET`; on the
+  Worker the edge forwards to the organization's Durable Object with
+  `INTERNAL_COMMAND_TOKEN`). Attachments are stored **only in the region's
+  object storage** (KSA only in KSA); the US control plane keeps just the
+  location code and the message id (for de-duplication).
+- Senders: each invoice is marked with its sender state: **known** (a supplier's
+  address), **allowed** (a person allowed that sender) or **unknown**. An
+  unknown sender's invoice still lands in **Invoices to match**, flagged, and a
+  person can allow the sender in one tap (`allow-sender`). Invoices land in
+  `inv_invoice_inbox` (files in `inv_invoice_inbox_files`). A person reads one
+  with the existing invoice reader (`INVOICE_READER_*`, same one, same rules:
+  suggestions only), opens it in **Record a delivery** with the lines pre-filled
+  and the photo attached, or dismisses it. Uploads from the App and photos from
+  Station (`POST /pos/inventory/invoice-inbox`) go to the same inbox.
+- Nothing is ever recorded or paid automatically.
+
+### Ready-made routines (#529)
+
+- Flag `inventory.routines`. Four templates a manager turns on or off per
+  location (`count_low_stock`, `weekly_waste`, `morning_brief`,
+  `supplier_cutoff`): the Routines page, `GET/PUT /routines`,
+  `GET /routines/runs`.
+- They run on the existing inventory tick (no new cron slot), one run row per
+  run key (`inv_routine_runs`: append-only, one per count, Monday, day or
+  supplier and day), generate their summary in the region and notify managers
+  through the existing alert system (`inventory_routine` kind, quiet hours and
+  snoozes apply). A routine **only drafts and tells**: it never sends an order
+  to a supplier or a message to staff.
+
+### New environment variables (tenant-api)
+
+| Variable                                                         | Purpose                                                                 |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `SPEECH_COUNT_BASE_URL` / `_API_KEY` / `_MODEL` / `_DATA_REGION` | In-region speech-to-text endpoint (OpenAI-compatible). Unset: no voice. |
+| `INVOICE_INBOX_DOMAIN`                                           | The domain of `invoices+<code>@<domain>`. Unset: no address is shown.   |
+| `INVOICE_INBOX_WEBHOOK_SECRET`                                   | Bearer secret the inbound mail provider posts with.                     |
+
+### Deploy order
+
+Tenant-api first (tenant `0076`, then the env variables above), then App and the
+control-plane migration `0085` (the flags stay off), then Station, then
+jobs-cron only if it changed (it did not: the routines ride the existing hourly
+tick). Enable per organization in Admin: `inventory.use_by`, `.voice_counts`,
+`.invoice_inbox`, `.routines`.
 
 ---
 

@@ -182,6 +182,13 @@ export const INVENTORY_POS_PATHS = {
 	dishWasteLog: '/pos/inventory/waste/dish',
 	/** `POST`: take a dish group back (#517). */
 	undoDishWaste: (id: string) => `/pos/inventory/waste/dishes/${id}/undo`,
+	/** `POST`: a prep or opened-item label (#523). */
+	labels: '/pos/inventory/labels',
+	/** `POST`: an invoice photo with no delivery, to the inbox (#503). */
+	invoiceInbox: '/pos/inventory/invoice-inbox',
+	/** `POST` the recording itself: proposed count lines (#488). */
+	voicePropose: '/pos/inventory/voice/propose',
+	voiceParse: '/pos/inventory/voice/parse',
 } as const
 
 // ── Error codes ─────────────────────────────────────────────────────────────
@@ -253,6 +260,9 @@ export const STATION_ERROR_HANDLING = {
 	payload_too_large: { status: 413, action: 'permanent' },
 	/** Photos only: the node has no storage; keep the delivery, drop the photo. */
 	upload_not_configured: { status: 503, action: 'permanent' },
+	/** Voice counts (#488): no speech model in this node's region, or it did not answer. */
+	voice_not_available: { status: 503, action: 'permanent' },
+	voice_failed: { status: 502, action: 'permanent' },
 	rate_limited: { status: 429, action: 'retry' },
 	service_unavailable: { status: 503, action: 'retry' },
 	internal_error: { status: 500, action: 'retry' },
@@ -421,6 +431,10 @@ export const stationItemSchema = z.object({
 	isKey: z.boolean().optional(),
 	/** Counted by bottle (#470): size and weights, so the till converts offline. */
 	bottle: itemBottleSchema.nullable().optional(),
+	/** Use-by dates (#479): receiving asks for the date. Only with `inventory.use_by`. */
+	trackByDate: z.boolean().optional(),
+	/** Shelf life in hours (#479, #523), to suggest the date. Only with `inventory.use_by`. */
+	shelfLifeHours: z.number().int().nullable().optional(),
 })
 export type StationItem = z.infer<typeof stationItemSchema>
 
@@ -519,6 +533,16 @@ export const stationCatalogSchema = z.object({
 		transfersEnabled: z.boolean().optional(),
 		/** `inventory.recipes` is on: dishes can be picked for waste (#517). */
 		dishWasteEnabled: z.boolean().optional(),
+		/** `inventory.use_by` is on: use-by dates on deliveries and the Labels screen (#479, #523). */
+		useByEnabled: z.boolean().optional(),
+		/**
+		 * `inventory.voice_counts` is on AND this node has a speech model in its
+		 * own region: the microphone shows on the count screen (#488). Absent or
+		 * false hides it.
+		 */
+		voiceCountsEnabled: z.boolean().optional(),
+		/** `inventory.invoice_inbox` is on: "Photograph an invoice" with no delivery (#503). */
+		invoiceInboxEnabled: z.boolean().optional(),
 	}),
 	items: z.array(stationItemSchema),
 	areas: z.array(stationAreaSchema),
@@ -741,6 +765,8 @@ export const stationDeliveryLineSchema = z
 		packBaseQuantity: deliveryLineInputSchema.shape.packBaseQuantity,
 		realWeightQuantity: deliveryLineInputSchema.shape.realWeightQuantity,
 		orderLineId: deliveryLineInputSchema.shape.orderLineId,
+		/** The last day to use it (#479), for an item tracked by date. */
+		useByDate: deliveryLineInputSchema.shape.useByDate,
 	})
 	.strict()
 

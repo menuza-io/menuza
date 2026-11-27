@@ -579,6 +579,7 @@ export function DeliverySheet({
 								<DeliveryLine
 									key={line.key}
 									line={line}
+									tracked={items.get(line.itemId)?.trackByDate === true}
 									locale={i18n.locale}
 									onPatch={(change) => patch(line.key, change)}
 									onRemove={
@@ -772,11 +773,14 @@ export function DeliverySheet({
 
 function DeliveryLine({
 	line,
+	tracked,
 	locale,
 	onPatch,
 	onRemove,
 }: {
 	line: DeliveryLineDraft
+	/** The item is tracked by use-by date (#479): the date is asked for. */
+	tracked: boolean
 	locale: string
 	onPatch: (change: Partial<DeliveryLineDraft>) => void
 	onRemove?: () => void
@@ -831,6 +835,20 @@ function DeliveryLine({
 					</Button>
 				) : null}
 			</div>
+			{line.received && tracked ? (
+				<label className="flex flex-col gap-1">
+					<span className="text-muted-foreground text-sm">
+						<Trans>Use by (optional)</Trans>
+					</span>
+					<Input
+						type="date"
+						dir="ltr"
+						value={line.useByDate ?? ''}
+						onChange={(event) => onPatch({ useByDate: event.target.value })}
+						data-testid={`delivery-use-by-${line.key}`}
+					/>
+				</label>
+			) : null}
 			{line.received && line.plain ? (
 				<PlainQuantity line={line} locale={locale} onPatch={onPatch} />
 			) : line.received ? (

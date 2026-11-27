@@ -108,6 +108,25 @@ const KINDS: Record<AttentionItem['kind'], AttentionItem> = {
 		times: 3,
 		more: 0,
 	},
+	expired_stock: {
+		kind: 'expired_stock',
+		lotId: 'l1',
+		itemId: 'i4',
+		itemName: 'Yoghurt',
+		useByDate: '2026-11-20',
+		more: 0,
+		valueAtStakeMinor: 5000,
+	},
+	use_first: {
+		kind: 'use_first',
+		lotId: 'l2',
+		itemId: 'i5',
+		itemName: 'Cream',
+		useByDate: '2026-11-28',
+		daysLeft: 1,
+		more: 0,
+		valueAtStakeMinor: 5000,
+	},
 }
 
 describe('attentionTarget', () => {
@@ -133,6 +152,8 @@ describe('attentionTarget', () => {
 			sold_out_by_stock: '/acme/inventory/today#sold-out',
 			ran_out_at_till: '/acme/menu/items/m1',
 			runs_out_soon: '/acme/inventory/stock/i3',
+			expired_stock: '/acme/inventory/today#freshness',
+			use_first: '/acme/inventory/today#freshness',
 		})
 	})
 

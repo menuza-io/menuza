@@ -743,6 +743,16 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   / `INVOICE_READER_DATA_REGION` - Tenant-api only, optional. OpenAI-compatible
   vision endpoint that reads an inventory invoice photo into lines to check.
   Used only when the data region equals `DATA_REGION`. See `docs/inventory.md`.
+- `SPEECH_COUNT_BASE_URL` / `SPEECH_COUNT_API_KEY` / `SPEECH_COUNT_MODEL` /
+  `SPEECH_COUNT_DATA_REGION` - Tenant-api only, optional. OpenAI-compatible
+  speech-to-text endpoint for counting stock by voice (#488). Used only when the
+  data region equals `DATA_REGION`; unset, the microphone is hidden. The
+  recording is never stored. See `docs/inventory.md`.
+- `INVOICE_INBOX_DOMAIN` / `INVOICE_INBOX_WEBHOOK_SECRET` - Tenant-api only,
+  optional. The domain of a location's `invoices+<code>@<domain>` address and
+  the bearer secret the inbound mail provider posts to `/webhooks/invoice-mail`
+  with (#503). Attachments stay in the region's storage. See
+  `docs/inventory.md`.
 - `INVENTORY_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
   switch for inventory on a node: `false` (also `0`, `off`, `no`, `disabled`)
   answers 503 `inventory_unavailable` on operator and Station inventory routes.
@@ -1654,6 +1664,25 @@ packaging fee, daily dish limits; #251, #257, #355, #422, #408, #409):**
   resolves at checkout (`codesWithIssuedCode`). Attaching one needs the coupon
   flags and `read:discount:any`; the App checks it in
   `utils/discounts/marketing-offers.server.ts`.
+
+**Kitchen freshness and stock history (use-by dates, prep labels, stock on any
+date, voice counts, emailed invoices, routines; #479, #523, #521, #488, #503,
+#529):**
+
+- Details: `docs/inventory.md` ("Kitchen freshness and stock history"). Tenant
+  migration `0076_inventory_freshness`, control plane
+  `0085_inventory_freshness`; flags `inventory.use_by`, `.voice_counts`,
+  `.invoice_inbox`, `.routines` (default off, optional on `InventoryFeatures`).
+  Contract versions unchanged (`POS_CONTRACT_VERSION` 13,
+  `INVENTORY_POS_CONTRACT_VERSION` 2).
+- Dated stock is derived lots (`inv_stock_lots`, `inv_lot_takes`, append-only)
+  over the one ledger; takes go oldest date first. Labels use the one print path
+  (`buildLabelDoc`, job kind `label`); Station prints in the browser when no
+  cloud label printer is online. Stock on a past date reads the ledger.
+- Voice: a recording is never stored, only the transcript on the confirmed
+  entry; it only proposes lines. Speech runs only in the organization's region.
+  Emailed invoices live in the region's storage only; the control plane keeps a
+  location code. Routines only draft and notify, on the existing tick.
 
 **Inventory setup tools (used in, unit change, groups, merge, setup checks, days
 left, sold-out alerts; tenant `0062_inventory_setup`):**

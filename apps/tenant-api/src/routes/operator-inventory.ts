@@ -29,8 +29,10 @@ import {
 } from '../lib/inventory-route.ts'
 import { hashInventoryRequest } from '../lib/inventory-write.ts'
 import { operatorInventoryCountsRoutes } from './operator-inventory-counts.ts'
+import { operatorInventoryFreshnessRoutes } from './operator-inventory-freshness.ts'
 import { operatorInventoryGroupsRoutes } from './operator-inventory-groups.ts'
 import { operatorInventoryImportsRoutes } from './operator-inventory-imports.ts'
+import { operatorInventoryInvoiceInboxRoutes } from './operator-inventory-invoice-inbox.ts'
 import { operatorInventoryItemsRoutes } from './operator-inventory-items.ts'
 import { operatorInventoryLevelsRoutes } from './operator-inventory-levels.ts'
 import { operatorInventoryMergeRoutes } from './operator-inventory-merge.ts'
@@ -39,12 +41,15 @@ import { operatorInventoryPlacesRoutes } from './operator-inventory-places.ts'
 import { operatorInventoryPrepRoutes } from './operator-inventory-prep.ts'
 import { operatorInventoryPurchasingRoutes } from './operator-inventory-purchasing.ts'
 import { operatorInventoryRecipesRoutes } from './operator-inventory-recipes.ts'
+import { operatorInventoryRoutinesRoutes } from './operator-inventory-routines.ts'
 import { operatorInventoryRepeatOrdersRoutes } from './operator-inventory-repeat-orders.ts'
 import { operatorInventorySetupChecksRoutes } from './operator-inventory-setup-checks.ts'
 import { operatorInventorySoldOutRoutes } from './operator-inventory-sold-out.ts'
+import { operatorInventoryStockHistoryRoutes } from './operator-inventory-stock-history.ts'
 import { operatorInventoryTodayRoutes } from './operator-inventory-today.ts'
 import { operatorInventoryTransfersRoutes } from './operator-inventory-transfers.ts'
 import { operatorInventoryVarianceRoutes } from './operator-inventory-variance.ts'
+import { operatorInventoryVoiceRoutes } from './operator-inventory-voice.ts'
 import { operatorInventoryWasteRoutes } from './operator-inventory-waste.ts'
 import {
 	listLocationSettings,
@@ -74,6 +79,11 @@ export const operatorInventoryRoutes = new Hono()
 operatorInventoryRoutes.route('/', operatorInventoryItemsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryImportsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryGroupsRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryFreshnessRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryStockHistoryRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryVoiceRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryInvoiceInboxRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryRoutinesRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryMergeRoutes)
 operatorInventoryRoutes.route('/', operatorInventorySetupChecksRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)

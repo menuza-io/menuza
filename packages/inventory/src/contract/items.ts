@@ -4,6 +4,7 @@ import { inventoryLocationIdSchema } from '../token.ts'
 import { itemBottleSchema } from '../bottles.ts'
 import { inventoryBaseUnitSchema, namedUnitSchema } from '../units.ts'
 import { mergeLinkSchema } from './setup.ts'
+import { itemFreshnessInputShape, itemFreshnessOutShape } from './freshness.ts'
 import {
 	adjustmentReasonSchema,
 	inventoryCategorySchema,
@@ -112,6 +113,8 @@ export const createItemSchema = z
 		isKey: z.boolean().optional(),
 		/** Counted by bottle (#470): millilitre items only (`invalid_request` otherwise). */
 		bottle: itemBottleSchema.optional(),
+		/** Use-by dates, shelf life, storage note and label name (#479, #523). */
+		...itemFreshnessInputShape,
 		units: z.array(namedUnitSchema).max(12).optional(),
 		/**
 		 * Where it is kept and how it is counted at one location. `countUnit`
@@ -159,6 +162,8 @@ export const updateItemSchema = z
 		 * `null` to stop. Millilitre items only (`invalid_request` otherwise).
 		 */
 		bottle: itemBottleSchema.nullable().optional(),
+		/** Use-by dates, shelf life, storage note and label name (#479, #523); needs `inventory.use_by`. */
+		...itemFreshnessInputShape,
 	})
 	.strict()
 
@@ -283,6 +288,8 @@ export const stockItemSchema = z.object({
 	isKey: z.boolean().optional(),
 	/** Counted by bottle (#470); null when not. Absent from older regions. */
 	bottle: itemBottleSchema.nullable().optional(),
+	/** Use-by tracking, shelf life, storage note, label name (#479, #523). Absent from older regions. */
+	...itemFreshnessOutShape,
 	/** On hand at the requested location, base thousandths (may be negative). */
 	onHand: z.number().int(),
 	countUnit: unitRefSchema.nullable(),

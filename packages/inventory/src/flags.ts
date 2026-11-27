@@ -12,6 +12,14 @@ export const INVENTORY_FLAG_KEYS = {
 	recipes: 'inventory.recipes',
 	prep: 'inventory.prep',
 	transfers: 'inventory.transfers',
+	/** Use-by dates on stock and prep labels (#479, #523). */
+	useBy: 'inventory.use_by',
+	/** Count stock by voice (#488). */
+	voiceCounts: 'inventory.voice_counts',
+	/** Supplier invoices by email and the invoices inbox (#503). */
+	invoiceInbox: 'inventory.invoice_inbox',
+	/** Ready-made back-of-house routines (#529). */
+	routines: 'inventory.routines',
 } as const
 
 export type InventoryFlagName = keyof typeof INVENTORY_FLAG_KEYS
@@ -31,6 +39,18 @@ export type InventoryFeatures = {
 	prep: boolean
 	/** Transfers between locations and the central kitchen. */
 	transfers: boolean
+	/**
+	 * The four flags below are additive: a context or token written before they
+	 * existed has none, which reads as off.
+	 */
+	/** Use-by dates on stock, "Use first" and "Expired" on Today, prep labels. */
+	useBy?: boolean
+	/** The microphone on the count screens (still needs a speech model on the node). */
+	voiceCounts?: boolean
+	/** The invoice address and the "Invoices to match" inbox. */
+	invoiceInbox?: boolean
+	/** The Routines page. */
+	routines?: boolean
 }
 
 export const INVENTORY_FEATURES_OFF: Readonly<InventoryFeatures> =
@@ -40,6 +60,10 @@ export const INVENTORY_FEATURES_OFF: Readonly<InventoryFeatures> =
 		recipes: false,
 		prep: false,
 		transfers: false,
+		useBy: false,
+		voiceCounts: false,
+		invoiceInbox: false,
+		routines: false,
 	})
 
 export const inventoryFeaturesSchema = z
@@ -49,6 +73,10 @@ export const inventoryFeaturesSchema = z
 		recipes: z.boolean(),
 		prep: z.boolean(),
 		transfers: z.boolean(),
+		useBy: z.boolean().optional(),
+		voiceCounts: z.boolean().optional(),
+		invoiceInbox: z.boolean().optional(),
+		routines: z.boolean().optional(),
 	})
 	.strict()
 
@@ -70,6 +98,10 @@ export function foldInventoryFeatures(
 		recipes: enabled && isInventoryFlagOn(raw.recipes),
 		prep: enabled && isInventoryFlagOn(raw.prep),
 		transfers: enabled && isInventoryFlagOn(raw.transfers),
+		useBy: enabled && isInventoryFlagOn(raw.useBy),
+		voiceCounts: enabled && isInventoryFlagOn(raw.voiceCounts),
+		invoiceInbox: enabled && isInventoryFlagOn(raw.invoiceInbox),
+		routines: enabled && isInventoryFlagOn(raw.routines),
 	}
 }
 

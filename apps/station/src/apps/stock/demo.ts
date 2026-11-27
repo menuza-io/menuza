@@ -3,7 +3,7 @@ import {
 	type StationCatalog,
 	type StationCountSummary,
 } from '@repo/inventory'
-import { type StockApi } from './api.ts'
+import { StockApiError, type StockApi } from './api.ts'
 
 /**
  * Demo mode's Stock: a sample kitchen and a count that live in this tab, like
@@ -286,6 +286,44 @@ export function createDemoStockApi(): StockApi {
 		},
 		async prepDone(id, body) {
 			return demoPrepMove(id, 'done', body)
+		},
+		async printLabel(body) {
+			const now = NOW()
+			return {
+				printed: false,
+				jobs: 0,
+				label: {
+					itemId: body.itemId,
+					nameEn: 'Demo item',
+					nameAr: null,
+					kind: body.kind,
+					madeAt: now,
+					useByAt: now + 72 * 3_600_000,
+					madeAtLabel: new Date(now)
+						.toISOString()
+						.slice(0, 16)
+						.replace('T', ' '),
+					useByLabel: new Date(now + 72 * 3_600_000)
+						.toISOString()
+						.slice(0, 16)
+						.replace('T', ' '),
+					madeBy: null,
+					quantityLabel: body.quantityLabel ?? null,
+					storageNote: null,
+					timeZone: 'UTC',
+					copies: body.copies ?? 1,
+				},
+			}
+		},
+		async voicePropose() {
+			// The demo region has no speech model: the microphone stays hidden.
+			throw new StockApiError('voice_not_available', 503)
+		},
+		async voiceParse() {
+			throw new StockApiError('voice_not_available', 503)
+		},
+		async invoicePhoto() {
+			return { invoices: [], ignored: 0 }
 		},
 		async dishWaste(body) {
 			// The demo has no recipes: nothing is taken out, nothing is sent.

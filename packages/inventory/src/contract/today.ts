@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { orderSendChannelSchema } from '../records.ts'
 import { assigneeSchema, countKindSchema } from './count-controls.ts'
+import { freshnessSchema } from './freshness.ts'
 import {
 	currencyOut,
 	isoDateSchema,
@@ -154,6 +155,28 @@ export const attentionItemSchema = z.discriminatedUnion('kind', [
 		supplierName: z.string(),
 		more: z.number().int(),
 	}),
+	/** #479: stock past its use-by date (`inventory.use_by`). One row for the oldest, "and 3 more". */
+	z.object({
+		kind: z.literal('expired_stock'),
+		lotId: z.string(),
+		itemId: z.string(),
+		itemName: z.string(),
+		useByDate: isoDateSchema,
+		/** Lots past their date at this location beyond this one. */
+		more: z.number().int(),
+		valueAtStakeMinor: minorOut,
+	}),
+	/** #479: stock to use first, with a use-by date in the next two days. */
+	z.object({
+		kind: z.literal('use_first'),
+		lotId: z.string(),
+		itemId: z.string(),
+		itemName: z.string(),
+		useByDate: isoDateSchema,
+		daysLeft: z.number().int(),
+		more: z.number().int(),
+		valueAtStakeMinor: minorOut,
+	}),
 	z.object({
 		kind: z.literal('unpaid_deliveries'),
 		count: z.number().int(),
@@ -223,6 +246,8 @@ export const todaySchema = z.object({
 			}),
 		)
 		.optional(),
+	/** Use-by lists (#479). Only with `inventory.use_by` on. */
+	freshness: freshnessSchema.optional(),
 	/** Setup checklist facts (as `GET /status`). */
 	setup: z.object({
 		items: z.number().int(),

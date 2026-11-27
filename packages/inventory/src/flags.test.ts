@@ -31,6 +31,10 @@ describe('inventory flags', () => {
 				recipes: true,
 				prep: true,
 				transfers: true,
+				useBy: true,
+				voiceCounts: true,
+				invoiceInbox: true,
+				routines: true,
 			}),
 		).toEqual(INVENTORY_FEATURES_OFF)
 		expect(foldInventoryFeatures({ enabled: true, recipes: true })).toEqual({
@@ -39,7 +43,35 @@ describe('inventory flags', () => {
 			recipes: true,
 			prep: false,
 			transfers: false,
+			useBy: false,
+			voiceCounts: false,
+			invoiceInbox: false,
+			routines: false,
 		})
+	})
+
+	test('the freshness flags are additive: an older context has none and reads as off', () => {
+		const older = {
+			enabled: true,
+			purchasing: true,
+			recipes: true,
+			prep: true,
+			transfers: true,
+		}
+		expect(readInventoryFeatures(older)).toMatchObject({
+			enabled: true,
+			purchasing: true,
+			useBy: false,
+			voiceCounts: false,
+			invoiceInbox: false,
+			routines: false,
+		})
+		expect(
+			readInventoryFeatures({ ...older, useBy: true, routines: true }),
+		).toMatchObject({ useBy: true, voiceCounts: false, routines: true })
+		expect(
+			readInventoryFeatures({ ...older, enabled: false, useBy: true }),
+		).toEqual(INVENTORY_FEATURES_OFF)
 	})
 
 	test('untrusted payloads read as all off', () => {

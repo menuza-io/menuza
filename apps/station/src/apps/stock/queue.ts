@@ -289,6 +289,17 @@ export type CountEntryInput = {
 	areaId: string | null
 	amount: number | null
 	unit: UnitRef
+	/** The words a voice count heard for this line (#488), kept on the entry for the review. */
+	transcript?: string
+}
+
+/** An entry with the voice words set, or with none (a hand edit after a voice line clears them). */
+function withTranscript<T extends { transcript?: string }>(
+	entry: T,
+	transcript: string | undefined,
+): T {
+	const { transcript: ignoredWords, ...rest } = entry
+	return (transcript ? { ...rest, transcript } : rest) as T
 }
 
 export type SaveCountOptions = {
@@ -396,7 +407,10 @@ export async function saveCountEntry(
 				madeAt: now,
 				payload: {
 					...sameUnit.payload,
-					entry: { ...sameUnit.payload.entry, amount: entry.amount },
+					entry: withTranscript(
+						{ ...sameUnit.payload.entry, amount: entry.amount },
+						entry.transcript,
+					),
 				},
 			})
 		} else {
@@ -412,6 +426,7 @@ export async function saveCountEntry(
 						clientId: id,
 						itemId: entry.itemId,
 						areaId: entry.areaId,
+						...(entry.transcript ? { transcript: entry.transcript } : {}),
 						amount: entry.amount,
 						unit: entry.unit,
 					},

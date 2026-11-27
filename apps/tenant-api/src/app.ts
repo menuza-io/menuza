@@ -69,6 +69,10 @@ import {
 	smsInboundInternalRoutes,
 	smsWebhookRoutes,
 } from './routes/sms-webhook.ts'
+import {
+	invoiceInboxInternalRoutes,
+	invoiceMailWebhookRoutes,
+} from './routes/invoice-inbox-webhook.ts'
 import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorDeliveryRoutes } from './routes/operator-deliveries.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
@@ -178,9 +182,42 @@ export function createTenantApiApp() {
 		maxSize: 25 * 1024 * 1024,
 		onError: (c) => c.json({ error: 'Payload too large' }, 413),
 	})
+	// An email is up to 25 MB of attachments, as base64 inside one JSON body
+	// (#503), and an invoice upload is up to 25 MB of files in a form.
+	const invoiceMailBodyLimit = bodyLimit({
+		maxSize: 40 * 1024 * 1024,
+		onError: (c) => c.json({ status: 'too_large' }, 413),
+	})
+	const invoiceUploadBodyLimit = bodyLimit({
+		maxSize: 27 * 1024 * 1024,
+		onError: (c) => c.json({ error: 'Payload too large' }, 413),
+	})
+	// A recording for counting by voice (#488) and a Station invoice photo.
+	const audioBodyLimit = bodyLimit({
+		maxSize: 2 * 1024 * 1024 + 64 * 1024,
+		onError: (c) => c.json({ error: 'payload_too_large' }, 413),
+	})
 	app.use('*', (c, next) => {
 		const path = c.req.path
 		if (path === '/photos/upload') return photoUploadBodyLimit(c, next)
+		if (
+			path === '/webhooks/invoice-mail' ||
+			path === '/api/invoice-inbox/receive'
+		) {
+			return invoiceMailBodyLimit(c, next)
+		}
+		if (path === '/operator/inventory/invoice-inbox/upload') {
+			return invoiceUploadBodyLimit(c, next)
+		}
+		if (path === '/pos/inventory/invoice-inbox') {
+			return serviceBodyLimit(c, next)
+		}
+		if (
+			path === '/operator/inventory/voice/propose' ||
+			path === '/pos/inventory/voice/propose'
+		) {
+			return audioBodyLimit(c, next)
+		}
 		if (path.startsWith('/api/')) return serviceBodyLimit(c, next)
 		if (path === '/operator/inventory/setup/imports') {
 			return setupImportBodyLimit(c, next)
@@ -359,6 +396,10 @@ export function createTenantApiApp() {
 		rateLimit('sms-webhook', { windowMs: 60 * 1000, maxRequests: 300 }),
 	)
 	app.use(
+		'/webhooks/invoice-mail',
+		rateLimit('invoice-mail-webhook', { windowMs: 60 * 1000, maxRequests: 120 }),
+	)
+	app.use(
 		'/webhooks/sms-status/*',
 		rateLimit('sms-status-webhook', { windowMs: 60 * 1000, maxRequests: 300 }),
 	)
@@ -458,6 +499,8 @@ export function createTenantApiApp() {
 	app.route('/api/marketing', engagementSyncRoutes)
 	app.route('/api/marketing', marketingInternalRoutes)
 	app.route('/api/sms-inbound', smsInboundInternalRoutes)
+	app.route('/api/invoice-inbox', invoiceInboxInternalRoutes)
+	app.route('/webhooks/invoice-mail', invoiceMailWebhookRoutes)
 	app.route('/webhooks/sms', smsWebhookRoutes)
 	app.route('/webhooks/sms-status', smsStatusWebhookRoutes)
 	app.route('/api/staff', staffTickRoutes)

@@ -58,6 +58,10 @@ export const receivePrefillLineSchema = z.object({
 	packPriceMinor: minorOut,
 	/** Outstanding packs × pack price (an estimate for a priced-by-weight pack). */
 	lineTotalMinor: minorOut,
+	/** Use-by dates (#479): the item is tracked by date. Only with `inventory.use_by`. */
+	trackByDate: z.boolean().optional(),
+	/** The item's shelf life in hours, to suggest the date. Only with `inventory.use_by`. */
+	shelfLifeHours: z.number().int().nullable().optional(),
 })
 
 /**

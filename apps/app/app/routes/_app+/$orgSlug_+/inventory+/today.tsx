@@ -41,6 +41,7 @@ import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ComparePanel } from '#app/components/inventory/compare-panel.tsx'
+import { FreshnessPanel } from '#app/components/inventory/freshness-panel.tsx'
 import { InventoryHeaderActions } from '#app/components/inventory/inventory-chrome.tsx'
 import {
 	useInventoryRevision,
@@ -465,6 +466,36 @@ export default function InventoryTodayRoute() {
 					canSeeCost={canSeeCost}
 					currency={currency}
 				/>
+			) : null}
+
+			{nav.useBy && data.freshness ? (
+				<FreshnessPanel
+					locationId={activeLocationId}
+					freshness={data.freshness}
+					canEdit={canEdit}
+					canSeeCost={canSeeCost}
+					currency={currency}
+				/>
+			) : null}
+
+			{nav.routines && canEdit ? (
+				<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4">
+					<p className="text-sm">
+						<Trans>
+							Ready-made routines draft orders after a count, send you a Monday
+							waste summary and a morning brief, and remind you before a
+							supplier's cut-off.
+						</Trans>
+					</p>
+					<Button
+						variant="outline"
+						size="sm"
+						render={<Link to={`/${orgSlug}/inventory/routines${linkSearch}`} />}
+						data-testid="today-routines-link"
+					>
+						<Trans>Routines</Trans>
+					</Button>
+				</div>
 			) : null}
 
 			{nav.recipes && (hasItems || setupDone) ? (
@@ -1113,6 +1144,60 @@ function AttentionRow({
 				</Trans>
 			)
 			action = <Trans>See delivery</Trans>
+			break
+		}
+		case 'expired_stock': {
+			const name = item.itemName
+			sentence = (
+				<>
+					<Trans>
+						<span className="font-medium wrap-anywhere">{name}</span> is past
+						its use-by date.
+					</Trans>
+					{item.more > 0 ? (
+						<>
+							{' '}
+							<Plural
+								value={item.more}
+								one="And # more lot is past its date."
+								other="And # more lots are past their date."
+							/>
+						</>
+					) : null}
+				</>
+			)
+			action = <Trans>See expired stock</Trans>
+			break
+		}
+		case 'use_first': {
+			const name = item.itemName
+			sentence = (
+				<>
+					{item.daysLeft === 0 ? (
+						<Trans>
+							Use <span className="font-medium wrap-anywhere">{name}</span>{' '}
+							first: it expires today.
+						</Trans>
+					) : (
+						<Trans>
+							Use <span className="font-medium wrap-anywhere">{name}</span>{' '}
+							first: it expires in{' '}
+							<Plural value={item.daysLeft} one="# day" other="# days" />.
+						</Trans>
+					)}
+					{item.more > 0 ? (
+						<>
+							{' '}
+							<Plural
+								value={item.more}
+								one="And # more lot to use soon."
+								other="And # more lots to use soon."
+							/>
+						</>
+					) : null}
+				</>
+			)
+			action = <Trans>See what to use first</Trans>
 			break
 		}
 		case 'unpaid_deliveries': {

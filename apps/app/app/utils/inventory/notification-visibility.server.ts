@@ -54,6 +54,8 @@ export async function inventoryAlertVisibleOrgIds(
 				}
 				// Dishes come off the menu through recipes (#478).
 				if (kind && isSoldOutAlertKind(kind) && !features.recipes) return
+				// Routines have their own flag (#529).
+				if (kind === 'inventory_routine' && !features.routines) return
 				const held = new Set<string>(
 					await getUserInventoryGrants(userId, organizationId),
 				)

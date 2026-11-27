@@ -1034,6 +1034,10 @@ export async function addCountEntries(
 				counterId: counter.id,
 				clientId: entry.clientId,
 				pass,
+				// What was said (#488), kept for the review; never any audio.
+				transcript: caller.features?.voiceCounts
+					? (entry.transcript ?? null)
+					: null,
 				createdAt: madeAt,
 			})
 			accepted.push({
@@ -1379,6 +1383,13 @@ export async function approveCount(
 				updatedAt: ctx.now,
 			})
 			.where(eq(invCounts.id, row.id))
+		// The low stock routine (#529) drafts orders once the count is committed.
+		ctx.afterCommit(async () => {
+			const { runCountApprovedRoutine } = await import(
+				'./inventory-routines-service.ts'
+			)
+			await runCountApprovedRoutine(caller.orgId, row.id)
+		})
 		await recordInventoryAudit(tx, {
 			actorKind: caller.actor.kind,
 			actorId: caller.actor.id,

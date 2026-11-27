@@ -1,5 +1,8 @@
 import { type PosDeviceApps } from '@repo/common/pos-orders'
-import { type STATION_INVENTORY_GATE_CODES } from '@repo/inventory'
+import {
+	type InventoryFeatures,
+	type STATION_INVENTORY_GATE_CODES,
+} from '@repo/inventory'
 import { type ReservationsContext } from '@repo/reservations'
 import { type PosDevice } from '@repo/tenant-db'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
@@ -110,7 +113,7 @@ export async function reservationsGate(
 }
 
 export type InventoryGate =
-	| { ok: true; locationId: string }
+	| { ok: true; locationId: string; features: InventoryFeatures }
 	| {
 			ok: false
 			code:
@@ -142,7 +145,7 @@ export async function inventoryGate(
 	if (state.status === 'unknown')
 		return { ok: false, code: 'service_unavailable' }
 	if (!state.features.enabled) return { ok: false, code: 'inventory_disabled' }
-	return { ok: true, locationId }
+	return { ok: true, locationId, features: state.features }
 }
 
 export type OrdersGate =

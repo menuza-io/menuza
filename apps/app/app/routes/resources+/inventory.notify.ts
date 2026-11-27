@@ -73,6 +73,8 @@ function featureOn(
 	if (!features.enabled) return false
 	// Dishes come off the menu through recipes.
 	if (isSoldOutAlertKind(kind)) return features.recipes
+	// Routines (#529) are behind their own flag.
+	if (kind === 'inventory_routine') return features.routines === true
 	// Orders and prices only exist with Purchasing.
 	return kind === 'inventory_delivery_due' ||
 		kind === 'inventory_price_rise' ||
@@ -368,6 +370,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			: {}),
 		...(event.orderApproval ? { orderApproval: event.orderApproval } : {}),
 		...(event.countOverdue ? { countOverdue: event.countOverdue } : {}),
+		...(event.routine ? { routine: event.routine } : {}),
 	})
 	const baseUrl = String(ENV.BASE_URL ?? '').replace(/\/$/, '')
 	const actionPath =

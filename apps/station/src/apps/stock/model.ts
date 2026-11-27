@@ -333,6 +333,8 @@ export type DeliveryLineDraft = {
 	/** The weight on the scale, in `weightUnit`, for a line priced by weight. */
 	weight: number | null
 	weightUnit: UnitRef
+	/** The last day to use it (#479), `YYYY-MM-DD`, for an item tracked by date. Empty: the shelf life decides. */
+	useByDate?: string
 }
 
 /** Standard unit a weight is typed in by default: kilograms and litres, pieces as they are. */
@@ -456,6 +458,7 @@ export function deliveryLines(lines: readonly DeliveryLineDraft[]) {
 		packBaseQuantity: number | null
 		realWeightQuantity: number | null
 		orderLineId: string | null
+		useByDate?: string
 	}> = []
 	for (const line of lines) {
 		const amount = lineQuantity(line)
@@ -469,6 +472,9 @@ export function deliveryLines(lines: readonly DeliveryLineDraft[]) {
 			packBaseQuantity: line.plain ? null : line.packBaseQuantity,
 			realWeightQuantity: amount.realWeightQuantity,
 			orderLineId: line.orderLineId,
+			...(line.useByDate && /^\d{4}-\d{2}-\d{2}$/.test(line.useByDate)
+				? { useByDate: line.useByDate }
+				: {}),
 		})
 	}
 	return out

@@ -1,3 +1,4 @@
+import { plural } from '@lingui/core/macro'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import {
 	countSheetSchema,
@@ -39,6 +40,11 @@ import {
 	useNotifyInventoryChanged,
 	useQuantityFormat,
 } from '#app/components/inventory/inventory-prefs.tsx'
+import {
+	amountOfDraft,
+	type VoiceDraftLine,
+	VoiceCountButton,
+} from '#app/components/inventory/voice-count.tsx'
 import { useCountEntrySync } from '#app/hooks/use-count-entry-sync.ts'
 import {
 	useInventoryClient,
@@ -104,6 +110,7 @@ export function CountingScreen({
 	canEdit,
 	canSeeCost,
 	currency = '',
+	voiceEnabled = false,
 	search,
 }: {
 	orgSlug: string
@@ -113,6 +120,8 @@ export function CountingScreen({
 	canSeeCost: boolean
 	/** The currency of this location's money, for late-entry values. */
 	currency?: string
+	/** The `inventory.voice_counts` flag: the microphone shows when the region can also hear (#488). */
+	voiceEnabled?: boolean
 	/** The query string to keep on links (`?locationId=…`), with its `?`. */
 	search: string
 }) {
@@ -256,6 +265,59 @@ export function CountingScreen({
 			for (const timer of pending.values()) clearTimeout(timer)
 		}
 	}, [commitAll])
+
+	/**
+	 * Lines confirmed from a recording (#488) are ordinary entries: they replace
+	 * the field's value like typing does, go through the same offline queue and
+	 * carry the words for the review. A line for an item that is not on this
+	 * count is left out and counted in the toast.
+	 */
+	function applyVoice(lines: VoiceDraftLine[], transcript: string) {
+		let skipped = 0
+		for (const line of lines) {
+			const amount = amountOfDraft(line)
+			const candidates = [...rowsByKey.values()].filter(
+				(row) => row.itemId === line.itemId,
+			)
+			const row =
+				candidates.find((entry) => currentTab?.rows.includes(entry)) ??
+				candidates[0]
+			if (!row || amount === null) {
+				skipped += 1
+				continue
+			}
+			const unit = (line.unit || row.countUnit) as UnitRef
+			const slot = slotOf(row.key, unit)
+			const next: SheetAmounts = {
+				...amountsRef.current,
+				[row.key]: { ...amountsRef.current[row.key], [unit]: amount },
+			}
+			amountsRef.current = next
+			setAmounts(next)
+			const pending = timers.current.get(slot)
+			if (pending) clearTimeout(pending)
+			timers.current.delete(slot)
+			dirtyRef.current.delete(slot)
+			setDirtyCount(dirtyRef.current.size)
+			committedRef.current.set(slot, amount)
+			void sync.submit({
+				clientId: newClientId('v'),
+				itemId: row.itemId,
+				areaId: row.areaId,
+				amount,
+				unit,
+				transcript: transcript.slice(0, 1000),
+			})
+		}
+		if (skipped > 0) {
+			toast.error(
+				plural(skipped, {
+					one: '# line is not on this count and was left out.',
+					other: '# lines are not on this count and were left out.',
+				}),
+			)
+		}
+	}
 
 	function change(row: CountRow, unit: UnitRef, value: number | null) {
 		const current = amountsRef.current
@@ -644,6 +706,16 @@ export function CountingScreen({
 							</div>
 						</WorkspaceTabDivider>
 					</Tabs>
+				) : null}
+
+				{counting && !snapshot.closed ? (
+					<div className="flex flex-wrap items-center gap-2">
+						<VoiceCountButton
+							locationId={sheet.data?.count.locationId ?? ''}
+							enabled={voiceEnabled && Boolean(sheet.data)}
+							onConfirm={applyVoice}
+						/>
+					</div>
 				) : null}
 
 				{tabs.length === 0 ? (

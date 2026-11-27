@@ -303,6 +303,46 @@ describe('buildRecordDelivery', () => {
 		expect(recordDeliverySchema.safeParse(result.payload).success).toBe(true)
 	})
 
+	it('sends the use-by date of a tracked line only when it is a real date, and none for an untracked one (#479)', () => {
+		const tracked = buildRecordDelivery(
+			draft({
+				lines: [line({ trackByDate: true, useByText: '2026-12-01' })],
+			}),
+			CONTEXT,
+		)
+		expect(tracked.ok).toBe(true)
+		if (!tracked.ok) return
+		expect(tracked.payload.lines[0]).toMatchObject({ useByDate: '2026-12-01' })
+		expect(recordDeliverySchema.safeParse(tracked.payload).success).toBe(true)
+
+		// Empty: the item's shelf life decides, nothing is sent.
+		const empty = buildRecordDelivery(
+			draft({ lines: [line({ trackByDate: true, useByText: '' })] }),
+			CONTEXT,
+		)
+		expect(empty.ok).toBe(true)
+		if (empty.ok) expect(empty.payload.lines[0]).not.toHaveProperty('useByDate')
+
+		// A date typed for an item not tracked by date is dropped.
+		const untracked = buildRecordDelivery(
+			draft({ lines: [line({ useByText: '2026-12-01' })] }),
+			CONTEXT,
+		)
+		expect(untracked.ok).toBe(true)
+		if (untracked.ok)
+			expect(untracked.payload.lines[0]).not.toHaveProperty('useByDate')
+
+		// Not a date: named as that line's problem, nothing is built.
+		const bad = buildRecordDelivery(
+			draft({
+				lines: [line({ key: 'x', trackByDate: true, useByText: 'soon' })],
+			}),
+			CONTEXT,
+		)
+		expect(bad.ok).toBe(false)
+		if (!bad.ok) expect(bad.problems.lines).toEqual({ x: ['useBy'] })
+	})
+
 	it('refuses a draft with no lines, and names the line that is wrong', () => {
 		const empty = buildRecordDelivery(draft({ lines: [] }), CONTEXT)
 		expect(empty).toEqual({
@@ -617,6 +657,21 @@ describe('receiving against an order', () => {
 			pack: { id: 'orderline:ol2', productId: null },
 		})
 		expect(lines[0]!.previousCostMicro).toBe(2_800_000)
+	})
+
+	it('knows which prefilled lines are tracked by date and their shelf life (#479)', () => {
+		const lines = linesFromPrefill(
+			{
+				...PREFILL,
+				lines: [
+					{ ...PREFILL.lines[0]!, trackByDate: true, shelfLifeHours: 48 },
+					PREFILL.lines[1]!,
+				],
+			},
+			options,
+		)
+		expect(lines[0]).toMatchObject({ trackByDate: true, shelfLifeHours: 48 })
+		expect(lines[1]).toMatchObject({ trackByDate: false, shelfLifeHours: null })
 	})
 
 	it('starts without prices for someone who cannot see them', () => {

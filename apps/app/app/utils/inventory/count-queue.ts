@@ -27,6 +27,8 @@ export type QueuedEntry = {
 	/** Typed amount in `unit`; `null` clears this counter's entry. */
 	amount: number | null
 	unit: UnitRef
+	/** The words behind a voice entry (#488), kept for the review. Never audio. */
+	transcript?: string
 	queuedAt: number
 }
 

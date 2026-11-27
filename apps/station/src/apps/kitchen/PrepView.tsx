@@ -1,6 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type PrepTask } from '@repo/inventory'
+import { type LabelResult, type PrepTask } from '@repo/inventory'
 import {
 	Empty,
 	EmptyDescription,
@@ -18,6 +18,7 @@ import {
 	sortedTasks,
 } from './prep-model.ts'
 import { type PrepState } from './usePrep.ts'
+import { printLabelInBrowser } from '~/lib/label-print.ts'
 import { Badge, Button, cn, Modal } from '~/ui/primitives.tsx'
 
 /** A new id for each time the cook opens "How much did you make?". */
@@ -41,6 +42,16 @@ export function PrepView({
 }) {
 	const { _, i18n } = useLingui()
 	const [finishing, setFinishing] = useState<PrepTask | null>(null)
+	const showLabel = (label: LabelResult) => {
+		if (label.printed) return
+		printLabelInBrowser(label.label, {
+			made: _(t`Made`),
+			opened: _(t`Opened`),
+			useBy: _(t`Use by`),
+			madeBy: _(t`Made by`),
+			quantity: _(t`Quantity`),
+		})
+	}
 	const plan = prep.plan
 	if (!plan) {
 		return (
@@ -201,9 +212,19 @@ export function PrepView({
 					task={finishing}
 					busy={prep.busy !== null}
 					onClose={() => setFinishing(null)}
-					onConfirm={async (answer, clientId) => {
-						const ok = await prep.done(finishing, answer, clientId)
-						if (ok) setFinishing(null)
+					labelsEnabled={plan.labelsEnabled === true}
+					onConfirm={async (answer, clientId, labels) => {
+						const { ok, label } = await prep.done(
+							finishing,
+							answer,
+							clientId,
+							labels,
+						)
+						if (ok) {
+							setFinishing(null)
+							// No cloud label printer took the job: the tablet prints the label itself.
+							if (label) showLabel(label)
+						}
 					}}
 				/>
 			) : null}
@@ -215,15 +236,18 @@ export function PrepView({
 function MadeDialog({
 	task,
 	busy,
+	labelsEnabled,
 	onClose,
 	onConfirm,
 }: {
 	task: PrepTask
 	busy: boolean
+	labelsEnabled: boolean
 	onClose: () => void
 	onConfirm: (
 		answer: { kind: 'batches' | 'amount'; value: number },
 		clientId: string,
+		labels?: { copies: number },
 	) => Promise<void>
 }) {
 	const { _ } = useLingui()
@@ -231,6 +255,8 @@ function MadeDialog({
 	const [value, setValue] = useState<number | null>(planned.value)
 	// One id per opening: a second tap or a retry after a lost answer is the same write.
 	const [clientId] = useState(newClientId)
+	const [printLabels, setPrintLabels] = useState(false)
+	const [copies, setCopies] = useState<number | null>(1)
 	return (
 		<Modal
 			open
@@ -248,7 +274,11 @@ function MadeDialog({
 						disabled={busy || value === null || value <= 0}
 						onClick={() =>
 							value !== null &&
-							void onConfirm({ kind: planned.kind, value }, clientId)
+							void onConfirm(
+								{ kind: planned.kind, value },
+								clientId,
+								printLabels ? { copies: copies ?? 1 } : undefined,
+							)
 						}
 					>
 						<Trans>Mark as done</Trans>
@@ -274,6 +304,38 @@ function MadeDialog({
 					}
 					onChange={setValue}
 				/>
+				{labelsEnabled ? (
+					<div className="flex flex-col gap-2">
+						<label className="flex items-center gap-3 text-base">
+							<input
+								type="checkbox"
+								className="size-5"
+								checked={printLabels}
+								onChange={(event) => setPrintLabels(event.target.checked)}
+								data-testid="prep-print-labels"
+							/>
+							<Trans>Print labels</Trans>
+						</label>
+						{printLabels ? (
+							<div className="flex flex-col gap-1">
+								<p className="text-muted-foreground text-sm">
+									<Trans>Number of labels</Trans>
+								</p>
+								<BigStepper
+									value={copies}
+									label={_(t`Number of labels`)}
+									step={1}
+									fractions={false}
+									onChange={(next) =>
+										setCopies(
+											next === null ? null : Math.min(5, Math.max(1, next)),
+										)
+									}
+								/>
+							</div>
+						) : null}
+					</div>
+				) : null}
 			</div>
 		</Modal>
 	)

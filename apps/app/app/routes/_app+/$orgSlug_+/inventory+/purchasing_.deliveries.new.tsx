@@ -28,11 +28,13 @@ export default function InventoryRecordDeliveryRoute() {
 	const [searchParams] = useSearchParams()
 	const orderId = searchParams.get('orderId')
 	const creditForDeliveryId = searchParams.get('creditFor')
+	const inboxId = searchParams.get('inboxId')
 	const isCashMode = searchParams.get('cash') === '1'
 	// One-off pointers are not filters to carry on every link.
 	const kept = new URLSearchParams(search)
 	kept.delete('orderId')
 	kept.delete('creditFor')
+	kept.delete('inboxId')
 	kept.delete('cash')
 	const keptSearch = kept.toString() === '' ? '' : `?${kept.toString()}`
 	const cleanSearch = layout.locations.length > 1 ? keptSearch : ''
@@ -64,6 +66,7 @@ export default function InventoryRecordDeliveryRoute() {
 			purchasingEnabled={layout.purchasingEnabled}
 			orderId={orderId}
 			creditForDeliveryId={creditForDeliveryId}
+			inboxId={inboxId}
 			search={cleanSearch}
 		/>
 	)

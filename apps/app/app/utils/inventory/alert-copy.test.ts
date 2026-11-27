@@ -24,7 +24,8 @@ describe('inventory alert wording', () => {
 	it('has a subject and a next step for every kind, and names nothing', () => {
 		for (const kind of INVENTORY_ALL_NOTIFY_KINDS) {
 			const copy = inventoryAlertCopy(kind, 2, translate)
-			expect(copy.subject).toMatch(/2/)
+			// A routine's message has no count: it points at its own summary.
+			if (kind !== 'inventory_routine') expect(copy.subject).toMatch(/2/)
 			expect(copy.body.length).toBeGreaterThan(5)
 			expect(`${copy.subject}${copy.body}`).not.toMatch(/undefined|NaN|\{/)
 		}

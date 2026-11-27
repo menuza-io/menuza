@@ -40,6 +40,13 @@ import {
 	stationWasteSchema,
 	undoWasteSchema,
 	confirmInvoicePhotoSchema,
+	stationInvoiceInboxSchema,
+	invoiceInboxUploadResultSchema,
+	stationLabelSchema,
+	labelResultSchema,
+	stationPrepDoneResultSchema,
+	stationVoiceParseSchema,
+	voiceProposalSchema,
 	type StationCatalog,
 } from '@repo/inventory'
 import { type z } from 'zod'
@@ -136,7 +143,24 @@ export type StockApi = {
 	prepDone(
 		id: string,
 		body: Body<typeof doneTaskSchema>,
-	): Promise<z.infer<typeof prepTaskSchema>>
+	): Promise<z.infer<typeof stationPrepDoneResultSchema>>
+	/** A label for a made or opened item (#523, online only; one `requestId` per press). */
+	printLabel(
+		body: Body<typeof stationLabelSchema>,
+	): Promise<z.infer<typeof labelResultSchema>>
+	/** A recording becomes proposed count lines (#488). Nothing is written and the audio is not kept. */
+	voicePropose(
+		audio: Blob,
+		language?: 'en' | 'ar',
+	): Promise<z.infer<typeof voiceProposalSchema>>
+	/** The same matching for typed or corrected words. */
+	voiceParse(
+		body: Body<typeof stationVoiceParseSchema>,
+	): Promise<z.infer<typeof voiceProposalSchema>>
+	/** An invoice photo with no delivery, to the Invoices to match inbox (#503). */
+	invoicePhoto(
+		body: Body<typeof stationInvoiceInboxSchema>,
+	): Promise<z.infer<typeof invoiceInboxUploadResultSchema>>
 	undoWaste(
 		id: string,
 		body: Body<typeof undoWasteSchema>,
@@ -364,11 +388,60 @@ export function createStockApi(
 			call(
 				'POST',
 				PREP_POS_PATHS.done(encodeURIComponent(id)),
-				prepTaskSchema,
+				stationPrepDoneResultSchema,
 				{
 					schema: doneTaskSchema,
 					body,
 				},
+			),
+		printLabel: (body) =>
+			call('POST', INVENTORY_POS_PATHS.labels, labelResultSchema, {
+				schema: stationLabelSchema,
+				body,
+			}),
+		async voicePropose(audio, language) {
+			const controller = new AbortController()
+			const timer = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS)
+			let response: Response
+			try {
+				response = await fetchImpl(
+					`${base()}${INVENTORY_POS_PATHS.voicePropose}${language ? `?language=${language}` : ''}`,
+					{
+						method: 'POST',
+						cache: 'no-store',
+						credentials: 'omit',
+						headers: headers(false, {
+							'Content-Type': audio.type || 'application/octet-stream',
+						}),
+						body: audio,
+						signal: controller.signal,
+					},
+				)
+			} catch (failure) {
+				if (failure instanceof StockApiError) throw failure
+				throw new StockApiError('connection_lost')
+			} finally {
+				clearTimeout(timer)
+			}
+			if (!response.ok)
+				throw new StockApiError(await refusalCode(response), response.status)
+			const parsed = voiceProposalSchema.safeParse(
+				await response.json().catch(() => null),
+			)
+			if (!parsed.success) throw new StockApiError(INVALID_RESPONSE, 502)
+			return parsed.data
+		},
+		voiceParse: (body) =>
+			call('POST', INVENTORY_POS_PATHS.voiceParse, voiceProposalSchema, {
+				schema: stationVoiceParseSchema,
+				body,
+			}),
+		invoicePhoto: (body) =>
+			call(
+				'POST',
+				INVENTORY_POS_PATHS.invoiceInbox,
+				invoiceInboxUploadResultSchema,
+				{ schema: stationInvoiceInboxSchema, body },
 			),
 		dishWaste: (body) =>
 			call(

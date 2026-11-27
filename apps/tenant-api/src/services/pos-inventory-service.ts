@@ -108,6 +108,12 @@ export type CatalogInput = {
 	transfersEnabled?: boolean
 	/** The organization's `inventory.recipes` flag (dishes as waste, #517). */
 	recipesEnabled?: boolean
+	/** `inventory.use_by` (#479, #523). */
+	useByEnabled?: boolean
+	/** `inventory.voice_counts` and a speech model in this node's region (#488). */
+	voiceCountsEnabled?: boolean
+	/** `inventory.invoice_inbox` (#503). */
+	invoiceInboxEnabled?: boolean
 	anyStaffCanReceive: boolean
 	now: number
 }
@@ -254,6 +260,12 @@ export async function buildStationCatalog(
 		areaIds: row.areaIds.filter((id) => activeAreas.has(id)),
 		isKey: row.item.isKey,
 		bottle: itemBottleOf(row.item),
+		...(input.useByEnabled
+			? {
+					trackByDate: row.item.trackByDate,
+					shelfLifeHours: row.item.shelfLifeHours,
+				}
+			: {}),
 	}))
 
 	const areas = areaList.areas.map((area) => ({
@@ -327,6 +339,9 @@ export async function buildStationCatalog(
 			secondCountRequired: countControls.secondCountRequired,
 			...(input.transfersEnabled ? { transfersEnabled: true } : {}),
 			...(input.recipesEnabled ? { dishWasteEnabled: true } : {}),
+			...(input.useByEnabled ? { useByEnabled: true } : {}),
+			...(input.voiceCountsEnabled ? { voiceCountsEnabled: true } : {}),
+			...(input.invoiceInboxEnabled ? { invoiceInboxEnabled: true } : {}),
 		},
 		items,
 		areas,

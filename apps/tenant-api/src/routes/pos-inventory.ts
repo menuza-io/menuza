@@ -8,7 +8,17 @@ import {
 	prepTaskActionSchema,
 	prepPlanSchema,
 	prepTaskSchema,
+	stationLabelSchema,
+	stationPrepDoneResultSchema,
+	stationInvoiceInboxSchema,
+	invoiceInboxUploadResultSchema,
+	STATION_PHOTO_MAX_BYTES,
+	stationVoiceParseSchema,
+	stationVoiceProposeQuerySchema,
+	VOICE_AUDIO_MAX_BYTES,
+	voiceProposalSchema,
 	inventoryIdSchema,
+	labelResultSchema,
 	stationCatalogQuerySchema,
 	stationCashPurchaseResultSchema,
 	stationCashPurchaseSchema,
@@ -44,6 +54,7 @@ import {
 import { invCounts, invItems } from '@repo/tenant-db'
 import { and, eq, inArray } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
+import { readCappedRequestBytes } from '../lib/http.ts'
 import { InventoryError } from '../lib/inventory-http.ts'
 import { getInventoryFlagState } from '../lib/inventory-context.ts'
 import {
@@ -63,6 +74,13 @@ import {
 	markCountDeviceDone,
 	startOrJoinCount,
 } from '../services/inventory-counts-service.ts'
+import { addInvoiceFiles } from '../services/inventory-invoice-inbox-service.ts'
+import { isSpeechReaderConfigured } from '../lib/speech-reader.ts'
+import { printItemLabel } from '../services/inventory-labels-service.ts'
+import {
+	proposeFromAudio,
+	proposeFromText,
+} from '../services/inventory-voice-count-service.ts'
 import {
 	loadAllowedDelivery,
 	recordDelivery,
@@ -198,6 +216,10 @@ posInventoryRoutes.get(
 				ordersEnabled: flags.features.purchasing,
 				transfersEnabled: flags.features.transfers,
 				recipesEnabled: flags.features.recipes,
+				useByEnabled: flags.features.useBy === true,
+				voiceCountsEnabled:
+					flags.features.voiceCounts === true && isSpeechReaderConfigured(),
+				invoiceInboxEnabled: flags.features.invoiceInbox === true,
 				anyStaffCanReceive: settings.anyStaffCanReceive === true,
 				now: posInventoryDeps.now(),
 			})
@@ -526,7 +548,13 @@ posInventoryRoutes.get(
 				stationId: query.stationId,
 				now: posInventoryDeps.now(),
 			})
-			return stationJson(prepPlanSchema.parse(plan))
+			return stationJson(
+				prepPlanSchema.parse({
+					...plan,
+					// "Print labels" with Done (#523) only while use-by dates are on.
+					...(ctx.caller.features?.useBy ? { labelsEnabled: true } : {}),
+				}),
+			)
 		},
 	),
 )
@@ -579,8 +607,142 @@ posInventoryRoutes.post(
 		const refused = await prepGate(ctx)
 		if (refused) return refused
 		const task = await donePrepTask(ctx.caller, { id: idParam(ctx), body })
-		return stationJson(prepTaskSchema.parse(task))
+		// "Print labels" with the batch (#523): best effort, never undoes the task.
+		let label: Awaited<ReturnType<typeof printItemLabel>> | null = null
+		if (body.labels && ctx.caller.features?.useBy) {
+			label = await printItemLabel(ctx.pos.db, {
+				caller: ctx.caller,
+				locationId: ctx.locationId,
+				itemId: task.itemId,
+				kind: 'made',
+				copies: body.labels.copies,
+				quantityLabel: body.labels.quantityLabel,
+				madeBy: ctx.session.staff.name,
+				requestId: body.clientId,
+				now: posInventoryDeps.now(),
+			}).catch(() => null)
+		}
+		return stationJson(stationPrepDoneResultSchema.parse({ ...task, label }))
 	}),
+)
+
+/**
+ * The Labels screen of Station Kitchen (#523): a label for any made item (made
+ * time) or stock item (opened time), through the one cloud print path.
+ */
+posInventoryRoutes.post(
+	'/labels',
+	stationRoute(
+		{ body: stationLabelSchema, locations: (body) => [body.locationId] },
+		async (ctx, body) => {
+			const result = await printItemLabel(ctx.pos.db, {
+				caller: ctx.caller,
+				locationId: body.locationId,
+				itemId: body.itemId,
+				kind: body.kind,
+				copies: body.copies,
+				quantityLabel: body.quantityLabel,
+				madeAt: body.madeAt,
+				madeBy: ctx.session.staff.name,
+				requestId: body.requestId,
+				now: posInventoryDeps.now(),
+			})
+			return stationJson(labelResultSchema.parse(result))
+		},
+	),
+)
+
+// ── Invoice photos with no delivery (#503) ──────────────────────────────────
+
+/**
+ * A photo of a supplier invoice taken on the tablet, with no delivery: it goes
+ * to the location's "Invoices to match" inbox, in this region's storage. One
+ * press (`clientId`) makes one row. Needs the receive permission.
+ */
+posInventoryRoutes.post(
+	'/invoice-inbox',
+	stationRoute(
+		{
+			body: stationInvoiceInboxSchema,
+			locations: (body) => [body.locationId],
+			receive: true,
+		},
+		async (ctx, body) => {
+			let bytes: Uint8Array
+			try {
+				bytes = Uint8Array.from(
+					atob(body.contentBase64.replace(/\s+/g, '')),
+					(ch) => ch.charCodeAt(0),
+				)
+			} catch {
+				return stationError('invalid_request')
+			}
+			if (bytes.length > STATION_PHOTO_MAX_BYTES) {
+				return stationError('payload_too_large')
+			}
+			const result = await addInvoiceFiles(ctx.caller, {
+				locationId: body.locationId,
+				source: 'station',
+				clientId: body.clientId,
+				files: [
+					{
+						fileName: body.fileName ?? null,
+						contentType: body.contentType,
+						bytes,
+					},
+				],
+			})
+			return stationJson(invoiceInboxUploadResultSchema.parse(result))
+		},
+	),
+)
+
+// ── Counting by voice (#488) ────────────────────────────────────────────────
+
+/**
+ * A recording becomes proposed lines for the terminal's own location. Nothing
+ * is written and the audio is never stored; the lines are confirmed on the
+ * tablet and go through the ordinary count entries route.
+ */
+posInventoryRoutes.post(
+	'/voice/propose',
+	stationRoute(
+		{ query: stationVoiceProposeQuerySchema },
+		async (ctx, query) => {
+			const bytes = await readCappedRequestBytes(
+				ctx.c.req.raw,
+				VOICE_AUDIO_MAX_BYTES,
+			)
+			if (!bytes) return stationError('payload_too_large')
+			const proposal = await proposeFromAudio(ctx.pos.db, {
+				caller: ctx.caller,
+				locationId: ctx.locationId,
+				audio: {
+					bytes,
+					contentType:
+						ctx.c.req.header('content-type') ?? 'application/octet-stream',
+				},
+				language: query.language,
+				now: posInventoryDeps.now(),
+			})
+			return stationJson(voiceProposalSchema.parse(proposal))
+		},
+	),
+)
+
+posInventoryRoutes.post(
+	'/voice/parse',
+	stationRoute({ body: stationVoiceParseSchema }, async (ctx, body) =>
+		stationJson(
+			voiceProposalSchema.parse(
+				await proposeFromText(ctx.pos.db, {
+					caller: ctx.caller,
+					locationId: ctx.locationId,
+					transcript: body.transcript,
+				}),
+			),
+		),
+	),
 )
 
 // ── Transfers (#515) ────────────────────────────────────────────────────────

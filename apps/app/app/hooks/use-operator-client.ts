@@ -88,7 +88,15 @@ export function useOperatorClient(
 				const { jwt, tenantApiUrl } = await credentials
 				const headers = new Headers(init.headers)
 				headers.set('Authorization', `Bearer ${jwt}`)
-				if (init.body) headers.set('Content-Type', 'application/json')
+				// A form (several files at once) sets its own multipart boundary, and a
+				// recording (voice count) sets its own content type.
+				if (
+					init.body &&
+					!(init.body instanceof FormData) &&
+					!headers.has('Content-Type')
+				) {
+					headers.set('Content-Type', 'application/json')
+				}
 				return fetch(`${tenantApiUrl}${base}${path}`, {
 					...fetchInit,
 					headers,

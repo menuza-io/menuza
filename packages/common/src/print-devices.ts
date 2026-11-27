@@ -100,6 +100,8 @@ export const printerRoutesSchema = z.object({
 	deliveryAddress: z.boolean().catch(false).default(false),
 	/** The printer has an Arabic font: no picture is needed for Arabic text. */
 	arabicFont: z.boolean().catch(false).default(false),
+	/** Food-safety labels from Station print here (#523). */
+	labels: z.boolean().catch(false).default(false),
 })
 export type PrinterRoutes = z.infer<typeof printerRoutesSchema>
 

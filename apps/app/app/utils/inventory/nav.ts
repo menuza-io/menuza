@@ -31,6 +31,14 @@ export type InventoryNavAccess = {
 	editRecipes: boolean
 	/** `read:inventory_cost:any`: a typed cost per dish may be entered. */
 	seeCost: boolean
+	/** Use-by dates, "Use first" and "Expired" (`inventory.use_by`, #479). */
+	useBy: boolean
+	/** The microphone on the count screens (`inventory.voice_counts`, #488). */
+	voiceCounts: boolean
+	/** The invoice address and the "Invoices to match" inbox (`inventory.invoice_inbox`, #503). */
+	invoiceInbox: boolean
+	/** The Routines page (`inventory.routines`, #529). */
+	routines: boolean
 } & Record<InventoryTab, boolean>
 
 export const HIDDEN_INVENTORY_NAV: InventoryNavAccess = {
@@ -38,6 +46,10 @@ export const HIDDEN_INVENTORY_NAV: InventoryNavAccess = {
 	recipes: false,
 	editRecipes: false,
 	seeCost: false,
+	useBy: false,
+	voiceCounts: false,
+	invoiceInbox: false,
+	routines: false,
 	today: false,
 	stock: false,
 	counts: false,
@@ -69,6 +81,10 @@ export function computeInventoryNavAccess(
 			features.recipes &&
 			held.has(INVENTORY_PERMISSIONS.UPDATE_INVENTORY_RECIPE),
 		seeCost: held.has(INVENTORY_PERMISSIONS.READ_INVENTORY_COST),
+		useBy: features.useBy === true,
+		voiceCounts: features.voiceCounts === true,
+		invoiceInbox: features.invoiceInbox === true,
+		routines: features.routines === true,
 		today: true,
 		stock: true,
 		counts: true,
