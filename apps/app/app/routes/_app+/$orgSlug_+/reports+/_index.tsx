@@ -14,6 +14,7 @@ import { Link, useLoaderData, useNavigate } from 'react-router'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { listLocationTags } from '#app/utils/location/tags.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { resolveReportTokenGrants } from '#app/utils/reports/token-grants.server.ts'
 import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
 import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { type Route } from './+types/_index.ts'
@@ -45,7 +46,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const location = url.searchParams.get('location')
 	const tags = await listLocationTags(organization.id)
 	const requestedTag = url.searchParams.get('tag')
+	// The accounting export is offered only while its flag is on and the member's
+	// reports token would list it (analytics and order access).
+	const accounting = (
+		await resolveReportTokenGrants({
+			request,
+			userId,
+			organizationId: organization.id,
+		})
+	).subjects.includes('accounting_daily')
 	return {
+		accounting,
 		category: url.searchParams.get('category'),
 		location: location && location.length <= 64 ? location : null,
 		// Location tags (#374): the picker limits new reports to a tag's locations.
@@ -140,6 +151,16 @@ export default function ReportsIndex() {
 				>
 					<Trans>Online ordering uptime</Trans>
 				</Button>
+				{data.accounting ? (
+					<Button
+						variant="outline"
+						size="sm"
+						render={<Link to={`${basePath}/accounting`} />}
+						data-testid="reports-accounting-link"
+					>
+						<Trans>Accounting</Trans>
+					</Button>
+				) : null}
 				<Button
 					variant="outline"
 					size="sm"

@@ -18,6 +18,10 @@ import {
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
 import {
+	ACCOUNTING_MAX_DAYS,
+	loadAccountingFacts,
+} from '../services/accounting-daily-records.ts'
+import {
 	buildCsvRows,
 	computeMonthlyFigures,
 	ReportHasPersonalFieldsError,
@@ -125,6 +129,57 @@ reportsInternalRoutes.post('/figures', async (c) => {
 			error instanceof Error ? error.message : 'unknown',
 		)
 		return respond(c, 500, { error: 'figures_failed' })
+	}
+})
+
+const accountingRequestSchema = z.object({
+	orgId: z.string().regex(TENANT_ORG_ID_PATTERN),
+	from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	/** Limits the figures to these locations (a location-scoped caller); null is all. */
+	locationIds: z.array(z.string().min(1).max(64)).max(500).nullable().default(null),
+})
+
+/**
+ * `POST /internal/reports/accounting` (#189): the daily accounting figures for
+ * a range, for the App's export and the weekly bookkeeper email, which build
+ * the files from them. Totals per location, day and currency only.
+ */
+reportsInternalRoutes.post('/accounting', async (c) => {
+	const denied = authorize(c)
+	if (denied) return denied
+	const parsed = accountingRequestSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) return respond(c, 400, { error: 'invalid_request' })
+	const { orgId, from, to, locationIds } = parsed.data
+	const span = (Date.parse(to) - Date.parse(from)) / 86_400_000
+	if (!(span >= 0) || span + 1 > ACCOUNTING_MAX_DAYS) {
+		return respond(c, 400, { error: 'invalid_range' })
+	}
+	const organization = await findActiveOrganizationById(orgId)
+	if (!organization || !organization.hasProvisionedDb) {
+		return respond(c, 404, { error: 'org_not_found' })
+	}
+	if (!orgMatchesNodeRegion(organization.dataRegion)) {
+		return respond(c, 409, { error: 'region_mismatch' })
+	}
+	try {
+		const facts = await loadAccountingFacts({
+			db: await getTenantDb(orgId),
+			orgId,
+			locationIds,
+			fromDate: from,
+			toDate: to,
+		})
+		if (facts.truncated) return respond(c, 422, { error: 'range_too_large' })
+		return c.json({ days: facts.days }, 200, NO_STORE)
+	} catch (error) {
+		console.error(
+			'Accounting facts failed:',
+			error instanceof Error ? error.message : 'unknown',
+		)
+		return respond(c, 500, { error: 'accounting_failed' })
 	}
 })
 

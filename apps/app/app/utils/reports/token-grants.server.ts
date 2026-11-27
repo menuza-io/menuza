@@ -1,11 +1,13 @@
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import {
+	ACCOUNTING_REPORT_SUBJECT,
 	DELIVERY_REPORT_SUBJECTS,
 	ORDER_REPORT_SUBJECTS,
 	ORG_WIDE_REPORT_SUBJECTS,
 	SALES_STAFF_FIELD_PERMISSION,
 	type RestrictedReportSubject,
 } from '@repo/reports/token'
+import { isAccountingEnabled } from './accounting-flag.ts'
 import { resolveGiftCardReportAccess } from '#app/utils/gift-cards/report-access.server.ts'
 import { resolveInventoryReportAccess } from '#app/utils/inventory/report-access.server.ts'
 import { isInHouseDeliveryEnabled } from '#app/utils/orders/deliveries.server.ts'
@@ -118,12 +120,17 @@ export async function resolveReportTokenGrants(input: {
 	// for members who may read orders. The driver's name rides on the staff grant.
 	const canReadDeliveries =
 		canReadOrders && (await isInHouseDeliveryEnabled(organizationId))
+	// The accounting export (#189): behind its flag, for members who may read
+	// orders (the money grants the sales reports need), limited to their locations.
+	const canExportAccounting =
+		canReadOrders && (await isAccountingEnabled(organizationId))
 	const subjects: RestrictedReportSubject[] = [
 		// A module-only grant never lists the organization-wide subjects.
 		...(hasAdminAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
 		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
 		...(canReadDeliveries ? DELIVERY_REPORT_SUBJECTS : []),
+		...(canExportAccounting ? [ACCOUNTING_REPORT_SUBJECT] : []),
 		...(canReadSalesStaff ? [SALES_STAFF_FIELD_PERMISSION] : []),
 		...staff.subjects,
 		...reservations.subjects,
