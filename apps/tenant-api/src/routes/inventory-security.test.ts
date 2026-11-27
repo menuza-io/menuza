@@ -13,6 +13,7 @@ import {
 import {
 	destroyTenantDb,
 	getTenantDb,
+	invInvoiceInbox,
 	invPrepTasks,
 	invSoldOut,
 	provisionTenantDb,
@@ -81,6 +82,10 @@ const FEATURES_NO_RECIPES: InventoryFeatures = {
 	recipes: false,
 }
 const FEATURES_NO_USE_BY: InventoryFeatures = { ...FEATURES_ON, useBy: false }
+const FEATURES_NO_INBOX: InventoryFeatures = {
+	...FEATURES_ON,
+	invoiceInbox: false,
+}
 const FEATURES_NO_VOICE: InventoryFeatures = {
 	...FEATURES_ON,
 	voiceCounts: false,
@@ -148,6 +153,15 @@ const ROUTE_GRANTS: Record<
 	'GET /voice': READ,
 	'POST /voice/propose': UPDATE,
 	'POST /voice/parse': UPDATE,
+	// Supplier invoices by email, the inbox (#503).
+	'GET /invoice-inbox/config': READ,
+	'GET /invoice-inbox': READ,
+	'GET /invoice-inbox/:id': READ,
+	'POST /invoice-inbox/upload': UPDATE,
+	'POST /invoice-inbox/:id/match': UPDATE,
+	'POST /invoice-inbox/:id/dismiss': UPDATE,
+	'POST /invoice-inbox/:id/allow-sender': UPDATE,
+	'POST /invoice-inbox/:id/read': PURCHASING,
 	'GET /items': READ,
 	'POST /items': UPDATE,
 	'POST /items/bulk': UPDATE,
@@ -379,6 +393,17 @@ const USE_BY_FLAG_ROUTES = new Set([
 
 /** Routes behind the `inventory.voice_counts` flag (403 feature_disabled while it is off). */
 const VOICE_FLAG_ROUTES = new Set(['POST /voice/propose', 'POST /voice/parse'])
+
+/** Routes behind the `inventory.invoice_inbox` flag (403 feature_disabled while it is off). */
+const INBOX_FLAG_ROUTES = new Set([
+	'GET /invoice-inbox',
+	'GET /invoice-inbox/:id',
+	'POST /invoice-inbox/upload',
+	'POST /invoice-inbox/:id/match',
+	'POST /invoice-inbox/:id/dismiss',
+	'POST /invoice-inbox/:id/allow-sender',
+	'POST /invoice-inbox/:id/read',
+])
 
 /** Routes behind the `inventory.recipes` flag (403 feature_disabled while it is off). */
 const RECIPES_FLAG_ROUTES = new Set([
@@ -846,6 +871,32 @@ describe('inventory operator routes: flags and switches', () => {
 		expect(failures).toEqual([])
 	})
 
+	it('inventory.invoice_inbox gates the inbox routes (403 feature_disabled) and nothing else', async () => {
+		const token = await mintInventoryToken({ features: FEATURES_NO_INBOX })
+		const failures: string[] = []
+		for (const route of ROUTES) {
+			const request = validRequest(route)
+			const res = await call(route.method, request.path, {
+				token,
+				body: request.body,
+			})
+			const body = (await res.json()) as { code?: string; feature?: string }
+			const gated = INBOX_FLAG_ROUTES.has(routeKey(route))
+			if (gated) {
+				if (
+					res.status !== 403 ||
+					body.code !== 'feature_disabled' ||
+					body.feature !== 'invoiceInbox'
+				) {
+					failures.push(`${routeKey(route)} -> ${res.status} ${body.code}`)
+				}
+			} else if (body.code === 'feature_disabled') {
+				failures.push(`${routeKey(route)} is gated but not listed`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
 	it('inventory.voice_counts gates the voice routes (403 feature_disabled) and nothing else', async () => {
 		const token = await mintInventoryToken({ features: FEATURES_NO_VOICE })
 		const failures: string[] = []
@@ -1278,6 +1329,16 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 				],
 			})
 		).id
+		// An invoice in the inbox (#503), made the way a mail would: a row and a file.
+		const tenantDb = await getTenantDb(ORG_A)
+		await tenantDb.insert(invInvoiceInbox).values({
+			id: 'sec_inbox_1',
+			locationId: LOC_B,
+			source: 'upload',
+			senderState: 'known',
+			readState: 'not_configured',
+		})
+		seed.inbox = 'sec_inbox_1'
 	})
 
 	function cases(): Case[] {
@@ -1341,6 +1402,28 @@ describe('inventory operator routes: items, counts, waste, purchasing and Today'
 			c('GET /stock/on-date', `/stock/on-date?${q}`),
 			c('GET /stock/day', `/stock/day?${q}&date=${today}`),
 			c('GET /stock/value-export', `/stock/value-export?${q}&date=${today}`),
+			c('GET /invoice-inbox/config', `/invoice-inbox/config?${q}`),
+			c('GET /invoice-inbox', `/invoice-inbox?${q}`),
+			c('GET /invoice-inbox/:id', `/invoice-inbox/${seed.inbox}`, {
+				byId: true,
+			}),
+			c('POST /invoice-inbox/upload', `/invoice-inbox/upload?${q}`),
+			c('POST /invoice-inbox/:id/match', `/invoice-inbox/${seed.inbox}/match`, {
+				body: { expectedVersion: 1, orderId: null },
+				byId: true,
+			}),
+			c('POST /invoice-inbox/:id/dismiss', `/invoice-inbox/${seed.inbox}/dismiss`, {
+				body: { expectedVersion: 1 },
+				byId: true,
+			}),
+			c('POST /invoice-inbox/:id/allow-sender', `/invoice-inbox/${seed.inbox}/allow-sender`, {
+				body: {},
+				byId: true,
+			}),
+			c('POST /invoice-inbox/:id/read', `/invoice-inbox/${seed.inbox}/read`, {
+				body: {},
+				byId: true,
+			}),
 			c('GET /voice', `/voice?${q}`),
 			c('POST /voice/propose', `/voice/propose?${q}`),
 			c('POST /voice/parse', '/voice/parse', {

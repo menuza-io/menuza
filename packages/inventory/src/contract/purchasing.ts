@@ -266,6 +266,11 @@ export const recordDeliveryBaseSchema = z
 		closeOrder: z.boolean().optional(),
 		/** Cash purchase from built-in "Market / cash" supplier (#466); always marked paid. */
 		isCashPurchase: z.boolean().optional(),
+		/**
+		 * The invoice in the inbox this delivery is made from (#503): it is marked
+		 * delivered and points at the delivery. Needs `inventory.invoice_inbox`.
+		 */
+		invoiceInboxId: inventoryIdSchema.nullable().optional(),
 		/** Supplier credit note or return (#507): appears as negative amounts in exports/reports. */
 		isCredit: z.boolean().optional(),
 		creditForDeliveryId: inventoryIdSchema.nullable().optional(),

@@ -67,7 +67,9 @@ import {
 import { fanOutReservationsTick } from '../src/services/rsv-tick-fanout.ts'
 import type { ReservationsTickResult } from '../src/services/rsv-tick-service.ts'
 import type { OrgSmsOutcome } from '../src/services/sms-inbound.ts'
+import type { MailOutcome } from '../src/services/inventory-invoice-inbox-service.ts'
 import { handleInboundSmsWebhook } from '../src/services/sms-inbound-webhook.ts'
+import { handleInvoiceMailWebhook } from '../src/services/invoice-inbox-webhook.ts'
 import { fanOutStaffTick } from '../src/services/staff-tick-fanout.ts'
 import type { TickResult } from '../src/services/staff-tick-service.ts'
 import { TENANT_ORG_HEADER, TenantOrg } from './tenant-org.ts'
@@ -505,6 +507,37 @@ async function handle(
 				},
 			}),
 		)
+	}
+
+	// Supplier invoice mail (#503): the edge checks the webhook secret, asks the
+	// control plane which organization the address names (the code only), and
+	// forwards the message to that organization's Durable Object, which stores
+	// it in this region. Mail for another region is dropped before any storage.
+	if (request.method === 'POST' && url.pathname === '/webhooks/invoice-mail') {
+		return handleInvoiceMailWebhook(request, async (address, mail) => {
+			const forwarded = new Request(
+				new URL('/api/invoice-inbox/receive', request.url),
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${env.INTERNAL_COMMAND_TOKEN || ''}`,
+					},
+					body: JSON.stringify({
+						orgId: address.orgId,
+						locationId: address.locationId,
+						mail,
+					}),
+				},
+			)
+			const answered = await forwardToOrg(forwarded, env, address.orgId)
+			if (!answered.ok) {
+				return answered.status === 413
+					? { status: 'too_large' as const }
+					: { status: 'storage_unavailable' as const }
+			}
+			return (await answered.json()) as MailOutcome
+		})
 	}
 
 	const tickModule: TickModuleName | null =

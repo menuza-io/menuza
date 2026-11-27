@@ -69,6 +69,7 @@ import {
 	type UpdateSupplierInput,
 	type UpdateSupplierProductInput,
 } from './inventory-contract-types.ts'
+import { linkInboxToDelivery } from './inventory-invoice-inbox-service.ts'
 import { type InventoryCaller } from './inventory-items-service.ts'
 import {
 	recordLotForReceipt,
@@ -1541,6 +1542,21 @@ export async function recordDelivery(
 				createdAt: ctx.now,
 				updatedAt: ctx.now,
 			})
+
+			// Made from an invoice in the inbox (#503): that invoice is now delivered.
+			if (body.invoiceInboxId) {
+				if (!caller.features?.invoiceInbox) {
+					throw new InventoryError('feature_disabled', 403, {
+						feature: 'invoiceInbox',
+					})
+				}
+				await linkInboxToDelivery(tx, {
+					inboxId: body.invoiceInboxId,
+					locationId: body.locationId,
+					deliveryId,
+					now: ctx.now,
+				})
+			}
 
 			const rises = new Map<
 				string,

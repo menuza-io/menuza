@@ -54,6 +54,10 @@ export function setCachedVisionRead<T>(
 	readCache.set(key, { at: now, read })
 }
 
+export function deleteCachedVisionRead(key: string): void {
+	readCache.delete(key)
+}
+
 export function takeVisionReadSlot(
 	orgId: string,
 	now = Date.now(),

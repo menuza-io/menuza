@@ -443,6 +443,12 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// Inbound supplier invoice mail (#503): the edge forwards one message to
+	// the organization its location code names; the route checks the token.
+	if (pathname === '/api/invoice-inbox/receive') {
+		return orgIdFromJsonBody(request)
+	}
+
 	// Hourly staff tick: a body orgId runs that organization in its Durable
 	// Object; no orgId means the edge fans out to every organization.
 	if (pathname === '/api/staff/tick') {

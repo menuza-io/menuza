@@ -32,6 +32,7 @@ import { operatorInventoryCountsRoutes } from './operator-inventory-counts.ts'
 import { operatorInventoryFreshnessRoutes } from './operator-inventory-freshness.ts'
 import { operatorInventoryGroupsRoutes } from './operator-inventory-groups.ts'
 import { operatorInventoryImportsRoutes } from './operator-inventory-imports.ts'
+import { operatorInventoryInvoiceInboxRoutes } from './operator-inventory-invoice-inbox.ts'
 import { operatorInventoryItemsRoutes } from './operator-inventory-items.ts'
 import { operatorInventoryLevelsRoutes } from './operator-inventory-levels.ts'
 import { operatorInventoryMergeRoutes } from './operator-inventory-merge.ts'
@@ -80,6 +81,7 @@ operatorInventoryRoutes.route('/', operatorInventoryGroupsRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryFreshnessRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryStockHistoryRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryVoiceRoutes)
+operatorInventoryRoutes.route('/', operatorInventoryInvoiceInboxRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryMergeRoutes)
 operatorInventoryRoutes.route('/', operatorInventorySetupChecksRoutes)
 operatorInventoryRoutes.route('/', operatorInventoryPlacesRoutes)

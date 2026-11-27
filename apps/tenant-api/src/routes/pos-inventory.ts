@@ -10,6 +10,9 @@ import {
 	prepTaskSchema,
 	stationLabelSchema,
 	stationPrepDoneResultSchema,
+	stationInvoiceInboxSchema,
+	invoiceInboxUploadResultSchema,
+	STATION_PHOTO_MAX_BYTES,
 	stationVoiceParseSchema,
 	stationVoiceProposeQuerySchema,
 	VOICE_AUDIO_MAX_BYTES,
@@ -70,6 +73,7 @@ import {
 	markCountDeviceDone,
 	startOrJoinCount,
 } from '../services/inventory-counts-service.ts'
+import { addInvoiceFiles } from '../services/inventory-invoice-inbox-service.ts'
 import { isSpeechReaderConfigured } from '../lib/speech-reader.ts'
 import { printItemLabel } from '../services/inventory-labels-service.ts'
 import {
@@ -636,6 +640,51 @@ posInventoryRoutes.post(
 				now: posInventoryDeps.now(),
 			})
 			return stationJson(labelResultSchema.parse(result))
+		},
+	),
+)
+
+// ── Invoice photos with no delivery (#503) ──────────────────────────────────
+
+/**
+ * A photo of a supplier invoice taken on the tablet, with no delivery: it goes
+ * to the location's "Invoices to match" inbox, in this region's storage. One
+ * press (`clientId`) makes one row. Needs the receive permission.
+ */
+posInventoryRoutes.post(
+	'/invoice-inbox',
+	stationRoute(
+		{
+			body: stationInvoiceInboxSchema,
+			locations: (body) => [body.locationId],
+			receive: true,
+		},
+		async (ctx, body) => {
+			let bytes: Uint8Array
+			try {
+				bytes = Uint8Array.from(
+					atob(body.contentBase64.replace(/\s+/g, '')),
+					(ch) => ch.charCodeAt(0),
+				)
+			} catch {
+				return stationError('invalid_request')
+			}
+			if (bytes.length > STATION_PHOTO_MAX_BYTES) {
+				return stationError('payload_too_large')
+			}
+			const result = await addInvoiceFiles(ctx.caller, {
+				locationId: body.locationId,
+				source: 'station',
+				clientId: body.clientId,
+				files: [
+					{
+						fileName: body.fileName ?? null,
+						contentType: body.contentType,
+						bytes,
+					},
+				],
+			})
+			return stationJson(invoiceInboxUploadResultSchema.parse(result))
 		},
 	),
 )
