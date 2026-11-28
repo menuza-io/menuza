@@ -18,6 +18,7 @@ import {
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
 import { countedOrderCondition } from '../services/report-records.ts'
+import { testOrderDoneAt } from '../services/test-orders-service.ts'
 
 /**
  * App to region facts for the home page and the launch checklist, with the
@@ -93,7 +94,7 @@ async function readBody<S extends z.ZodTypeAny>(
 }
 
 export async function loadLaunchFacts(db: TenantDatabase) {
-	const [paired, first] = await Promise.all([
+	const [paired, first, testDone] = await Promise.all([
 		db
 			.selectDistinct({ locationId: posDevices.locationId })
 			.from(posDevices)
@@ -108,6 +109,9 @@ export async function loadLaunchFacts(db: TenantDatabase) {
 			})
 			.from(restaurantOrders)
 			.where(countedOrderCondition()),
+		// "Place a test order" (#119): a test order whose ticket the operator
+		// confirmed, or that a person moved through the kitchen.
+		testOrderDoneAt(db),
 	])
 	const firstAt = first[0]?.firstAt
 	return {
@@ -119,6 +123,8 @@ export async function loadLaunchFacts(db: TenantDatabase) {
 			firstAt instanceof Date && !Number.isNaN(firstAt.getTime())
 				? firstAt.toISOString()
 				: null,
+		testOrderDoneAt:
+			testDone === null ? null : new Date(testDone).toISOString(),
 	}
 }
 

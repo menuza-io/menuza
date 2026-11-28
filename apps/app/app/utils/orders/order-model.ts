@@ -48,6 +48,10 @@ export const orderSchema = z.object({
 	largeOrder: z.boolean().optional().catch(undefined),
 	/** The order has alcohol: staff "Check ID" at handoff (#167). */
 	hasAlcohol: z.boolean().optional().catch(undefined),
+	/** A free test order (#119): badged TEST, never charged, never a sale. */
+	isTest: z.boolean().optional().catch(undefined),
+	/** "Did the ticket print?" for a test order: yes, no, or not asked yet. */
+	testPrintAnswer: z.enum(['yes', 'no']).nullable().optional().catch(undefined),
 	/** The guest stated an allergy at checkout (#294). */
 	guestAllergy: z.boolean().optional().catch(undefined),
 	/** The time the guest asked for (ISO); null for as soon as possible. */

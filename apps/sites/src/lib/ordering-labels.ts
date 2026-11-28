@@ -253,6 +253,19 @@ export function buildOrderDetailsLabels(i18n: I18n) {
 	}
 }
 
+/** A free test order (#119): the checkout's own words, beside the banner. */
+export function buildTestOrderLabels(i18n: I18n) {
+	return {
+		invalid: i18n._(
+			msg`That test code is not valid any more, so this is no longer a test. You can still place a real order.`,
+		),
+		successTitle: i18n._(msg`Test order`),
+		successBody: i18n._(
+			msg`Nothing was charged. The restaurant can see it on its kitchen screens.`,
+		),
+	}
+}
+
 /** Saved delivery addresses at checkout (#113). */
 export function buildSavedAddressLabels(i18n: I18n) {
 	return {

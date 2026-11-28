@@ -106,6 +106,8 @@ async function loadStopFacts(
 	if (options.locationId) {
 		conditions.push(eq(deliveryRuns.locationId, options.locationId))
 	}
+	// A free test order (#119) is not a delivery to report on.
+	conditions.push(eq(restaurantOrders.isTest, false))
 	const rows = await ctx.db
 		.select({
 			stopId: deliveryRunStops.id,
@@ -131,7 +133,10 @@ async function loadStopFacts(
 		})
 		.from(deliveryRunStops)
 		.innerJoin(deliveryRuns, eq(deliveryRuns.id, deliveryRunStops.runId))
-		.innerJoin(restaurantOrders, eq(restaurantOrders.id, deliveryRunStops.orderId))
+		.innerJoin(
+			restaurantOrders,
+			eq(restaurantOrders.id, deliveryRunStops.orderId),
+		)
 		.innerJoin(staffMembers, eq(staffMembers.id, deliveryRuns.driverStaffId))
 		.where(and(...conditions))
 		.orderBy(desc(endedAt))
@@ -146,7 +151,8 @@ async function loadStopFacts(
 		if (row.endedAt == null) return []
 		let readyAt: number | null = null
 		for (const step of steps.get(row.orderId) ?? []) {
-			if (step.step === 'ready') readyAt = step.event === 'done' ? step.at : null
+			if (step.step === 'ready')
+				readyAt = step.event === 'done' ? step.at : null
 		}
 		const zone = [row.locationTimezone, row.pickupTimezone].find(
 			(candidate): candidate is string =>
@@ -195,7 +201,10 @@ function driverLabels(
 			id,
 			includeStaffNames
 				? { label: fact.driverName || anonymousDriverLabel(index + 1), key: id }
-				: { label: anonymousDriverLabel(index + 1), key: `driver-${index + 1}` },
+				: {
+						label: anonymousDriverLabel(index + 1),
+						key: `driver-${index + 1}`,
+					},
 		)
 	})
 	return out
@@ -257,7 +266,9 @@ export async function loadDeliveryRecords(
 					? minutes(pickedUp, fact.endedAt)
 					: null,
 			minutesActual:
-				delivered && fact.placedAt > 0 ? minutes(fact.placedAt, fact.endedAt) : null,
+				delivered && fact.placedAt > 0
+					? minutes(fact.placedAt, fact.endedAt)
+					: null,
 			minutesPromised:
 				promised !== null && fact.placedAt > 0 && promised >= fact.placedAt
 					? minutes(fact.placedAt, promised)
@@ -278,7 +289,9 @@ export async function loadDeliveryRecords(
 function average(values: ReadonlyArray<number | null>): number | null {
 	const present = values.filter((value): value is number => value !== null)
 	if (present.length === 0) return null
-	return Math.round((present.reduce((a, b) => a + b, 0) / present.length) * 10) / 10
+	return (
+		Math.round((present.reduce((a, b) => a + b, 0) / present.length) * 10) / 10
+	)
 }
 
 /**
@@ -299,8 +312,10 @@ export async function loadDriverSummaryRecords(
 	const { facts, truncated } = await loadStopFacts(ctx, { fromMs, toMs })
 	const wanted = facts.filter((fact) =>
 		options.loaderFilters.every((condition) => {
-			if (condition.field === 'locationId') return allows(fact.locationId, condition)
-			if (condition.field === 'location') return allows(fact.locationName, condition)
+			if (condition.field === 'locationId')
+				return allows(fact.locationId, condition)
+			if (condition.field === 'location')
+				return allows(fact.locationName, condition)
 			return true
 		}),
 	)
@@ -326,7 +341,9 @@ export async function loadDriverSummaryRecords(
 			deliveries: delivered.length,
 			avgMinutesReadyToPickedUp: average(
 				group.map((fact) =>
-					fact.readyAt !== null && fact.pickedUpAt !== null && fact.pickedUpAt >= fact.readyAt
+					fact.readyAt !== null &&
+					fact.pickedUpAt !== null &&
+					fact.pickedUpAt >= fact.readyAt
 						? minutes(fact.readyAt, fact.pickedUpAt)
 						: null,
 				),
@@ -341,7 +358,8 @@ export async function loadDriverSummaryRecords(
 			lateDeliveries: delivered.filter(
 				(fact) => fact.promisedAt !== null && fact.endedAt > fact.promisedAt,
 			).length,
-			cashCollected: delivered.reduce((sum, fact) => sum + fact.cashCollectedCents, 0) / 100,
+			cashCollected:
+				delivered.reduce((sum, fact) => sum + fact.cashCollectedCents, 0) / 100,
 			tips: delivered.reduce((sum, fact) => sum + fact.tipCents, 0) / 100,
 			problems: group.length - delivered.length,
 			currency: first.currency,

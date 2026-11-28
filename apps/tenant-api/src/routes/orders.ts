@@ -1,3 +1,4 @@
+import { TEST_ORDER_HEADER } from '@repo/common/test-orders'
 import { Hono, type Context } from 'hono'
 import { ENV } from 'varlock/env'
 
@@ -578,6 +579,8 @@ publicOrderRoutes.post('/', async (c) => {
 			customerId: customer.customerId,
 			dineIn,
 			client: c.req.header('X-Client') ?? null,
+			// A free test order (#119): the one-time code from the operator's link.
+			testOrderCode: c.req.header(TEST_ORDER_HEADER) ?? null,
 		})
 		await couponGuard.settle(
 			result.ok ? 'applied' : couponOutcomeOfFailure(result.failure),

@@ -1,11 +1,14 @@
 import { Hono } from 'hono'
+import { z } from 'zod'
 import { kdsCommandSchema, kdsConfigRequestSchema } from '@repo/common/kds'
+import { testPrintAnswerSchema } from '@repo/common/test-orders'
 import { authenticatePosDevice, posError } from '../lib/pos-auth.ts'
 import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
 import { HttpError, json, readJsonBody } from '../lib/http.ts'
 import { runInBackground } from '../lib/background.ts'
 import { sendReadyTextIfDue } from '../services/pos-ready-text-service.ts'
 import { touchDevice } from '../services/pos-service.ts'
+import { recordTestPrintAnswer } from '../services/test-orders-service.ts'
 import {
 	configureKitchen,
 	kitchenCommand,
@@ -25,6 +28,36 @@ posKdsRoutes.onError((error) => {
 		error instanceof Error ? error.name : 'unknown',
 	)
 	return posError(500, 'kitchen_unavailable')
+})
+
+/**
+ * "Did the ticket print?" for a free test order (#119), answered on the
+ * kitchen screen. Bound to this screen's location like every kitchen call.
+ */
+posKdsRoutes.post('/test-print', async (c) => {
+	const auth = await authenticatePosDevice(c)
+	if ('error' in auth) return auth.error
+	const { pos } = auth
+	const locationId = pos.device.locationId
+	if (!locationId) return posError(403, 'kitchen_needs_location')
+	if (pos.device.signInRequired) {
+		const verified = await verifyPosStaffSession(c, pos)
+		if ('error' in verified) return verified.error
+	}
+	const body = await readJsonBody(
+		c,
+		testPrintAnswerSchema.extend({ orderId: z.string().min(1).max(100) }),
+	)
+	if ('error' in body) return body.error
+	const recorded = await recordTestPrintAnswer(
+		pos.orgId,
+		pos.db,
+		body.data.orderId,
+		body.data.answer,
+		{ locationIds: [locationId] },
+	)
+	if (!recorded.ok) return posError(recorded.status, recorded.code)
+	return json(await kitchenFeed(pos.db, pos.orgId, locationId))
 })
 
 for (const method of ['get', 'post', 'put'] as const) {

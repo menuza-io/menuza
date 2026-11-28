@@ -58,6 +58,7 @@ export type OrderEmailOrder = Pick<
 	| 'pickupTime'
 	| 'promisedAt'
 	| 'promisedUntil'
+	| 'isTest'
 > & {
 	/** Why it was cancelled; only guest-visible reasons are shown. */
 	cancelReason?: RestaurantOrder['cancelReason']
@@ -226,13 +227,17 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 		location: locationName,
 	}
 	const delivery = order.fulfillment === 'delivery'
+	// A free test order (#119): the confirmation is labelled test in the subject
+	// and above the lead, so nobody takes it for a real order.
+	const testTag = order.isTest ? `[${labels.testTag}] ` : ''
+	const testLead = order.isTest ? `${labels.testLabel} ` : ''
 	const copy = {
-		subject: fillCopy(entry.subject, values),
+		subject: `${testTag}${fillCopy(entry.subject, values)}`,
 		heading: fillCopy(entry.heading, values),
-		lead: fillCopy(
+		lead: `${testLead}${fillCopy(
 			delivery && entry.leadDelivery ? entry.leadDelivery : entry.lead,
 			values,
-		),
+		)}`,
 	}
 	const money = (cents: number) => formatMoney(cents, order.currency, locale)
 
@@ -488,7 +493,8 @@ ${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}${codesHtml}
 		textLines.push('', `${labels.trackInApp}:`)
 		for (const link of inviteLinks) textLines.push(`${link.label}: ${link.url}`)
 	}
-	for (const link of codeLinks) textLines.push('', `${link.caption}: ${link.url}`)
+	for (const link of codeLinks)
+		textLines.push('', `${link.caption}: ${link.url}`)
 	textLines.push('', labels.footer)
 
 	return { subject: copy.subject, html, text: textLines.join('\n') }

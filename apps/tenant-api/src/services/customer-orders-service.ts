@@ -83,7 +83,11 @@ export async function listCustomerOrders(
 	input: { cursor?: string } = {},
 ): Promise<CustomerOrdersPage> {
 	const cursor = decodeCursor(input.cursor)
-	const mine = eq(restaurantOrders.customerId, customerId)
+	// A free test order (#119) is not part of a guest's order history.
+	const mine = and(
+		eq(restaurantOrders.customerId, customerId),
+		eq(restaurantOrders.isTest, false),
+	)!
 	const where = cursor
 		? and(
 				mine,

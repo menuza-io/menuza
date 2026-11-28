@@ -126,6 +126,14 @@ export async function recordOrderRefund(
 					if (!order) {
 						return orderFailure(404, 'order_not_found', 'Order not found.')
 					}
+					// A free test order (#119) took no money: there is nothing to give back.
+					if (order.isTest) {
+						return orderFailure(
+							409,
+							'test_order_not_refundable',
+							'A test order was not charged, so it cannot be refunded.',
+						)
+					}
 
 					// Taking points back and restoring rewards is a loyalty decision too.
 					if (await orderCarriesLoyalty(tx, order.id)) {

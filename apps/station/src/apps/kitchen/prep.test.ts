@@ -54,6 +54,7 @@ function drawKitchen(inventory: boolean) {
 		now: 2_000_000,
 		refresh: vi.fn(async () => {}),
 		command: vi.fn(async () => true),
+		testPrint: vi.fn(async () => true),
 		configure: vi.fn(async () => true),
 	})
 	return page.draw(

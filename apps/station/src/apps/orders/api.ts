@@ -56,6 +56,11 @@ export type OrdersApi = {
 		idempotencyKey: string,
 	) => Promise<PosOnlineOrderDetailResponse>
 	contact: (id: string) => Promise<PosOnlineOrderContact>
+	/** "Did the ticket print?" for a free test order (#119). */
+	testPrint: (
+		id: string,
+		answer: 'yes' | 'no',
+	) => Promise<PosOnlineOrderDetailResponse>
 	/** Today's and recent orders by number, name or the phone's last digits. */
 	search: (query: PosOnlineOrdersSearchQuery) => Promise<PosOnlineOrdersSearch>
 	/** Manager controls: the location's pause and what stock holds off. */
@@ -157,6 +162,10 @@ export function createOrdersApi(
 			}),
 		contact: (id) =>
 			call('POST', `${one(id)}/contact`, posOnlineOrderContactSchema, {}),
+		testPrint: (id, answer) =>
+			call('POST', `${one(id)}/test-print`, posOnlineOrderDetailSchema, {
+				answer,
+			}),
 		search: (query) => {
 			const params = new URLSearchParams()
 			for (const [key, value] of Object.entries(query))

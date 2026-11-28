@@ -152,6 +152,24 @@ describe('loadLaunchChecklist', () => {
 		expect(hours.completedAt).not.toBeNull()
 	})
 
+	it('ticks Place a test order when a test order printed or went through the kitchen (#119)', async () => {
+		const { user, organization } = await setupTestOrgWithUser('admin')
+		const locationId = await createLocation(organization.id)
+		const before = await loadLaunchChecklist({
+			organizationId: organization.id,
+			userId: user.id,
+			facts: NO_FACTS,
+		})
+		expect(step(before, locationId, 'launch_test_order').state).not.toBe('done')
+		const after = await loadLaunchChecklist({
+			organizationId: organization.id,
+			userId: user.id,
+			facts: { ...NO_FACTS, testOrderDoneAt: new Date().toISOString() },
+		})
+		expect(step(after, locationId, 'launch_test_order').state).toBe('done')
+		expect(after!.testOrdersEnabled).toBe(false)
+	})
+
 	it('evaluates each location on its own and shares organization-wide steps', async () => {
 		const { user, organization } = await setupTestOrgWithUser('admin')
 		const withHours = await createLocation(organization.id, {

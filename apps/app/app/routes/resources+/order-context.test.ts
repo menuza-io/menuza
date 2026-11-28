@@ -164,6 +164,25 @@ describe('internal restaurant order context', () => {
 		expect((await loader(args())).status).toBe(404)
 	})
 
+	it('folds the guest-ordering flags in, a literal true only (#119 #191 #170)', async () => {
+		featureFlag.mockImplementation(async (key: string) =>
+			key === 'launch.test_order'
+				? true
+				: key === 'ordering.problem_reports'
+					? 'true'
+					: key === 'ordering.group'
+						? true
+						: null,
+		)
+		const response = await loader(args({ locationId: 'loc_1' }))
+		const payload = (await response.json()) as { guestOrdering: unknown }
+		expect(payload.guestOrdering).toEqual({
+			testOrders: true,
+			problemReports: false,
+			group: true,
+		})
+	})
+
 	it('returns fresh menu context with routing flags and no-store', async () => {
 		const response = await loader(args({ locationId: 'loc_1' }))
 		expect(response.status).toBe(200)
@@ -210,6 +229,8 @@ describe('internal restaurant order context', () => {
 				discounts: [],
 				codes: [],
 			},
+			// Test orders, problem reports and group orders (#119, #191, #170) are off.
+			guestOrdering: { testOrders: false, problemReports: false, group: false },
 		})
 
 		// Fresh catalog reads: the builder is called with the resolved org and

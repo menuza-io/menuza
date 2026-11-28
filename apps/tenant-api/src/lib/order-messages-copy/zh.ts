@@ -81,5 +81,7 @@ export const ZH: OrderMessageCopy = {
 		pointsUnit: '积分',
 		starsUnit: '颗星',
 		footer: '这是一条关于您订单的服务消息。',
+		testTag: '测试',
+		testLabel: '测试订单：未收取任何费用。',
 	},
 }

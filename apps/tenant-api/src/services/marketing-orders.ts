@@ -30,6 +30,7 @@ export function countedOrdersSql(): SQL {
 			CASE WHEN ro.status = 'completed' THEN 1 ELSE 0 END AS completed
 		FROM restaurant_orders ro
 		WHERE ro.customer_id IS NOT NULL
+			AND ro.is_test = 0
 			AND ro.status IN ('accepted', 'preparing', 'ready', 'completed')
 			AND (ro.payment_method = 'handoff' OR ro.payment_status IN ('paid', 'not_required'))
 			AND (ro.refunded_cents - ro.refund_reversed_cents) < MAX(ro.total_cents, 1)

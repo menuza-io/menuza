@@ -123,6 +123,7 @@ const WORDS = {
 		longPrep: 'LONG PREP',
 		guestAllergy: 'ALLERGY STATED BY GUEST',
 		checkId: 'CHECK ID',
+		testOrder: 'TEST ORDER',
 		utensilsYes: 'Utensils: yes',
 		utensilsNo: 'No utensils',
 		largeOrder: 'Large order',
@@ -174,6 +175,7 @@ const WORDS = {
 		longPrep: 'تحضير طويل',
 		guestAllergy: 'الضيف ذكر حساسية',
 		checkId: 'تحقق من الهوية',
+		testOrder: 'طلب تجريبي',
 		utensilsYes: 'أدوات المائدة: نعم',
 		utensilsNo: 'بدون أدوات مائدة',
 		largeOrder: 'طلب كبير',
@@ -329,13 +331,18 @@ export type KitchenTicketInput = {
 	paid?: boolean | null
 	guestAllergy?: boolean
 	checkId?: boolean
+	/** A free test order (#119): "TEST ORDER" in a box, so nobody cooks it. */
+	testOrder?: boolean
 	reprint?: boolean
 	kind?: 'full' | 'changes' | 'cancelled'
 	removed?: Array<{ quantity: number; name: string }>
 	lines: KitchenLineInput[]
 }
 
-const orderTypeWord = (words: TicketWords, type: KitchenTicketInput['orderType']) =>
+const orderTypeWord = (
+	words: TicketWords,
+	type: KitchenTicketInput['orderType'],
+) =>
 	({
 		pickup: words.pickup,
 		delivery: words.delivery,
@@ -391,7 +398,9 @@ export function buildKitchenTicket(input: {
 		const parts = [
 			orderTypeWord(words, ticket.orderType),
 			ticket.tableLabel ? `${words.table} ${clean(ticket.tableLabel, 20)}` : '',
-			ticket.guestFirstName ? clean(scrubPhones(ticket.guestFirstName), 20) : '',
+			ticket.guestFirstName
+				? clean(scrubPhones(ticket.guestFirstName), 20)
+				: '',
 			ticket.dueTime ?? '',
 		].filter(Boolean)
 		doc.text(parts.join(' · '), { align: 'center', ...style('orderType') })
@@ -413,11 +422,14 @@ export function buildKitchenTicket(input: {
 	if (ticket.checkId) {
 		doc.text(words.checkId, { align: 'center', bold: true, boxed: true })
 	}
+	if (ticket.testOrder) {
+		doc.text(words.testOrder, { align: 'center', bold: true, boxed: true })
+	}
 	if (typeof ticket.utensilsRequested === 'boolean' && f('utensils').show) {
-		doc.text(
-			ticket.utensilsRequested ? words.utensilsYes : words.utensilsNo,
-			{ align: 'center', bold: true },
-		)
+		doc.text(ticket.utensilsRequested ? words.utensilsYes : words.utensilsNo, {
+			align: 'center',
+			bold: true,
+		})
 	}
 	if ((ticket.largeOrderExtraMinutes ?? 0) > 0 || ticket.largeOrder) {
 		if (f('largeOrder').show) {
@@ -517,6 +529,8 @@ export type ReceiptInput = {
 	/** The ZATCA code of a signed invoice, printed first of all codes. */
 	fiscalQr?: string | null
 	checkId?: boolean
+	/** A free test order (#119): "TEST ORDER" in a box. */
+	testOrder?: boolean
 	kind?: 'sale' | 'refund' | 'void'
 	reprint?: boolean
 }
@@ -614,7 +628,9 @@ export function buildReceipt(input: {
 		doc.text(
 			[
 				orderTypeWord(words, receipt.orderType),
-				receipt.tableLabel ? `${words.table} ${clean(receipt.tableLabel, 20)}` : '',
+				receipt.tableLabel
+					? `${words.table} ${clean(receipt.tableLabel, 20)}`
+					: '',
 			]
 				.filter(Boolean)
 				.join(' · '),
@@ -637,6 +653,9 @@ export function buildReceipt(input: {
 	}
 	if (receipt.checkId) {
 		doc.text(words.checkId, { align: 'center', bold: true, boxed: true })
+	}
+	if (receipt.testOrder) {
+		doc.text(words.testOrder, { align: 'center', bold: true, boxed: true })
 	}
 	doc.rule()
 	for (const line of receipt.lines) {
@@ -880,13 +899,11 @@ export function buildShiftReportDoc(input: {
 		{ t: 'text', text: 'Shift report', align: 'center', bold: true },
 		{ t: 'row', left: input.terminal, right: input.businessDate },
 		{ t: 'rule' },
-		...input.lines.map(
-			(line): TicketBlock => ({
-				t: 'row',
-				left: line.label,
-				right: line.value,
-			}),
-		),
+		...input.lines.map((line): TicketBlock => ({
+			t: 'row',
+			left: line.label,
+			right: line.value,
+		})),
 		{ t: 'feed', lines: 2 },
 	]
 	return {

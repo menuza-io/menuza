@@ -1,5 +1,16 @@
 import { randomUUID } from 'node:crypto'
-import { and, asc, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gte,
+	inArray,
+	isNull,
+	lte,
+	or,
+	sql,
+} from 'drizzle-orm'
 import {
 	formatPrintRef,
 	generatePrinterPassword,
@@ -123,7 +134,9 @@ export async function listPrinters(
 		.orderBy(asc(printDevices.name))
 	const flagged = await flaggedCounts(db)
 	return rows
-		.filter((row) => locationIds === null || locationIds.includes(row.locationId))
+		.filter(
+			(row) => locationIds === null || locationIds.includes(row.locationId),
+		)
 		.map((row) => view(orgId, row, now, flagged.get(row.id) ?? 0))
 }
 
@@ -448,7 +461,10 @@ async function livePrinters(db: TenantDatabase, locationId: string) {
 		.select()
 		.from(printDevices)
 		.where(
-			and(eq(printDevices.locationId, locationId), isNull(printDevices.revokedAt)),
+			and(
+				eq(printDevices.locationId, locationId),
+				isNull(printDevices.revokedAt),
+			),
 		)
 }
 
@@ -480,7 +496,8 @@ export async function queueOrderPrint(
 	if (printers.length === 0) return { queued: 0, printers: 0 }
 	const context = await loadPrintContext(input.orgId, input.locationId)
 	const tickets = resolveTickets(context?.tickets)
-	const sourceType = input.source === 'online' ? 'restaurant_order' : 'pos_order'
+	const sourceType =
+		input.source === 'online' ? 'restaurant_order' : 'pos_order'
 	let queued = 0
 
 	if (input.trigger.kind === 'kitchen') {
@@ -494,8 +511,21 @@ export async function queueOrderPrint(
 		if (!projected) return { queued: 0, printers: printers.length }
 		const { ticket, stationNames } = projected
 		const orderType = printOrderType(ticket)
-		if (!printAllowed(tickets, orderType === 'takeaway' ? 'takeaway' : orderType === 'pickup' ? 'pickup' : orderType)) {
-			return { queued: 0, printers: printers.length, reason: 'dine_in_left_out' }
+		if (
+			!printAllowed(
+				tickets,
+				orderType === 'takeaway'
+					? 'takeaway'
+					: orderType === 'pickup'
+						? 'pickup'
+						: orderType,
+			)
+		) {
+			return {
+				queued: 0,
+				printers: printers.length,
+				reason: 'dine_in_left_out',
+			}
 		}
 		const routes = routeKitchenTicket({
 			locationId: input.locationId,
@@ -509,7 +539,13 @@ export async function queueOrderPrint(
 				routes: readPrinterRoutes(device.routes),
 			})),
 		})
-		const extra = await kitchenExtras(db, input.orgId, input.locationId, input.source, input.orderId)
+		const extra = await kitchenExtras(
+			db,
+			input.orgId,
+			input.locationId,
+			input.source,
+			input.orderId,
+		)
 		for (const route of routes) {
 			const device = printers.find((p) => p.id === route.printerId)
 			if (!device) continue
@@ -519,7 +555,9 @@ export async function queueOrderPrint(
 					lineIndexes: route.lineIndexes,
 					station:
 						route.partial && ticket.lines[route.lineIndexes[0] ?? 0]
-							? stationNames.get(ticket.lines[route.lineIndexes[0]!]!.stationId) ?? null
+							? (stationNames.get(
+									ticket.lines[route.lineIndexes[0]!]!.stationId,
+								) ?? null)
 							: null,
 					orderType,
 					timeZone: context?.timeZone ?? extra.timeZone,
@@ -642,7 +680,8 @@ async function kitchenExtras(
 			)
 			.limit(1)
 		return {
-			guestFirstName: row?.fulfillment === 'pickup' ? firstName(row.name) : null,
+			guestFirstName:
+				row?.fulfillment === 'pickup' ? firstName(row.name) : null,
 			deliveryAddress:
 				row?.fulfillment === 'delivery' && row.address
 					? [row.address, row.unit, row.city].filter(Boolean).join(', ')
@@ -686,11 +725,14 @@ function kitchenInput(input: {
 	reprint: boolean
 }): KitchenTicketInput {
 	const { ticket } = input
-	const time = new Intl.DateTimeFormat(input.locale === 'ar' ? 'ar-SA' : 'en-US', {
-		dateStyle: 'short',
-		timeStyle: 'short',
-		timeZone: safeZone(input.timeZone),
-	})
+	const time = new Intl.DateTimeFormat(
+		input.locale === 'ar' ? 'ar-SA' : 'en-US',
+		{
+			dateStyle: 'short',
+			timeStyle: 'short',
+			timeZone: safeZone(input.timeZone),
+		},
+	)
 	return {
 		number: ticket.number,
 		time: time.format(ticket.createdAt),
@@ -711,25 +753,43 @@ function kitchenInput(input: {
 		paid: ticket.paid ?? null,
 		guestAllergy: ticket.guestAllergy === true,
 		checkId: ticket.checkId === true,
+		testOrder: ticket.isTest === true,
 		reprint: input.reprint,
 		lines: input.lineIndexes.map((index) => {
 			const line = ticket.lines[index]!
 			return {
 				quantity: line.quantity,
-				name: kitchenLineName(line.name, line.kitchenName, input.locale, input.locale),
+				name: kitchenLineName(
+					line.name,
+					line.kitchenName,
+					input.locale,
+					input.locale,
+				),
 				variant: line.variant,
-				highlight: line.highlight && line.highlight !== 'none' ? line.highlight : null,
+				highlight:
+					line.highlight && line.highlight !== 'none' ? line.highlight : null,
 				note: line.instructions || null,
 				courseName: line.courseName ?? null,
 				held: line.held,
 				options: line.options.map((option) => ({
-					name: kitchenLineName(option.name, option.kitchenName, input.locale, input.locale),
+					name: kitchenLineName(
+						option.name,
+						option.kitchenName,
+						input.locale,
+						input.locale,
+					),
 					quantity: option.quantity,
 					groupName: option.groupName
-						? getLocalizedMenuValue(option.groupName, input.locale, input.locale)
+						? getLocalizedMenuValue(
+								option.groupName,
+								input.locale,
+								input.locale,
+							)
 						: null,
 					highlight:
-						option.highlight && option.highlight !== 'none' ? option.highlight : null,
+						option.highlight && option.highlight !== 'none'
+							? option.highlight
+							: null,
 				})),
 			}
 		}),
@@ -796,7 +856,11 @@ export async function jobStatus(
 	db: TenantDatabase,
 	printerId: string,
 	jobId: string,
-): Promise<{ status: string; reason: string | null; printedAt: number | null } | null> {
+): Promise<{
+	status: string
+	reason: string | null
+	printedAt: number | null
+} | null> {
 	const [row] = await db
 		.select({
 			status: printJobs.status,
@@ -852,7 +916,10 @@ export async function locationHasPrinter(
 		.select({ id: printDevices.id })
 		.from(printDevices)
 		.where(
-			and(eq(printDevices.locationId, locationId), isNull(printDevices.revokedAt)),
+			and(
+				eq(printDevices.locationId, locationId),
+				isNull(printDevices.revokedAt),
+			),
 		)
 		.limit(1)
 	return Boolean(row)

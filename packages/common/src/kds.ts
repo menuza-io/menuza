@@ -262,6 +262,14 @@ export const kdsTicketSchema = z.object({
 	guestAllergy: z.boolean().optional(),
 	/** The order has alcohol: the ticket says "Check ID" (#167). Left out unless set. */
 	checkId: z.boolean().optional(),
+	/**
+	 * A free test order (#119): the kitchen screen badges it TEST and asks "Did
+	 * the ticket print?". Left out unless set, so other tickets keep their
+	 * fingerprints.
+	 */
+	isTest: z.boolean().optional(),
+	/** The answer to that question, once given: `yes` or `no`. */
+	testPrintAnswer: z.enum(['yes', 'no']).nullable().optional(),
 })
 export type KdsTicket = z.infer<typeof kdsTicketSchema>
 export const kdsFeedSchema = z.object({

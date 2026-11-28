@@ -723,6 +723,9 @@ export function Kitchen({
 													now
 												}
 												onCommand={(extra) => command(ticket, extra)}
+												onTestPrint={(answer) =>
+													void kitchen.testPrint(ticket.id, answer)
+												}
 												wasteAction={
 													<TicketWaste
 														ticket={ticket}
@@ -782,6 +785,7 @@ function Ticket({
 	labels,
 	fresh,
 	onCommand,
+	onTestPrint,
 	wasteAction,
 }: {
 	ticket: KdsTicket
@@ -795,6 +799,8 @@ function Ticket({
 	/** Came in (or had dishes added) a moment ago: ringed so it is seen. */
 	fresh: boolean
 	onCommand: (extra: Partial<KdsCommand>) => void
+	/** Answers "Did the ticket print?" on a free test order (#119). */
+	onTestPrint: (answer: 'yes' | 'no') => void
 	/** "Log it as waste?" for a cancelled ticket (Stock's waste, offered when the terminal has it). */
 	wasteAction?: React.ReactNode
 }) {
@@ -910,7 +916,7 @@ function Ticket({
 						// and words, never colour alone.
 						<p
 							data-kitchen-guest-allergy
-							className="kitchen-mark mt-1 ms-0 text-sm"
+							className="kitchen-mark ms-0 mt-1 text-sm"
 							data-highlight="allergy"
 						>
 							<Icon name="alert-triangle" className="size-4" aria-hidden />
@@ -918,10 +924,56 @@ function Ticket({
 						</p>
 					) : null}
 					{ticket.checkId ? (
-						<p data-kitchen-check-id className="kitchen-mark mt-1 ms-0 text-sm">
+						<p data-kitchen-check-id className="kitchen-mark ms-0 mt-1 text-sm">
 							<Icon name="shield-check" className="size-4" aria-hidden />
 							<Trans>Check ID</Trans>
 						</p>
+					) : null}
+					{ticket.isTest ? (
+						// A free test order (#119): badged so nobody cooks it for a guest, and
+						// asked whether its ticket printed (yes marks the launch step done).
+						<div data-kitchen-test className="mt-1 space-y-1">
+							<Badge tone="warning" className="text-sm font-semibold">
+								<Trans>TEST</Trans>
+							</Badge>
+							{ticket.testPrintAnswer === 'yes' ? (
+								<p className="text-sm" data-test-print="yes">
+									<Trans>The ticket printed.</Trans>
+								</p>
+							) : ticket.testPrintAnswer === 'no' ? (
+								<p className="text-sm" data-test-print="no">
+									<Trans>
+										The ticket did not print. Check that the printer is on, has
+										paper and is set up in Settings → Terminals in the App.
+									</Trans>
+								</p>
+							) : null}
+							{ticket.testPrintAnswer !== 'yes' ? (
+								<div className="flex flex-wrap items-center gap-2">
+									<span className="text-sm font-medium">
+										<Trans>Did the ticket print?</Trans>
+									</span>
+									<Button
+										size="md"
+										variant="outline"
+										disabled={disabled}
+										onClick={() => onTestPrint('yes')}
+										data-test-print-yes
+									>
+										<Trans>Yes</Trans>
+									</Button>
+									<Button
+										size="md"
+										variant="outline"
+										disabled={disabled}
+										onClick={() => onTestPrint('no')}
+										data-test-print-no
+									>
+										<Trans>No</Trans>
+									</Button>
+								</div>
+							) : null}
+						</div>
 					) : null}
 				</div>
 				<div className="shrink-0 text-end">

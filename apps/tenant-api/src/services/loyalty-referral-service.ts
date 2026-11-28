@@ -330,6 +330,8 @@ async function hasPriorCustomerOrderInTx(
 		.where(
 			and(
 				or(...identityClauses),
+				// A free test order (#119) is not a prior order.
+				eq(restaurantOrders.isTest, false),
 				// bounded: fixed 6-element status tuple
 				inArray(restaurantOrders.status, [...activeStatuses]),
 				// Ignore lapsed unpaid online holds (consistent with discount-apply.ts).

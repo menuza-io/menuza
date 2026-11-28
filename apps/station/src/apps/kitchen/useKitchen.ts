@@ -146,6 +146,8 @@ export function useKitchen(
 		stale,
 		refresh,
 		command: (command: KdsCommand) => write(() => api.command(command)),
+		testPrint: (orderId: string, answer: 'yes' | 'no') =>
+			write(() => api.testPrint(orderId, answer)),
 		configure: (version: number, config: KdsConfig) =>
 			write(() => api.configure(version, config)),
 	}

@@ -63,6 +63,7 @@ import {
 	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
 import { wouldExceedSlotLimit } from '@repo/common/slot-usage'
+import { readGuestOrderingFeatures } from '@repo/common/guest-ordering'
 import {
 	businessDayDate,
 	businessDayStartUtc,
@@ -92,6 +93,7 @@ import {
 	restaurantOrders,
 	restaurantOrderReservations,
 	type RestaurantOrder,
+	testOrderNonces,
 } from '@repo/tenant-db'
 
 import {
@@ -110,6 +112,7 @@ import {
 import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { deriveTabToken } from '../lib/qr-tokens.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { verifyTestOrderCode } from '../lib/test-order-code.ts'
 import { createOrgLock } from '../lib/concurrency.ts'
 import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
 import {
@@ -204,6 +207,7 @@ import {
 import { clearCartSnapshot } from './cart-reminders.ts'
 import { scheduleOrderJourneys } from './order-journeys.ts'
 import { orderCountsTowardSales } from './report-records.ts'
+import { spendTestNonceInTx } from './test-order-nonces.ts'
 import {
 	claimPurchaseIfUnclaimedInTx,
 	claimPurchaseInTx,
@@ -1017,6 +1021,12 @@ export async function placeOrder(input: {
 	dineIn?: DineInCapability | null
 	/** Trusted client platform header (`X-Client: ios | android`). */
 	client?: string | null
+	/**
+	 * The one-time test code the guest flow was opened with (`X-Test-Order`, #119).
+	 * Verified against the order context's switch, the location and its nonce;
+	 * a good one makes this a free test order.
+	 */
+	testOrderCode?: string | null
 	now?: Date
 }): Promise<PlaceOrderResult> {
 	const { organization, request, customerId } = input
@@ -1055,6 +1065,45 @@ export async function placeOrder(input: {
 			'Ordering is temporarily unavailable. Please try again shortly.',
 		)
 	}
+
+	// A free test order (#119): a tampered, expired, reused or other-location code
+	// is refused with `test_code_invalid`, and the guest can still place a real
+	// order. The nonce itself is spent inside the order's transaction.
+	let testNonce: string | null = null
+	if (input.testOrderCode) {
+		const features = readGuestOrderingFeatures(
+			(context as { guestOrdering?: unknown }).guestOrdering,
+		)
+		const checked = features.testOrders
+			? verifyTestOrderCode(input.testOrderCode, {
+					orgId,
+					locationId: request.locationId,
+					now: now.getTime(),
+				})
+			: ({ ok: false } as const)
+		if (!checked.ok) {
+			return orderFailure(
+				422,
+				'test_code_invalid',
+				'This test code is not valid any more. You can still place a real order.',
+			)
+		}
+		if (
+			isDineIn ||
+			request.loyalty ||
+			request.giftCard ||
+			request.catering ||
+			request.discounts?.code
+		) {
+			return orderFailure(
+				422,
+				'test_order_unsupported',
+				'A test order has no rewards, gift cards, coupons, catering or table codes.',
+			)
+		}
+		testNonce = checked.nonce
+	}
+	const isTest = testNonce !== null
 
 	// Catering (#124): the kill switch stops new catering orders on this node,
 	// and a gift card cannot be mixed in (the deposit and the balance are paid
@@ -1096,14 +1145,17 @@ export async function placeOrder(input: {
 
 	// Where the guest came from (#115): what the browser or the customer app
 	// kept (at most 7 days old), the coupon used, or a table or poster code.
-	const placedAttribution = await attributionForNewOrder(orgId, {
-		orderSource,
-		attribution: request.attribution,
-		couponCode: request.discounts?.code ?? null,
-		now: now.getTime(),
-	})
+	const placedAttribution = isTest
+		? { attribution: null, source: null }
+		: await attributionForNewOrder(orgId, {
+				orderSource,
+				attribution: request.attribution,
+				couponCode: request.discounts?.code ?? null,
+				now: now.getTime(),
+			})
 
 	if (
+		!isTest &&
 		request.paymentMethod === 'online' &&
 		(!context.onlinePayment.enabled || !context.onlinePayment.processor)
 	) {
@@ -1237,7 +1289,9 @@ export async function placeOrder(input: {
 	// Loyalty pre-checks, before the org lock: a reward on a tab round, a
 	// guest, or an organization without loyalty never reaches the transaction.
 	const loyaltyFlags =
-		customerId || request.loyalty ? await getLoyaltyFlagState(orgId) : null
+		!isTest && (customerId || request.loyalty)
+			? await getLoyaltyFlagState(orgId)
+			: null
 	if (request.loyalty) {
 		if (isDineIn) {
 			return orderFailure(
@@ -1307,7 +1361,7 @@ export async function placeOrder(input: {
 	const orderId = crypto.randomUUID()
 	const receiptToken = deriveReceiptToken(orgId, orderId)
 	const paymentToken =
-		request.paymentMethod === 'online'
+		request.paymentMethod === 'online' && !isTest
 			? derivePaymentToken(orgId, orderId)
 			: null
 
@@ -1321,8 +1375,13 @@ export async function placeOrder(input: {
 	// Guest order messages: the policy is stored with the order (fail closed),
 	// and update texts only with a phone, off table rounds, on the US node.
 	const guestMessages = readGuestMessagesPolicy(context.guestMessages)
-	const orderGuestMessages =
-		guestMessages.enabled && !isDineIn
+	// A test order's confirmation goes only to the email typed at checkout, and
+	// is labelled test; it never texts, whatever the restaurant's switches say.
+	const orderGuestMessages = isTest
+		? request.contact.email
+			? { receipt: true, ready: false, cancelled: false }
+			: null
+		: guestMessages.enabled && !isDineIn
 			? {
 					receipt: guestMessages.receipt,
 					ready: guestMessages.ready,
@@ -1330,6 +1389,7 @@ export async function placeOrder(input: {
 				}
 			: null
 	const smsUpdatesOptIn =
+		!isTest &&
 		request.smsUpdates === true &&
 		orderGuestMessages !== null &&
 		Boolean(request.contact.phone) &&
@@ -1363,6 +1423,7 @@ export async function placeOrder(input: {
 	// count and item subtotal as the prep rule above, a separate threshold. Never
 	// a table round. Flags the order; the alert itself is queued with the order.
 	const isLargeAlertOrder =
+		!isTest &&
 		request.fulfillment !== 'dine_in' &&
 		isLargeForAlert(
 			readLargeOrderAlertRule(
@@ -1570,7 +1631,7 @@ export async function placeOrder(input: {
 						}
 					}
 
-					if (result.capacity) {
+					if (result.capacity && !isTest) {
 						const slotFailure = await assertSlotCapacity(tx, result.capacity)
 						if (slotFailure) return { ok: false, failure: slotFailure }
 						const entityFailure = await assertEntityCapacity(
@@ -1579,7 +1640,7 @@ export async function placeOrder(input: {
 						)
 						if (entityFailure) return { ok: false, failure: entityFailure }
 					}
-					if (result.readySlotCapacity) {
+					if (result.readySlotCapacity && !isTest) {
 						const readyFailure = await assertReadySlotCapacity(
 							tx,
 							result.readySlotCapacity,
@@ -1587,31 +1648,36 @@ export async function placeOrder(input: {
 						if (readyFailure) return { ok: false, failure: readyFailure }
 					}
 					// Daily dish caps (#409): sold plus held stock may not pass the cap.
-					const dailyCapacity = await assertDailyDishCapacity({
-						db: tx,
-						context,
-						locationId: request.locationId,
-						lines: result.lines,
-						now,
-					})
+					const dailyCapacity = isTest
+						? { ok: true as const }
+						: await assertDailyDishCapacity({
+								db: tx,
+								context,
+								locationId: request.locationId,
+								lines: result.lines,
+								now,
+							})
 					if (!dailyCapacity.ok) {
 						const { status, code, message, details } = dailyCapacity.failure
 						return orderFailure(status, code, message, { details })
 					}
 
-					const preparedResult = await prepareOrderDiscounts(tx, {
-						priced: result,
-						context,
-						discounts: request.discounts,
-						fulfillment: request.fulfillment,
-						source: orderSource,
-						customerId,
-						now,
-						killed: isDiscountsKillSwitchOn(),
-						orgId,
-						phone: request.contact.phone,
-						deviceId: request.referralDeviceId ?? null,
-					})
+					// A test order never prices or records a discount (#119).
+					const preparedResult = isTest
+						? ({ ok: true, prepared: null } as const)
+						: await prepareOrderDiscounts(tx, {
+								priced: result,
+								context,
+								discounts: request.discounts,
+								fulfillment: request.fulfillment,
+								source: orderSource,
+								customerId,
+								now,
+								killed: isDiscountsKillSwitchOn(),
+								orgId,
+								phone: request.contact.phone,
+								deviceId: request.referralDeviceId ?? null,
+							})
 					if (!preparedResult.ok) {
 						return orderFailure(
 							preparedResult.failure.status,
@@ -1627,6 +1693,7 @@ export async function placeOrder(input: {
 					// The kill switch prices nothing. A guest who was shown a
 					// discount must not be charged full price with a 201.
 					if (
+						!isTest &&
 						!prepared &&
 						isDiscountsKillSwitchOn() &&
 						(request.discounts?.expectedDiscountMinor ?? 0) > 0
@@ -1775,18 +1842,20 @@ export async function placeOrder(input: {
 					// handoff, free) waits as `pending_acceptance`; an online order
 					// that still has to be paid is placed as today and waits from
 					// its paid event (the deadline set here marks it).
-					const acceptance = placementAcceptance({
-						context,
-						locationId: request.locationId,
-						totalCents: totals.totalCents,
-						fulfillment: request.fulfillment,
-						source: orderSource,
-						tabId: tabRow?.id ?? null,
-						scheduledFor: result.scheduledFor,
-						pickup: result.pickup,
-						prepMinutes: promiseLocation?.prepTime ?? null,
-						now,
-					})
+					const acceptance = isTest
+						? { deadline: null }
+						: placementAcceptance({
+								context,
+								locationId: request.locationId,
+								totalCents: totals.totalCents,
+								fulfillment: request.fulfillment,
+								source: orderSource,
+								tabId: tabRow?.id ?? null,
+								scheduledFor: result.scheduledFor,
+								pickup: result.pickup,
+								prepMinutes: promiseLocation?.prepTime ?? null,
+								now,
+							})
 					const waitsNow =
 						acceptance.deadline !== null &&
 						(request.paymentMethod !== 'online' || freeOrder)
@@ -1809,6 +1878,23 @@ export async function placeOrder(input: {
 								})
 							: null
 
+					// The test code is spent last, after every refusal above (a refusal
+					// commits what the transaction did): one order per code (#119).
+					if (
+						testNonce &&
+						!(await spendTestNonceInTx(
+							tx,
+							testNonce,
+							request.locationId,
+							now.getTime(),
+						))
+					) {
+						return orderFailure(
+							422,
+							'test_code_invalid',
+							'This test code is not valid any more. You can still place a real order.',
+						)
+					}
 					const numberFormat = promiseLocation?.orderNumberFormat
 						? parseOrderNumberFormat(promiseLocation.orderNumberFormat)
 						: null
@@ -1821,7 +1907,7 @@ export async function placeOrder(input: {
 							orderNumberFormat: numberFormat,
 						})
 						const holdExpiresAt =
-							request.paymentMethod === 'online' && !freeOrder
+							request.paymentMethod === 'online' && !freeOrder && !isTest
 								? new Date(now.getTime() + result.holdMinutes * 60 * 1000)
 								: null
 						try {
@@ -1835,17 +1921,20 @@ export async function placeOrder(input: {
 									locale: request.locale,
 									status: waitsNow ? 'pending_acceptance' : 'accepted',
 									acceptanceDeadlineAt: acceptance.deadline,
-									paymentMethod: request.paymentMethod,
+									// A test order never reaches a payment provider: online or at
+									// handoff, it is stored as a free order paid at handoff (#119).
+									paymentMethod: isTest ? 'handoff' : request.paymentMethod,
 									paymentStatus:
-										freeOrder || freeHandoff
+										isTest || freeOrder || freeHandoff
 											? 'not_required'
 											: request.paymentMethod === 'online'
 												? 'pending'
 												: 'unpaid',
 									paymentProcessor:
-										request.paymentMethod === 'online'
+										request.paymentMethod === 'online' && !isTest
 											? (context.onlinePayment.processor ?? null)
 											: null,
+									isTest,
 									fulfillment: request.fulfillment,
 									locationId: request.locationId,
 									locationName: result.location.name,
@@ -1875,10 +1964,14 @@ export async function placeOrder(input: {
 									scheduledFor: result.scheduledFor
 										? new Date(result.scheduledFor)
 										: null,
-									readySlotAt: result.readySlotCapacity
-										? new Date(result.readySlotCapacity.readySlotAtMs)
-										: null,
-									readySlotUnits: result.readySlotCapacity?.units ?? null,
+									// A test order holds no kitchen capacity (#119).
+									readySlotAt:
+										result.readySlotCapacity && !isTest
+											? new Date(result.readySlotCapacity.readySlotAtMs)
+											: null,
+									readySlotUnits: isTest
+										? null
+										: (result.readySlotCapacity?.units ?? null),
 									promisedAt: promised.promisedAt,
 									promisedUntil: promised.promisedUntil,
 									locationTimezone: promiseLocation?.timezone || null,
@@ -1937,6 +2030,13 @@ export async function placeOrder(input: {
 						}
 					}
 					if (!inserted) {
+						if (testNonce) {
+							// Give the code back: nothing was placed with it.
+							await tx
+								.update(testOrderNonces)
+								.set({ usedAt: null })
+								.where(eq(testOrderNonces.nonce, testNonce))
+						}
 						return orderFailure(
 							500,
 							'order_number_conflict',
@@ -1944,7 +2044,9 @@ export async function placeOrder(input: {
 						)
 					}
 
-					await recordDailyDishClaims({ tx, context, order: inserted, now })
+					if (!isTest) {
+						await recordDailyDishClaims({ tx, context, order: inserted, now })
+					}
 					// Order steps (#243): the order was placed by the guest, and an order
 					// that stands at once was accepted by Menuza (an order waiting for a
 					// person is accepted when one does it).
@@ -1979,11 +2081,15 @@ export async function placeOrder(input: {
 					// idempotency hash.
 					await recordDishPhotoOrderLines(tx, {
 						orderId: inserted.id,
-						photoTests: signedPhotoTests,
+						photoTests: isTest ? [] : signedPhotoTests,
 						lines: result.lines,
 					})
 
-					if (result.capacity && result.capacity.entities.length > 0) {
+					if (
+						!isTest &&
+						result.capacity &&
+						result.capacity.entities.length > 0
+					) {
 						await insertRowsInChunks(
 							restaurantOrderReservations,
 							result.capacity.entities.map((entity) => ({
@@ -2013,7 +2119,13 @@ export async function placeOrder(input: {
 					await queueOrderPlacedMessages(tx, inserted, messages.context(at))
 					// The manager alert for a new order (#131, #241, #300), posted after
 					// commit; an online order waits for its paid event like the receipt.
-					await queueOrderPlacedManagerAlert(tx, inserted, messages.context(at))
+					if (!isTest) {
+						await queueOrderPlacedManagerAlert(
+							tx,
+							inserted,
+							messages.context(at),
+						)
+					}
 					if (prepared) {
 						budgetCrossings = await reserveOrderDiscounts(tx, {
 							orderId: inserted.id,
@@ -2076,7 +2188,7 @@ export async function placeOrder(input: {
 							at,
 						})
 					}
-					if (!isDineIn) {
+					if (!isDineIn && !isTest) {
 						const referralDiscountApplied =
 							prepared?.evaluation.applied.filter(
 								(a) => a.discountId === LOYALTY_REFERRAL_DISCOUNT_ID,
@@ -2102,7 +2214,7 @@ export async function placeOrder(input: {
 					// only a placed order records the consent ticked with it. A
 					// replay returned earlier and records nothing again.
 					const consent =
-						customerId && request.marketingConsent
+						!isTest && customerId && request.marketingConsent
 							? await recordOrderMarketingConsentInTx(tx, {
 									customerId,
 									consent: request.marketingConsent,
@@ -2148,9 +2260,10 @@ export async function placeOrder(input: {
 		}
 		// A pay-at-pickup order counts at once; an online one counts when its
 		// payment lands (below). Background: the guest never waits for it.
-		scheduleOrderJourneys(orgId)
+		// A test order starts no journey and clears no cart (#119).
+		if (!isTest) scheduleOrderJourneys(orgId)
 		// Any order clears the guest's left-behind cart (#150).
-		if (customerId) {
+		if (customerId && !isTest) {
 			await getTenantDb(orgId)
 				.then((tenantDb) => clearCartSnapshot(tenantDb, customerId))
 				.catch(() => undefined)
@@ -3396,75 +3509,79 @@ export async function applyOrderStatusPatchInTx(
 			now.getTime(),
 		)
 	}
-	await queues.loyalty.queue(
-		loyaltyTx(tx),
-		{ type: 'restaurant_order', id: order.id },
-		now.getTime(),
-	)
-	// A cancel returns what the order used; accepting an order held
-	// for review (or marking one paid) starts to count it.
-	await queues.inventory.queue(
-		tx,
-		{
-			type: 'restaurant_order',
-			id: order.id,
-			locationId: order.locationId,
-		},
-		now.getTime(),
-	)
-	if (patch.status === 'cancelled') {
-		await releaseDiscountRedemptions(tx, [order.id])
-		await refundDiscountRedemptions(tx, order.id)
-		await onReferralOrderCancelledOrRefundedInTx(loyaltyTx(tx), {
-			orderId: order.id,
-			fullRefund: true,
-			remainingEligibleMinor: 0,
-			now: now.getTime(),
-		})
-		// An order that captured no provider money (unpaid, or paid entirely by
-		// a gift card) gives the card its part back. A paid one returns it
-		// through the refund path, gift card first.
-		if (order.paymentStatus !== 'paid') {
-			await restoreOrderGiftCardsInTx(
-				tx,
-				[order.id],
-				now.getTime(),
-				'order cancelled',
-			)
-		}
-	} else if (
-		patch.status === 'completed' ||
-		patch.paymentStatus === 'paid' ||
-		// Accepting a paid (or free) online order spends the use, as its paid
-		// event (or a free order's placement) would have had it not waited.
-		(fromPending &&
-			patch.status === 'accepted' &&
-			order.paymentMethod === 'online' &&
-			(order.paymentStatus === 'paid' ||
-				order.paymentStatus === 'not_required')) ||
-		// An operator accepting a paid order that was held for review
-		// (it was paid after its hold lapsed) honors the sale.
-		(order.status === 'payment_review' && patch.status !== undefined)
-	) {
-		if (order.status === 'payment_review') {
-			// Orders that reached review before the use was re-recorded
-			// at that moment have only a released row: record it now.
-			await reReserveReleasedDiscounts(tx, order.id)
-		}
-		await consumeDiscountRedemptions(tx, [order.id])
-		const effectivePaymentStatus = patch.paymentStatus ?? order.paymentStatus
-		if (
-			patch.status === 'completed' &&
-			(effectivePaymentStatus === 'paid' ||
-				effectivePaymentStatus === 'not_required')
-		) {
-			await onReferralOrderCompletedInTx(loyaltyTx(tx), {
+	// A free test order (#119) moved nothing: no points, no stock, no discount
+	// use, no referral, no gift card. Its status change is only a status change.
+	if (!order.isTest) {
+		await queues.loyalty.queue(
+			loyaltyTx(tx),
+			{ type: 'restaurant_order', id: order.id },
+			now.getTime(),
+		)
+		// A cancel returns what the order used; accepting an order held
+		// for review (or marking one paid) starts to count it.
+		await queues.inventory.queue(
+			tx,
+			{
+				type: 'restaurant_order',
+				id: order.id,
+				locationId: order.locationId,
+			},
+			now.getTime(),
+		)
+		if (patch.status === 'cancelled') {
+			await releaseDiscountRedemptions(tx, [order.id])
+			await refundDiscountRedemptions(tx, order.id)
+			await onReferralOrderCancelledOrRefundedInTx(loyaltyTx(tx), {
 				orderId: order.id,
-				eligibleMinor: Math.max(0, order.subtotalCents - order.discountCents),
-				totalPaidMinor: order.totalCents,
-				paymentStatus: effectivePaymentStatus,
+				fullRefund: true,
+				remainingEligibleMinor: 0,
 				now: now.getTime(),
 			})
+			// An order that captured no provider money (unpaid, or paid entirely by
+			// a gift card) gives the card its part back. A paid one returns it
+			// through the refund path, gift card first.
+			if (order.paymentStatus !== 'paid') {
+				await restoreOrderGiftCardsInTx(
+					tx,
+					[order.id],
+					now.getTime(),
+					'order cancelled',
+				)
+			}
+		} else if (
+			patch.status === 'completed' ||
+			patch.paymentStatus === 'paid' ||
+			// Accepting a paid (or free) online order spends the use, as its paid
+			// event (or a free order's placement) would have had it not waited.
+			(fromPending &&
+				patch.status === 'accepted' &&
+				order.paymentMethod === 'online' &&
+				(order.paymentStatus === 'paid' ||
+					order.paymentStatus === 'not_required')) ||
+			// An operator accepting a paid order that was held for review
+			// (it was paid after its hold lapsed) honors the sale.
+			(order.status === 'payment_review' && patch.status !== undefined)
+		) {
+			if (order.status === 'payment_review') {
+				// Orders that reached review before the use was re-recorded
+				// at that moment have only a released row: record it now.
+				await reReserveReleasedDiscounts(tx, order.id)
+			}
+			await consumeDiscountRedemptions(tx, [order.id])
+			const effectivePaymentStatus = patch.paymentStatus ?? order.paymentStatus
+			if (
+				patch.status === 'completed' &&
+				(effectivePaymentStatus === 'paid' ||
+					effectivePaymentStatus === 'not_required')
+			) {
+				await onReferralOrderCompletedInTx(loyaltyTx(tx), {
+					orderId: order.id,
+					eligibleMinor: Math.max(0, order.subtotalCents - order.discountCents),
+					totalPaidMinor: order.totalCents,
+					paymentStatus: effectivePaymentStatus,
+					now: now.getTime(),
+				})
+			}
 		}
 	}
 	// Order steps (#243), written in the same transaction as the status: who
@@ -3487,14 +3604,17 @@ export async function applyOrderStatusPatchInTx(
 			})
 		}
 	}
-	// Ready and cancelled tell the guest (once per kind and channel).
-	await queueOrderStatusMessages(
-		tx,
-		updated ?? { ...order, ...patch },
-		order.status,
-		patch.status ?? null,
-		queues.messages.context(now.getTime()),
-	)
+	// Ready and cancelled tell the guest (once per kind and channel); a test
+	// order only ever sent its test confirmation.
+	if (!order.isTest) {
+		await queueOrderStatusMessages(
+			tx,
+			updated ?? { ...order, ...patch },
+			order.status,
+			patch.status ?? null,
+			queues.messages.context(now.getTime()),
+		)
+	}
 	// Only a person accepting a waiting order says "accepted" (#107); an
 	// order accepted automatically at placement never does.
 	if (fromPending && patch.status === 'accepted') {
@@ -3755,6 +3875,11 @@ export function publicOrderSummary(order: RestaurantOrder) {
 	return {
 		id: order.id,
 		number: order.number,
+		/**
+		 * A free test order (#119): Sites skips payment and says "Test order",
+		 * the kitchen screens badge it. Only ever true; absent otherwise.
+		 */
+		...(order.isTest ? { isTest: true as const } : {}),
 		status: order.status,
 		paymentStatus: order.paymentStatus,
 		currency: order.currency,
@@ -3980,6 +4105,10 @@ export function operatorOrder(
 		largeOrder: order.largeOrder === true,
 		/** The order has alcohol: staff "Check ID" at handoff (#167). Operators only. */
 		hasAlcohol: order.hasAlcohol === true,
+		/** A free test order (#119): the inbox badges it and offers the print question. */
+		isTest: order.isTest === true,
+		/** "Did the ticket print?" for a test order: `yes`, `no` or null (not asked yet). */
+		testPrintAnswer: order.isTest ? (order.testPrintAnswer ?? null) : null,
 		/** The guest stated an allergy at checkout (#294). Operators only. */
 		guestAllergy: order.guestAllergy === true,
 		/**

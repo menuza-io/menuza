@@ -49,10 +49,12 @@ const ticket: KdsTicket = {
 let host: HTMLDivElement
 let root: Root
 const command = vi.fn(async () => true)
+const testPrint = vi.fn(async (_orderId: string, _answer: 'yes' | 'no') => true)
 const issues: unknown[][] = []
 beforeEach(() => {
 	localStorage.clear()
 	command.mockClear()
+	testPrint.mockClear()
 	issues.length = 0
 	vi.spyOn(console, 'error').mockImplementation((...args) => {
 		issues.push(args)
@@ -102,6 +104,7 @@ function draw(
 		now: NOW,
 		refresh: vi.fn(async () => {}),
 		command,
+		testPrint,
 		configure: vi.fn(async () => true),
 		...over,
 	})
@@ -155,6 +158,52 @@ describe('flat kitchen presentation retains operational actions', () => {
 			lineId: null,
 			stage: 'preparing',
 		})
+	})
+	it('badges a free test order TEST and asks whether its ticket printed (#119)', () => {
+		const feed: KdsFeed = {
+			config: DEFAULT_KDS_CONFIG,
+			configVersion: 1,
+			tickets: [{ ...ticket, isTest: true, testPrintAnswer: null }],
+			serverNow: NOW,
+			truncated: false,
+		}
+		draw({ feed })
+		const mark = host.querySelector('[data-kitchen-test]')!
+		expect(mark.textContent).toContain('TEST')
+		expect(mark.textContent).toContain('Did the ticket print?')
+		const yes = host.querySelector<HTMLButtonElement>('[data-test-print-yes]')!
+		const no = host.querySelector<HTMLButtonElement>('[data-test-print-no]')!
+		expect(yes.textContent).toBe('Yes')
+		expect(no.textContent).toBe('No')
+		act(() => yes.click())
+		expect(testPrint).toHaveBeenCalledExactlyOnceWith('ticket', 'yes')
+		act(() => no.click())
+		expect(testPrint).toHaveBeenLastCalledWith('ticket', 'no')
+	})
+	it('says the ticket printed, or points to printer setup, once answered (#119)', () => {
+		const ticketWith = (answer: 'yes' | 'no') =>
+			({
+				config: DEFAULT_KDS_CONFIG,
+				configVersion: 1,
+				tickets: [{ ...ticket, isTest: true, testPrintAnswer: answer }],
+				serverNow: NOW,
+				truncated: false,
+			}) satisfies KdsFeed
+		draw({ feed: ticketWith('yes') })
+		expect(host.querySelector('[data-test-print="yes"]')).not.toBeNull()
+		expect(host.querySelector('[data-test-print-yes]')).toBeNull()
+		act(() => root.unmount())
+		root = createRoot(host)
+		draw({ feed: ticketWith('no') })
+		expect(host.querySelector('[data-test-print="no"]')!.textContent).toContain(
+			'Settings',
+		)
+		// The question stays so the answer can be corrected after a fix.
+		expect(host.querySelector('[data-test-print-yes]')).not.toBeNull()
+	})
+	it('shows nothing about printing on a real order (#119)', () => {
+		draw()
+		expect(host.querySelector('[data-kitchen-test]')).toBeNull()
 	})
 	it('keeps stale tickets readable but refuses bumping until reconnected', () => {
 		draw({ stale: true })

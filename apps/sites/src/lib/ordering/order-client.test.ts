@@ -128,6 +128,44 @@ describe('regional order client', () => {
 		})
 		expect(fetch).not.toHaveBeenCalled()
 	})
+	it('sends the one-time test code in the X-Test-Order header, only when there is one (#119)', async () => {
+		using ignoredSetup = setup()
+		const placed = {
+			ok: true,
+			status: 201,
+			json: async () => ({
+				order: {
+					id: 'o1',
+					number: 'A1',
+					status: 'accepted',
+					paymentStatus: 'not_required',
+					currency: 'USD',
+					subtotalCents: 2000,
+					taxCents: 0,
+					deliveryFeeCents: 0,
+					tipCents: 0,
+					totalCents: 2000,
+					holdExpiresAt: null,
+				},
+				receiptToken: 'r'.repeat(40),
+			}),
+		}
+		const fetch = vi.fn().mockResolvedValue(placed)
+		vi.stubGlobal('fetch', fetch)
+		await submitRegionalOrder(
+			{ lines: [] },
+			{ testOrderCode: 'tc1.loc.nonce.1.mac' },
+		)
+		const [, init] = fetch.mock.calls[0] as [string, RequestInit]
+		expect((init.headers as Record<string, string>)['X-Test-Order']).toBe(
+			'tc1.loc.nonce.1.mac',
+		)
+		await submitRegionalOrder({ lines: [] })
+		const [, plain] = fetch.mock.calls[1] as [string, RequestInit]
+		expect(plain.headers as Record<string, string>).not.toHaveProperty(
+			'X-Test-Order',
+		)
+	})
 	it('clears the attempt so a later order mints a fresh key', async () => {
 		using ignoredSetup = setup()
 		const payload = { contact: { name: 'Test guest' }, lines: [] }

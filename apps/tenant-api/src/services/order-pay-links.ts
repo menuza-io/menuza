@@ -313,6 +313,14 @@ export async function createOperatorOrderPayLink(input: {
 	if (!order || !inScope(input.scope, order.locationId)) {
 		return orderFailure(404, 'order_not_found', 'Order not found.')
 	}
+	// A free test order (#119) is never charged and never becomes a real order.
+	if (order.isTest) {
+		return orderFailure(
+			409,
+			'test_order_not_payable',
+			'A test order is free and cannot be paid.',
+		)
+	}
 	if (order.status === 'cancelled' || order.status === 'expired') {
 		return orderFailure(
 			409,

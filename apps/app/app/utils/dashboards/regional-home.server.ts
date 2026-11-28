@@ -42,6 +42,11 @@ async function postRegionalHome<T>(
 export type LaunchFacts = {
 	pairedLocationIds: string[]
 	firstOrderAt: string | null
+	/**
+	 * When a free test order (#119) was confirmed printed, or first moved through
+	 * the kitchen by a person. A time only, never an order.
+	 */
+	testOrderDoneAt?: string | null
 }
 
 /** Paired terminal locations and the first counted order time, or null. */
@@ -63,6 +68,11 @@ export async function loadLaunchFacts(organization: {
 			typeof raw.firstOrderAt === 'string' &&
 			!Number.isNaN(Date.parse(raw.firstOrderAt))
 				? raw.firstOrderAt
+				: null,
+		testOrderDoneAt:
+			typeof raw.testOrderDoneAt === 'string' &&
+			!Number.isNaN(Date.parse(raw.testOrderDoneAt))
+				? raw.testOrderDoneAt
 				: null,
 	}
 }

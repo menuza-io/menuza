@@ -58,6 +58,9 @@ export type OrderCopyLabels = {
 	pointsUnit: string
 	starsUnit: string
 	footer: string
+	/** A free test order (#119): the subject tag, and the line above the lead. */
+	testTag: string
+	testLabel: string
 }
 
 export type OrderMessageCopy = {

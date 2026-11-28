@@ -82,5 +82,7 @@ export const FR: OrderMessageCopy = {
 		pointsUnit: 'points',
 		starsUnit: 'étoiles',
 		footer: 'Ceci est un message de service concernant votre commande.',
+		testTag: 'Test',
+		testLabel: 'Commande test : rien n’a été débité.',
 	},
 }

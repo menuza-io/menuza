@@ -60,6 +60,8 @@ type OrderSalesState = {
 	status: OrderStatus
 	paymentMethod: 'handoff' | 'online'
 	paymentStatus: string
+	/** A free test order (#119) never counts toward sales. */
+	isTest?: boolean | null
 }
 
 /**
@@ -69,12 +71,19 @@ type OrderSalesState = {
  * expired, and payment-review orders are left out.
  */
 export function orderCountsTowardSales(order: OrderSalesState) {
-	return ACTIVE_STATUSES.includes(order.status) && isPayableOrder(order)
+	return (
+		order.isTest !== true &&
+		ACTIVE_STATUSES.includes(order.status) &&
+		isPayableOrder(order)
+	)
 }
 
 /** The same rule as {@link orderCountsTowardSales}, as a WHERE clause. */
 export function countedOrderCondition(): SQL {
 	return and(
+		// A free test order (#119) is never a sale: not in a report, a total,
+		// stock, a marketing credit or a guest's order count.
+		eq(restaurantOrders.isTest, false),
 		inArray(restaurantOrders.status, [...RESTAURANT_SALES_ORDER_STATUSES]),
 		payableOrderCondition(),
 	)!
@@ -239,6 +248,8 @@ async function loadOrderRows(
 	// The columns hold epoch seconds.
 	const conditions: SQL[] = [
 		eq(restaurantOrders.orgId, orgId),
+		// Test orders (#119) are not report rows, counted or not.
+		eq(restaurantOrders.isTest, false),
 		sql`${timeColumn} <= ${Math.floor(range.end.getTime() / 1000)}`,
 	]
 	if (range.start) {

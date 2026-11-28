@@ -26,6 +26,7 @@ import {
 
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { errorLogFields } from '../lib/error-log.ts'
+import { HttpError } from '../lib/http.ts'
 import { checkDeliveryAddress } from './delivery.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
@@ -55,6 +56,14 @@ import {
 	resetOperatorSlotLimits,
 } from '../services/order-slot-limits-service.ts'
 import { reviseOrderRequestSchema } from '@repo/common/order-edits'
+import {
+	mintTestOrderCodeRequestSchema,
+	testPrintAnswerSchema,
+} from '@repo/common/test-orders'
+import {
+	mintTestOrderCodeForOrg,
+	recordTestPrintAnswer,
+} from '../services/test-orders-service.ts'
 import { sendOrderPayLinkRequestSchema } from '@repo/common/order-pay-links'
 import { createOperatorOrderPayLink } from '../services/order-pay-links.ts'
 import {
@@ -702,6 +711,77 @@ operatorOrderRoutes.post('/delivery-check', async (c) => {
 		)
 	}
 	return c.json(checked.body, 200, noStoreHeaders())
+})
+
+/**
+ * `POST /operator/orders/test-code` (#119, `orders:write`): one one-time code
+ * for a free test order at one location the token reaches, 30 minutes, the
+ * organization's own. At most 10 a day per location (`test_order_limit`).
+ * Only a code and its expiry leave the region; the App builds the link to the
+ * website and puts the code in its URL fragment. Registered before `/:id`.
+ */
+operatorOrderRoutes.post('/test-code', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:write')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const parsed = mintTestOrderCodeRequestSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	if (!orderVisible(auth.auth, parsed.data.locationId)) {
+		return c.json({ error: 'location_not_found' }, 404, noStoreHeaders())
+	}
+	try {
+		const db = await getTenantDb(auth.auth.orgId)
+		const minted = await mintTestOrderCodeForOrg(auth.auth.orgId, db, {
+			locationId: parsed.data.locationId,
+		})
+		return c.json(minted, 201, noStoreHeaders())
+	} catch (error) {
+		if (error instanceof HttpError) return error.toResponse()
+		throw error
+	}
+})
+
+/**
+ * `POST /operator/orders/:id/test-print` (#119, `orders:write`): the answer to
+ * "Did the ticket print?" for a test order. Yes marks the launch step done; No
+ * is recorded and links to printer help. Only a test order has the question.
+ */
+operatorOrderRoutes.post('/:id/test-print', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:write')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const parsed = testPrintAnswerSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	const db = await getTenantDb(auth.auth.orgId)
+	const recorded = await recordTestPrintAnswer(
+		auth.auth.orgId,
+		db,
+		c.req.param('id'),
+		parsed.data.answer,
+		{ locationIds: auth.auth.locationIds },
+	)
+	if (!recorded.ok) {
+		return c.json(
+			{ error: recorded.code, message: recorded.message },
+			recorded.status,
+			noStoreHeaders(),
+		)
+	}
+	return c.json(
+		{ ok: true, testPrintAnswer: recorded.order.testPrintAnswer },
+		200,
+		noStoreHeaders(),
+	)
 })
 
 /**

@@ -17,6 +17,7 @@ import {
 	AlertDialogTitle,
 } from '@repo/ui/alert-dialog'
 import { Avatar, AvatarFallback } from '@repo/ui/avatar'
+import { TEST_ORDER_BADGE } from '@repo/common/test-orders'
 import { Badge } from '@repo/ui/badge'
 import {
 	Breadcrumb,
@@ -296,12 +297,14 @@ export function OrderDetail({
 	// are refunded through the payment provider.
 	const canRecordRefund =
 		canWrite &&
+		!order.isTest &&
 		Boolean(onRecordRefund) &&
 		paidAtHandoff &&
 		!onTab &&
 		refundableCents(order) > 0
 	const canProviderRefund =
 		canWrite &&
+		!order.isTest &&
 		canRefund &&
 		paidOnline &&
 		!onTab &&
@@ -831,6 +834,19 @@ export function OrderDetail({
 									<Trans>Came from: </Trans>
 									<span dir="auto">{cameFromLabel}</span>
 								</p>
+								{order.isTest ? (
+									<p
+										className="flex flex-wrap items-center gap-2 font-medium"
+										data-testid="order-test"
+									>
+										<Badge variant="secondary">{TEST_ORDER_BADGE}</Badge>
+										<span>
+											<Trans>
+												A test order: nothing was charged, and it is not a sale.
+											</Trans>
+										</span>
+									</p>
+								) : null}
 								{order.largeOrderExtraMinutes ? (
 									<p className="font-medium" data-testid="order-large-order">
 										<Trans>Large order +{largeOrderExtraMinutes} min</Trans>

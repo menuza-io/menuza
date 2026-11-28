@@ -20,6 +20,7 @@ import OrderBar from '~/components/ordering/OrderBar.astro'
 import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import OrderingLabels from '~/components/ordering/OrderingLabels.astro'
 import PopularRow from '~/components/ordering/PopularRow.astro'
+import TestOrderBanner from '~/components/ordering/TestOrderBanner.astro'
 import StickyCategoryNav from '~/components/ordering/StickyCategoryNav.astro'
 import TableTab from '~/components/ordering/TableTab.astro'
 import { buildFavoritesLabels } from '~/lib/guest-account-labels'
@@ -815,6 +816,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			class="mt-6 lg:hidden"
 		/>
 
+		<TestOrderBanner />
 		<PopularRow variant="favorites" heading={favoritesLabels.row} labels={carouselLabels} cards={[]} />
 		<script id="favorites-labels" type="application/json" is:inline set:html={JSON.stringify(favoritesLabels).replace(/</g, '\\u003c')} />
 		<PopularRow heading={mostOrderedLabel} labels={carouselLabels} cards={popularCards} />
@@ -1081,6 +1083,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		import { createItemModal } from '~/lib/ordering/item-modal'
 		import { initPhotoTests, recordPhotoTestAdd } from '~/lib/photo-test-client'
 		import { mountMenuFavorites } from '~/lib/ordering/favorites-ui'
+		import { mountTestOrderBanner } from '../scripts/test-order-banner'
 		import { addSuggestion, suggestForCart } from '~/lib/ordering/upsell'
 		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
 		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
@@ -1838,6 +1841,9 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			modal.open(itemId, opener)
 		})
 		modal?.openFromUrl()
+
+		// A free test order (#119): keep the code out of the address bar, say so.
+		mountTestOrderBanner(orgId)
 
 		// Favorite dishes (#158): hearts, the modal's heart and "Your favorites".
 		const favoritesLabelsEl = document.getElementById('favorites-labels')

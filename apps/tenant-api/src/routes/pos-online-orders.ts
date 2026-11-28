@@ -11,6 +11,7 @@ import {
 	posPauseCommandSchema,
 	posStationControlsAllowed,
 } from '@repo/common/pos-station-controls'
+import { testPrintAnswerSchema } from '@repo/common/test-orders'
 import { authenticatePosDevice, posError } from '../lib/pos-auth.ts'
 import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
 import { HttpError, json, readJsonBody } from '../lib/http.ts'
@@ -30,6 +31,7 @@ import {
 	type OnlineOrdersActor,
 } from '../services/pos-online-orders-service.ts'
 import { touchDevice } from '../services/pos-service.ts'
+import { recordTestPrintAnswer } from '../services/test-orders-service.ts'
 import {
 	stationAvailability,
 	stationControlsState,
@@ -285,6 +287,26 @@ posOnlineOrdersRoutes.post('/:id/refunds', async (c) => {
 		c.req.param('id'),
 		result.data.replayed ? 200 : 201,
 	)
+})
+
+/**
+ * "Did the ticket print?" for a free test order (#119). The question is only
+ * asked of a test order; yes marks the launch step done, no is recorded.
+ */
+posOnlineOrdersRoutes.post('/:id/test-print', async (c) => {
+	const auth = await authorize(c)
+	if ('error' in auth) return auth.error
+	const body = await readJsonBody(c, testPrintAnswerSchema)
+	if ('error' in body) return body.error
+	const recorded = await recordTestPrintAnswer(
+		auth.actor.orgId,
+		auth.db,
+		c.req.param('id'),
+		body.data.answer,
+		{ locationIds: [auth.actor.locationId] },
+	)
+	if (!recorded.ok) return posError(recorded.status, recorded.code)
+	return detailResponse(auth, c.req.param('id'))
 })
 
 /** The guest's full phone and email, one order at a time, recorded. */

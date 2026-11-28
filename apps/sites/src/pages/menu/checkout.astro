@@ -7,10 +7,15 @@ import LegalLinks from '~/components/LegalLinks.astro'
 import LoyaltyLabels from '~/components/loyalty/LoyaltyLabels.astro'
 import MarketingConsentBoxes from '~/components/marketing/MarketingConsentBoxes.astro'
 import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
+import TestOrderBanner from '~/components/ordering/TestOrderBanner.astro'
 import SitePage from '~/components/SitePage.astro'
 import { buildLoyaltyLabels } from '~/lib/loyalty/labels'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
-import { buildOrderDetailsLabels, translate } from '~/lib/ordering-labels'
+import {
+	buildOrderDetailsLabels,
+	buildTestOrderLabels,
+	translate,
+} from '~/lib/ordering-labels'
 import {
 	buildChannelUpsellCategories,
 	collectUnavailableVariantIds,
@@ -153,6 +158,7 @@ if (fulfillmentOptions.pickup !== false) allowedModes.push('pickup')
 if (fulfillmentOptions.delivery !== false) allowedModes.push('delivery')
 if (!allowedModes.length) allowedModes.push('pickup')
 const odLabels = buildOrderDetailsLabels(i18n)
+const testOrderLabels = buildTestOrderLabels(i18n)
 const loyaltyLabels = buildLoyaltyLabels(i18n)
 
 const menuHref = getLocaleHref('/menu', requestedLocale, requestedLocale, defaultLocale)
@@ -567,6 +573,7 @@ const inputClass =
 				<a href={emptyHref} class="btn-cta mt-2">{emptyActionLabel}</a>
 			</div>
 
+			<TestOrderBanner />
 			<div id="checkout-root" class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-8">
 				{/* Form column: sections are numbered by CSS counters, so a hidden
 				    section (delivery address, tip) never leaves a gap. */}
@@ -1025,6 +1032,7 @@ const inputClass =
 			alcoholIds: alcoholIdsFromMenu(menuPayload ?? { menus: [] }),
 			allowedModes,
 			orderDetailsLabels: odLabels,
+			testOrderLabels,
 			unavailableVariantIds: [...unavailableVariantIds],
 			orderLimits,
 			locationPhone,
@@ -1077,6 +1085,8 @@ const inputClass =
 		import { currentAttribution } from '~/lib/ordering/attribution'
 import { photoTestsForCart } from '~/lib/photo-test-client'
 		import { checkoutOrderPayload, checkoutOrderRequest } from '~/lib/ordering/checkout-payload'
+		import { clearTestCode, readTestCode } from '~/lib/ordering/test-order'
+		import { mountTestOrderBanner } from '../../scripts/test-order-banner'
 		import {
 			dailySoldOutMessage,
 			orderErrorMessage,
@@ -1272,6 +1282,9 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			? `menuza_drop_cart_${orgId}_${drop!.id}`
 			: `menuza_cart_${orgId}`
 		const odLabels = (meta.orderDetailsLabels ?? {}) as OrderDetailsLabels
+		// A free test order (#119): the banner, and a flag the placement reads.
+		const testOrderLabels = (meta.testOrderLabels ?? {}) as { invalid: string }
+		mountTestOrderBanner(orgId)
 		const allowedModes = (meta.allowedModes ?? ['pickup', 'delivery']) as FulfillmentMode[]
 		const activeLocation = (meta.locations ?? []).find((l: any) => l.id === meta.locationId) ?? null
 		// Which dishes count toward an item count (#256), and the languages to
@@ -3044,6 +3057,11 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			if (!orderingOpen) return
 			// A new attempt judges the cart afresh (a manager may have topped a dish up).
 			regionShort = null
+			// A free test order (#119): the code from the operator's link, while it
+			// lasts. No payment, rewards, coupons, gift cards, consent or attribution
+			// ride along: the region would refuse or ignore them anyway.
+			const testOrder = readTestCode(sessionStorage, orgId)
+			if (testOrder) paymentMethod = 'handoff'
 
 			// Drop orders revalidate the pickup chosen on the drop page: the slot
 			// can sell out or fall inside the lead time while checkout sits open.
@@ -3131,7 +3149,9 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			// A reward goes out only as the latest quote priced it: wait a few
 			// seconds at most for a re-price still on its way, and stop when it
 			// did not confirm the pick.
-			const reward = (await loyalty?.placement()) ?? { ok: true as const, selection: null }
+			const reward = testOrder
+				? { ok: true as const, selection: null }
+				: ((await loyalty?.placement()) ?? { ok: true as const, selection: null })
 			if (!reward.ok) {
 				setBusy(false)
 				renderCheckout()
@@ -3142,10 +3162,12 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			// Discounts go out only as the region's latest quote priced them: wait a
 			// few seconds at most for one on its way, and never place a total the
 			// customer was not shown. With discounts off nothing is sent.
-			const placedDiscounts = (await discounts?.placement()) ?? {
-				ok: true as const,
-				discounts: null,
-			}
+			const placedDiscounts = testOrder
+				? { ok: true as const, discounts: null }
+				: ((await discounts?.placement()) ?? {
+						ok: true as const,
+						discounts: null,
+					})
 			if (!placedDiscounts.ok) {
 				setBusy(false)
 				renderCheckout()
@@ -3175,7 +3197,7 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 			}
 			// A gift card goes out only as the region just priced it: a different
 			// amount stops here and the guest sees the new total.
-			if (giftCardCheckout && !(await giftCardCheckout.confirm())) {
+			if (!testOrder && giftCardCheckout && !(await giftCardCheckout.confirm())) {
 				setBusy(false)
 				renderCheckout()
 				showCheckoutError(readGiftCardLabels().giftCardChanged)
@@ -3209,7 +3231,7 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 						(document.getElementById('age-confirm') as HTMLInputElement | null)?.checked === true,
 					),
 					guestAllergy: (document.getElementById('guest-allergy') as HTMLInputElement | null)?.checked === true,
-					giftCard: giftCardCheckout?.payload() ?? null,
+					giftCard: testOrder ? null : (giftCardCheckout?.payload() ?? null),
 					referralDeviceId: referralDeviceId(window.localStorage),
 				})
 				// smsUpdates is part of the core payload: the region hashes it into
@@ -3220,17 +3242,20 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 				// a box changed still replays the first order instead of placing and
 				// charging a second one.
 				const idempotencyKey = await checkoutAttemptKey(orgId, corePayload)
-				const marketingConsent = checkoutMarketingConsent()
+				const marketingConsent = testOrder ? null : checkoutMarketingConsent()
 				const created = await submitRegionalOrder(
 					checkoutOrderRequest(
 						corePayload,
 						idempotencyKey,
 						marketingConsent,
-						currentAttribution(),
+						testOrder ? null : currentAttribution(),
 						// What this browser showed for a dish in a photo test (#192).
-						photoTestsForCart(cart),
+						testOrder ? [] : photoTestsForCart(cart),
 					),
+					{ testOrderCode: testOrder?.code ?? null },
 				)
+				// The code is spent with the order.
+				if (testOrder) clearTestCode(sessionStorage, orgId)
 				saveOrderCapability(orgId, created)
 				flagEmailConfirmationPending(created.marketingConsent, created.order.id)
 				try {
@@ -3290,6 +3315,13 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 				} else if (rewardMessage) {
 					renderCheckout()
 					showCheckoutError(rewardMessage)
+				} else if (code === 'test_code_invalid') {
+					// A tampered, reused or expired test code: forget it. The cart stays and
+					// the guest can still place a real order.
+					clearTestCode(sessionStorage, orgId)
+					mountTestOrderBanner(orgId)
+					renderCheckout()
+					showCheckoutError(testOrderLabels.invalid)
 				} else if (code === 'delivery_quote_expired') {
 					details = updateOrderDetails(orgId, details, { delivery: undefined })
 					renderCheckout()
@@ -3529,3 +3561,13 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 		}
 	</script>
 </SitePage>
+
+<style is:global>
+	/* A free test order (#119): nothing is paid, so none of these apply. */
+	html[data-test-order] #payment-method-card,
+	html[data-test-order] #loyalty-rewards-card,
+	html[data-test-order] #coupon-block,
+	html[data-test-order] #gift-card-block {
+		display: none !important;
+	}
+</style>

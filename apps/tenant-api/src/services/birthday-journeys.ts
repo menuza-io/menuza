@@ -37,9 +37,16 @@ import {
  * the log. Only the year and ids do.
  */
 
-type BirthdayJourney = { id: string; daysBefore: number; timeZone: string | null }
+type BirthdayJourney = {
+	id: string
+	daysBefore: number
+	timeZone: string | null
+}
 
-function readConfig(raw: unknown): { daysBefore?: unknown; timeZone?: unknown } {
+function readConfig(raw: unknown): {
+	daysBefore?: unknown
+	timeZone?: unknown
+} {
 	try {
 		const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
 		return parsed && typeof parsed === 'object' ? parsed : {}
@@ -91,6 +98,7 @@ async function guestTimeZone(
 		.where(
 			and(
 				eq(restaurantOrders.customerId, customerId),
+				eq(restaurantOrders.isTest, false),
 				isNotNull(restaurantOrders.locationTimezone),
 			),
 		)
@@ -125,7 +133,8 @@ export async function runBirthdayJourneys(
 					.from(rsvLocationSettings)
 					.limit(1)
 					.get()
-				reservationZone = row?.zone && isValidTimeZone(row.zone) ? row.zone : null
+				reservationZone =
+					row?.zone && isValidTimeZone(row.zone) ? row.zone : null
 			}
 			return reservationZone
 		}

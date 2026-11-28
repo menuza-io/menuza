@@ -1621,6 +1621,12 @@ export const restaurantOrderContextSchema = z
 		 * `readCateringPolicy`, never parsed here: missing or bad is off.
 		 */
 		catering: z.unknown().optional(),
+		/**
+		 * The guest-ordering switches (#119 test orders, #191 problem reports, #170
+		 * group orders). Read with `readGuestOrderingFeatures` (`@repo/common/
+		 * guest-ordering`), never parsed here: missing or malformed is off.
+		 */
+		guestOrdering: z.unknown().optional(),
 	})
 	.loose()
 

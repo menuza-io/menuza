@@ -1,4 +1,5 @@
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import { TEST_ORDER_FLAG } from '@repo/common/test-orders'
 import { isUnavailableUntilExpired } from '@repo/common/location-availability'
 import { isLaunchStepKey } from '@repo/common/onboarding'
 import {
@@ -235,6 +236,7 @@ export async function loadLaunchChecklist({
 		logo,
 		payAtPickupOnly,
 		guestsOffered,
+		testOrdersEnabled,
 		health,
 		items,
 		assignments,
@@ -281,6 +283,7 @@ export async function loadLaunchChecklist({
 			.limit(1),
 		getFeatureFlag(PAY_AT_PICKUP_ONLY_FLAG, { organizationId }),
 		getFeatureFlag(LAUNCH_GUESTS_OFFERED_FLAG, { organizationId }),
+		getFeatureFlag(TEST_ORDER_FLAG, { organizationId }),
 		loadMenuHealth(organization),
 		db
 			.select({
@@ -363,7 +366,11 @@ export async function loadLaunchChecklist({
 			checkoutChargesEnabled: Boolean(organization.checkoutChargesEnabled),
 		}).enabled,
 		payAtPickupOnly: payAtPickupOnly === true,
-		hasCountedOrder: facts ? facts.firstOrderAt !== null : null,
+		// "Place a test order": done by a real counted order, or by a test order the
+		// operator confirmed printed or a person moved through the kitchen (#119).
+		hasCountedOrder: facts
+			? facts.firstOrderAt !== null || (facts.testOrderDoneAt ?? null) !== null
+			: null,
 		customDomainActive: Boolean(
 			organization.customDomain && organization.customDomainStatus === 'active',
 		),
@@ -485,6 +492,7 @@ export async function loadLaunchChecklist({
 		locations: views,
 		siteUrl: orgSiteUrl(organization),
 		guestsOffered: guestsOffered === true,
+		testOrdersEnabled: testOrdersEnabled === true,
 	}
 }
 

@@ -887,6 +887,11 @@
       "types": "./src/group-orders.ts",
       "import": "./src/group-orders.ts",
       "default": "./src/group-orders.ts"
+    },
+    "./guest-ordering": {
+      "types": "./src/guest-ordering.ts",
+      "import": "./src/guest-ordering.ts",
+      "default": "./src/guest-ordering.ts"
     }
   },
   "scripts": {

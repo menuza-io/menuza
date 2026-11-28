@@ -181,6 +181,15 @@ function summary(
 		...(order.rejectedReason
 			? { rejectedReason: clip(order.rejectedReason, 40) }
 			: {}),
+		...(order.isTest
+			? {
+					isTest: true,
+					testPrintAnswer:
+						order.testPrintAnswer === 'yes' || order.testPrintAnswer === 'no'
+							? order.testPrintAnswer
+							: null,
+				}
+			: {}),
 	}
 }
 

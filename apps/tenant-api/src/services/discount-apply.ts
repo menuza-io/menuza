@@ -445,6 +445,8 @@ export async function discountCustomerFacts(
 		.where(
 			and(
 				eq(restaurantOrders.customerId, customerId),
+				// A free test order (#119) is not a first order.
+				eq(restaurantOrders.isTest, false),
 				inArray(restaurantOrders.status, [
 					// An order waiting for acceptance (#107) is an order placed.
 					'pending_acceptance',

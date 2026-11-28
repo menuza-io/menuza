@@ -14,7 +14,8 @@ export function countedOrders(): ReturnType<typeof sql> {
 			json_extract(ro.attribution, '$.stepId') AS step_id,
 			json_extract(ro.attribution, '$.shortLinkId') AS short_link_id
 		FROM restaurant_orders ro
-		WHERE ro.status IN ('accepted', 'preparing', 'ready', 'completed')
+		WHERE ro.is_test = 0
+			AND ro.status IN ('accepted', 'preparing', 'ready', 'completed')
 			AND (ro.payment_status = 'paid' OR ro.status = 'completed')
 	)`
 }

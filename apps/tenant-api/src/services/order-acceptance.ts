@@ -19,6 +19,7 @@ import {
 	type OrderMessagesTickResult,
 } from './order-message-send.ts'
 import { runCateringTickForOrg } from './catering-tick.ts'
+import { runTestOrdersTick } from './test-orders-service.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
 import { processOwedCancelRefunds } from './order-provider-refund-service.ts'
 import {
@@ -248,12 +249,21 @@ export async function runOrdersTickForOrg(
 			return null
 		},
 	)
+	// Free test orders (#119) finish themselves after two hours, and their spent
+	// codes are forgotten after a day. Counts only.
+	const testOrders = await runTestOrdersTick(orgId, db, now).catch(
+		(error: unknown) => {
+			console.error('Test orders tick failed', orgId, errorLogFields(error))
+			return null
+		},
+	)
 	const due = [
 		messages.nextDueAt,
 		acceptance.nextDeadlineAt,
 		alerts?.nextDueAt ?? null,
 		prints.nextDueAt,
 		catering?.nextDueAt ?? null,
+		testOrders?.nextDueAt ?? null,
 	].filter((at): at is number => at !== null)
 	const nextDueAt = due.length > 0 ? Math.min(...due) : null
 	return {

@@ -81,5 +81,7 @@ export const ES: OrderMessageCopy = {
 		pointsUnit: 'puntos',
 		starsUnit: 'estrellas',
 		footer: 'Este es un mensaje de servicio sobre tu pedido.',
+		testTag: 'Prueba',
+		testLabel: 'Pedido de prueba: no se cobró nada.',
 	},
 }

@@ -1,0 +1,24 @@
+---
+import { msg } from '@lingui/core/macro'
+
+/**
+ * "Test order: you won't be charged" (#119): shown on the menu and at checkout
+ * while this tab holds a test code. Hidden until the page script finds one, so
+ * a guest never sees it. Nothing about a guest is rendered here.
+ */
+const i18n = Astro.locals.i18n
+const title = i18n._(msg`Test order: you won't be charged`)
+const body = i18n._(
+	msg`This runs the whole order path for the restaurant. Nothing is paid, and it does not count as a sale.`,
+)
+---
+
+<div
+	data-test-order-banner
+	hidden
+	role="status"
+	class="tone-warning mx-auto mt-4 w-full max-w-3xl rounded-lg border p-3 text-sm sm:p-4"
+>
+	<p class="font-semibold">{title}</p>
+	<p class="mt-0.5 text-foreground/80">{body}</p>
+</div>

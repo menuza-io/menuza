@@ -220,6 +220,8 @@ export type LaunchChecklist = {
 	siteUrl: string
 	/** "Tell your guests" was already offered on the home page. */
 	guestsOffered: boolean
+	/** `launch.test_order` is on: the Place a test order step offers its button (#119). */
+	testOrdersEnabled?: boolean
 }
 
 export const SKIP_REASON_MAX = 200

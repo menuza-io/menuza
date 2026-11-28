@@ -81,5 +81,7 @@ export const EN: OrderMessageCopy = {
 		pointsUnit: 'points',
 		starsUnit: 'stars',
 		footer: 'This is a service message about your order.',
+		testTag: 'Test',
+		testLabel: 'Test order: nothing was charged.',
 	},
 }

@@ -387,7 +387,7 @@ msgstr "添加留言"
 msgid "Add a tip"
 msgstr "添加小费"
 
-#: src/lib/guest-account-labels.ts:21
+#: src/lib/guest-account-labels.ts:23
 msgid "Add an address"
 msgstr "添加地址"
 
@@ -412,7 +412,7 @@ msgstr "添加礼品卡"
 msgid "Add more of the eligible items to use this code."
 msgstr "再添加符合条件的商品才能使用此优惠码。"
 
-#: src/lib/guest-account-labels.ts:20
+#: src/lib/guest-account-labels.ts:21
 msgid "Add one below, or save one while you check out for delivery."
 msgstr "在下方添加，或在选择配送结账时保存。"
 
@@ -430,7 +430,7 @@ msgstr "请把所需商品加入订单才能使用此优惠码。"
 msgid "Add to calendar"
 msgstr "添加到日历"
 
-#: src/lib/guest-account-labels.ts:51
+#: src/lib/guest-account-labels.ts:53
 msgid "Add to favorites"
 msgstr "加入收藏"
 
@@ -438,11 +438,11 @@ msgstr "加入收藏"
 msgid "Add to order"
 msgstr "加入订单"
 
-#: src/lib/ordering-labels.ts:269
+#: src/lib/ordering-labels.ts:282
 msgid "Address saved"
 msgstr "地址已保存"
 
-#: src/lib/guest-account-labels.ts:26
+#: src/lib/guest-account-labels.ts:28
 #: src/lib/ordering-labels.ts:154
 msgid "Address suggestions"
 msgstr "地址建议"
@@ -586,7 +586,7 @@ msgstr "同意使用 {reward}"
 msgid "Approved: {reward}."
 msgstr "已同意：{reward}。"
 
-#: src/lib/guest-account-labels.ts:23
+#: src/lib/guest-account-labels.ts:25
 #: src/lib/ordering-labels.ts:163
 msgid "Apt, suite or floor"
 msgstr "公寓、单元或楼层"
@@ -723,7 +723,7 @@ msgstr "预订条款"
 msgid "Booking…"
 msgstr "正在预订…"
 
-#: src/lib/guest-account-labels.ts:57
+#: src/lib/guest-account-labels.ts:59
 msgid "Browse the menu"
 msgstr "浏览菜单"
 
@@ -772,7 +772,7 @@ msgstr "致电 {phone}"
 msgid "Call the restaurant"
 msgstr "致电餐厅"
 
-#: src/lib/guest-account-labels.ts:35
+#: src/lib/guest-account-labels.ts:37
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Cancel"
@@ -885,7 +885,7 @@ msgstr "更改时间或人数"
 msgid "Check a card's balance"
 msgstr "查询卡片余额"
 
-#: src/lib/guest-account-labels.ts:24
+#: src/lib/guest-account-labels.ts:26
 msgid "Check address"
 msgstr "检查地址"
 
@@ -957,7 +957,7 @@ msgstr "正在核对优惠码…"
 msgid "Checking your payment…"
 msgstr "正在核对您的付款…"
 
-#: src/lib/guest-account-labels.ts:25
+#: src/lib/guest-account-labels.ts:27
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Checking…"
 msgstr "正在核对…"
@@ -1327,7 +1327,7 @@ msgstr "已拒绝：{reward}。"
 msgid "Decrease quantity"
 msgstr "减少数量"
 
-#: src/lib/ordering-labels.ts:260
+#: src/lib/ordering-labels.ts:273
 msgid "Default"
 msgstr "默认"
 
@@ -1467,7 +1467,7 @@ msgstr "优惠暂时不可用，我们已移除您的优惠码。请核对合计
 msgid "Discounts aren't available right now. Please review your total and place your order again."
 msgstr "优惠暂时不可用。请核对合计后重新下单。"
 
-#: src/lib/guest-account-labels.ts:49
+#: src/lib/guest-account-labels.ts:51
 msgid "Dishes you love, saved to this account."
 msgstr "你喜爱的菜品，保存在此账户中。"
 
@@ -1543,7 +1543,7 @@ msgstr "获得"
 msgid "Earning {multiplier}× points"
 msgstr "当前享 {multiplier}× 积分"
 
-#: src/lib/guest-account-labels.ts:31
+#: src/lib/guest-account-labels.ts:33
 msgid "Edit"
 msgstr "编辑"
 
@@ -1742,7 +1742,7 @@ msgid "Explore our menu and add your favorite dishes."
 msgstr "浏览我们的菜单，添加您喜爱的菜品。"
 
 #: src/components/AccountShell.astro.ts:3
-#: src/lib/guest-account-labels.ts:48
+#: src/lib/guest-account-labels.ts:50
 msgid "Favorites"
 msgstr "收藏"
 
@@ -1845,7 +1845,7 @@ msgstr "全名"
 msgid "Full time"
 msgstr "全职"
 
-#: src/lib/ordering-labels.ts:266
+#: src/lib/ordering-labels.ts:279
 msgid "Gate code or delivery note"
 msgstr "门禁码或配送备注"
 
@@ -1985,11 +1985,11 @@ msgstr "隐藏详情"
 msgid "History"
 msgstr "记录"
 
-#: src/lib/ordering-labels.ts:264
+#: src/lib/ordering-labels.ts:277
 msgid "Home"
 msgstr "家"
 
-#: src/lib/ordering-labels.ts:263
+#: src/lib/ordering-labels.ts:276
 msgid "Home, Work…"
 msgstr "家、公司…"
 
@@ -2292,7 +2292,7 @@ msgstr "看起来您还没有在订单中添加任何菜品。"
 msgid "Make another reservation"
 msgstr "再预订一次"
 
-#: src/lib/guest-account-labels.ts:34
+#: src/lib/guest-account-labels.ts:36
 msgid "Make default"
 msgstr "设为默认"
 
@@ -2383,7 +2383,7 @@ msgstr "可能产生短信和数据费用。回复 STOP 即可退订。"
 msgid "Name"
 msgstr "姓名"
 
-#: src/lib/ordering-labels.ts:262
+#: src/lib/ordering-labels.ts:275
 msgid "Name this address"
 msgstr "为此地址命名"
 
@@ -2415,7 +2415,7 @@ msgstr "网络错误，请重试。"
 msgid "Never miss a drop"
 msgstr "不再错过任何限量活动"
 
-#: src/lib/guest-account-labels.ts:67
+#: src/lib/guest-account-labels.ts:69
 #: src/pages/menu.astro.ts:3
 msgid "Next"
 msgstr "下一个"
@@ -2448,7 +2448,7 @@ msgstr "目前没有限量活动。"
 msgid "No experiences right now"
 msgstr "暂无体验"
 
-#: src/lib/guest-account-labels.ts:55
+#: src/lib/guest-account-labels.ts:57
 msgid "No favorites yet."
 msgstr "还没有收藏。"
 
@@ -2594,6 +2594,10 @@ msgstr "此订单无需付款。"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Nothing on your tab yet. Add dishes and send them to the kitchen."
 msgstr "您的账单上还没有内容。添加菜品并发送到厨房。"
+
+#: src/lib/ordering-labels.ts:264
+msgid "Nothing was charged. The restaurant can see it on its kitchen screens."
+msgstr "未收取任何费用。餐厅可以在厨房屏幕上看到这笔订单。"
 
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
@@ -3342,7 +3346,7 @@ msgstr "预付款"
 msgid "Preview · ordering opens {when}"
 msgstr "预览 · 订单于{when}开放"
 
-#: src/lib/guest-account-labels.ts:66
+#: src/lib/guest-account-labels.ts:68
 #: src/pages/menu.astro.ts:3
 msgid "Previous"
 msgstr "上一个"
@@ -3497,7 +3501,7 @@ msgid "Reject non-essential"
 msgstr "拒绝非必要项"
 
 #: src/lib/gift-cards/labels.ts:89
-#: src/lib/guest-account-labels.ts:32
+#: src/lib/guest-account-labels.ts:34
 #: src/lib/ordering-labels.ts:95
 #: src/lib/ordering-labels.ts:118
 #: src/pages/menu/checkout.astro.ts:3
@@ -3509,11 +3513,11 @@ msgstr "移除"
 msgid "Remove code {code}"
 msgstr "移除优惠码 {code}"
 
-#: src/lib/guest-account-labels.ts:52
+#: src/lib/guest-account-labels.ts:54
 msgid "Remove from favorites"
 msgstr "取消收藏"
 
-#: src/lib/guest-account-labels.ts:33
+#: src/lib/guest-account-labels.ts:35
 msgid "Remove this address?"
 msgstr "要移除此地址吗？"
 
@@ -3624,11 +3628,11 @@ msgstr "优惠价"
 msgid "Save"
 msgstr "保存"
 
-#: src/lib/ordering-labels.ts:267
+#: src/lib/ordering-labels.ts:280
 msgid "Save address"
 msgstr "保存地址"
 
-#: src/lib/guest-account-labels.ts:36
+#: src/lib/guest-account-labels.ts:38
 #: src/lib/reservations/labels.ts:180
 msgid "Save changes"
 msgstr "保存更改"
@@ -3641,11 +3645,11 @@ msgstr "保存更改"
 msgid "Save my choices"
 msgstr "保存我的选择"
 
-#: src/lib/ordering-labels.ts:261
+#: src/lib/ordering-labels.ts:274
 msgid "Save this address"
 msgstr "保存此地址"
 
-#: src/lib/ordering-labels.ts:259
+#: src/lib/ordering-labels.ts:272
 msgid "Saved addresses"
 msgstr "已保存的地址"
 
@@ -3654,7 +3658,7 @@ msgstr "已保存的地址"
 msgid "Saving..."
 msgstr "保存中..."
 
-#: src/lib/ordering-labels.ts:268
+#: src/lib/ordering-labels.ts:281
 msgid "Saving…"
 msgstr "正在保存…"
 
@@ -3674,7 +3678,7 @@ msgstr "预约"
 msgid "Scheduled orders only"
 msgstr "仅限预约订单"
 
-#: src/lib/guest-account-labels.ts:22
+#: src/lib/guest-account-labels.ts:24
 #: src/lib/ordering-labels.ts:152
 msgid "Search street address"
 msgstr "搜索街道地址"
@@ -3824,14 +3828,14 @@ msgstr "出示会员码不会消耗积分。每次使用奖励都需您本人同
 
 #: src/components/SiteHeader.astro.ts:3
 #: src/lib/gift-cards/labels.ts:79
-#: src/lib/guest-account-labels.ts:40
-#: src/lib/guest-account-labels.ts:65
+#: src/lib/guest-account-labels.ts:42
+#: src/lib/guest-account-labels.ts:67
 #: src/lib/loyalty/labels.ts:71
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "登录"
 
-#: src/lib/ordering-labels.ts:276
+#: src/lib/ordering-labels.ts:289
 msgid "Sign in again to use your saved addresses."
 msgstr "请重新登录以使用已保存的地址。"
 
@@ -3843,11 +3847,11 @@ msgstr "登录以接收优惠信息"
 msgid "Sign in to save gift cards to your account."
 msgstr "登录后可将礼品卡保存到您的账户。"
 
-#: src/lib/guest-account-labels.ts:53
+#: src/lib/guest-account-labels.ts:55
 msgid "Sign in to save your favorite dishes."
 msgstr "登录后即可收藏喜爱的菜品。"
 
-#: src/lib/guest-account-labels.ts:64
+#: src/lib/guest-account-labels.ts:66
 msgid "Sign in to see your favorites."
 msgstr "登录后查看你的收藏。"
 
@@ -3855,7 +3859,7 @@ msgstr "登录后查看你的收藏。"
 msgid "Sign in to see your rewards"
 msgstr "登录以查看您的奖励"
 
-#: src/lib/guest-account-labels.ts:39
+#: src/lib/guest-account-labels.ts:41
 msgid "Sign in to see your saved addresses."
 msgstr "登录后查看已保存的地址。"
 
@@ -3872,7 +3876,7 @@ msgstr "使用手机号码登录，即可查看积分并使用奖励。"
 msgid "Sign up"
 msgstr "注册"
 
-#: src/lib/guest-account-labels.ts:54
+#: src/lib/guest-account-labels.ts:56
 #: src/lib/ordering-labels.ts:66
 #: src/lib/reservations/labels.ts:471
 msgid "Sold out"
@@ -4041,7 +4045,7 @@ msgstr "正在跳转到安全支付页面…"
 msgid "Tap again to leave this table"
 msgstr "再点一次以离开这张桌子"
 
-#: src/lib/guest-account-labels.ts:56
+#: src/lib/guest-account-labels.ts:58
 msgid "Tap the heart on a dish to keep it here."
 msgstr "点击菜品上的爱心，即可收藏到这里。"
 
@@ -4076,6 +4080,14 @@ msgstr "临时工"
 #: src/components/LegalLinks.astro.ts:3
 msgid "Terms of service"
 msgstr "服务条款"
+
+#: src/lib/ordering-labels.ts:262
+msgid "Test order"
+msgstr "测试订单"
+
+#: src/components/ordering/TestOrderBanner.astro.ts:3
+msgid "Test order: you won't be charged"
+msgstr "测试订单：不会向您收费"
 
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Text"
@@ -4226,6 +4238,10 @@ msgstr "该奖励已不再适用，因此已移除。"
 #: src/lib/loyalty/labels.ts:187
 msgid "That reward would cover the whole tab, so it cannot be used when paying from your phone. Pick another reward or pay without one."
 msgstr "该奖励将抵扣整张账单，因此用手机支付时无法使用。请选择其他奖励，或不使用奖励直接支付。"
+
+#: src/lib/ordering-labels.ts:260
+msgid "That test code is not valid any more, so this is no longer a test. You can still place a real order."
+msgstr "该测试码已失效，因此这不再是测试。您仍然可以提交真实订单。"
 
 #: src/lib/reservations/labels.ts:487
 msgid "That time was just taken. Please choose another time."
@@ -4421,7 +4437,7 @@ msgstr "{name} 今日库存不足。请返回菜单修改订单。"
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "以下商品今日库存不足：{names}。请返回菜单修改订单。"
 
-#: src/lib/ordering-labels.ts:275
+#: src/lib/ordering-labels.ts:288
 msgid "This address is no longer saved."
 msgstr "此地址已不再保存。"
 
@@ -4699,6 +4715,10 @@ msgstr "此奖励可抵扣您的全部订单。请选择在收到订单时付款
 msgid "This reward is no longer available."
 msgstr "此奖励已不可用。"
 
+#: src/components/ordering/TestOrderBanner.astro.ts:3
+msgid "This runs the whole order path for the restaurant. Nothing is paid, and it does not count as a sale."
+msgstr "这会为餐厅走完整个下单流程。不会产生任何付款，也不计入销售额。"
+
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "该商店目前不可用。"
@@ -4818,8 +4838,8 @@ msgid "Track this order in the app"
 msgstr "在应用中跟踪此订单"
 
 #: src/components/ordering/TableTab.astro.ts:3
-#: src/lib/guest-account-labels.ts:38
-#: src/lib/guest-account-labels.ts:63
+#: src/lib/guest-account-labels.ts:40
+#: src/lib/guest-account-labels.ts:65
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:162
 #: src/lib/reservations/labels.ts:281
@@ -5166,7 +5186,7 @@ msgstr "无法确认合计。请重试。"
 msgid "We couldn't find that address"
 msgstr "找不到该地址"
 
-#: src/lib/guest-account-labels.ts:30
+#: src/lib/guest-account-labels.ts:32
 msgid "We couldn't find that address."
 msgstr "找不到该地址。"
 
@@ -5182,11 +5202,11 @@ msgstr "无法获取您的位置。请输入地址以按距离排序。"
 msgid "We couldn't load address suggestions."
 msgstr "无法加载地址建议。"
 
-#: src/lib/guest-account-labels.ts:37
+#: src/lib/guest-account-labels.ts:39
 msgid "We couldn't load your addresses."
 msgstr "无法加载你的地址。"
 
-#: src/lib/guest-account-labels.ts:62
+#: src/lib/guest-account-labels.ts:64
 msgid "We couldn't load your favorites."
 msgstr "无法加载你的收藏。"
 
@@ -5214,7 +5234,7 @@ msgstr "无法恢复您的购物车。"
 msgid "We couldn't save that. Try again."
 msgstr "无法保存，请重试。"
 
-#: src/lib/ordering-labels.ts:273
+#: src/lib/ordering-labels.ts:286
 msgid "We couldn't save this address. Try again."
 msgstr "无法保存此地址，请重试。"
 
@@ -5230,7 +5250,7 @@ msgstr "我们无法自动发送您的退款。请致电餐厅。"
 msgid "We couldn't start payment. Please try again."
 msgstr "无法发起支付。请重试。"
 
-#: src/lib/guest-account-labels.ts:61
+#: src/lib/guest-account-labels.ts:63
 msgid "We couldn't update your favorites. Try again."
 msgstr "无法更新你的收藏，请重试。"
 
@@ -5250,7 +5270,7 @@ msgstr "此地址可配送"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "我们未能及时收到您的回复。您可以重新加入候位名单。"
 
-#: src/lib/ordering-labels.ts:274
+#: src/lib/ordering-labels.ts:287
 msgid "We don't deliver here right now"
 msgstr "目前不配送到这里"
 
@@ -5258,7 +5278,7 @@ msgstr "目前不配送到这里"
 msgid "We don't deliver to this address yet"
 msgstr "暂不支持配送至此地址"
 
-#: src/lib/guest-account-labels.ts:28
+#: src/lib/guest-account-labels.ts:30
 msgid "We don't deliver to this address yet, so it can't be saved."
 msgstr "我们暂时不配送到此地址，因此无法保存。"
 
@@ -5443,7 +5463,7 @@ msgstr "你们能满足哪些饮食需求?"
 msgid "Whole"
 msgstr "整份"
 
-#: src/lib/ordering-labels.ts:265
+#: src/lib/ordering-labels.ts:278
 msgid "Work"
 msgstr "公司"
 
@@ -5503,11 +5523,11 @@ msgstr "您仍可下单自取。"
 msgid "You have {amount}"
 msgstr "您有 {amount}"
 
-#: src/lib/ordering-labels.ts:271
+#: src/lib/ordering-labels.ts:284
 msgid "You have 10 saved addresses. Remove one in your profile to add another."
 msgstr "你已保存 10 个地址。请在个人资料中移除一个后再添加。"
 
-#: src/lib/guest-account-labels.ts:59
+#: src/lib/guest-account-labels.ts:61
 msgid "You have 100 favorites. Remove one to add another."
 msgstr "你已收藏 100 个。请取消一个后再添加。"
 
@@ -5664,7 +5684,7 @@ msgstr "您的邮箱（用于接收收据）"
 msgid "Your event"
 msgstr "您的活动"
 
-#: src/lib/guest-account-labels.ts:50
+#: src/lib/guest-account-labels.ts:52
 msgid "Your favorites"
 msgstr "你的收藏"
 

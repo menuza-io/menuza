@@ -81,5 +81,7 @@ export const AR: OrderMessageCopy = {
 		pointsUnit: 'نقطة',
 		starsUnit: 'نجمة',
 		footer: 'هذه رسالة خدمة بخصوص طلبك.',
+		testTag: 'تجريبي',
+		testLabel: 'طلب تجريبي: لم يتم خصم أي مبلغ.',
 	},
 }

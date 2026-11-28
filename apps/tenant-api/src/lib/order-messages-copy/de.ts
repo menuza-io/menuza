@@ -81,5 +81,7 @@ export const DE: OrderMessageCopy = {
 		pointsUnit: 'Punkte',
 		starsUnit: 'Sterne',
 		footer: 'Dies ist eine Servicenachricht zu deiner Bestellung.',
+		testTag: 'Test',
+		testLabel: 'Testbestellung: Es wurde nichts berechnet.',
 	},
 }

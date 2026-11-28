@@ -70,6 +70,9 @@ export function createKitchenApi(
 	return {
 		feed: () => call('GET', ''),
 		command: (command: KdsCommand) => call('POST', '/command', command),
+		/** "Did the ticket print?" for a free test order (#119). */
+		testPrint: (orderId: string, answer: 'yes' | 'no') =>
+			call('POST', '/test-print', { orderId, answer }),
 		configure: (expectedVersion: number, config: KdsConfig) =>
 			call('PUT', '/settings', { expectedVersion, config }),
 	}

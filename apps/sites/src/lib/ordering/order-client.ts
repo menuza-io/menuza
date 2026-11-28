@@ -1,3 +1,4 @@
+import { TEST_ORDER_HEADER } from '@repo/common/test-orders'
 import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
 import {
 	createdOrderSchema,
@@ -209,8 +210,9 @@ export async function fetchOrderingOptions(input: {
  */
 export async function submitRegionalOrder(
 	body: Record<string, unknown>,
+	options: { testOrderCode?: string | null } = {},
 ): Promise<CreatedOrder & { marketingConsent?: OrderMarketingConsentResult }> {
-	return withMarketingConsent(await placeRegionalOrder(body))
+	return withMarketingConsent(await placeRegionalOrder(body, options))
 }
 
 type PlacedOrderAnswer = { created: CreatedOrder; raw: unknown }
@@ -228,11 +230,18 @@ function withMarketingConsent({ created, raw }: PlacedOrderAnswer) {
 
 async function placeRegionalOrder(
 	body: Record<string, unknown>,
+	options: { testOrderCode?: string | null } = {},
 ): Promise<PlacedOrderAnswer> {
 	const url = `${regionalUrl()}/orders`
 	const init: RequestInit = {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers: {
+			'Content-Type': 'application/json',
+			// A free test order (#119): the one-time code from the operator's link.
+			...(options.testOrderCode
+				? { [TEST_ORDER_HEADER]: options.testOrderCode }
+				: {}),
+		},
 		body: JSON.stringify({ ...body, ...getOrgBinding() }),
 	}
 	if (!getAccessToken()) {

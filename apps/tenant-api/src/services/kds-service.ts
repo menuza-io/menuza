@@ -166,6 +166,9 @@ type SourceOrder = {
 	guestAllergy?: boolean
 	/** An item or option is alcohol (#167): "Check ID". */
 	checkId?: boolean
+	/** A free test order (#119): badged TEST on the screen and the ticket. */
+	isTest?: boolean
+	testPrintAnswer?: 'yes' | 'no' | null
 }
 
 async function settings(db: KitchenDb, locationId: string) {
@@ -396,6 +399,9 @@ function project(
 		...(order.largeOrder ? { largeOrder: true } : {}),
 		...(order.guestAllergy ? { guestAllergy: true } : {}),
 		...(order.checkId ? { checkId: true } : {}),
+		...(order.isTest
+			? { isTest: true, testPrintAnswer: order.testPrintAnswer ?? null }
+			: {}),
 		...(order.driveThrough ? { driveThrough: true } : {}),
 		...(order.driveThroughNote
 			? { driveThroughNote: order.driveThroughNote }
@@ -527,6 +533,15 @@ function onlineSource(row: typeof restaurantOrders.$inferSelect): SourceOrder {
 		largeOrder: row.largeOrder === true,
 		...(row.guestAllergy === true ? { guestAllergy: true } : {}),
 		...(row.hasAlcohol === true ? { checkId: true } : {}),
+		...(row.isTest === true
+			? {
+					isTest: true,
+					testPrintAnswer:
+						row.testPrintAnswer === 'yes' || row.testPrintAnswer === 'no'
+							? row.testPrintAnswer
+							: null,
+				}
+			: {}),
 	}
 }
 
