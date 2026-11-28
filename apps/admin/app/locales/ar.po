@@ -338,6 +338,10 @@ msgstr "إعادة إرسال لمن لم يفتح الرسالة الأولى �
 msgid "A reference is 16 letters and digits, for example a1b2c3d4e5f6a7b8."
 msgstr "المرجع مكوّن من 16 حرفًا ورقمًا، مثل a1b2c3d4e5f6a7b8."
 
+#: app/components/admin-setup-reminder-card.tsx:36
+msgid "A reminder was already sent today. The next one can go on {next}."
+msgstr "تم إرسال تذكير اليوم بالفعل. يمكن إرسال التالي في {next}."
+
 #: app/routes/_admin+/print-shop.tsx:95
 msgid "A submission or cancellation stopped halfway: check the vendor before retrying"
 msgstr "توقف الإرسال أو الإلغاء في منتصفه: تحقق لدى المورد قبل إعادة المحاولة"
@@ -1847,6 +1851,10 @@ msgstr "لوحة التحكم"
 msgid "Date"
 msgstr "التاريخ"
 
+#: app/components/admin-setup-reminder-card.tsx:198
+msgid "Day {day}"
+msgstr "اليوم {day}"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:382
 msgid "days"
 msgstr "أيام"
@@ -2889,6 +2897,7 @@ msgid "Hiring"
 msgstr "التوظيف"
 
 #: app/components/admin-contacts-card.tsx:155
+#: app/components/admin-setup-reminder-card.tsx:172
 msgid "History"
 msgstr "السجل"
 
@@ -3469,6 +3478,10 @@ msgstr "إدارة المستخدمين والمؤسسات وإعدادات ال
 msgid "Manage waitlist users and grant early access"
 msgstr "إدارة مستخدمي قائمة الانتظار ومنح الوصول المبكر"
 
+#: app/components/admin-setup-reminder-card.tsx:197
+msgid "Manual"
+msgstr "يدوي"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:495
 msgid "Manual Actions"
 msgstr "الإجراءات اليدوية"
@@ -3846,6 +3859,10 @@ msgstr "لا يوجد نشاط حديث"
 msgid "No recent comments"
 msgstr "لا توجد تعليقات حديثة"
 
+#: app/components/admin-setup-reminder-card.tsx:176
+msgid "No reminders sent yet."
+msgstr "لم يُرسل أي تذكير بعد."
+
 #: app/routes/_admin+/subscription-requests.tsx:67
 msgid "No requests."
 msgstr "لا توجد طلبات."
@@ -3934,6 +3951,10 @@ msgstr "لا أحد"
 #: app/components/admin-contacts-card.tsx:65
 msgid "Nobody is assigned yet."
 msgstr "لم يُعيَّن أحد بعد."
+
+#: app/components/admin-setup-reminder-card.tsx:45
+msgid "Nobody to notify"
+msgstr "لا أحد لإبلاغه"
 
 #: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:33
 msgid "Nobody would receive this: no one in the audience is subscribed."
@@ -4073,6 +4094,10 @@ msgstr "معلّق: آخر مسؤول في المؤسسة {organizationIds}. ي�
 #: ../../packages/reports/src/ui/report-labels.ts:56
 msgid "On-time arrival"
 msgstr "الحضور في الوقت المحدد"
+
+#: app/components/admin-setup-reminder-card.tsx:135
+msgid "One manual reminder per day per organization."
+msgstr "تذكير يدوي واحد في اليوم لكل منظمة."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:44
 msgid "One to three dishes with photo, price and an Order button."
@@ -4607,6 +4632,10 @@ msgstr "ملصق"
 msgid "Prefix (optional)"
 msgstr "البادئة (اختياري)"
 
+#: app/components/admin-setup-reminder-card.tsx:131
+msgid "Preview reminder"
+msgstr "معاينة التذكير"
+
 #: app/routes/_admin+/audit-logs.tsx:437
 #: app/routes/_admin+/gdpr-requests.tsx:716
 #: app/routes/_admin+/waitlist.tsx:580
@@ -5028,6 +5057,10 @@ msgstr "إصدار"
 #: app/routes/_admin+/customer-apps.tsx:191
 msgid "Release name"
 msgstr "اسم الإصدار"
+
+#: app/components/admin-setup-reminder-card.tsx:28
+msgid "Reminder sent to {count} owner(s)."
+msgstr "أُرسل التذكير إلى {count} من المالكين."
 
 #: app/components/admin-contacts-card.tsx:85
 #: app/routes/_admin+/customer-apps_.$appId.tsx:333
@@ -5795,6 +5828,10 @@ msgstr "أرسل رسائل بريد إلكتروني لمرة واحدة إلى
 msgid "Send push"
 msgstr "إرسال إشعار"
 
+#: app/components/admin-setup-reminder-card.tsx:158
+msgid "Send reminder now"
+msgstr "إرسال التذكير الآن"
+
 #: app/routes/_admin+/feedback_.$requestId.tsx:253
 msgid "Send reply"
 msgstr "إرسال الرد"
@@ -5875,6 +5912,10 @@ msgstr "عيّن القيم الافتراضية للنظام وتجاوزها �
 #: app/components/admin-organizations-table.tsx:355
 msgid "Setup"
 msgstr "الإعداد"
+
+#: app/components/admin-setup-reminder-card.tsx:123
+msgid "Setup reminders"
+msgstr "تذكيرات الإعداد"
 
 #: app/routes/_admin+/audit-logs.tsx:149
 #: app/routes/_admin+/audit-logs.tsx:277
@@ -6515,6 +6556,10 @@ msgstr "صفحة المدير التي تبحث عنها غير موجودة."
 msgid "The allowance comes back on {resets}."
 msgstr "يعود الحد المسموح في {resets}."
 
+#: app/components/admin-setup-reminder-card.tsx:91
+msgid "The App could not be reached. Try again in a moment."
+msgstr "تعذّر الوصول إلى التطبيق. حاول مرة أخرى بعد قليل."
+
 #: app/routes/_admin+/print-shop.tsx:212
 msgid "The App could not do that. Try again."
 msgstr "تعذّر على التطبيق تنفيذ ذلك. حاول مرة أخرى."
@@ -6567,6 +6612,10 @@ msgstr "ينتهي خصم القسيمة قبل موعد الإرسال. غيّ�
 msgid "The coupon's discount is paused, archived or gone. Resume it or choose another coupon."
 msgstr "خصم القسيمة متوقف أو مؤرشف أو محذوف. استأنفه أو اختر قسيمة أخرى."
 
+#: app/components/admin-setup-reminder-card.tsx:85
+msgid "The email could not be sent. Try again."
+msgstr "تعذّر إرسال البريد. حاول مرة أخرى."
+
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:428
@@ -6588,6 +6637,10 @@ msgstr "توقفت المحاولة الأخيرة بعد إرسال الطلب�
 #: app/routes/_admin+/print-shop.tsx:617
 msgid "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: {list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing."
 msgstr "توقفت المحاولة الأخيرة بعد إرسال الطلب، لذا قد يكون لدى المورد بالفعل. ابحث في لوحة المورد عن: {list}. إذا كان لدى المورد، فلا تُعد المحاولة (سيُطبع مرتين): استرد المبلغ أو انتظر حالته. أعد المحاولة فقط إن لم تجد شيئًا."
+
+#: app/components/admin-setup-reminder-card.tsx:67
+msgid "The launch checklist is off for this organization."
+msgstr "قائمة الإطلاق متوقفة لهذه المنظمة."
 
 #: app/components/admin-launch-card.tsx:103
 msgid "The launch status could not be loaded from the App."
@@ -6757,6 +6810,10 @@ msgstr "مدة الانتظار التي ذكرتها ومدة الانتظار 
 msgid "Theme"
 msgstr "المظهر"
 
+#: app/components/admin-setup-reminder-card.tsx:79
+msgid "There is no next step to remind about."
+msgstr "لا توجد خطوة تالية للتذكير بها."
+
 #: ../../packages/marketing/src/components/email/email-templates.tsx:57
 msgid "There is nothing to save yet. Add a block first."
 msgstr "لا يوجد ما يمكن حفظه بعد. أضف كتلة أولًا."
@@ -6772,6 +6829,10 @@ msgstr "تمنع هذه المشكلات إرسال هذه الرسالة الج
 #: app/routes/_admin+/organizations+/$organizationId_+/text-sends.server.ts:93
 msgid "They count for this month only and are added to the plan's sends."
 msgstr "تُحتسب لهذا الشهر فقط وتُضاف إلى عمليات إرسال الخطة."
+
+#: app/components/admin-setup-reminder-card.tsx:56
+msgid "This account is cancelled: it is never sent reminders."
+msgstr "هذا الحساب ملغى: لا تُرسل إليه تذكيرات أبدًا."
 
 #: app/routes/_admin+/customer-apps.tsx:47
 msgid "This Android package is already used by another app."
@@ -6829,6 +6890,10 @@ msgstr "معرّف حزمة iOS هذا مستخدم في تطبيق آخر."
 msgid "This is a mobile number that can receive texts."
 msgstr "هذا رقم جوال يمكنه استلام الرسائل النصية."
 
+#: app/components/admin-setup-reminder-card.tsx:52
+msgid "This is a test organization: it is never sent reminders."
+msgstr "هذه منظمة تجريبية: لا تُرسل إليها تذكيرات أبدًا."
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:132
 msgid "This is your last one this month. You get {limit} more on {resetDate}."
 msgstr "هذه آخر عملية إرسال لك هذا الشهر. تحصل على {limit} أخرى في {resetDate}."
@@ -6864,6 +6929,14 @@ msgstr "يجري تغيير هذا الطلب الآن. حدّث الصفحة و
 #: app/routes/_admin+/customer-apps.tsx:49
 msgid "This organization already has an app."
 msgstr "لدى هذه المنظمة تطبيق بالفعل."
+
+#: app/components/admin-setup-reminder-card.tsx:73
+msgid "This organization is already live: nothing to remind."
+msgstr "هذه المنظمة جاهزة بالفعل: لا شيء للتذكير به."
+
+#: app/components/admin-setup-reminder-card.tsx:60
+msgid "This organization is not active."
+msgstr "هذه المنظمة غير نشطة."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:64
 msgid "This policy applies to all channels, direct messages, and group chats in this organization. Only platform admins can change it."
@@ -6930,6 +7003,10 @@ msgstr "العنوان (بالإنجليزية)"
 #: app/routes/_admin+/assignments.tsx:118
 msgid "To"
 msgstr "إلى"
+
+#: app/components/admin-setup-reminder-card.tsx:162
+msgid "To {recipients} owner(s)"
+msgstr "إلى {recipients} من المالكين"
 
 #: app/components/admin-launch-card.tsx:48
 msgid "To do"

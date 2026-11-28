@@ -16,6 +16,7 @@ import { AlertSettingsCard } from '#app/components/settings/cards/alert-settings
 import { GuestMessagesCard } from '#app/components/settings/cards/guest-messages-card.tsx'
 import { NotificationPreferencesCard } from '#app/components/settings/cards/notification-preferences-card.tsx'
 import { ReportEmailsCard } from '#app/components/settings/cards/report-emails-card.tsx'
+import { SetupRemindersCard } from '#app/components/settings/cards/setup-reminders-card.tsx'
 import { availablePushCategories } from '#app/utils/alerts/settings.server.ts'
 import {
 	isGuestMessagesEnabled,
@@ -23,12 +24,17 @@ import {
 	saveGuestMessageSwitches,
 } from '#app/utils/guest-messages/settings.server.ts'
 import { inventoryAlertSettingsVisible } from '#app/utils/inventory/notification-visibility.server.ts'
+import { isOrganizationOwner } from '#app/utils/legal/agreements.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
-import { monthlyResultsEmailEnabled } from '#app/utils/reports/report-unsubscribe.server.ts'
+import {
+	monthlyResultsEmailEnabled,
+	setSetupReminderEmail,
+	setupReminderEmailEnabled,
+} from '#app/utils/reports/report-unsubscribe.server.ts'
 import { listMemberReportEmails } from '#app/utils/reports/schedules.server.ts'
 import { reservationAlertVisibleOrgIds } from '#app/utils/reservations/notification-visibility.server.ts'
 import {
@@ -48,9 +54,23 @@ const guestMessagesSchema = z.object({
  * and `update:settings:any`. Policy only, no guest data.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
+	const userId = await requireUserId(request)
 	const org = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 	})
+	const form = await request.formData()
+	// Setup reminders (#271): each owner switches their own email on or off.
+	if (form.get('intent') === 'setup-reminders') {
+		if (!(await isOrganizationOwner(userId, org.id))) {
+			throw new Response('Forbidden', { status: 403 })
+		}
+		await setSetupReminderEmail({
+			userId,
+			organizationId: org.id,
+			email: form.get('enabled') === 'true',
+		})
+		return data({ ok: true, error: null })
+	}
 	if (!(await isGuestMessagesEnabled(org.id)))
 		throw new Response('Not found', { status: 404 })
 	const actorId = await requireUserWithOrganizationPermission(
@@ -58,7 +78,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		org.id,
 		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
 	)
-	const submission = parseWithZod(await request.formData(), {
+	const submission = parseWithZod(form, {
 		schema: guestMessagesSchema,
 	})
 	if (submission.status !== 'success')
@@ -168,8 +188,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				),
 			}
 		: null
+	// Setup reminders (#271) go to owners: each owner has their own switch.
+	const setupReminders = (await isOrganizationOwner(userId, org.id))
+		? { on: await setupReminderEmailEnabled(userId, org.id) }
+		: null
 	return {
 		organizationId: org.id,
+		setupReminders,
 		reportEmails,
 		guestMessages,
 		showStaffingAlerts,
@@ -188,6 +213,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function NotificationSettings() {
 	const {
 		organizationId,
+		setupReminders,
 		reportEmails,
 		guestMessages,
 		showStaffingAlerts,
@@ -221,6 +247,11 @@ export default function NotificationSettings() {
 			<AnnotatedSection>
 				<AlertSettingsCard organizationId={organizationId} />
 			</AnnotatedSection>
+			{setupReminders ? (
+				<AnnotatedSection>
+					<SetupRemindersCard on={setupReminders.on} />
+				</AnnotatedSection>
+			) : null}
 			{reportEmails.schedules.length > 0 || reportEmails.monthly ? (
 				<AnnotatedSection>
 					<ReportEmailsCard

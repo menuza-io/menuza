@@ -11,6 +11,8 @@ import { z } from 'zod'
 export type ReportUnsubscribeTarget =
 	| { kind: 'schedule'; scheduleId: string; userId: string }
 	| { kind: 'monthly'; organizationId: string; userId: string }
+	/** The setup reminder emails (#271): one owner, one organization. */
+	| { kind: 'setup'; organizationId: string; userId: string }
 
 const UNSUBSCRIBE_PURPOSE = 'report-unsubscribe:v1'
 
@@ -48,6 +50,11 @@ const targetSchema = z.discriminatedUnion('kind', [
 	}),
 	z.object({
 		kind: z.literal('monthly'),
+		organizationId: z.string().min(1).max(64),
+		userId: z.string().min(1).max(64),
+	}),
+	z.object({
+		kind: z.literal('setup'),
 		organizationId: z.string().min(1).max(64),
 		userId: z.string().min(1).max(64),
 	}),

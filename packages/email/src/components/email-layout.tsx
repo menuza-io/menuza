@@ -27,6 +27,9 @@ export interface EmailLayoutProps {
 	children: ReactNode
 	/** Magic link repeated in the footer for clients that strip the button. */
 	fallbackUrl?: string
+	/** Document language and direction; English, left to right unless set. */
+	lang?: string
+	dir?: 'ltr' | 'rtl'
 }
 
 /** Centered footer line — each block gets its own aligned table (email-safe). */
@@ -75,9 +78,11 @@ export function EmailLayout({
 	preview,
 	children,
 	fallbackUrl,
+	lang = 'en',
+	dir = 'ltr',
 }: EmailLayoutProps) {
 	return (
-		<Html lang="en" dir="ltr">
+		<Html lang={lang} dir={dir}>
 			<Tailwind config={emailTailwindConfig}>
 				<Head />
 				<Preview>{preview}</Preview>

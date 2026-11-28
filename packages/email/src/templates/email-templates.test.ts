@@ -17,6 +17,7 @@ import InvoiceEmail from './invoice'
 import MentionEmail from './mention-email'
 import NewDeviceSigninEmail from './new-device-signin'
 import OrganizationInviteEmail from './organization-invite'
+import SetupReminderEmail from './setup-reminder'
 import SignupEmail from './signup'
 import StaffingAlertEmail from './staffing-alert-email'
 import TrialEndingEmail from './trial-ending'
@@ -93,6 +94,11 @@ const cases = [
 		name: 'MentionEmail',
 		element: createElement(MentionEmail, MentionEmail.PreviewProps),
 		cta: MentionEmail.PreviewProps.noteUrl,
+	},
+	{
+		name: 'SetupReminderEmail',
+		element: createElement(SetupReminderEmail, SetupReminderEmail.PreviewProps),
+		cta: SetupReminderEmail.PreviewProps.actionUrl,
 	},
 ]
 
@@ -230,5 +236,31 @@ describe('transactional email copy', () => {
 				expect(source, `${file} must not contain "${term}"`).not.toContain(term)
 			}
 		}
+	})
+})
+
+describe('setup reminder email (#271)', () => {
+	it('is laid out right to left in Arabic', async () => {
+		const html = await render(
+			createElement(SetupReminderEmail, {
+				...SetupReminderEmail.PreviewProps,
+				lang: 'ar',
+				dir: 'rtl',
+				heading: 'أضف عنوانك وساعات عملك، نحو 3 دقائق',
+			}),
+		)
+		expect(html).toContain('lang="ar"')
+		expect(html).toContain('dir="rtl"')
+		expect(html).toContain('أضف عنوانك')
+	})
+
+	it('has one button to the step, the progress and a way to turn it off', async () => {
+		const html = await render(
+			createElement(SetupReminderEmail, SetupReminderEmail.PreviewProps),
+		)
+		expect(html).toContain('4 of 7 done')
+		expect(html).toContain('Continue setup')
+		expect(html).toContain('Turn off these reminders')
+		expect(html).toContain('lang="en"')
 	})
 })

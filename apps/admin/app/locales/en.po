@@ -338,6 +338,10 @@ msgstr "A re-send to people who did not open or click the first one and are stil
 msgid "A reference is 16 letters and digits, for example a1b2c3d4e5f6a7b8."
 msgstr "A reference is 16 letters and digits, for example a1b2c3d4e5f6a7b8."
 
+#: app/components/admin-setup-reminder-card.tsx:36
+msgid "A reminder was already sent today. The next one can go on {next}."
+msgstr "A reminder was already sent today. The next one can go on {next}."
+
 #: app/routes/_admin+/print-shop.tsx:95
 msgid "A submission or cancellation stopped halfway: check the vendor before retrying"
 msgstr "A submission or cancellation stopped halfway: check the vendor before retrying"
@@ -1847,6 +1851,10 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
+#: app/components/admin-setup-reminder-card.tsx:198
+msgid "Day {day}"
+msgstr "Day {day}"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:382
 msgid "days"
 msgstr ""
@@ -2889,6 +2897,7 @@ msgid "Hiring"
 msgstr "Hiring"
 
 #: app/components/admin-contacts-card.tsx:155
+#: app/components/admin-setup-reminder-card.tsx:172
 msgid "History"
 msgstr "History"
 
@@ -3469,6 +3478,10 @@ msgstr ""
 msgid "Manage waitlist users and grant early access"
 msgstr ""
 
+#: app/components/admin-setup-reminder-card.tsx:197
+msgid "Manual"
+msgstr "Manual"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:495
 msgid "Manual Actions"
 msgstr ""
@@ -3846,6 +3859,10 @@ msgstr ""
 msgid "No recent comments"
 msgstr ""
 
+#: app/components/admin-setup-reminder-card.tsx:176
+msgid "No reminders sent yet."
+msgstr "No reminders sent yet."
+
 #: app/routes/_admin+/subscription-requests.tsx:67
 msgid "No requests."
 msgstr "No requests."
@@ -3934,6 +3951,10 @@ msgstr "Nobody"
 #: app/components/admin-contacts-card.tsx:65
 msgid "Nobody is assigned yet."
 msgstr "Nobody is assigned yet."
+
+#: app/components/admin-setup-reminder-card.tsx:45
+msgid "Nobody to notify"
+msgstr "Nobody to notify"
 
 #: ../../packages/marketing/src/components/broadcast-check-dialog.tsx:33
 msgid "Nobody would receive this: no one in the audience is subscribed."
@@ -4073,6 +4094,10 @@ msgstr "On hold: last admin of organization {organizationIds}. It runs once anot
 #: ../../packages/reports/src/ui/report-labels.ts:56
 msgid "On-time arrival"
 msgstr "On-time arrival"
+
+#: app/components/admin-setup-reminder-card.tsx:135
+msgid "One manual reminder per day per organization."
+msgstr "One manual reminder per day per organization."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:44
 msgid "One to three dishes with photo, price and an Order button."
@@ -4607,6 +4632,10 @@ msgstr "Poster"
 msgid "Prefix (optional)"
 msgstr "Prefix (optional)"
 
+#: app/components/admin-setup-reminder-card.tsx:131
+msgid "Preview reminder"
+msgstr "Preview reminder"
+
 #: app/routes/_admin+/audit-logs.tsx:437
 #: app/routes/_admin+/gdpr-requests.tsx:716
 #: app/routes/_admin+/waitlist.tsx:580
@@ -5028,6 +5057,10 @@ msgstr "Release"
 #: app/routes/_admin+/customer-apps.tsx:191
 msgid "Release name"
 msgstr "Release name"
+
+#: app/components/admin-setup-reminder-card.tsx:28
+msgid "Reminder sent to {count} owner(s)."
+msgstr "Reminder sent to {count} owner(s)."
 
 #: app/components/admin-contacts-card.tsx:85
 #: app/routes/_admin+/customer-apps_.$appId.tsx:333
@@ -5795,6 +5828,10 @@ msgstr ""
 msgid "Send push"
 msgstr "Send push"
 
+#: app/components/admin-setup-reminder-card.tsx:158
+msgid "Send reminder now"
+msgstr "Send reminder now"
+
 #: app/routes/_admin+/feedback_.$requestId.tsx:253
 msgid "Send reply"
 msgstr "Send reply"
@@ -5875,6 +5912,10 @@ msgstr "Set system defaults and override them for an organization or a user."
 #: app/components/admin-organizations-table.tsx:355
 msgid "Setup"
 msgstr "Setup"
+
+#: app/components/admin-setup-reminder-card.tsx:123
+msgid "Setup reminders"
+msgstr "Setup reminders"
 
 #: app/routes/_admin+/audit-logs.tsx:149
 #: app/routes/_admin+/audit-logs.tsx:277
@@ -6515,6 +6556,10 @@ msgstr ""
 msgid "The allowance comes back on {resets}."
 msgstr "The allowance comes back on {resets}."
 
+#: app/components/admin-setup-reminder-card.tsx:91
+msgid "The App could not be reached. Try again in a moment."
+msgstr "The App could not be reached. Try again in a moment."
+
 #: app/routes/_admin+/print-shop.tsx:212
 msgid "The App could not do that. Try again."
 msgstr "The App could not do that. Try again."
@@ -6567,6 +6612,10 @@ msgstr "The coupon's discount ends before this would go out. Change its end date
 msgid "The coupon's discount is paused, archived or gone. Resume it or choose another coupon."
 msgstr "The coupon's discount is paused, archived or gone. Resume it or choose another coupon."
 
+#: app/components/admin-setup-reminder-card.tsx:85
+msgid "The email could not be sent. Try again."
+msgstr "The email could not be sent. Try again."
+
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:428
@@ -6588,6 +6637,10 @@ msgstr "The last attempt stopped after the order was sent, so the vendor may alr
 #: app/routes/_admin+/print-shop.tsx:617
 msgid "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: {list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing."
 msgstr "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: {list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing."
+
+#: app/components/admin-setup-reminder-card.tsx:67
+msgid "The launch checklist is off for this organization."
+msgstr "The launch checklist is off for this organization."
 
 #: app/components/admin-launch-card.tsx:103
 msgid "The launch status could not be loaded from the App."
@@ -6757,6 +6810,10 @@ msgstr "The wait you quoted and the wait parties had before they were seated, by
 msgid "Theme"
 msgstr ""
 
+#: app/components/admin-setup-reminder-card.tsx:79
+msgid "There is no next step to remind about."
+msgstr "There is no next step to remind about."
+
 #: ../../packages/marketing/src/components/email/email-templates.tsx:57
 msgid "There is nothing to save yet. Add a block first."
 msgstr "There is nothing to save yet. Add a block first."
@@ -6772,6 +6829,10 @@ msgstr "These problems stop this broadcast. Fix them, then try again."
 #: app/routes/_admin+/organizations+/$organizationId_+/text-sends.server.ts:93
 msgid "They count for this month only and are added to the plan's sends."
 msgstr "They count for this month only and are added to the plan's sends."
+
+#: app/components/admin-setup-reminder-card.tsx:56
+msgid "This account is cancelled: it is never sent reminders."
+msgstr "This account is cancelled: it is never sent reminders."
 
 #: app/routes/_admin+/customer-apps.tsx:47
 msgid "This Android package is already used by another app."
@@ -6829,6 +6890,10 @@ msgstr "This iOS bundle id is already used by another app."
 msgid "This is a mobile number that can receive texts."
 msgstr "This is a mobile number that can receive texts."
 
+#: app/components/admin-setup-reminder-card.tsx:52
+msgid "This is a test organization: it is never sent reminders."
+msgstr "This is a test organization: it is never sent reminders."
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:132
 msgid "This is your last one this month. You get {limit} more on {resetDate}."
 msgstr "This is your last one this month. You get {limit} more on {resetDate}."
@@ -6864,6 +6929,14 @@ msgstr "This order is changing right now. Refresh and try again."
 #: app/routes/_admin+/customer-apps.tsx:49
 msgid "This organization already has an app."
 msgstr "This organization already has an app."
+
+#: app/components/admin-setup-reminder-card.tsx:73
+msgid "This organization is already live: nothing to remind."
+msgstr "This organization is already live: nothing to remind."
+
+#: app/components/admin-setup-reminder-card.tsx:60
+msgid "This organization is not active."
+msgstr "This organization is not active."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:64
 msgid "This policy applies to all channels, direct messages, and group chats in this organization. Only platform admins can change it."
@@ -6930,6 +7003,10 @@ msgstr "Title (English)"
 #: app/routes/_admin+/assignments.tsx:118
 msgid "To"
 msgstr "To"
+
+#: app/components/admin-setup-reminder-card.tsx:162
+msgid "To {recipients} owner(s)"
+msgstr "To {recipients} owner(s)"
 
 #: app/components/admin-launch-card.tsx:48
 msgid "To do"

@@ -21159,6 +21159,11 @@ msgstr "قد يحتاج البريد إلى انتباه"
 msgid "Email me a daily summary"
 msgstr "أرسل لي ملخصًا يوميًا بالبريد"
 
+#: app/components/settings/cards/setup-reminders-card.tsx:39
+#: app/components/settings/cards/setup-reminders-card.tsx:49
+msgid "Email me setup reminders"
+msgstr "أرسل لي تذكيرات الإعداد بالبريد"
+
 #: app/components/dashboard/blocks/today-block.tsx:276
 msgid "Email me yesterday's summary every morning"
 msgstr "أرسل لي ملخص أمس كل صباح"
@@ -51246,6 +51251,10 @@ msgstr "مفتاح الإعداد"
 msgid "Setup progress"
 msgstr "تقدّم الإعداد"
 
+#: app/components/settings/cards/setup-reminders-card.tsx:26
+msgid "Setup reminders"
+msgstr "تذكيرات الإعداد"
+
 #: app/components/launch/launch-checklist.tsx:65
 msgid "Setup step"
 msgstr "خطوة إعداد"
@@ -62764,6 +62773,10 @@ msgstr "حتى صباح الغد"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:541
 msgid "Until turned off"
 msgstr "حتى يُوقَف"
+
+#: app/components/settings/cards/setup-reminders-card.tsx:29
+msgid "Until your restaurant is live, we email the owner about the next unfinished step 1, 3 and 7 days after you last made progress, then stop."
+msgstr "إلى أن يصبح مطعمك جاهزًا، نرسل إلى المالك بريدًا عن الخطوة التالية غير المكتملة بعد 1 و3 و7 أيام من آخر تقدم لك، ثم نتوقف."
 
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:761
 msgid "Untitled category"
