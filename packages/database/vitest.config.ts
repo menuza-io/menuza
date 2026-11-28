@@ -8,5 +8,8 @@ export default defineConfig({
 			DATABASE_URL: 'file:./db/data.db',
 		},
 		testTimeout: 10000,
+		// The migration tests apply dozens of migrations in a hook; a loaded CI
+		// runner needs more than the 10 seconds default.
+		hookTimeout: 90000,
 	},
 })
