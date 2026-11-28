@@ -395,3 +395,85 @@ describe('calendar day math across DST', () => {
 		)
 	})
 })
+
+describe('yearly special hours (#242)', () => {
+	const week: WeeklySchedule = [
+		'monday',
+		'tuesday',
+		'wednesday',
+		'thursday',
+		'friday',
+		'saturday',
+		'sunday',
+	].map((day) => ({
+		day: day as WeeklySchedule[number]['day'],
+		isOpen: true,
+		slots: [{ start: '10:00', end: '22:00' }],
+	}))
+	const christmas = {
+		id: 'xmas',
+		date: '2026-12-25',
+		isOpen: false,
+		slots: [],
+		repeatsYearly: true,
+	}
+
+	it('closes ordering next 25 December without anyone re-entering it', () => {
+		const result = isLocationOpenForOrdering(
+			{
+				timezone: 'America/New_York',
+				onlineHours: week,
+				specialHours: [christmas],
+				prepTime: 15,
+			},
+			new Date('2027-12-25T17:00:00Z'),
+		)
+		expect(result.isOpen).toBe(false)
+		expect(result.status).toBe('closed')
+	})
+
+	it('lets a one-off entry for the same date override it for that year only', () => {
+		const specialHours = [
+			christmas,
+			{
+				id: 'open-2027',
+				date: '2027-12-25',
+				isOpen: true,
+				slots: [{ start: '12:00', end: '16:00' }],
+			},
+		]
+		const open = isLocationOpenForOrdering(
+			{ timezone: 'America/New_York', onlineHours: week, specialHours },
+			new Date('2027-12-25T17:00:00Z'),
+		)
+		expect(open.isOpen).toBe(true)
+		const nextYear = isLocationOpenForOrdering(
+			{ timezone: 'America/New_York', onlineHours: week, specialHours },
+			new Date('2028-12-25T17:00:00Z'),
+		)
+		expect(nextYear.isOpen).toBe(false)
+	})
+
+	it('rolls over the year boundary in the location time zone', () => {
+		const newYear = { ...christmas, id: 'ny', date: '2027-01-01' }
+		// 04:30 UTC on 1 Jan 2028 is still 31 Dec 2027 at 23:30 in New York.
+		const stillOpen = isLocationOpenForOrdering(
+			{
+				timezone: 'America/New_York',
+				onlineHours: week,
+				specialHours: [newYear],
+			},
+			new Date('2028-01-01T03:30:00Z'),
+		)
+		expect(stillOpen.currentLocalDate).toBe('2027-12-31')
+		const closed = isLocationOpenForOrdering(
+			{
+				timezone: 'America/New_York',
+				onlineHours: week,
+				specialHours: [newYear],
+			},
+			new Date('2028-01-01T17:00:00Z'),
+		)
+		expect(closed.isOpen).toBe(false)
+	})
+})

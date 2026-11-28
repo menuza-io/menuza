@@ -229,3 +229,35 @@ describe('open state, phone and fingerprints', () => {
 		expect(fingerprint({ a: 1 })).not.toBe(fingerprint({ a: 2 }))
 	})
 })
+
+describe('yearly special hours in listing sync (#242)', () => {
+	const christmas = {
+		id: 'xmas',
+		date: '2026-12-25',
+		isOpen: false,
+		slots: [],
+		repeatsYearly: true,
+	}
+
+	it('sends each upcoming occurrence of a repeating closure to Google', () => {
+		const periods = specialHoursToGoogle([christmas], '2027-01-10')
+		expect(periods).toEqual([
+			{ startDate: { year: 2027, month: 12, day: 25 }, closed: true },
+		])
+	})
+
+	it('does not report a difference when Google already lists the occurrence', () => {
+		const google = specialHoursToGoogle([christmas], '2026-12-01')
+		expect(diffSpecialHours([christmas], google, '2026-12-01')).toEqual([])
+	})
+
+	it('keeps the repeat when "use Google\'s value" brings the same hours back', () => {
+		const google = specialHoursToGoogle([christmas], '2026-12-01')
+		const merged = googleSpecialToMenuza(google, '2026-12-01', [christmas])
+		expect(merged).toHaveLength(1)
+		expect(merged.find((entry) => entry.date === '2026-12-25')).toMatchObject({
+			repeatsYearly: true,
+		})
+		expect(merged.find((entry) => entry.date === '2027-12-25')).toBeUndefined()
+	})
+})

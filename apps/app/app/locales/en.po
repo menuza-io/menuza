@@ -6125,7 +6125,7 @@ msgstr "Add combination"
 msgid "Add contact"
 msgstr "Add contact"
 
-#: app/components/locations/special-hours-picker.tsx:102
+#: app/components/locations/special-hours-picker.tsx:127
 msgid "Add date override"
 msgstr "Add date override"
 
@@ -6518,7 +6518,7 @@ msgstr ""
 msgid "Add special day"
 msgstr "Add special day"
 
-#: app/components/locations/special-hours-picker.tsx:109
+#: app/components/locations/special-hours-picker.tsx:134
 msgid "Add Special Hours Override"
 msgstr "Add Special Hours Override"
 
@@ -11268,7 +11268,7 @@ msgstr "Can't text that number"
 #: app/components/locations/copy-settings-dialog.tsx:490
 #: app/components/locations/delivery-zones-manager.tsx:896
 #: app/components/locations/location-form.tsx:1691
-#: app/components/locations/special-hours-picker.tsx:225
+#: app/components/locations/special-hours-picker.tsx:271
 #: app/components/loyalty/adjust-dialog.tsx:274
 #: app/components/loyalty/promotion-dialog.tsx:908
 #: app/components/loyalty/record-refund-dialog.tsx:297
@@ -14174,7 +14174,7 @@ msgstr "Close, shorten or replace your regular services on holidays, Ramadan, pr
 
 #: app/components/hiring/job-labels.ts:51
 #: app/components/locations/availability-picker.tsx:374
-#: app/components/locations/special-hours-picker.tsx:276
+#: app/components/locations/special-hours-picker.tsx:346
 #: app/components/menu/drop-wizard/drop-preview.tsx:73
 #: app/components/orders/order-problems.tsx:208
 #: app/components/phone-agent/business-details-section.tsx:244
@@ -14195,7 +14195,7 @@ msgid "Closed (holiday)"
 msgstr "Closed (holiday)"
 
 #: app/components/locations/copy-settings-dialog.tsx:532
-#: app/components/locations/special-hours-picker.tsx:153
+#: app/components/locations/special-hours-picker.tsx:199
 msgid "Closed all day"
 msgstr "Closed all day"
 
@@ -17207,7 +17207,7 @@ msgstr "Custom for 1–{onlinePartyMax}"
 msgid "Custom form"
 msgstr "Custom form"
 
-#: app/components/locations/special-hours-picker.tsx:166
+#: app/components/locations/special-hours-picker.tsx:212
 msgid "Custom Hours"
 msgstr "Custom Hours"
 
@@ -17551,7 +17551,7 @@ msgstr ""
 #: app/components/inventory/cash-purchase-dialog.tsx:287
 #: app/components/inventory/invoice-inbox-panel.tsx:444
 #: app/components/locations/copy-settings-dialog.tsx:519
-#: app/components/locations/special-hours-picker.tsx:122
+#: app/components/locations/special-hours-picker.tsx:147
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
 #: app/components/menu/menu-availability-card.tsx:350
 #: app/components/orders/order-history-tab.tsx:375
@@ -20231,7 +20231,7 @@ msgstr ""
 msgid "e.g. Choice of Protein, Sides"
 msgstr "e.g. Choice of Protein, Sides"
 
-#: app/components/locations/special-hours-picker.tsx:139
+#: app/components/locations/special-hours-picker.tsx:164
 msgid "e.g. Christmas Day, Summer Festival"
 msgstr "e.g. Christmas Day, Summer Festival"
 
@@ -22650,6 +22650,10 @@ msgstr "Every two weeks"
 #: app/components/staff/timesheets/pay-period-dialog.tsx:109
 msgid "Every week"
 msgstr "Every week"
+
+#: app/components/locations/special-hours-picker.tsx:325
+msgid "Every year"
+msgstr "Every year"
 
 #: app/components/staff/announcements/announcements-page.tsx:73
 #: app/components/staff/announcements/announcements-page.tsx:302
@@ -28905,7 +28909,7 @@ msgstr "Kosher"
 msgid "Label"
 msgstr "Label"
 
-#: app/components/locations/special-hours-picker.tsx:135
+#: app/components/locations/special-hours-picker.tsx:160
 msgid "Label / Reason (Optional)"
 msgstr "Label / Reason (Optional)"
 
@@ -30696,7 +30700,7 @@ msgstr "Location scope writes an override, not the base dish price."
 msgid "Location scorecard"
 msgstr "Location scorecard"
 
-#: app/components/locations/special-hours-picker.tsx:148
+#: app/components/locations/special-hours-picker.tsx:194
 msgid "Location Status"
 msgstr "Location Status"
 
@@ -35935,7 +35939,7 @@ msgstr "No single table seats {partySize}. The largest seats {largestSeating}, s
 msgid "No special days yet"
 msgstr "No special days yet"
 
-#: app/components/locations/special-hours-picker.tsx:238
+#: app/components/locations/special-hours-picker.tsx:297
 msgid "No special hours or holiday closures scheduled."
 msgstr "No special hours or holiday closures scheduled."
 
@@ -38858,7 +38862,7 @@ msgstr "Open waitlist"
 msgid "Open WhatsApp"
 msgstr "Open WhatsApp"
 
-#: app/components/locations/special-hours-picker.tsx:152
+#: app/components/locations/special-hours-picker.tsx:198
 msgid "Open with custom hours"
 msgstr "Open with custom hours"
 
@@ -40178,7 +40182,7 @@ msgstr "Override"
 msgid "Override base prep minutes during specific windows (15-minute steps)."
 msgstr "Override base prep minutes during specific windows (15-minute steps)."
 
-#: app/components/locations/special-hours-picker.tsx:91
+#: app/components/locations/special-hours-picker.tsx:116
 msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "Override regular operating hours on holidays, events, or closures."
 
@@ -46199,6 +46203,10 @@ msgstr "Reorder cancelled. {name} stays where they were."
 msgid "Repeat each item before sending the link."
 msgstr "Repeat each item before sending the link."
 
+#: app/components/locations/special-hours-picker.tsx:173
+msgid "Repeat every year"
+msgstr "Repeat every year"
+
 #: app/components/staff/schedule/shift-editor-sheet.tsx:506
 msgid "Repeat on"
 msgstr "Repeat on"
@@ -46240,6 +46248,14 @@ msgstr "Repeat-purchase rate"
 #: app/routes/_app+/$orgSlug_+/website+/events.$eventId.tsx:724
 msgid "Repeats"
 msgstr "Repeats"
+
+#: app/components/locations/special-hours-picker.tsx:322
+msgid "Repeats every year"
+msgstr "Repeats every year"
+
+#: app/components/locations/special-hours-picker.tsx:176
+msgid "Repeats on the same date each year, like 25 December. Holidays that move, such as Eid, Easter or Thanksgiving, are not the same date every year: add those one year at a time."
+msgstr "Repeats on the same date each year, like 25 December. Holidays that move, such as Eid, Easter or Thanksgiving, are not the same date every year: add those one year at a time."
 
 #: ../../packages/marketing/src/components/ai/ai-draft-dialog.tsx:396
 #: app/components/menu/drop-wizard/drop-form.tsx:703
@@ -48226,7 +48242,7 @@ msgstr "Save Option"
 msgid "Save order alerts"
 msgstr "Save order alerts"
 
-#: app/components/locations/special-hours-picker.tsx:228
+#: app/components/locations/special-hours-picker.tsx:274
 msgid "Save override"
 msgstr "Save override"
 
@@ -50668,7 +50684,7 @@ msgstr "Set channels"
 msgid "Set clock-out"
 msgstr "Set clock-out"
 
-#: app/components/locations/special-hours-picker.tsx:112
+#: app/components/locations/special-hours-picker.tsx:137
 msgid "Set custom hours or mark the restaurant closed for a specific date."
 msgstr "Set custom hours or mark the restaurant closed for a specific date."
 
@@ -51359,6 +51375,11 @@ msgstr "Show opening date"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.defaults.tsx:318
 msgid "Show overrides"
 msgstr "Show overrides"
+
+#. placeholder {0}: rows.past.length
+#: app/components/locations/special-hours-picker.tsx:284
+msgid "Show past ({0})"
+msgstr "Show past ({0})"
 
 #: app/routes/_app+/$orgSlug_+/reports+/product-mix.tsx:247
 #: app/routes/_app+/$orgSlug_+/reports+/product-mix.tsx:249
@@ -52501,7 +52522,7 @@ msgstr "Special hours"
 msgid "Special hours (holidays)"
 msgstr "Special hours (holidays)"
 
-#: app/components/locations/special-hours-picker.tsx:88
+#: app/components/locations/special-hours-picker.tsx:113
 msgid "Special Hours & Holiday Overrides"
 msgstr "Special Hours & Holiday Overrides"
 

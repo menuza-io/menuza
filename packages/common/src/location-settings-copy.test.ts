@@ -283,3 +283,60 @@ describe('addHolidayToLocation', () => {
 		expect(result.patch).toEqual({})
 	})
 })
+
+describe('copying special hours keeps the yearly repeat (#242)', () => {
+	it('copies the Repeat every year flag to the target', () => {
+		const source = loc('a', {
+			specialHours: JSON.stringify([
+				{
+					id: 's1',
+					date: '2026-12-25',
+					isOpen: false,
+					slots: [],
+					note: 'Christmas',
+					repeatsYearly: true,
+				},
+				{ id: 's2', date: '2026-12-31', isOpen: false, slots: [] },
+			]),
+		})
+		const target = loc('b')
+		const result = mergeLocationSettings(source, target, ['specialHours'], {
+			makeId,
+			specialHours: { mode: 'add' },
+		})
+		const written = JSON.parse(result.patch.specialHours as string) as Array<{
+			date: string
+			repeatsYearly?: boolean
+		}>
+		expect(written.find((entry) => entry.date === '2026-12-25')).toMatchObject({
+			repeatsYearly: true,
+		})
+		expect(
+			written.find((entry) => entry.date === '2026-12-31')?.repeatsYearly,
+		).toBeUndefined()
+	})
+
+	it('does not add a dated entry that a repeating one on the target already covers', () => {
+		const source = loc('a', {
+			specialHours: JSON.stringify([
+				{ id: 's1', date: '2027-12-25', isOpen: false, slots: [] },
+			]),
+		})
+		const target = loc('b', {
+			specialHours: JSON.stringify([
+				{
+					id: 't1',
+					date: '2026-12-25',
+					isOpen: false,
+					slots: [],
+					repeatsYearly: true,
+				},
+			]),
+		})
+		const result = mergeLocationSettings(source, target, ['specialHours'], {
+			makeId,
+			specialHours: { mode: 'add' },
+		})
+		expect(result.changed).toBe(false)
+	})
+})

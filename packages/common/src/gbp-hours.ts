@@ -9,6 +9,11 @@
  * stretch is ONE period on both sides and never shows up as a difference.
  */
 import {
+	expandSpecialHours,
+	findSpecialHourForDate,
+	specialHoursHorizonEnd,
+} from '@repo/opening-hours'
+import {
 	DAYS_OF_WEEK,
 	SHORT_DAY_LABELS,
 	type DayOfWeek,
@@ -304,8 +309,12 @@ export function specialHoursToGoogle(
 	today: string,
 ): GoogleSpecialHourPeriod[] {
 	const periods: GoogleSpecialHourPeriod[] = []
-	const sorted = [...(special ?? [])].sort((a, b) =>
-		a.date.localeCompare(b.date),
+	// Yearly repeats (#242) become one dated entry per occurrence in the next
+	// year, so Google gets the same dates the rest of the product enforces.
+	const sorted = expandSpecialHours(
+		special,
+		today,
+		specialHoursHorizonEnd(today),
 	)
 	for (const entry of sorted) {
 		if (entry.date < today) continue
@@ -412,6 +421,9 @@ export function googleSpecialToMenuza(
 			isOpen: true,
 			slots: [],
 			note: existing.find((item) => item.date === date)?.note,
+			...(existing.find((item) => item.date === date)?.repeatsYearly
+				? { repeatsYearly: true }
+				: {}),
 		}
 		if (period.closed) {
 			entry.isOpen = false
@@ -423,6 +435,21 @@ export function googleSpecialToMenuza(
 			})
 		}
 		byDate.set(date, entry)
+	}
+	// A repeating entry (#242) already covers later years: Google's copy of a
+	// later occurrence with the same hours is not a new entry, and the repeat
+	// flag survives on the entry's own date. A different value stays a one-off
+	// that overrides the repeat for that year.
+	const repeating = existing.filter((item) => item.repeatsYearly)
+	const sameDay = (a: SpecialHour, b: SpecialHour) =>
+		a.isOpen === b.isOpen &&
+		a.slots.map((slot) => `${slot.start}-${slot.end}`).join(',') ===
+			b.slots.map((slot) => `${slot.start}-${slot.end}`).join(',')
+	for (const [date, entry] of [...byDate]) {
+		const base = findSpecialHourForDate(repeating, date)
+		if (!base || !sameDay(base, entry)) continue
+		if (base.date === date) entry.repeatsYearly = true
+		else byDate.delete(date)
 	}
 	// Past dates are left alone: keep Menuza's own past entries untouched.
 	const past = existing.filter((item) => item.date < today)

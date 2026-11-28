@@ -1,4 +1,5 @@
 import { SpecialHourSchema } from '@repo/common/location-types'
+import { expandSpecialHours, specialHoursHorizonEnd } from '@repo/opening-hours'
 import { type RemoteHolidayHour } from './types.ts'
 
 function resolveValidTimeZone(timeZone: string | null | undefined): string {
@@ -45,12 +46,19 @@ export function projectSpecialHoursForPlatform(
 	const safeTz = resolveValidTimeZone(timeZone)
 	const todayInTimeZone = formatDateInTimeZone(now, safeTz)
 
-	const byDate = new Map<string, RemoteHolidayHour>()
-	for (const entry of rawList) {
+	const entries = rawList.flatMap((entry) => {
 		const parsed = SpecialHourSchema.safeParse(entry)
-		if (!parsed.success) continue
-		const { date, isOpen, slots } = parsed.data
-		if (date < todayInTimeZone) continue
+		return parsed.success ? [parsed.data] : []
+	})
+	// Yearly repeats (#242) go out as dated holidays for the next year.
+	const upcoming = expandSpecialHours(
+		entries,
+		todayInTimeZone,
+		specialHoursHorizonEnd(todayInTimeZone),
+	)
+
+	const byDate = new Map<string, RemoteHolidayHour>()
+	for (const { date, isOpen, slots } of upcoming) {
 		byDate.set(date, {
 			date,
 			isOpen,

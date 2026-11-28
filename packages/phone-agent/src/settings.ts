@@ -129,6 +129,7 @@ export const SpecialHoursSchema = z.object({
 	isOpen: z.boolean(),
 	slots: z.array(ScheduleSlotSchema).max(6),
 	note: z.string().trim().max(120).optional(),
+	repeatsYearly: z.boolean().optional(),
 })
 
 /**

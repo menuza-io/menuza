@@ -346,3 +346,28 @@ describe('buildAgentInstructions', () => {
 		expect(text).not.toContain('transfer_to_staff')
 	})
 })
+
+describe('describeBusiness lists yearly special hours (#242)', () => {
+	it('names the next occurrence of a repeating closure', async () => {
+		const { describeBusiness } = await import('./config.ts')
+		const text = describeBusiness(
+			{
+				phone: null,
+				timezone: 'UTC',
+				address: null,
+				hours: [],
+				specialHours: [
+					{
+						date: '2024-12-25',
+						isOpen: false,
+						slots: [],
+						repeatsYearly: true,
+						note: 'Christmas',
+					},
+				],
+			},
+			new Date('2026-06-01T12:00:00Z'),
+		)
+		expect(text).toContain('2026-12-25: closed (Christmas)')
+	})
+})

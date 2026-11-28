@@ -1287,6 +1287,7 @@ const specialHoursContextSchema = z
 				)
 				.default([]),
 			note: z.string().optional(),
+			repeatsYearly: z.boolean().optional(),
 		}),
 	)
 	.default([])

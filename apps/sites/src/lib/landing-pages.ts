@@ -9,6 +9,7 @@ import { DAYS_OF_WEEK } from '@repo/common/location-types'
 import { isSoldOn } from '@repo/common/menu-channels'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { RESERVED_DISH_SLUGS } from '@repo/common/site-landing-pages'
+import { findSpecialHourForDate } from '@repo/opening-hours'
 import { localParts } from '@repo/zoned-time'
 // Type-only: a value import would load the Workers runtime (verbatimModuleSyntax).
 // eslint-disable-next-line import/consistent-type-specifier-style
@@ -323,8 +324,21 @@ export function weeklyHoursRows(
 		(new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).getUTCDay() +
 			6) %
 		7
-	const special = parseList(location.specialHours).find(
-		(entry) => (entry as { date?: unknown })?.date === today,
+	// The one hours rule (#242): an entry for exactly today, else a repeating one.
+	const special = findSpecialHourForDate(
+		parseList(location.specialHours).flatMap((entry) => {
+			const record = entry as { date?: unknown; repeatsYearly?: unknown }
+			return typeof record?.date === 'string'
+				? [
+						{
+							...(entry as object),
+							date: record.date,
+							repeatsYearly: record.repeatsYearly === true,
+						},
+					]
+				: []
+		}),
+		today,
 	)
 	return DAYS_OF_WEEK.map((day, index) => {
 		const isToday = index === todayIndex

@@ -106,3 +106,48 @@ describe('projectSpecialHoursForPlatform (#96)', () => {
 		).toEqual([])
 	})
 })
+
+describe('projectSpecialHoursForPlatform yearly repeats (#242)', () => {
+	it('sends a repeating closure for each occurrence in the next year, one-off winning', () => {
+		const now = new Date('2026-12-26T12:00:00.000Z')
+		const result = projectSpecialHoursForPlatform(
+			[
+				{
+					id: 'xmas',
+					date: '2026-12-25',
+					isOpen: false,
+					slots: [],
+					repeatsYearly: true,
+				},
+				{
+					id: 'short',
+					date: '2027-12-25',
+					isOpen: true,
+					slots: [{ start: '12:00', end: '15:00' }],
+				},
+			],
+			'UTC',
+			now,
+		)
+		// The 2026 closure is past; 2027 is the one-off with its own hours.
+		expect(result.map((entry) => entry.date)).toEqual(['2027-12-25'])
+		expect(result[0]).toMatchObject({
+			isOpen: true,
+			intervals: [{ start: '12:00', end: '15:00' }],
+		})
+		const repeatOnly = projectSpecialHoursForPlatform(
+			[
+				{
+					id: 'xmas',
+					date: '2026-12-25',
+					isOpen: false,
+					slots: [],
+					repeatsYearly: true,
+				},
+			],
+			'UTC',
+			now,
+		)
+		expect(repeatOnly).toMatchObject([{ date: '2027-12-25', isOpen: false }])
+	})
+})
