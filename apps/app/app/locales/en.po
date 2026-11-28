@@ -1839,7 +1839,7 @@ msgstr "{days} days"
 msgid "{days}, {from} to {to}"
 msgstr "{days}, {from} to {to}"
 
-#: app/components/ui/notification-bell.tsx:158
+#: app/components/ui/notification-bell.tsx:166
 msgid "{days}d ago"
 msgstr ""
 
@@ -2115,7 +2115,7 @@ msgstr "{hours}h"
 msgid "{hours}h {rest}m"
 msgstr "{hours}h {rest}m"
 
-#: app/components/ui/notification-bell.tsx:154
+#: app/components/ui/notification-bell.tsx:162
 msgid "{hours}h ago"
 msgstr ""
 
@@ -2335,7 +2335,7 @@ msgstr "{minutes} minutes"
 msgid "{minutes}m {remainingSec}s"
 msgstr ""
 
-#: app/components/ui/notification-bell.tsx:150
+#: app/components/ui/notification-bell.tsx:158
 msgid "{minutes}m ago"
 msgstr ""
 
@@ -3129,7 +3129,7 @@ msgstr "{seconds, plural, one {Closing in # second} other {Closing in # seconds}
 msgid "{seconds} seconds"
 msgstr "{seconds} seconds"
 
-#: app/components/ui/notification-bell.tsx:146
+#: app/components/ui/notification-bell.tsx:154
 msgid "{seconds}s ago"
 msgstr ""
 
@@ -3558,7 +3558,7 @@ msgstr "**A discount reached its weekly budget**"
 msgid "**New form response**"
 msgstr "**New form response**"
 
-#: app/components/ui/notification-bell.tsx:266
+#: app/components/ui/notification-bell.tsx:274
 msgid "**New response to {safeFormName}**"
 msgstr "**New response to {safeFormName}**"
 
@@ -3569,6 +3569,10 @@ msgstr "**Print order paid**"
 #: app/utils/print/print-notifications.ts:31
 msgid "**Print order refunded**"
 msgstr "**Print order refunded**"
+
+#: app/utils/sso/sso-alerts.ts:75
+msgid "**Single sign-on is failing**"
+msgstr "**Single sign-on is failing**"
 
 #: app/utils/customer-apps/alerts.ts:51
 msgid "**Your app’s developer account** expires within 30 days"
@@ -7449,8 +7453,8 @@ msgstr "All messages in this channel are permanently deleted for everyone. This 
 msgid "All none left"
 msgstr "All none left"
 
-#: app/components/ui/notification-bell.tsx:719
-#: app/components/ui/notification-bell.tsx:819
+#: app/components/ui/notification-bell.tsx:743
+#: app/components/ui/notification-bell.tsx:843
 msgid "All Notifications"
 msgstr ""
 
@@ -7771,7 +7775,7 @@ msgstr "Already on order"
 msgid "Already paid"
 msgstr "Already paid"
 
-#: app/components/ui/notification-bell.tsx:547
+#: app/components/ui/notification-bell.tsx:571
 msgid "Already read"
 msgstr ""
 
@@ -17127,7 +17131,7 @@ msgstr "Credit tips"
 msgid "Credit tips: {from} to {to}"
 msgstr "Credit tips: {from} to {to}"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:281
+#: app/components/settings/cards/notification-preferences-card.tsx:293
 msgid "Critical"
 msgstr ""
 
@@ -27860,31 +27864,31 @@ msgstr "Inventory settings"
 msgid "Inventory settings saved."
 msgstr "Inventory settings saved."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:59
+#: app/components/settings/cards/notification-preferences-card.tsx:60
 msgid "Inventory: a count is waiting for review"
 msgstr "Inventory: a count is waiting for review"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:63
+#: app/components/settings/cards/notification-preferences-card.tsx:64
 msgid "Inventory: a dish went off the menu because an ingredient ran out"
 msgstr "Inventory: a dish went off the menu because an ingredient ran out"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:64
+#: app/components/settings/cards/notification-preferences-card.tsx:65
 msgid "Inventory: a routine has something for you (morning brief, waste summary, cut-off reminder)"
 msgstr "Inventory: a routine has something for you (morning brief, waste summary, cut-off reminder)"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:60
+#: app/components/settings/cards/notification-preferences-card.tsx:61
 msgid "Inventory: a scheduled count was not started"
 msgstr "Inventory: a scheduled count was not started"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:62
+#: app/components/settings/cards/notification-preferences-card.tsx:63
 msgid "Inventory: an item went up in price"
 msgstr "Inventory: an item went up in price"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:61
+#: app/components/settings/cards/notification-preferences-card.tsx:62
 msgid "Inventory: an order is due for delivery"
 msgstr "Inventory: an order is due for delivery"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:58
+#: app/components/settings/cards/notification-preferences-card.tsx:59
 msgid "Inventory: items are below the level you order at"
 msgstr "Inventory: items are below the level you order at"
 
@@ -29028,7 +29032,7 @@ msgstr "Kitchen station ticket"
 msgid "Kitchen tablet offline"
 msgstr "Kitchen tablet offline"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:72
+#: app/components/settings/cards/notification-preferences-card.tsx:73
 msgid "Kitchen tablets: a tablet goes offline"
 msgstr "Kitchen tablets: a tablet goes offline"
 
@@ -31673,7 +31677,7 @@ msgstr ""
 msgid "Manage your menus, categories, items, drops, and modifier groups."
 msgstr "Manage your menus, categories, items, drops, and modifier groups."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:365
+#: app/components/settings/cards/notification-preferences-card.tsx:380
 msgid "Manage your notification settings for different channels and workflows."
 msgstr ""
 
@@ -31781,6 +31785,10 @@ msgstr "Many answers differ"
 msgid "Many of the same guests would get another broadcast around the same time."
 msgstr "Many of the same guests would get another broadcast around the same time."
 
+#: app/utils/sso/sso-alerts.ts:71
+msgid "Many sign-in attempts were blocked as suspicious."
+msgstr "Many sign-in attempts were blocked as suspicious."
+
 #: app/components/staff/kiosk-manager.tsx:424
 msgid "Many wrong PINs"
 msgstr "Many wrong PINs"
@@ -31819,7 +31827,7 @@ msgstr "Mark {reviewableCount} as reviewed"
 msgid "Mark Active"
 msgstr "Mark Active"
 
-#: app/components/ui/notification-bell.tsx:844
+#: app/components/ui/notification-bell.tsx:868
 msgid "Mark all as read"
 msgstr ""
 
@@ -31845,7 +31853,7 @@ msgstr "Mark as not done"
 msgid "Mark as preselected"
 msgstr "Mark as preselected"
 
-#: app/components/ui/notification-bell.tsx:549
+#: app/components/ui/notification-bell.tsx:573
 msgid "Mark as read"
 msgstr ""
 
@@ -37248,7 +37256,7 @@ msgstr "Nothing has fired yet."
 msgid "Nothing has happened to this item yet."
 msgstr "Nothing has happened to this item yet."
 
-#: app/components/ui/notification-bell.tsx:602
+#: app/components/ui/notification-bell.tsx:626
 msgid "Nothing here yet!"
 msgstr ""
 
@@ -37542,7 +37550,7 @@ msgstr "Notice only"
 msgid "Notification Message"
 msgstr "Notification Message"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:362
+#: app/components/settings/cards/notification-preferences-card.tsx:377
 msgid "Notification Preferences"
 msgstr ""
 
@@ -38842,7 +38850,7 @@ msgstr ""
 msgid "Open link"
 msgstr "Open link"
 
-#: app/components/ui/notification-bell.tsx:834
+#: app/components/ui/notification-bell.tsx:858
 msgid "Open menu"
 msgstr ""
 
@@ -40047,27 +40055,27 @@ msgstr "Orders through Menuza cost you nothing per order."
 msgid "Orders waiting too long"
 msgstr "Orders waiting too long"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:71
+#: app/components/settings/cards/notification-preferences-card.tsx:72
 msgid "Orders: a guest reported a problem with an order"
 msgstr "Orders: a guest reported a problem with an order"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:70
+#: app/components/settings/cards/notification-preferences-card.tsx:71
 msgid "Orders: a large order arrives"
 msgstr "Orders: a large order arrives"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:65
+#: app/components/settings/cards/notification-preferences-card.tsx:66
 msgid "Orders: a new online order arrives"
 msgstr "Orders: a new online order arrives"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:68
+#: app/components/settings/cards/notification-preferences-card.tsx:69
 msgid "Orders: a payment needs review"
 msgstr "Orders: a payment needs review"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:67
+#: app/components/settings/cards/notification-preferences-card.tsx:68
 msgid "Orders: a scheduled order is due soon and still new"
 msgstr "Orders: a scheduled order is due soon and still new"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:66
+#: app/components/settings/cards/notification-preferences-card.tsx:67
 msgid "Orders: an order has been waiting too long"
 msgstr "Orders: an order has been waiting too long"
 
@@ -40079,7 +40087,7 @@ msgstr "Orders: First Order Placed"
 msgid "Orders: Guest Lapsed"
 msgstr "Orders: Guest Lapsed"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:69
+#: app/components/settings/cards/notification-preferences-card.tsx:70
 msgid "Orders: online ordering has been paused or busy for too long"
 msgstr "Orders: online ordering has been paused or busy for too long"
 
@@ -41550,6 +41558,10 @@ msgstr "People or departments the agent can transfer to, like a manager. Use num
 #: app/components/staff/timeclock-today.tsx:244
 msgid "People show up here the moment they punch in on a paired tablet."
 msgstr "People show up here the moment they punch in on a paired tablet."
+
+#: app/utils/sso/sso-alerts.ts:70
+msgid "People signed in, but their accounts could not be created or linked."
+msgstr "People signed in, but their accounts could not be created or linked."
 
 #: app/components/staff/kiosk-manager.tsx:478
 msgid "People tap their name, then type their PIN. Names are shown with a last initial on the tablet."
@@ -46996,31 +47008,31 @@ msgstr "Reservations setup sections"
 msgid "Reservations: {reservationsCount}"
 msgstr "Reservations: {reservationsCount}"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:53
+#: app/components/settings/cards/notification-preferences-card.tsx:54
 msgid "Reservations: a booking no longer has a table"
 msgstr "Reservations: a booking no longer has a table"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:52
+#: app/components/settings/cards/notification-preferences-card.tsx:53
 msgid "Reservations: a guest joined the waitlist remotely"
 msgstr "Reservations: a guest joined the waitlist remotely"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:51
+#: app/components/settings/cards/notification-preferences-card.tsx:52
 msgid "Reservations: a large-party request is waiting"
 msgstr "Reservations: a large-party request is waiting"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:56
+#: app/components/settings/cards/notification-preferences-card.tsx:57
 msgid "Reservations: a payment dispute was opened"
 msgstr "Reservations: a payment dispute was opened"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:54
+#: app/components/settings/cards/notification-preferences-card.tsx:55
 msgid "Reservations: a payment failed"
 msgstr "Reservations: a payment failed"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:55
+#: app/components/settings/cards/notification-preferences-card.tsx:56
 msgid "Reservations: a payment needs a review"
 msgstr "Reservations: a payment needs a review"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:57
+#: app/components/settings/cards/notification-preferences-card.tsx:58
 msgid "Reservations: guest messages could not be delivered"
 msgstr "Reservations: guest messages could not be delivered"
 
@@ -52027,6 +52039,10 @@ msgstr ""
 msgid "Sign up with your social account or email"
 msgstr ""
 
+#: app/utils/sso/sso-alerts.ts:72
+msgid "Sign-ins are failing for a reason we could not classify."
+msgstr "Sign-ins are failing for a reason we could not classify."
+
 #: app/components/customers/person-marketing-card.tsx:65
 msgid "Sign-up"
 msgstr "Sign-up"
@@ -52107,9 +52123,21 @@ msgstr "Single choice"
 msgid "Single Choice (Radio)"
 msgstr "Single Choice (Radio)"
 
+#: app/utils/sso/sso-alerts.ts:64
+msgid "Single sign-on is not set up, so nobody can sign in with it."
+msgstr "Single sign-on is not set up, so nobody can sign in with it."
+
+#: app/utils/sso/sso-alerts.ts:65
+msgid "Single sign-on is switched off, so sign-ins through it are refused."
+msgstr "Single sign-on is switched off, so sign-ins through it are refused."
+
 #: app/components/settings/cards/organization/billing-card.tsx:312
 msgid "Single sign-on, custom SLA, private support channel, and more."
 msgstr ""
+
+#: app/components/settings/cards/notification-preferences-card.tsx:51
+msgid "Single sign-on: sign-ins keep failing"
+msgstr "Single sign-on: sign-ins keep failing"
 
 #: app/routes/_app+/$orgSlug_+/website+/import.tsx:308
 msgid "Site address"
@@ -57047,6 +57075,14 @@ msgstr "The header, footer and theme go back to what is live. This cannot be und
 msgid "The host stand for this location: today’s floor, arrivals, walk-ins and the waitlist."
 msgstr "The host stand for this location: today’s floor, arrivals, walk-ins and the waitlist."
 
+#: app/utils/sso/sso-alerts.ts:67
+msgid "The identity provider returned an error or could not be reached."
+msgstr "The identity provider returned an error or could not be reached."
+
+#: app/utils/sso/sso-alerts.ts:69
+msgid "The identity provider sent back a response that could not be read."
+msgstr "The identity provider sent back a response that could not be read."
+
 #: app/components/phone-agent/agent-details.tsx:175
 msgid "The instructions the AI assistant gets at the start of a call, built from your settings, answers, and training rules. Saved changes show up here."
 msgstr "The instructions the AI assistant gets at the start of a call, built from your settings, answers, and training rules. Saved changes show up here."
@@ -58096,9 +58132,17 @@ msgstr "The shift as a bar, with any deducted break marked"
 msgid "The short side is under 800 px. It will still upload, but it may look soft on a menu."
 msgstr "The short side is under 800 px. It will still upload, but it may look soft on a menu."
 
+#: app/utils/sso/sso-alerts.ts:68
+msgid "The sign-in token could not be exchanged. Check the client secret and redirect address."
+msgstr "The sign-in token could not be exchanged. Check the client secret and redirect address."
+
 #: app/components/website/domain/connect-card.tsx:91
 msgid "The simple setup fits: let Menuza manage this domain."
 msgstr "The simple setup fits: let Menuza manage this domain."
+
+#: app/utils/sso/sso-alerts.ts:66
+msgid "The single sign-on settings look wrong, such as an expired client secret."
+msgstr "The single sign-on settings look wrong, such as an expired client secret."
 
 #: app/components/inventory/setup-checks-panel.tsx:183
 msgid "The size of {pack} of <0>{item}</0> from <1>{supplier}</1> looks 1,000 times too big."
@@ -61016,7 +61060,7 @@ msgstr "Today's reservations by status, covers by service, and the next arrivals
 msgid "Toggle announcement visibility"
 msgstr ""
 
-#: app/components/ui/notification-bell.tsx:775
+#: app/components/ui/notification-bell.tsx:799
 msgid "Toggle notifications"
 msgstr ""
 
@@ -62607,8 +62651,8 @@ msgstr "Unpublished changes"
 msgid "Unread"
 msgstr "Unread"
 
-#: app/components/ui/notification-bell.tsx:720
-#: app/components/ui/notification-bell.tsx:824
+#: app/components/ui/notification-bell.tsx:744
+#: app/components/ui/notification-bell.tsx:848
 msgid "Unread Notifications"
 msgstr ""
 
@@ -66132,7 +66176,7 @@ msgstr "When visitors or search engines request a URL that doesn't exist, it wil
 msgid "When you close it"
 msgstr "When you close it"
 
-#: app/components/ui/notification-bell.tsx:605
+#: app/components/ui/notification-bell.tsx:629
 msgid "When you get notifications, they'll show up here."
 msgstr ""
 

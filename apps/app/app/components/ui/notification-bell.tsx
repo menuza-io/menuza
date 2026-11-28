@@ -92,6 +92,14 @@ import {
 	reservationAlertKindFromNotificationType,
 	reservationAlertPath,
 } from '#app/utils/reservations/manager-alerts.ts'
+import {
+	SSO_FAILURE_NOTIFICATION_TYPE,
+	SSO_NOTICE_SUBJECT,
+	SSO_REASON_TEXT,
+	isSsoReasonKind,
+	ssoAlertPath,
+	type SsoReasonKind,
+} from '#app/utils/sso/sso-alerts.ts'
 import { staffingAlertCopy } from '#app/utils/staffing/alert-copy.ts'
 import {
 	SUPPORT_REPLY_COPY,
@@ -269,6 +277,18 @@ function NotificationItem({
 			}
 		: null
 
+	// Single sign-on keeps failing (#347): the kind of error only, never a user.
+	const ssoFailure = notification.type === SSO_FAILURE_NOTIFICATION_TYPE
+	const ssoReason: SsoReasonKind = isSsoReasonKind(payload?.reasonKind)
+		? (payload?.reasonKind as SsoReasonKind)
+		: 'unknown_error'
+	const ssoAlert = ssoFailure
+		? {
+				subject: _(SSO_NOTICE_SUBJECT),
+				body: _(SSO_REASON_TEXT[ssoReason]),
+			}
+		: null
+
 	const websiteKind = websiteAlertKindFromNotificationType(notification.type)
 	const websiteAlert = websiteKind
 		? websiteAlertCopy(
@@ -331,6 +351,7 @@ function NotificationItem({
 		: null
 
 	const subject =
+		ssoAlert?.subject ??
 		orderAlert?.subject ??
 		menuSyncAlert?.subject ??
 		customerAppAlert?.subject ??
@@ -349,6 +370,7 @@ function NotificationItem({
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
 	const body =
+		ssoAlert?.body ??
 		orderAlert?.body ??
 		menuSyncAlert?.body ??
 		customerAppAlert?.body ??
@@ -370,7 +392,9 @@ function NotificationItem({
 		if (!notification.isRead) {
 			onMarkRead(notification.id)
 		}
-		if (
+		if (ssoFailure && typeof payload?.orgSlug === 'string') {
+			void navigate(`/${payload.orgSlug}${ssoAlertPath()}`)
+		} else if (
 			formKind &&
 			typeof payload?.orgSlug === 'string' &&
 			typeof payload?.formId === 'string'

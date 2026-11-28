@@ -1,6 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { AuditAction, auditService } from '@repo/audit'
 import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
+import { db, eq, SSOConfiguration } from '@repo/database'
 import { STAFFING_PERMISSIONS } from '@repo/staffing'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import {
@@ -133,6 +134,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		org.id,
 		ORG_PERMISSIONS.READ_WEBSITE_ANY,
 	)
+	// Single sign-on failure notices (#347) are offered to the people who run
+	// settings, where single sign-on is set up.
+	const showSsoAlerts =
+		receivesMonthly &&
+		(await db
+			.select({ id: SSOConfiguration.id })
+			.from(SSOConfiguration)
+			.where(eq(SSOConfiguration.organizationId, org.id))
+			.limit(1)
+			.then((rows) => rows.length > 0))
 	// Reservations alerts are offered where the module is on and the member is
 	// one of the people the alerts are sent to.
 	const showReservationsAlerts = (
@@ -165,6 +176,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		showScheduleAlerts,
 		showHiringAlerts,
 		showFormAlerts,
+		showSsoAlerts,
 		showReservationsAlerts,
 		showInventoryAlerts: inventoryAlerts.any,
 		showInventoryPriceAlerts: inventoryAlerts.priceRise,
@@ -182,6 +194,7 @@ export default function NotificationSettings() {
 		showScheduleAlerts,
 		showHiringAlerts,
 		showFormAlerts,
+		showSsoAlerts,
 		showReservationsAlerts,
 		showInventoryAlerts,
 		showInventoryPriceAlerts,
@@ -197,6 +210,7 @@ export default function NotificationSettings() {
 					showScheduleAlerts={showScheduleAlerts}
 					showHiringAlerts={showHiringAlerts}
 					showFormAlerts={showFormAlerts}
+					showSsoAlerts={showSsoAlerts}
 					showReservationsAlerts={showReservationsAlerts}
 					showInventoryAlerts={showInventoryAlerts}
 					showInventoryPriceAlerts={showInventoryPriceAlerts}

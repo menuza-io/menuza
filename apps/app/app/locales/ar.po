@@ -1837,7 +1837,7 @@ msgstr "{days} يومًا"
 msgid "{days}, {from} to {to}"
 msgstr "{days}، من {from} إلى {to}"
 
-#: app/components/ui/notification-bell.tsx:158
+#: app/components/ui/notification-bell.tsx:166
 msgid "{days}d ago"
 msgstr "منذ {days} يوم"
 
@@ -2113,7 +2113,7 @@ msgstr "{hours} س"
 msgid "{hours}h {rest}m"
 msgstr "{hours} س {rest} د"
 
-#: app/components/ui/notification-bell.tsx:154
+#: app/components/ui/notification-bell.tsx:162
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
@@ -2333,7 +2333,7 @@ msgstr "{minutes} دقيقة"
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
-#: app/components/ui/notification-bell.tsx:150
+#: app/components/ui/notification-bell.tsx:158
 msgid "{minutes}m ago"
 msgstr "منذ {minutes} دقيقة"
 
@@ -3127,7 +3127,7 @@ msgstr "{seconds, plural, one {يُغلق خلال ثانية} two {يُغلق �
 msgid "{seconds} seconds"
 msgstr "{seconds} ثانية"
 
-#: app/components/ui/notification-bell.tsx:146
+#: app/components/ui/notification-bell.tsx:154
 msgid "{seconds}s ago"
 msgstr "منذ {seconds} ثانية"
 
@@ -3556,7 +3556,7 @@ msgstr "**بلغ أحد الخصومات ميزانيته الأسبوعية**"
 msgid "**New form response**"
 msgstr "**رد جديد على نموذج**"
 
-#: app/components/ui/notification-bell.tsx:266
+#: app/components/ui/notification-bell.tsx:274
 msgid "**New response to {safeFormName}**"
 msgstr "**رد جديد على {safeFormName}**"
 
@@ -3567,6 +3567,10 @@ msgstr "**تم دفع طلب الطباعة**"
 #: app/utils/print/print-notifications.ts:31
 msgid "**Print order refunded**"
 msgstr "**تم استرداد مبلغ طلب الطباعة**"
+
+#: app/utils/sso/sso-alerts.ts:75
+msgid "**Single sign-on is failing**"
+msgstr "**تسجيل الدخول الموحّد يفشل**"
 
 #: app/utils/customer-apps/alerts.ts:51
 msgid "**Your app’s developer account** expires within 30 days"
@@ -7447,8 +7451,8 @@ msgstr "ستُحذف جميع الرسائل في هذه القناة نهائي
 msgid "All none left"
 msgstr "الكل لم يتبقَّ منه شيء"
 
-#: app/components/ui/notification-bell.tsx:719
-#: app/components/ui/notification-bell.tsx:819
+#: app/components/ui/notification-bell.tsx:743
+#: app/components/ui/notification-bell.tsx:843
 msgid "All Notifications"
 msgstr "جميع الإشعارات"
 
@@ -7769,7 +7773,7 @@ msgstr "مطلوب بالفعل"
 msgid "Already paid"
 msgstr "مدفوعة مسبقًا"
 
-#: app/components/ui/notification-bell.tsx:547
+#: app/components/ui/notification-bell.tsx:571
 msgid "Already read"
 msgstr "تمت قراءتها بالفعل"
 
@@ -17125,7 +17129,7 @@ msgstr "إكراميات البطاقات"
 msgid "Credit tips: {from} to {to}"
 msgstr "إكراميات البطاقات: من {from} إلى {to}"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:281
+#: app/components/settings/cards/notification-preferences-card.tsx:293
 msgid "Critical"
 msgstr "حرجة"
 
@@ -27858,31 +27862,31 @@ msgstr "إعدادات المخزون"
 msgid "Inventory settings saved."
 msgstr "تم حفظ إعدادات المخزون."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:59
+#: app/components/settings/cards/notification-preferences-card.tsx:60
 msgid "Inventory: a count is waiting for review"
 msgstr "المخزون: جرد بانتظار المراجعة"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:63
+#: app/components/settings/cards/notification-preferences-card.tsx:64
 msgid "Inventory: a dish went off the menu because an ingredient ran out"
 msgstr "المخزون: خرج طبق من القائمة لنفاد أحد مكوناته"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:64
+#: app/components/settings/cards/notification-preferences-card.tsx:65
 msgid "Inventory: a routine has something for you (morning brief, waste summary, cut-off reminder)"
 msgstr "المخزون: لدى أحد الروتينات شيء لك (ملخص الصباح، ملخص الهدر، تذكير الإغلاق)"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:60
+#: app/components/settings/cards/notification-preferences-card.tsx:61
 msgid "Inventory: a scheduled count was not started"
 msgstr "المخزون: لم يبدأ جرد مجدول"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:62
+#: app/components/settings/cards/notification-preferences-card.tsx:63
 msgid "Inventory: an item went up in price"
 msgstr "المخزون: ارتفع سعر عنصر"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:61
+#: app/components/settings/cards/notification-preferences-card.tsx:62
 msgid "Inventory: an order is due for delivery"
 msgstr "المخزون: طلب حان موعد تسليمه"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:58
+#: app/components/settings/cards/notification-preferences-card.tsx:59
 msgid "Inventory: items are below the level you order at"
 msgstr "المخزون: عناصر أقل من مستوى الطلب"
 
@@ -29026,7 +29030,7 @@ msgstr "تذكرة محطة المطبخ"
 msgid "Kitchen tablet offline"
 msgstr "جهاز المطبخ غير متصل"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:72
+#: app/components/settings/cards/notification-preferences-card.tsx:73
 msgid "Kitchen tablets: a tablet goes offline"
 msgstr "أجهزة المطبخ: انقطع اتصال جهاز"
 
@@ -31671,7 +31675,7 @@ msgstr "إدارة حساباتك المتصلة هنا."
 msgid "Manage your menus, categories, items, drops, and modifier groups."
 msgstr "إدارة القوائم والفئات والعناصر والطروحات ومجموعات المعدلات."
 
-#: app/components/settings/cards/notification-preferences-card.tsx:365
+#: app/components/settings/cards/notification-preferences-card.tsx:380
 msgid "Manage your notification settings for different channels and workflows."
 msgstr "إدارة إعدادات الإشعارات للقنوات ومسارات العمل المختلفة."
 
@@ -31779,6 +31783,10 @@ msgstr "إجابات كثيرة مختلفة"
 msgid "Many of the same guests would get another broadcast around the same time."
 msgstr "سيتلقى كثير من الضيوف أنفسهم بثًّا آخر في وقت قريب."
 
+#: app/utils/sso/sso-alerts.ts:71
+msgid "Many sign-in attempts were blocked as suspicious."
+msgstr "تم حظر عدد كبير من محاولات تسجيل الدخول باعتبارها مشبوهة."
+
 #: app/components/staff/kiosk-manager.tsx:424
 msgid "Many wrong PINs"
 msgstr "أرقام سرية خاطئة كثيرة"
@@ -31817,7 +31825,7 @@ msgstr "تحديد {reviewableCount} كمراجَعة"
 msgid "Mark Active"
 msgstr "تعيين كـنشط"
 
-#: app/components/ui/notification-bell.tsx:844
+#: app/components/ui/notification-bell.tsx:868
 msgid "Mark all as read"
 msgstr "تحديد الكل كمقروء"
 
@@ -31843,7 +31851,7 @@ msgstr "وضع علامة غير منجزة"
 msgid "Mark as preselected"
 msgstr "تعيين كمحدد مسبقًا"
 
-#: app/components/ui/notification-bell.tsx:549
+#: app/components/ui/notification-bell.tsx:573
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
@@ -37246,7 +37254,7 @@ msgstr "لم يُطلق أي تنبيه بعد."
 msgid "Nothing has happened to this item yet."
 msgstr "لم يحدث شيء لهذا العنصر بعد."
 
-#: app/components/ui/notification-bell.tsx:602
+#: app/components/ui/notification-bell.tsx:626
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
@@ -37540,7 +37548,7 @@ msgstr "إشعار فقط"
 msgid "Notification Message"
 msgstr "رسالة الإشعار"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:362
+#: app/components/settings/cards/notification-preferences-card.tsx:377
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
@@ -38840,7 +38848,7 @@ msgstr "افتح إعدادات Kiro IDE"
 msgid "Open link"
 msgstr "فتح الرابط"
 
-#: app/components/ui/notification-bell.tsx:834
+#: app/components/ui/notification-bell.tsx:858
 msgid "Open menu"
 msgstr "فتح القائمة"
 
@@ -40045,27 +40053,27 @@ msgstr "الطلبات عبر منيوزا لا تكلّفك أي رسوم عن 
 msgid "Orders waiting too long"
 msgstr "طلبات تنتظر طويلًا"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:71
+#: app/components/settings/cards/notification-preferences-card.tsx:72
 msgid "Orders: a guest reported a problem with an order"
 msgstr "الطلبات: أبلغ ضيف عن مشكلة في طلب"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:70
+#: app/components/settings/cards/notification-preferences-card.tsx:71
 msgid "Orders: a large order arrives"
 msgstr "الطلبات: وصل طلب كبير"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:65
+#: app/components/settings/cards/notification-preferences-card.tsx:66
 msgid "Orders: a new online order arrives"
 msgstr "الطلبات: وصل طلب جديد عبر الإنترنت"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:68
+#: app/components/settings/cards/notification-preferences-card.tsx:69
 msgid "Orders: a payment needs review"
 msgstr "الطلبات: دفعة تحتاج إلى مراجعة"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:67
+#: app/components/settings/cards/notification-preferences-card.tsx:68
 msgid "Orders: a scheduled order is due soon and still new"
 msgstr "الطلبات: طلب مجدول يقترب موعده ولا يزال جديدًا"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:66
+#: app/components/settings/cards/notification-preferences-card.tsx:67
 msgid "Orders: an order has been waiting too long"
 msgstr "الطلبات: طلب ينتظر منذ وقت طويل"
 
@@ -40077,7 +40085,7 @@ msgstr "الطلبات: أول طلب"
 msgid "Orders: Guest Lapsed"
 msgstr "الطلبات: ضيف انقطع"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:69
+#: app/components/settings/cards/notification-preferences-card.tsx:70
 msgid "Orders: online ordering has been paused or busy for too long"
 msgstr "الطلبات: الطلب عبر الإنترنت متوقف أو في وضع الازدحام لفترة طويلة"
 
@@ -41548,6 +41556,10 @@ msgstr "الأشخاص أو الأقسام التي يمكن للوكيل الت
 #: app/components/staff/timeclock-today.tsx:244
 msgid "People show up here the moment they punch in on a paired tablet."
 msgstr "يظهر الأشخاص هنا لحظة تسجيل حضورهم على جهاز لوحي مرتبط."
+
+#: app/utils/sso/sso-alerts.ts:70
+msgid "People signed in, but their accounts could not be created or linked."
+msgstr "سجّل أشخاص الدخول، لكن تعذّر إنشاء حساباتهم أو ربطها."
 
 #: app/components/staff/kiosk-manager.tsx:478
 msgid "People tap their name, then type their PIN. Names are shown with a last initial on the tablet."
@@ -46994,31 +47006,31 @@ msgstr "أقسام إعداد الحجوزات"
 msgid "Reservations: {reservationsCount}"
 msgstr "الحجوزات: {reservationsCount}"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:53
+#: app/components/settings/cards/notification-preferences-card.tsx:54
 msgid "Reservations: a booking no longer has a table"
 msgstr "الحجوزات: حجز لم تعد له طاولة"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:52
+#: app/components/settings/cards/notification-preferences-card.tsx:53
 msgid "Reservations: a guest joined the waitlist remotely"
 msgstr "الحجوزات: انضم ضيف إلى قائمة الانتظار عن بُعد"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:51
+#: app/components/settings/cards/notification-preferences-card.tsx:52
 msgid "Reservations: a large-party request is waiting"
 msgstr "الحجوزات: طلب لمجموعة كبيرة بانتظار القرار"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:56
+#: app/components/settings/cards/notification-preferences-card.tsx:57
 msgid "Reservations: a payment dispute was opened"
 msgstr "الحجوزات: تم فتح نزاع على دفعة"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:54
+#: app/components/settings/cards/notification-preferences-card.tsx:55
 msgid "Reservations: a payment failed"
 msgstr "الحجوزات: فشلت دفعة"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:55
+#: app/components/settings/cards/notification-preferences-card.tsx:56
 msgid "Reservations: a payment needs a review"
 msgstr "الحجوزات: دفعة تحتاج إلى مراجعة"
 
-#: app/components/settings/cards/notification-preferences-card.tsx:57
+#: app/components/settings/cards/notification-preferences-card.tsx:58
 msgid "Reservations: guest messages could not be delivered"
 msgstr "الحجوزات: تعذّر تسليم رسائل إلى الضيوف"
 
@@ -52025,6 +52037,10 @@ msgstr "إنشاء حساب"
 msgid "Sign up with your social account or email"
 msgstr "أنشئ حساباً باستخدام حساب التواصل الاجتماعي أو البريد الإلكتروني"
 
+#: app/utils/sso/sso-alerts.ts:72
+msgid "Sign-ins are failing for a reason we could not classify."
+msgstr "تفشل عمليات تسجيل الدخول لسبب لم نتمكن من تصنيفه."
+
 #: app/components/customers/person-marketing-card.tsx:65
 msgid "Sign-up"
 msgstr "التسجيل"
@@ -52105,9 +52121,21 @@ msgstr "اختيار واحد"
 msgid "Single Choice (Radio)"
 msgstr "اختيار واحد (زر اختيار)"
 
+#: app/utils/sso/sso-alerts.ts:64
+msgid "Single sign-on is not set up, so nobody can sign in with it."
+msgstr "تسجيل الدخول الموحّد غير مُعدّ، لذا لا يستطيع أحد استخدامه."
+
+#: app/utils/sso/sso-alerts.ts:65
+msgid "Single sign-on is switched off, so sign-ins through it are refused."
+msgstr "تسجيل الدخول الموحّد متوقف، لذا تُرفض عمليات الدخول عبره."
+
 #: app/components/settings/cards/organization/billing-card.tsx:312
 msgid "Single sign-on, custom SLA, private support channel, and more."
 msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخصصة، قناة دعم خاصة، والمزيد."
+
+#: app/components/settings/cards/notification-preferences-card.tsx:51
+msgid "Single sign-on: sign-ins keep failing"
+msgstr "تسجيل الدخول الموحّد: عمليات الدخول تفشل باستمرار"
 
 #: app/routes/_app+/$orgSlug_+/website+/import.tsx:308
 msgid "Site address"
@@ -57045,6 +57073,14 @@ msgstr "تعود الترويسة والتذييل والمظهر إلى ما ه
 msgid "The host stand for this location: today’s floor, arrivals, walk-ins and the waitlist."
 msgstr "مكتب الاستقبال لهذا الموقع: مخطط اليوم، والقادمون، والزبائن بدون حجز، وقائمة الانتظار."
 
+#: app/utils/sso/sso-alerts.ts:67
+msgid "The identity provider returned an error or could not be reached."
+msgstr "أعاد مزوّد الهوية خطأً أو تعذّر الوصول إليه."
+
+#: app/utils/sso/sso-alerts.ts:69
+msgid "The identity provider sent back a response that could not be read."
+msgstr "أرسل مزوّد الهوية ردًا تعذّرت قراءته."
+
 #: app/components/phone-agent/agent-details.tsx:175
 msgid "The instructions the AI assistant gets at the start of a call, built from your settings, answers, and training rules. Saved changes show up here."
 msgstr "التعليمات التي يتلقاها المساعد الذكي في بداية المكالمة، والمبنية من إعداداتك وإجاباتك وقواعد التدريب. تظهر التغييرات المحفوظة هنا."
@@ -58094,9 +58130,17 @@ msgstr "الوردية على شكل شريط، مع تمييز أي استرا�
 msgid "The short side is under 800 px. It will still upload, but it may look soft on a menu."
 msgstr "الضلع الأقصر أقل من 800 بكسل. سيتم رفعها مع ذلك، لكنها قد تبدو غير واضحة في القائمة."
 
+#: app/utils/sso/sso-alerts.ts:68
+msgid "The sign-in token could not be exchanged. Check the client secret and redirect address."
+msgstr "تعذّر تبادل رمز تسجيل الدخول. تحقق من سر العميل وعنوان إعادة التوجيه."
+
 #: app/components/website/domain/connect-card.tsx:91
 msgid "The simple setup fits: let Menuza manage this domain."
 msgstr "الإعداد البسيط مناسب: دع Menuza تدير هذا النطاق."
+
+#: app/utils/sso/sso-alerts.ts:66
+msgid "The single sign-on settings look wrong, such as an expired client secret."
+msgstr "تبدو إعدادات تسجيل الدخول الموحّد خاطئة، مثل سر عميل منتهي الصلاحية."
 
 #: app/components/inventory/setup-checks-panel.tsx:183
 msgid "The size of {pack} of <0>{item}</0> from <1>{supplier}</1> looks 1,000 times too big."
@@ -61014,7 +61058,7 @@ msgstr "حجوزات اليوم حسب الحالة وعدد الضيوف حسب
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
-#: app/components/ui/notification-bell.tsx:775
+#: app/components/ui/notification-bell.tsx:799
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
@@ -62605,8 +62649,8 @@ msgstr "تغييرات غير منشورة"
 msgid "Unread"
 msgstr "غير مقروء"
 
-#: app/components/ui/notification-bell.tsx:720
-#: app/components/ui/notification-bell.tsx:824
+#: app/components/ui/notification-bell.tsx:744
+#: app/components/ui/notification-bell.tsx:848
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
@@ -66130,7 +66174,7 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you close it"
 msgstr "عندما تغلقها"
 
-#: app/components/ui/notification-bell.tsx:605
+#: app/components/ui/notification-bell.tsx:629
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 

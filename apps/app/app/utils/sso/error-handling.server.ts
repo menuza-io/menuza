@@ -1,5 +1,7 @@
 import { destroyRedirectToHeaders } from '@repo/common/redirect-cookie'
 import { redirectWithToast } from '@repo/common/toast'
+import { recordSsoFailure } from './failure-alerts.server.ts'
+import { organizationSlugFromSsoRequestUrl } from './sso-alerts.ts'
 
 // SSO-specific error types
 export enum SSOErrorType {
@@ -242,9 +244,10 @@ export async function handleSSOError(
 		shouldNotifyAdmin: ssoError.shouldNotifyAdmin,
 	})
 
-	// Notify admin if required
+	// Count the failure for the organization and tell its admins when sign-in
+	// keeps failing (#347). The organization is the one in the request path.
 	if (ssoError.shouldNotifyAdmin) {
-		await notifyAdminOfSSOError(ssoError)
+		await notifyAdminOfSSOError(ssoError, request)
 	}
 
 	// Determine redirect URL - validate fallback URL for security
@@ -354,43 +357,25 @@ function categorizeSSOError(error: Error): SSOError {
 }
 
 /**
- * Notify administrators of SSO errors that require attention
+ * Notify administrators of SSO errors that require attention (#347): the
+ * failure is counted for the organization in the request path, and five in ten
+ * minutes email and notify its admins, once an hour. Only the kind of error is
+ * used: the message and details stay in the sanitized server log.
  */
-async function notifyAdminOfSSOError(error: SSOError): Promise<void> {
+async function notifyAdminOfSSOError(
+	error: SSOError,
+	request?: Request,
+	record: typeof recordSsoFailure = recordSsoFailure,
+): Promise<void> {
 	try {
-		// In a real implementation, this would send notifications via:
-		// - Email to administrators
-		// - Slack/Teams webhook
-		// - Error tracking service
-		// - Admin dashboard alerts
-
+		// The kind and the time only: the message and details can hold secrets.
 		console.warn('Admin notification required for SSO error:', {
 			type: error.type,
-			message: error.message,
-			details: error.details,
 			timestamp: new Date().toISOString(),
 		})
-
-		// TODO: Implement actual notification system
-		// Example implementations:
-
-		// Email notification
-		// await sendAdminEmail({
-		//   subject: `SSO Error: ${error.userMessage}`,
-		//   body: `Error Type: ${error.type}\nMessage: ${error.message}\nDetails: ${error.details}`,
-		// })
-
-		// Slack notification
-		// await sendSlackNotification({
-		//   channel: '#admin-alerts',
-		//   message: `🚨 SSO Error: ${error.userMessage}\n\`\`\`${error.message}\`\`\``,
-		// })
-
-		// Error tracking
-		// captureException(new Error(error.message), {
-		//   tags: { sso_error_type: error.type },
-		//   extra: { details: error.details },
-		// })
+		const organizationSlug = organizationSlugFromSsoRequestUrl(request?.url)
+		if (!organizationSlug) return
+		await record({ organizationSlug, errorType: error.type })
 	} catch (notificationError) {
 		console.error('Failed to notify admin of SSO error:', notificationError)
 	}
