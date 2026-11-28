@@ -6163,7 +6163,7 @@ msgstr "إضافة دمج"
 msgid "Add contact"
 msgstr "إضافة جهة اتصال"
 
-#: app/components/locations/special-hours-picker.tsx:127
+#: app/components/locations/special-hours-picker.tsx:128
 msgid "Add date override"
 msgstr "إضافة استثناء تاريخ"
 
@@ -6556,7 +6556,7 @@ msgstr "إضافة رابط تواصل اجتماعي"
 msgid "Add special day"
 msgstr "إضافة يوم خاص"
 
-#: app/components/locations/special-hours-picker.tsx:134
+#: app/components/locations/special-hours-picker.tsx:135
 msgid "Add Special Hours Override"
 msgstr "إضافة استثناء ساعات خاصة"
 
@@ -11323,7 +11323,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/locations/copy-settings-dialog.tsx:490
 #: app/components/locations/delivery-zones-manager.tsx:896
 #: app/components/locations/location-form.tsx:1779
-#: app/components/locations/special-hours-picker.tsx:271
+#: app/components/locations/special-hours-picker.tsx:272
 #: app/components/loyalty/adjust-dialog.tsx:274
 #: app/components/loyalty/promotion-dialog.tsx:908
 #: app/components/loyalty/record-refund-dialog.tsx:297
@@ -14254,7 +14254,7 @@ msgstr "أغلق خدماتك المعتادة أو اختصرها أو استب
 
 #: app/components/hiring/job-labels.ts:51
 #: app/components/locations/availability-picker.tsx:374
-#: app/components/locations/special-hours-picker.tsx:346
+#: app/components/locations/special-hours-picker.tsx:347
 #: app/components/menu/drop-wizard/drop-preview.tsx:73
 #: app/components/orders/order-problems.tsx:208
 #: app/components/phone-agent/business-details-section.tsx:244
@@ -14275,7 +14275,7 @@ msgid "Closed (holiday)"
 msgstr "مغلق (عطلة)"
 
 #: app/components/locations/copy-settings-dialog.tsx:532
-#: app/components/locations/special-hours-picker.tsx:199
+#: app/components/locations/special-hours-picker.tsx:200
 msgid "Closed all day"
 msgstr "مغلق طوال اليوم"
 
@@ -17291,7 +17291,7 @@ msgstr "مخصص من 1 إلى {onlinePartyMax}"
 msgid "Custom form"
 msgstr "نموذج مخصص"
 
-#: app/components/locations/special-hours-picker.tsx:212
+#: app/components/locations/special-hours-picker.tsx:213
 msgid "Custom Hours"
 msgstr "ساعات مخصصة"
 
@@ -17635,7 +17635,7 @@ msgstr "خطأ في الاتصال بقاعدة البيانات"
 #: app/components/inventory/cash-purchase-dialog.tsx:287
 #: app/components/inventory/invoice-inbox-panel.tsx:444
 #: app/components/locations/copy-settings-dialog.tsx:519
-#: app/components/locations/special-hours-picker.tsx:147
+#: app/components/locations/special-hours-picker.tsx:148
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
 #: app/components/menu/menu-availability-card.tsx:350
 #: app/components/orders/order-history-tab.tsx:375
@@ -20336,7 +20336,7 @@ msgstr "مثال: checkout_abandoned, tier_upgraded"
 msgid "e.g. Choice of Protein, Sides"
 msgstr "مثلًا: اختيار البروتين، الأطباق الجانبية"
 
-#: app/components/locations/special-hours-picker.tsx:164
+#: app/components/locations/special-hours-picker.tsx:165
 msgid "e.g. Christmas Day, Summer Festival"
 msgstr "مثال: يوم عيد الميلاد، مهرجان الصيف"
 
@@ -21159,8 +21159,8 @@ msgstr "قد يحتاج البريد إلى انتباه"
 msgid "Email me a daily summary"
 msgstr "أرسل لي ملخصًا يوميًا بالبريد"
 
-#: app/components/settings/cards/setup-reminders-card.tsx:39
-#: app/components/settings/cards/setup-reminders-card.tsx:49
+#: app/components/settings/cards/setup-reminders-card.tsx:40
+#: app/components/settings/cards/setup-reminders-card.tsx:50
 msgid "Email me setup reminders"
 msgstr "أرسل لي تذكيرات الإعداد بالبريد"
 
@@ -22765,7 +22765,7 @@ msgstr "كل أسبوعين"
 msgid "Every week"
 msgstr "كل أسبوع"
 
-#: app/components/locations/special-hours-picker.tsx:325
+#: app/components/locations/special-hours-picker.tsx:326
 msgid "Every year"
 msgstr "كل سنة"
 
@@ -29098,7 +29098,7 @@ msgstr "كوشر"
 msgid "Label"
 msgstr "التسمية"
 
-#: app/components/locations/special-hours-picker.tsx:160
+#: app/components/locations/special-hours-picker.tsx:161
 msgid "Label / Reason (Optional)"
 msgstr "التسمية / السبب (اختياري)"
 
@@ -30889,7 +30889,7 @@ msgstr "نطاق الموقع يكتب تجاوزاً، وليس سعر الطب
 msgid "Location scorecard"
 msgstr "بطاقة أداء المواقع"
 
-#: app/components/locations/special-hours-picker.tsx:194
+#: app/components/locations/special-hours-picker.tsx:195
 msgid "Location Status"
 msgstr "حالة الفرع"
 
@@ -36170,7 +36170,7 @@ msgstr "لا توجد طاولة واحدة تتسع لـ {partySize}. أكبر 
 msgid "No special days yet"
 msgstr "لا توجد أيام خاصة بعد"
 
-#: app/components/locations/special-hours-picker.tsx:297
+#: app/components/locations/special-hours-picker.tsx:298
 msgid "No special hours or holiday closures scheduled."
 msgstr "لا توجد ساعات خاصة أو إغلاقات للأعياد مجدولة."
 
@@ -39129,7 +39129,7 @@ msgstr "فتح قائمة الانتظار"
 msgid "Open WhatsApp"
 msgstr "فتح واتساب"
 
-#: app/components/locations/special-hours-picker.tsx:198
+#: app/components/locations/special-hours-picker.tsx:199
 msgid "Open with custom hours"
 msgstr "مفتوح بساعات مخصصة"
 
@@ -40453,7 +40453,7 @@ msgstr "تخصيص"
 msgid "Override base prep minutes during specific windows (15-minute steps)."
 msgstr "Override base prep minutes during specific windows (15-minute steps)."
 
-#: app/components/locations/special-hours-picker.tsx:116
+#: app/components/locations/special-hours-picker.tsx:117
 msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "تجاوز ساعات العمل المعتادة في الأعياد أو المناسبات أو الإغلاقات."
 
@@ -46496,7 +46496,7 @@ msgstr "تم إلغاء إعادة الترتيب. يبقى {name} في مكان
 msgid "Repeat each item before sending the link."
 msgstr "كرّر كل صنف قبل إرسال الرابط."
 
-#: app/components/locations/special-hours-picker.tsx:173
+#: app/components/locations/special-hours-picker.tsx:174
 msgid "Repeat every year"
 msgstr "تكرار كل سنة"
 
@@ -46542,11 +46542,11 @@ msgstr "معدل تكرار الشراء"
 msgid "Repeats"
 msgstr "تتكرر"
 
-#: app/components/locations/special-hours-picker.tsx:322
+#: app/components/locations/special-hours-picker.tsx:323
 msgid "Repeats every year"
 msgstr "يتكرر كل سنة"
 
-#: app/components/locations/special-hours-picker.tsx:176
+#: app/components/locations/special-hours-picker.tsx:177
 msgid "Repeats on the same date each year, like 25 December. Holidays that move, such as Eid, Easter or Thanksgiving, are not the same date every year: add those one year at a time."
 msgstr "يتكرر في نفس التاريخ كل سنة، مثل 25 ديسمبر. الأعياد التي يتغير تاريخها، مثل العيد أو عيد الفصح أو عيد الشكر، لا تقع في التاريخ نفسه كل سنة: أضفها سنة بسنة."
 
@@ -48545,7 +48545,7 @@ msgstr "حفظ الخيار"
 msgid "Save order alerts"
 msgstr "حفظ تنبيهات الطلبات"
 
-#: app/components/locations/special-hours-picker.tsx:274
+#: app/components/locations/special-hours-picker.tsx:275
 msgid "Save override"
 msgstr "حفظ التجاوز"
 
@@ -51012,7 +51012,7 @@ msgstr "تعيين القنوات"
 msgid "Set clock-out"
 msgstr "تحديد الانصراف"
 
-#: app/components/locations/special-hours-picker.tsx:137
+#: app/components/locations/special-hours-picker.tsx:138
 msgid "Set custom hours or mark the restaurant closed for a specific date."
 msgstr "حدّد ساعات مخصصة أو اجعل المطعم مغلقًا في تاريخ محدد."
 
@@ -51251,7 +51251,7 @@ msgstr "مفتاح الإعداد"
 msgid "Setup progress"
 msgstr "تقدّم الإعداد"
 
-#: app/components/settings/cards/setup-reminders-card.tsx:26
+#: app/components/settings/cards/setup-reminders-card.tsx:27
 msgid "Setup reminders"
 msgstr "تذكيرات الإعداد"
 
@@ -51708,10 +51708,13 @@ msgstr "إظهار تاريخ الفتح"
 msgid "Show overrides"
 msgstr "عرض التخصيصات"
 
-#. placeholder {0}: rows.past.length
 #: app/components/locations/special-hours-picker.tsx:284
-msgid "Show past ({0})"
-msgstr "إظهار السابقة ({0})"
+#~ msgid "Show past ({0})"
+#~ msgstr "إظهار السابقة ({0})"
+
+#: app/components/locations/special-hours-picker.tsx:285
+msgid "Show past ({pastCount})"
+msgstr "إظهار السابقة ({pastCount})"
 
 #: app/routes/_app+/$orgSlug_+/reports+/product-mix.tsx:247
 #: app/routes/_app+/$orgSlug_+/reports+/product-mix.tsx:249
@@ -52879,7 +52882,7 @@ msgstr "ساعات خاصة"
 msgid "Special hours (holidays)"
 msgstr "الساعات الخاصة (العطل)"
 
-#: app/components/locations/special-hours-picker.tsx:113
+#: app/components/locations/special-hours-picker.tsx:114
 msgid "Special Hours & Holiday Overrides"
 msgstr "الساعات الخاصة وتجاوزات الأعياد"
 
@@ -62774,7 +62777,7 @@ msgstr "حتى صباح الغد"
 msgid "Until turned off"
 msgstr "حتى يُوقَف"
 
-#: app/components/settings/cards/setup-reminders-card.tsx:29
+#: app/components/settings/cards/setup-reminders-card.tsx:30
 msgid "Until your restaurant is live, we email the owner about the next unfinished step 1, 3 and 7 days after you last made progress, then stop."
 msgstr "إلى أن يصبح مطعمك جاهزًا، نرسل إلى المالك بريدًا عن الخطوة التالية غير المكتملة بعد 1 و3 و7 أيام من آخر تقدم لك، ثم نتوقف."
 

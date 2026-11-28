@@ -445,7 +445,7 @@ export function googleSpecialToMenuza(
 		a.isOpen === b.isOpen &&
 		a.slots.map((slot) => `${slot.start}-${slot.end}`).join(',') ===
 			b.slots.map((slot) => `${slot.start}-${slot.end}`).join(',')
-	for (const [date, entry] of [...byDate]) {
+	for (const [date, entry] of byDate) {
 		const base = findSpecialHourForDate(repeating, date)
 		if (!base || !sameDay(base, entry)) continue
 		if (base.date === date) entry.repeatsYearly = true

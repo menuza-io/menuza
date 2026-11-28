@@ -64,4 +64,8 @@ CREATE TABLE `SubscriptionChangeRequest` (
 CREATE INDEX `SubscriptionChangeRequest_organizationId_createdAt_idx` ON `SubscriptionChangeRequest` (`organizationId`,`createdAt`);--> statement-breakpoint
 CREATE INDEX `SubscriptionChangeRequest_status_createdAt_idx` ON `SubscriptionChangeRequest` (`status`,`createdAt`);--> statement-breakpoint
 ALTER TABLE `Organization` ADD `pastDueSince` integer;--> statement-breakpoint
-ALTER TABLE `OrganizationLocation` ADD `hoursWarningsDismissedFor` text;
+ALTER TABLE `OrganizationLocation` ADD `hoursWarningsDismissedFor` text;--> statement-breakpoint
+-- Setup reminders (#271): off for everyone, only a literal `true` turns them on.
+INSERT INTO "ConfigFlag" ("id", "key", "value", "level", "organizationId", "userId", "createdAt", "updatedAt")
+SELECT lower(hex(randomblob(12))), 'launch.reminders', 'false', 'system', NULL, NULL, CAST(strftime('%s','now') AS INTEGER) * 1000, CAST(strftime('%s','now') AS INTEGER) * 1000
+WHERE NOT EXISTS (SELECT 1 FROM "ConfigFlag" WHERE "key" = 'launch.reminders' AND "level" = 'system');

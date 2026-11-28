@@ -101,6 +101,7 @@ export function SpecialHoursPicker({
 			.sort((a, b) => b.item.date.localeCompare(a.item.date))
 		return { upcoming, past }
 	}, [specialHours, today])
+	const pastCount = rows.past.length
 	const visibleRows = showPast
 		? [...rows.upcoming, ...rows.past]
 		: rows.upcoming
@@ -281,7 +282,7 @@ export function SpecialHoursPicker({
 			{rows.past.length > 0 ? (
 				<div className="flex items-center justify-end gap-2">
 					<Label htmlFor="special-show-past" className="text-xs">
-						<Trans>Show past ({rows.past.length})</Trans>
+						<Trans>Show past ({pastCount})</Trans>
 					</Label>
 					<Switch
 						id="special-show-past"
