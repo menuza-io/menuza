@@ -123,10 +123,11 @@ then Sites and the customer app, then Station (kitchen labels).
   `restaurant_orders.group_id` and each stored line may carry `forName`.
 - Capabilities, in headers and URL fragments only: the link's **share token**
   (`gs1.` plus an HMAC of the group and its share version; bumping the version
-  burns links, which the host does with `POST /orders/group/:id/share/rotate`)
-  lets a friend look and join; a person's own token (`gp1.`, 256 random bits,
-  only its hash stored) changes their own dishes; the host's places the order.
-  Every refusal is the uniform 404 `group_not_found`. Sent as `X-Group-Token`.
+  burns links, which the host does with "Make a new link" in the host panel,
+  `POST /orders/group/:id/share/rotate`) lets a friend look and join; a person's
+  own token (`gp1.`, 256 random bits, only its hash stored) changes their own
+  dishes; the host's places the order. Every refusal is the uniform 404
+  `group_not_found`. Sent as `X-Group-Token`.
 - `/orders/group/*` (mounted before `/orders`): create (customer token), view
   (polled every 5 seconds), join (first name), add and remove a dish (priced by
   the order engine with the walk-in gates), done, host PATCH (deadline 15

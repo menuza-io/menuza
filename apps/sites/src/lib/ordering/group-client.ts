@@ -232,6 +232,21 @@ export async function updateGroup(
 	)
 }
 
+/** The host burns the old link: every earlier link stops working. */
+export async function rotateGroupShare(
+	groupId: string,
+	token: string,
+): Promise<{ shareToken: string; view: GroupView }> {
+	const answer = (await send(`/${encodeURIComponent(groupId)}/share/rotate`, {
+		method: 'POST',
+		token,
+		body: {},
+	})) as { shareToken?: unknown; view?: unknown }
+	const shareToken = shareTokenFromHash(`#join=${String(answer.shareToken)}`)
+	if (!shareToken) throw new Error('The region sent no new link')
+	return { shareToken, view: groupViewSchema.parse(answer.view) }
+}
+
 export async function leaveGroup(groupId: string, token: string) {
 	await send(`/${encodeURIComponent(groupId)}/people/me`, {
 		method: 'DELETE',

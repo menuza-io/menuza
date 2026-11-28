@@ -14,6 +14,7 @@ const client = {
 	updateGroup: vi.fn(),
 	leaveGroup: vi.fn(),
 	endGroup: vi.fn(),
+	rotateGroupShare: vi.fn(),
 }
 
 vi.mock('./group-client.ts', async () => {
@@ -30,6 +31,7 @@ vi.mock('./group-client.ts', async () => {
 		updateGroup: (...args: unknown[]) => client.updateGroup(...args),
 		leaveGroup: (...args: unknown[]) => client.leaveGroup(...args),
 		endGroup: (...args: unknown[]) => client.endGroup(...args),
+		rotateGroupShare: (...args: unknown[]) => client.rotateGroupShare(...args),
 	}
 })
 
@@ -394,6 +396,36 @@ describe('the group order page (#170)', () => {
 		expect(root.querySelector('[data-group-order="o1"]')).toBeTruthy()
 		expect(root.querySelector('a[href="/menu/success?order=o1"]')).toBeTruthy()
 		expect(root.querySelector('[data-group-state="ordered"]')).toBeTruthy()
+	})
+
+	it('lets the host burn the share link and shows the new one', async () => {
+		localStorage.setItem(
+			'menuza_group_org',
+			JSON.stringify({
+				groupId: 'g1',
+				personToken: PERSON,
+				shareToken: SHARE,
+				isHost: true,
+			}),
+		)
+		client.readGroup.mockResolvedValue(view())
+		const fresh = `gs1.${'c'.repeat(64)}`
+		client.rotateGroupShare.mockResolvedValue({
+			shareToken: fresh,
+			view: view({ version: 4 }),
+		})
+		vi.spyOn(window, 'confirm').mockReturnValue(true)
+		const { root } = mount()
+		await settled()
+		root.querySelector<HTMLButtonElement>('[data-group-new-link]')!.click()
+		await settled()
+		expect(client.rotateGroupShare).toHaveBeenCalledWith('g1', PERSON)
+		expect(
+			root.querySelector<HTMLInputElement>('[data-group-share]')!.value,
+		).toContain(`#join=${fresh}`)
+		expect(JSON.parse(localStorage.getItem('menuza_group_org')!)).toMatchObject(
+			{ shareToken: fresh },
+		)
 	})
 
 	it('does not redraw when a poll finds the same group, keeps the focus when it does, and drops a stale answer', async () => {

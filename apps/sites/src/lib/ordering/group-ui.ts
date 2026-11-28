@@ -25,6 +25,7 @@ import {
 	readGroup,
 	readPendingShareToken,
 	removeGroupLine,
+	rotateGroupShare,
 	saveGroupSession,
 	setGroupDone,
 	shareTokenFromHash,
@@ -192,6 +193,7 @@ export function mountGroupPage(options: GroupPageOptions) {
 		'data-group-add-cart',
 		'data-group-share',
 		'data-group-remove-unavailable',
+		'data-group-new-link',
 	]
 	const signatureOf = (current: GroupView) =>
 		JSON.stringify([
@@ -809,6 +811,23 @@ export function mountGroupPage(options: GroupPageOptions) {
 				)
 			})
 		})
+		const newLink = el('button', 'text-sm underline', labels.newLink)
+		newLink.type = 'button'
+		newLink.dataset.groupNewLink = ''
+		newLink.addEventListener('click', () => {
+			if (!session || !window.confirm(labels.newLinkConfirm)) return
+			const active = session
+			void act(async () => {
+				const rotated = await rotateGroupShare(
+					active.groupId,
+					active.personToken,
+				)
+				session = { ...active, shareToken: rotated.shareToken }
+				saveGroupSession(options.orgId, session)
+				copied = false
+				setView(rotated.view)
+			})
+		})
 		const end = el('button', 'text-sm underline', labels.end)
 		end.type = 'button'
 		end.addEventListener('click', () => {
@@ -828,7 +847,9 @@ export function mountGroupPage(options: GroupPageOptions) {
 		panel.appendChild(
 			el('p', 'text-xs text-muted-foreground', labels.checkoutHint),
 		)
-		panel.appendChild(end)
+		const links = el('div', 'flex flex-wrap gap-4')
+		links.append(newLink, end)
+		panel.appendChild(links)
 		return panel
 	}
 

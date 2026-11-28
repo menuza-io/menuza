@@ -410,6 +410,10 @@ export function buildGroupOrderLabels(i18n: I18n) {
 		),
 		emptyGroup: i18n._(msg`Add at least one dish before you check out.`),
 		leave: i18n._(msg`Leave the group order`),
+		newLink: i18n._(msg`Make a new link`),
+		newLinkConfirm: i18n._(
+			msg`Make a new link? The old link stops working. People already in the group stay in it.`,
+		),
 		end: i18n._(msg`End the group order`),
 		endConfirm: i18n._(
 			msg`End this group order for everyone? Every dish and name in it is deleted.`,
