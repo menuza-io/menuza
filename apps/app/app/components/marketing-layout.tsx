@@ -5,6 +5,7 @@ import { type ReactNode } from 'react'
 import { useLocation } from 'react-router'
 import { useAIPanel } from '#app/components/ai/ai-panel-context.tsx'
 import { AppSidebar } from '#app/components/app-sidebar.tsx'
+import { PastDueBanner } from '#app/components/billing/past-due-banner.tsx'
 import { CommandPaletteProvider } from '#app/components/command-palette-context.tsx'
 import { HelpProvider } from '#app/components/help/help-context.tsx'
 import { SiteHeader } from '#app/components/site-header.tsx'
@@ -33,6 +34,8 @@ type MarketingLayoutProps = {
 	onboardingProgress?: OnboardingProgressData | null
 	trialStatus?: { isActive: boolean; daysRemaining: number } | null
 	extensionId?: string | null
+	/** Set for members who can manage billing while the subscription is past due (#237). */
+	billingPastDue?: { orgSlug: string } | null
 }
 
 export function MarketingLayout({
@@ -41,6 +44,7 @@ export function MarketingLayout({
 	onboardingProgress,
 	trialStatus = null,
 	extensionId = null,
+	billingPastDue = null,
 }: MarketingLayoutProps) {
 	const { pathname } = useLocation()
 	const isConversation = /^\/[^/]+\/(?:mailbox|chat)\/?$/.test(pathname)
@@ -72,6 +76,9 @@ export function MarketingLayout({
 						)}
 					>
 						<SiteHeader isCollapsed={isCollapsed} />
+						{billingPastDue ? (
+							<PastDueBanner orgSlug={billingPastDue.orgSlug} />
+						) : null}
 						<div
 							className={cn(
 								'bg-card dark:bg-background @container/main flex flex-1 flex-col gap-2',

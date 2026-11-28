@@ -19,6 +19,7 @@ import {
 	TableRow,
 } from '@repo/ui/table'
 import { formatDistanceToNow } from 'date-fns'
+import { daysOverdue } from '#app/utils/past-due.ts'
 
 export interface AdminOrganizationDetail {
 	id: string
@@ -30,6 +31,8 @@ export interface AdminOrganizationDetail {
 	updatedAt: Date
 	planName: string | null
 	subscriptionStatus: string | null
+	/** When the subscription became past due (#237). */
+	pastDueSince?: Date | string | null
 	size: string | null
 	stripeCustomerId: string | null
 	stripeSubscriptionId: string | null
@@ -186,6 +189,10 @@ export function AdminOrganizationDetail({
 	organization,
 	recentActivity,
 }: AdminOrganizationDetailProps) {
+	const pastDueDays = daysOverdue(
+		organization.subscriptionStatus,
+		organization.pastDueSince,
+	)
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -286,6 +293,13 @@ export function AdminOrganizationDetail({
 					<CardContent>
 						<div className="flex flex-col gap-1">
 							{getSubscriptionStatusBadge(organization.subscriptionStatus)}
+							{pastDueDays !== null && (
+								<p className="text-destructive text-xs">
+									{pastDueDays === 1
+										? '1 day overdue'
+										: `${pastDueDays} days overdue`}
+								</p>
+							)}
 							{organization.planName && (
 								<p className="text-muted-foreground text-xs">
 									{organization.planName}

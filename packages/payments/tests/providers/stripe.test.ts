@@ -39,6 +39,10 @@ vi.mock('stripe', () => {
 		},
 		invoices: {
 			list: vi.fn(),
+			pay: vi.fn(),
+		},
+		charges: {
+			list: vi.fn(),
 		},
 		webhooks: {
 			constructEvent: vi.fn(),
@@ -593,6 +597,114 @@ describe('StripeProvider', () => {
 			const result = await stripeProvider.listInvoices('cus_123')
 
 			expect(result).toEqual([])
+		})
+	})
+
+	describe('getBillingIssue (#237)', () => {
+		it('returns the open invoice of the subscription and each failed attempt, newest first', async () => {
+			mockStripeInstance.invoices.list.mockResolvedValue({
+				data: [
+					{
+						id: 'in_other',
+						status: 'open',
+						attempt_count: 1,
+						parent: { subscription_details: { subscription: 'sub_other' } },
+					},
+					{
+						id: 'in_open',
+						status: 'open',
+						amount_due: 4999,
+						currency: 'usd',
+						attempt_count: 2,
+						next_payment_attempt: 1_700_300_000,
+						hosted_invoice_url: 'https://invoice.example/in_open',
+						created: 1_700_000_000,
+						parent: { subscription_details: { subscription: 'sub_123' } },
+					},
+				],
+			})
+			mockStripeInstance.charges.list.mockResolvedValue({
+				data: [
+					{
+						status: 'failed',
+						created: 1_700_100_000,
+						failure_code: 'card_declined',
+						payment_method_details: { card: { brand: 'visa', last4: '1234' } },
+					},
+					{ status: 'succeeded', created: 1_700_150_000 },
+					{
+						status: 'failed',
+						created: 1_700_200_000,
+						failure_code: 'expired_card',
+						payment_method_details: { card: { brand: 'visa', last4: '1234' } },
+					},
+					{ status: 'failed', created: 1_600_000_000, failure_code: 'old' },
+				],
+			})
+
+			const result = await stripeProvider.getBillingIssue('cus_1', 'sub_123')
+
+			expect(mockStripeInstance.invoices.list).toHaveBeenCalledWith(
+				expect.objectContaining({ customer: 'cus_1', status: 'open' }),
+			)
+			expect(result.invoice).toEqual({
+				id: 'in_open',
+				amountDue: 4999,
+				currency: 'usd',
+				attemptCount: 2,
+				nextPaymentAttempt: 1_700_300_000,
+				hostedInvoiceUrl: 'https://invoice.example/in_open',
+				created: 1_700_000_000,
+			})
+			expect(result.attempts).toEqual([
+				{
+					at: 1_700_200_000,
+					brand: 'visa',
+					last4: '1234',
+					reason: 'expired_card',
+				},
+				{
+					at: 1_700_100_000,
+					brand: 'visa',
+					last4: '1234',
+					reason: 'card_declined',
+				},
+			])
+		})
+
+		it('has nothing to show when no invoice is open', async () => {
+			mockStripeInstance.invoices.list.mockResolvedValue({ data: [] })
+			expect(await stripeProvider.getBillingIssue('cus_1', 'sub_1')).toEqual({
+				invoice: null,
+				attempts: [],
+			})
+		})
+	})
+
+	describe('payInvoice (#237)', () => {
+		it('pays the invoice with the idempotency key', async () => {
+			mockStripeInstance.invoices.pay.mockResolvedValue({ status: 'paid' })
+			const result = await stripeProvider.payInvoice('in_1', {
+				idempotencyKey: 'retry-in_1-2',
+			})
+			expect(result).toEqual({ status: 'paid' })
+			expect(mockStripeInstance.invoices.pay).toHaveBeenCalledWith(
+				'in_1',
+				{},
+				{ idempotencyKey: 'retry-in_1-2' },
+			)
+		})
+
+		it('reports a declined card as a failed result, not a throw', async () => {
+			mockStripeInstance.invoices.pay.mockRejectedValue(
+				Object.assign(new Error('declined'), {
+					type: 'StripeCardError',
+					code: 'card_declined',
+				}),
+			)
+			expect(
+				await stripeProvider.payInvoice('in_1', { idempotencyKey: 'k' }),
+			).toEqual({ status: 'failed', reason: 'card_declined' })
 		})
 	})
 

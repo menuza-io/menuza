@@ -1,4 +1,5 @@
-import { requireUserId } from '@repo/auth'
+import { AuditAction, auditService } from '@repo/audit'
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import { db, eq, Organization } from '@repo/database'
 import { smsUsageByLocation } from '@repo/marketing/server/sms-allowance'
 import { lastCompleteMonthKey } from '@repo/reports'
@@ -9,6 +10,10 @@ import {
 	useLoaderData,
 } from 'react-router'
 
+import {
+	PastDueCard,
+	type PastDueView,
+} from '#app/components/billing/past-due-card.tsx'
 import { BillingCard } from '#app/components/settings/cards/organization/billing-card.tsx'
 import { InvoicesCard } from '#app/components/settings/cards/organization/invoices-card.tsx'
 import {
@@ -17,6 +22,7 @@ import {
 } from '#app/components/settings/cards/organization/kept-by-direct-card.tsx'
 import { MarketingTextsCard } from '#app/components/settings/cards/organization/marketing-texts-card.tsx'
 
+import { daysOverdue, isPastDueStatus } from '#app/utils/billing/past-due.ts'
 import { getLaunchStatus } from '#app/utils/env.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
@@ -29,6 +35,8 @@ import {
 	getPlansAndPrices,
 	getOrganizationInvoices,
 	hasLiveSubscription,
+	loadBillingIssue,
+	retryBillingPayment,
 } from '#app/utils/payments.server.ts'
 import { defaultReportingTimeZone } from '#app/utils/reports/schedules.server.ts'
 import { resolveReportTokenGrants } from '#app/utils/reports/token-grants.server.ts'
@@ -47,6 +55,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		stripeProductId: true,
 		planName: true,
 		subscriptionStatus: true,
+		pastDueSince: true,
 		dataRegion: true,
 		hasProvisionedDb: true,
 		deliveryCommissionBp: true,
@@ -137,8 +146,28 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
+	// Past due (#237): the open invoice and each failed attempt, read live from
+	// the provider. Shown to the people who can retry (the page's actions need
+	// the same `update:settings:any`).
+	let pastDue: PastDueView | null = null
+	if (
+		isPastDueStatus(organization.subscriptionStatus) &&
+		(await userHasOrganizationPermission(
+			userId,
+			organization.id,
+			ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		))
+	) {
+		pastDue = {
+			since: organization.pastDueSince?.toISOString() ?? null,
+			daysOverdue: daysOverdue(organization.pastDueSince),
+			issue: await loadBillingIssue(organization),
+		}
+	}
+
 	return {
 		organization,
+		pastDue,
 		plansAndPrices,
 		plansUnavailable,
 		invoices,
@@ -172,7 +201,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	// Changing the plan or opening the billing portal is an admin operation.
-	await requireUserWithOrganizationPermission(
+	const actorId = await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
 		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
@@ -205,12 +234,36 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return customerPortalAction(request, organizationWithBilling)
 	}
 
+	// Retry the failed subscription payment (#237): pays the open invoice only,
+	// once a minute, and never changes the plan.
+	if (intent === 'retry-payment') {
+		const result = await retryBillingPayment(organizationWithBilling)
+		await auditService.log({
+			action: AuditAction.ORG_SETTINGS_UPDATED,
+			userId: actorId,
+			organizationId: organization.id,
+			resourceType: 'organization',
+			resourceId: organization.id,
+			details: 'Billing payment retried',
+			// The outcome only: never a card, an invoice id or an amount.
+			metadata: { outcome: result.status },
+			request,
+		})
+		return Response.json({
+			retry:
+				result.status === 'rate_limited'
+					? { status: result.status, retryAt: result.retryAt.toISOString() }
+					: result,
+		})
+	}
+
 	return Response.json({ error: `Invalid intent: ${intent}` }, { status: 400 })
 }
 
 export default function BillingSettings() {
 	const {
 		organization,
+		pastDue,
 		plansAndPrices,
 		plansUnavailable,
 		invoices,
@@ -222,6 +275,11 @@ export default function BillingSettings() {
 
 	return (
 		<AnnotatedLayout>
+			{pastDue ? (
+				<AnnotatedSection>
+					<PastDueCard view={pastDue} retry={null} />
+				</AnnotatedSection>
+			) : null}
 			<AnnotatedSection>
 				<BillingCard
 					organization={organization}

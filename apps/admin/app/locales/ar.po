@@ -22,7 +22,7 @@ msgid "(Expired)"
 msgstr "(منتهي الصلاحية)"
 
 #. placeholder {0}: result.partialHidden!
-#: ../../packages/reports/src/ui/report-chart.tsx:179
+#: ../../packages/reports/src/ui/report-chart.tsx:180
 msgid "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
 msgstr "{0, plural, one {فترة واحدة غير مكتملة ({#}) مستبعدة من هذا الرسم لأنها ما زالت جارية.} other {فترات غير مكتملة ({#}) مستبعدة من هذا الرسم لأنها ما زالت جارية.}}"
 
@@ -119,7 +119,7 @@ msgstr "تم إنهاء {endedSessions} جلسات."
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr "{errorCount, plural, one {خطأ تحقق واحد} other {# أخطاء تحقق}}"
 
-#: ../../packages/reports/src/ui/report-chart.tsx:156
+#: ../../packages/reports/src/ui/report-chart.tsx:157
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم استبعاد سجل واحد من هذه النسبة لأنه لا يوجد ما يقارن به، مثل يوم فيه أجور ولم تُدخل له مبيعات، أو أجور بعملة مختلفة عن المبيعات.} two {تم استبعاد سجلين من هذه النسبة لأنه لا يوجد ما يقارن بهما، مثل يومين فيهما أجور ولم تُدخل لهما مبيعات، أو أجور بعملة مختلفة عن المبيعات.} few {تم استبعاد # سجلات من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} many {تم استبعاد # سجلًا من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} other {تم استبعاد # سجل من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.}}"
 
@@ -151,6 +151,10 @@ msgstr "{name}: تغيّر السعر."
 msgid "{numberCount} numbers"
 msgstr "{numberCount} أرقام"
 
+#: app/components/admin-organizations-table.tsx:258
+msgid "{overdue, plural, one {# day overdue} other {# days overdue}}"
+msgstr "{overdue, plural, one {متأخر منذ يوم واحد} two {متأخر منذ يومين} few {متأخر منذ # أيام} many {متأخر منذ # يومًا} other {متأخر منذ # يوم}}"
+
 #: app/components/sso-configuration-overview.tsx:108
 msgid "{providerName} identity provider configuration"
 msgstr "إعداد موفر الهوية {providerName}"
@@ -175,7 +179,7 @@ msgstr "{status}"
 msgid "{totalCount} entries"
 msgstr "{totalCount} إدخالات"
 
-#: app/components/admin-organizations-table.tsx:490
+#: app/components/admin-organizations-table.tsx:506
 msgid "{totalCount} organizations"
 msgstr "{totalCount} مؤسسات"
 
@@ -270,7 +274,7 @@ msgstr "عنصر واحد"
 msgid "1 number"
 msgstr "رقم واحد"
 
-#: app/components/admin-organizations-table.tsx:488
+#: app/components/admin-organizations-table.tsx:504
 msgid "1 organization"
 msgstr "مؤسسة واحدة"
 
@@ -443,8 +447,8 @@ msgstr "تفعيل"
 msgid "active"
 msgstr "نشط"
 
-#: app/components/admin-organizations-table.tsx:100
-#: app/components/admin-organizations-table.tsx:276
+#: app/components/admin-organizations-table.tsx:103
+#: app/components/admin-organizations-table.tsx:292
 #: app/components/admin-users-table.tsx:176
 #: app/components/sso-user-management.tsx:269
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:127
@@ -1241,7 +1245,7 @@ msgstr "اسم الحملة"
 msgid "Cancel"
 msgstr "إلغاء"
 
-#: app/components/admin-organizations-table.tsx:107
+#: app/components/admin-organizations-table.tsx:110
 msgid "Canceled"
 msgstr "ملغي"
 
@@ -1451,7 +1455,7 @@ msgstr "الرمز"
 msgid "Code the caller reads out"
 msgstr "الرمز الذي يقرؤه المتصل"
 
-#: app/components/admin-organizations-table.tsx:396
+#: app/components/admin-organizations-table.tsx:412
 #: app/components/admin-users-table.tsx:271
 msgid "Columns"
 msgstr "الأعمدة"
@@ -1563,11 +1567,11 @@ msgstr "الحسابات المتصلة"
 msgid "Connections"
 msgstr "الاتصالات"
 
-#: app/components/admin-organizations-table.tsx:353
+#: app/components/admin-organizations-table.tsx:369
 msgid "Contact"
 msgstr "جهة الاتصال"
 
-#: app/components/admin-organizations-table.tsx:312
+#: app/components/admin-organizations-table.tsx:328
 #: app/components/admin-users-table.tsx:229
 #: app/routes/_admin+/audit-logs.tsx:125
 #: app/routes/_admin+/gdpr-requests.tsx:400
@@ -1705,7 +1709,7 @@ msgstr "أنشئ أول سير عمل أتمتة للمنصة."
 msgid "Create your first platform email campaign for tenant operators."
 msgstr "أنشئ أول حملة بريد إلكتروني للمنصة لمشغّلي المستأجرين."
 
-#: app/components/admin-organizations-table.tsx:283
+#: app/components/admin-organizations-table.tsx:299
 #: app/components/admin-users-table.tsx:202
 #: app/routes/_admin+/cache.tsx:613
 #: app/routes/_admin+/legal-agreements.tsx:141
@@ -1929,7 +1933,7 @@ msgstr "صِف النص الذي تريده. ستراجعه قبل أن يملأ
 msgid "Describe what this role can do..."
 msgstr "وصف ما يمكن لهذا الدور فعله..."
 
-#: app/components/admin-organizations-table.tsx:173
+#: app/components/admin-organizations-table.tsx:176
 #: app/routes/_admin+/roles+/$roleId.tsx:593
 #: app/routes/_admin+/roles+/$roleId.tsx:829
 #: app/routes/_admin+/roles+/$roleId.tsx:945
@@ -2993,12 +2997,12 @@ msgstr "بتوقيت منطقتك الزمنية."
 msgid "In-memory LRU cache"
 msgstr "ذاكرة التخزين المؤقت LRU في الذاكرة"
 
-#: app/components/admin-organizations-table.tsx:276
+#: app/components/admin-organizations-table.tsx:292
 #: app/components/sso-user-management.tsx:271
 msgid "Inactive"
 msgstr "غير نشط"
 
-#: app/components/admin-organizations-table.tsx:131
+#: app/components/admin-organizations-table.tsx:134
 msgid "Incomplete"
 msgstr "غير مكتمل"
 
@@ -3026,7 +3030,7 @@ msgstr "إدراج كتلة هنا"
 msgid "Instance:"
 msgstr "المثيل:"
 
-#: app/components/admin-organizations-table.tsx:223
+#: app/components/admin-organizations-table.tsx:226
 msgid "Integrations"
 msgstr "التكاملات"
 
@@ -3075,10 +3079,10 @@ msgstr "عناوين IP المستخدمة من قبل هذا المستخدم"
 msgid "IP Information"
 msgstr "معلومات IP"
 
-#: app/components/admin-organizations-table.tsx:321
-#: app/components/admin-organizations-table.tsx:333
-#: app/components/admin-organizations-table.tsx:342
-#: app/components/admin-organizations-table.tsx:356
+#: app/components/admin-organizations-table.tsx:337
+#: app/components/admin-organizations-table.tsx:349
+#: app/components/admin-organizations-table.tsx:358
+#: app/components/admin-organizations-table.tsx:372
 #: app/components/admin-users-table.tsx:238
 #: app/routes/_admin+/audit-logs.tsx:152
 #: app/routes/_admin+/gdpr-requests.tsx:409
@@ -3498,7 +3502,7 @@ msgstr "عضو"
 msgid "Member Went Quiet"
 msgstr "عضو انقطع عن الشراء"
 
-#: app/components/admin-organizations-table.tsx:192
+#: app/components/admin-organizations-table.tsx:195
 msgid "Members"
 msgstr "الأعضاء"
 
@@ -3533,7 +3537,7 @@ msgstr "الرسالة"
 msgid "Message content is required"
 msgstr "محتوى الرسالة مطلوب"
 
-#: app/components/admin-organization-detail.tsx:348
+#: app/components/admin-organization-detail.tsx:362
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:52
 msgid "Message retention"
 msgstr "الاحتفاظ بالرسائل"
@@ -3578,7 +3582,7 @@ msgstr "المزيد من الإجراءات"
 msgid "Move every restaurant one team member looks after to someone else."
 msgstr "انقل كل المطاعم التي يتولاها أحد أعضاء الفريق إلى شخص آخر."
 
-#: app/components/admin-organizations-table.tsx:359
+#: app/components/admin-organizations-table.tsx:375
 msgid "My restaurants"
 msgstr "مطاعمي"
 
@@ -3608,7 +3612,7 @@ msgstr "الاسم أو البريد الإلكتروني أو اسم المست
 msgid "Name, email, or username"
 msgstr "الاسم أو البريد الإلكتروني أو اسم المستخدم"
 
-#: app/components/admin-organizations-table.tsx:313
+#: app/components/admin-organizations-table.tsx:329
 msgid "Name, slug or description"
 msgstr "الاسم أو المعرّف أو الوصف"
 
@@ -3729,7 +3733,7 @@ msgstr "لم يتم رفع أي خطوط مخصصة."
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
-#: app/components/admin-organizations-table.tsx:179
+#: app/components/admin-organizations-table.tsx:182
 #: app/components/roles/roles-table-rows.tsx:54
 msgid "No description"
 msgstr "لا يوجد وصف"
@@ -3791,11 +3795,11 @@ msgstr "لم يتم العثور على أدوار المؤسسة"
 #~ msgid "No organizations found."
 #~ msgstr "لم يتم العثور على مؤسسات."
 
-#: app/components/admin-organizations-table.tsx:427
+#: app/components/admin-organizations-table.tsx:443
 msgid "No organizations match"
 msgstr "لا توجد مؤسسات مطابقة"
 
-#: app/components/admin-organizations-table.tsx:428
+#: app/components/admin-organizations-table.tsx:444
 msgid "No organizations yet"
 msgstr "لا توجد مؤسسات بعد"
 
@@ -3827,7 +3831,7 @@ msgstr "لا توجد جلسات SSO"
 msgid "No SSO Users"
 msgstr "لا يوجد مستخدمو SSO"
 
-#: app/components/admin-organizations-table.tsx:91
+#: app/components/admin-organizations-table.tsx:94
 #: app/routes/_admin+/index.tsx:287
 msgid "No Subscription"
 msgstr "لا توجد اشتراكات"
@@ -3954,7 +3958,7 @@ msgstr "غير موثّق (خاطئ)"
 msgid "Note"
 msgstr "ملاحظة"
 
-#: app/components/admin-organizations-table.tsx:210
+#: app/components/admin-organizations-table.tsx:213
 msgid "Notes"
 msgstr "الملاحظات"
 
@@ -4168,7 +4172,7 @@ msgstr "الطلبات: اكتمال الطلب"
 msgid "org - Organization resources"
 msgstr "org - موارد المؤسسة"
 
-#: app/components/admin-organizations-table.tsx:144
+#: app/components/admin-organizations-table.tsx:147
 #: app/components/admin-users-table.tsx:235
 #: app/components/admin/feature-flags.tsx:784
 #: app/routes/_admin+/customer-apps.tsx:126
@@ -4229,7 +4233,7 @@ msgstr "المعرّف المختصر للمؤسسة أو معرّفها للر�
 msgid "Organizations"
 msgstr "المؤسسات"
 
-#: app/components/admin-organizations-table.tsx:433
+#: app/components/admin-organizations-table.tsx:449
 msgid "Organizations will appear here once they are created."
 msgstr "ستظهر المؤسسات هنا بمجرد إنشائها."
 
@@ -4354,7 +4358,7 @@ msgstr "مفاتيح المرور"
 msgid "Password"
 msgstr "كلمة المرور"
 
-#: app/components/admin-organizations-table.tsx:113
+#: app/components/admin-organizations-table.tsx:116
 msgid "Past Due"
 msgstr "متأخر"
 
@@ -4495,7 +4499,7 @@ msgstr "تاريخ الطلب"
 msgid "Plaintext Fallback (Optional)"
 msgstr "نص عادي احتياطي (اختياري)"
 
-#: app/components/admin-organizations-table.tsx:330
+#: app/components/admin-organizations-table.tsx:346
 #: app/routes/_admin+/organizations+/$organizationId_+/text-sends.tsx:72
 msgid "Plan"
 msgstr "الخطة"
@@ -5585,7 +5589,7 @@ msgstr "النطاقات"
 msgid "Scopes:"
 msgstr "النطاقات:"
 
-#: app/components/admin-organizations-table.tsx:309
+#: app/components/admin-organizations-table.tsx:325
 #: app/components/admin-users-table.tsx:226
 #: app/components/admin/feature-flags.tsx:489
 #: app/components/admin/feature-flags.tsx:646
@@ -5817,7 +5821,7 @@ msgstr "ضُبط في {0}"
 msgid "Set system defaults and override them for an organization or a user."
 msgstr "عيّن القيم الافتراضية للنظام وتجاوزها لمؤسسة أو مستخدم."
 
-#: app/components/admin-organizations-table.tsx:339
+#: app/components/admin-organizations-table.tsx:355
 msgid "Setup"
 msgstr "الإعداد"
 
@@ -5913,7 +5917,7 @@ msgstr "الموقع منشور والطلب مفعّل"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:212
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:214
-#: app/components/admin-organizations-table.tsx:260
+#: app/components/admin-organizations-table.tsx:276
 #: app/routes/_admin+/cache.tsx:610
 msgid "Size"
 msgstr "الحجم"
@@ -6083,7 +6087,7 @@ msgstr "يبدأ عند الساعة 10:00 بالتوقيت المحلي، مر�
 msgid "Station terminal or kitchen display"
 msgstr "جهاز Station أو شاشة مطبخ"
 
-#: app/components/admin-organizations-table.tsx:271
+#: app/components/admin-organizations-table.tsx:287
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
 #: app/components/sso-user-management.tsx:178
@@ -6175,7 +6179,7 @@ msgstr "نص"
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإعداد العُقد."
 
-#: app/components/admin-organizations-table.tsx:347
+#: app/components/admin-organizations-table.tsx:363
 msgid "Stuck in setup for more than 14 days"
 msgstr "عالق في الإعداد لأكثر من 14 يومًا"
 
@@ -6194,8 +6198,8 @@ msgstr "الموضوع"
 msgid "Subject Line"
 msgstr "سطر الموضوع"
 
-#: app/components/admin-organizations-table.tsx:243
-#: app/components/admin-organizations-table.tsx:318
+#: app/components/admin-organizations-table.tsx:246
+#: app/components/admin-organizations-table.tsx:334
 msgid "Subscription"
 msgstr "الاشتراك"
 
@@ -6390,7 +6394,7 @@ msgstr "رسالة نصية"
 msgid "Text"
 msgstr "نص"
 
-#: app/components/admin-organization-detail.tsx:358
+#: app/components/admin-organization-detail.tsx:372
 #: app/routes/_admin+/organizations+/$organizationId_+/text-sends.tsx:51
 msgid "Text sends"
 msgstr "عمليات الإرسال النصية"
@@ -6951,7 +6955,7 @@ msgstr "الترجمة إلى العربية"
 msgid "Translate to English"
 msgstr "الترجمة إلى الإنجليزية"
 
-#: app/components/admin-organizations-table.tsx:125
+#: app/components/admin-organizations-table.tsx:128
 msgid "Trial"
 msgstr "تجربة"
 
@@ -6987,7 +6991,7 @@ msgstr "يُفعَّل عبر اختبار المشغّل أو API"
 msgid "True"
 msgstr "صحيح"
 
-#: app/components/admin-organizations-table.tsx:432
+#: app/components/admin-organizations-table.tsx:448
 #: app/components/admin-users-table.tsx:305
 #: app/routes/_admin+/audit-logs.tsx:347
 #: app/routes/_admin+/gdpr-requests.tsx:705
@@ -7024,7 +7028,7 @@ msgstr "إلغاء تخصيص {e164}؟ سيتوقف وكيل المؤسسة عن
 #~ msgid "Unassign {e164}? The restaurant's agent stops answering it right away."
 #~ msgstr "إلغاء تعيين {e164}؟ سيتوقف وكيل المطعم عن الرد عليه فورًا."
 
-#: app/components/admin-organizations-table.tsx:360
+#: app/components/admin-organizations-table.tsx:376
 msgid "Unassigned"
 msgstr "غير معيّن"
 
@@ -7052,7 +7056,7 @@ msgstr "غير معروف"
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
-#: app/components/admin-organizations-table.tsx:119
+#: app/components/admin-organizations-table.tsx:122
 msgid "Unpaid"
 msgstr "غير مدفوع"
 
@@ -7334,7 +7338,7 @@ msgstr "عارض"
 msgid "Visitor IP addresses will appear here."
 msgstr "ستظهر عناوين IP للزوار هنا."
 
-#: ../../packages/reports/src/ui/report-chart.tsx:168
+#: ../../packages/reports/src/ui/report-chart.tsx:169
 msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 msgstr "الأجور تقديرات مبنية على معدلات الأجر وليست كشف رواتب. المبيعات هي الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، أو المبيعات التي أدخلها فريقك، بحسب مصدر المبيعات في كل مكان عمل. مكان العمل الذي يحتسب الطلبات عبر الإنترنت فقط ستظهر نسبته أعلى من حصة العمالة الفعلية."
 

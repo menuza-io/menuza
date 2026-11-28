@@ -22,7 +22,7 @@ msgid "(Expired)"
 msgstr ""
 
 #. placeholder {0}: result.partialHidden!
-#: ../../packages/reports/src/ui/report-chart.tsx:179
+#: ../../packages/reports/src/ui/report-chart.tsx:180
 msgid "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
 msgstr "{0, plural, one {# incomplete period is left off this chart because it is still in progress.} other {# incomplete periods are left off this chart because they are still in progress.}}"
 
@@ -119,7 +119,7 @@ msgstr "{endedSessions} sessions ended."
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr ""
 
-#: ../../packages/reports/src/ui/report-chart.tsx:156
+#: ../../packages/reports/src/ui/report-chart.tsx:157
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 
@@ -151,6 +151,10 @@ msgstr "{name}: the price changed."
 msgid "{numberCount} numbers"
 msgstr "{numberCount} numbers"
 
+#: app/components/admin-organizations-table.tsx:258
+msgid "{overdue, plural, one {# day overdue} other {# days overdue}}"
+msgstr "{overdue, plural, one {# day overdue} other {# days overdue}}"
+
 #: app/components/sso-configuration-overview.tsx:108
 msgid "{providerName} identity provider configuration"
 msgstr ""
@@ -175,7 +179,7 @@ msgstr ""
 msgid "{totalCount} entries"
 msgstr "{totalCount} entries"
 
-#: app/components/admin-organizations-table.tsx:490
+#: app/components/admin-organizations-table.tsx:506
 msgid "{totalCount} organizations"
 msgstr "{totalCount} organizations"
 
@@ -270,7 +274,7 @@ msgstr "1 item"
 msgid "1 number"
 msgstr "1 number"
 
-#: app/components/admin-organizations-table.tsx:488
+#: app/components/admin-organizations-table.tsx:504
 msgid "1 organization"
 msgstr "1 organization"
 
@@ -443,8 +447,8 @@ msgstr ""
 msgid "active"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:100
-#: app/components/admin-organizations-table.tsx:276
+#: app/components/admin-organizations-table.tsx:103
+#: app/components/admin-organizations-table.tsx:292
 #: app/components/admin-users-table.tsx:176
 #: app/components/sso-user-management.tsx:269
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:127
@@ -1241,7 +1245,7 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:107
+#: app/components/admin-organizations-table.tsx:110
 msgid "Canceled"
 msgstr ""
 
@@ -1451,7 +1455,7 @@ msgstr "Code"
 msgid "Code the caller reads out"
 msgstr "Code the caller reads out"
 
-#: app/components/admin-organizations-table.tsx:396
+#: app/components/admin-organizations-table.tsx:412
 #: app/components/admin-users-table.tsx:271
 msgid "Columns"
 msgstr ""
@@ -1563,11 +1567,11 @@ msgstr ""
 msgid "Connections"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:353
+#: app/components/admin-organizations-table.tsx:369
 msgid "Contact"
 msgstr "Contact"
 
-#: app/components/admin-organizations-table.tsx:312
+#: app/components/admin-organizations-table.tsx:328
 #: app/components/admin-users-table.tsx:229
 #: app/routes/_admin+/audit-logs.tsx:125
 #: app/routes/_admin+/gdpr-requests.tsx:400
@@ -1705,7 +1709,7 @@ msgstr ""
 msgid "Create your first platform email campaign for tenant operators."
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:283
+#: app/components/admin-organizations-table.tsx:299
 #: app/components/admin-users-table.tsx:202
 #: app/routes/_admin+/cache.tsx:613
 #: app/routes/_admin+/legal-agreements.tsx:141
@@ -1929,7 +1933,7 @@ msgstr "Describe the text you want. You will review it before it fills your mess
 msgid "Describe what this role can do..."
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:173
+#: app/components/admin-organizations-table.tsx:176
 #: app/routes/_admin+/roles+/$roleId.tsx:593
 #: app/routes/_admin+/roles+/$roleId.tsx:829
 #: app/routes/_admin+/roles+/$roleId.tsx:945
@@ -2993,12 +2997,12 @@ msgstr "In your time zone."
 msgid "In-memory LRU cache"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:276
+#: app/components/admin-organizations-table.tsx:292
 #: app/components/sso-user-management.tsx:271
 msgid "Inactive"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:131
+#: app/components/admin-organizations-table.tsx:134
 msgid "Incomplete"
 msgstr ""
 
@@ -3026,7 +3030,7 @@ msgstr "Insert block here"
 msgid "Instance:"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:223
+#: app/components/admin-organizations-table.tsx:226
 msgid "Integrations"
 msgstr ""
 
@@ -3075,10 +3079,10 @@ msgstr ""
 msgid "IP Information"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:321
-#: app/components/admin-organizations-table.tsx:333
-#: app/components/admin-organizations-table.tsx:342
-#: app/components/admin-organizations-table.tsx:356
+#: app/components/admin-organizations-table.tsx:337
+#: app/components/admin-organizations-table.tsx:349
+#: app/components/admin-organizations-table.tsx:358
+#: app/components/admin-organizations-table.tsx:372
 #: app/components/admin-users-table.tsx:238
 #: app/routes/_admin+/audit-logs.tsx:152
 #: app/routes/_admin+/gdpr-requests.tsx:409
@@ -3498,7 +3502,7 @@ msgstr ""
 msgid "Member Went Quiet"
 msgstr "Member Went Quiet"
 
-#: app/components/admin-organizations-table.tsx:192
+#: app/components/admin-organizations-table.tsx:195
 msgid "Members"
 msgstr ""
 
@@ -3533,7 +3537,7 @@ msgstr ""
 msgid "Message content is required"
 msgstr "Message content is required"
 
-#: app/components/admin-organization-detail.tsx:348
+#: app/components/admin-organization-detail.tsx:362
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:52
 msgid "Message retention"
 msgstr "Message retention"
@@ -3578,7 +3582,7 @@ msgstr ""
 msgid "Move every restaurant one team member looks after to someone else."
 msgstr "Move every restaurant one team member looks after to someone else."
 
-#: app/components/admin-organizations-table.tsx:359
+#: app/components/admin-organizations-table.tsx:375
 msgid "My restaurants"
 msgstr "My restaurants"
 
@@ -3608,7 +3612,7 @@ msgstr "Name, email or username"
 msgid "Name, email, or username"
 msgstr "Name, email, or username"
 
-#: app/components/admin-organizations-table.tsx:313
+#: app/components/admin-organizations-table.tsx:329
 msgid "Name, slug or description"
 msgstr "Name, slug or description"
 
@@ -3729,7 +3733,7 @@ msgstr "No custom fonts have been uploaded."
 msgid "No delivery records yet."
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:179
+#: app/components/admin-organizations-table.tsx:182
 #: app/components/roles/roles-table-rows.tsx:54
 msgid "No description"
 msgstr ""
@@ -3791,11 +3795,11 @@ msgstr ""
 #~ msgid "No organizations found."
 #~ msgstr ""
 
-#: app/components/admin-organizations-table.tsx:427
+#: app/components/admin-organizations-table.tsx:443
 msgid "No organizations match"
 msgstr "No organizations match"
 
-#: app/components/admin-organizations-table.tsx:428
+#: app/components/admin-organizations-table.tsx:444
 msgid "No organizations yet"
 msgstr "No organizations yet"
 
@@ -3827,7 +3831,7 @@ msgstr ""
 msgid "No SSO Users"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:91
+#: app/components/admin-organizations-table.tsx:94
 #: app/routes/_admin+/index.tsx:287
 msgid "No Subscription"
 msgstr ""
@@ -3954,7 +3958,7 @@ msgstr ""
 msgid "Note"
 msgstr "Note"
 
-#: app/components/admin-organizations-table.tsx:210
+#: app/components/admin-organizations-table.tsx:213
 msgid "Notes"
 msgstr ""
 
@@ -4168,7 +4172,7 @@ msgstr "Orders: Order Completed"
 msgid "org - Organization resources"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:144
+#: app/components/admin-organizations-table.tsx:147
 #: app/components/admin-users-table.tsx:235
 #: app/components/admin/feature-flags.tsx:784
 #: app/routes/_admin+/customer-apps.tsx:126
@@ -4229,7 +4233,7 @@ msgstr "Organization slug or ID for {e164}"
 msgid "Organizations"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:433
+#: app/components/admin-organizations-table.tsx:449
 msgid "Organizations will appear here once they are created."
 msgstr "Organizations will appear here once they are created."
 
@@ -4354,7 +4358,7 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:113
+#: app/components/admin-organizations-table.tsx:116
 msgid "Past Due"
 msgstr ""
 
@@ -4495,7 +4499,7 @@ msgstr "Placed"
 msgid "Plaintext Fallback (Optional)"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:330
+#: app/components/admin-organizations-table.tsx:346
 #: app/routes/_admin+/organizations+/$organizationId_+/text-sends.tsx:72
 msgid "Plan"
 msgstr "Plan"
@@ -5585,7 +5589,7 @@ msgstr ""
 msgid "Scopes:"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:309
+#: app/components/admin-organizations-table.tsx:325
 #: app/components/admin-users-table.tsx:226
 #: app/components/admin/feature-flags.tsx:489
 #: app/components/admin/feature-flags.tsx:646
@@ -5817,7 +5821,7 @@ msgstr "Set on {0}"
 msgid "Set system defaults and override them for an organization or a user."
 msgstr "Set system defaults and override them for an organization or a user."
 
-#: app/components/admin-organizations-table.tsx:339
+#: app/components/admin-organizations-table.tsx:355
 msgid "Setup"
 msgstr "Setup"
 
@@ -5913,7 +5917,7 @@ msgstr "Site published and ordering on"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:212
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:214
-#: app/components/admin-organizations-table.tsx:260
+#: app/components/admin-organizations-table.tsx:276
 #: app/routes/_admin+/cache.tsx:610
 msgid "Size"
 msgstr ""
@@ -6083,7 +6087,7 @@ msgstr "Starts at 10:00 local time, once a year. A birthday alone is not consent
 msgid "Station terminal or kitchen display"
 msgstr "Station terminal or kitchen display"
 
-#: app/components/admin-organizations-table.tsx:271
+#: app/components/admin-organizations-table.tsx:287
 #: app/components/admin-users-table.tsx:161
 #: app/components/sso-configuration-overview.tsx:232
 #: app/components/sso-user-management.tsx:178
@@ -6175,7 +6179,7 @@ msgstr ""
 msgid "Structural checks for triggers, connections, and node configuration."
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:347
+#: app/components/admin-organizations-table.tsx:363
 msgid "Stuck in setup for more than 14 days"
 msgstr "Stuck in setup for more than 14 days"
 
@@ -6194,8 +6198,8 @@ msgstr ""
 msgid "Subject Line"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:243
-#: app/components/admin-organizations-table.tsx:318
+#: app/components/admin-organizations-table.tsx:246
+#: app/components/admin-organizations-table.tsx:334
 msgid "Subscription"
 msgstr ""
 
@@ -6390,7 +6394,7 @@ msgstr "text"
 msgid "Text"
 msgstr "Text"
 
-#: app/components/admin-organization-detail.tsx:358
+#: app/components/admin-organization-detail.tsx:372
 #: app/routes/_admin+/organizations+/$organizationId_+/text-sends.tsx:51
 msgid "Text sends"
 msgstr "Text sends"
@@ -6951,7 +6955,7 @@ msgstr "Translate to Arabic"
 msgid "Translate to English"
 msgstr "Translate to English"
 
-#: app/components/admin-organizations-table.tsx:125
+#: app/components/admin-organizations-table.tsx:128
 msgid "Trial"
 msgstr ""
 
@@ -6987,7 +6991,7 @@ msgstr ""
 msgid "True"
 msgstr "True"
 
-#: app/components/admin-organizations-table.tsx:432
+#: app/components/admin-organizations-table.tsx:448
 #: app/components/admin-users-table.tsx:305
 #: app/routes/_admin+/audit-logs.tsx:347
 #: app/routes/_admin+/gdpr-requests.tsx:705
@@ -7024,7 +7028,7 @@ msgstr "Unassign {e164}? The organization's agent stops answering it right away.
 #~ msgid "Unassign {e164}? The restaurant's agent stops answering it right away."
 #~ msgstr "Unassign {e164}? The restaurant's agent stops answering it right away."
 
-#: app/components/admin-organizations-table.tsx:360
+#: app/components/admin-organizations-table.tsx:376
 msgid "Unassigned"
 msgstr "Unassigned"
 
@@ -7052,7 +7056,7 @@ msgstr ""
 msgid "Unnamed recipient"
 msgstr ""
 
-#: app/components/admin-organizations-table.tsx:119
+#: app/components/admin-organizations-table.tsx:122
 msgid "Unpaid"
 msgstr ""
 
@@ -7334,7 +7338,7 @@ msgstr ""
 msgid "Visitor IP addresses will appear here."
 msgstr "Visitor IP addresses will appear here."
 
-#: ../../packages/reports/src/ui/report-chart.tsx:168
+#: ../../packages/reports/src/ui/report-chart.tsx:169
 msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 msgstr "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 

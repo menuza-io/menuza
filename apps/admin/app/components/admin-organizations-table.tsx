@@ -1,4 +1,4 @@
-import { msg, Trans } from '@lingui/macro'
+import { msg, Plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/avatar'
 import { Badge } from '@repo/ui/badge'
@@ -33,6 +33,7 @@ import { useNavigate } from 'react-router'
 import { TablePagination } from '#app/components/data-table/table-pagination.tsx'
 import { UrlFilters } from '#app/components/data-table/url-filters.tsx'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { daysOverdue } from '#app/utils/past-due.ts'
 
 export interface AdminOrganization {
 	id: string
@@ -44,6 +45,8 @@ export interface AdminOrganization {
 	updatedAt: Date
 	planName: string | null
 	subscriptionStatus: string | null
+	/** When the subscription became past due (#237). */
+	pastDueSince?: Date | string | null
 	size: string | null
 	stripeCustomerId: string | null
 	stripeSubscriptionId: string | null
@@ -243,9 +246,22 @@ const getColumns = (
 		header: _(msg`Subscription`),
 		cell: ({ row }) => {
 			const org = row.original
+			const overdue = daysOverdue(org.subscriptionStatus, org.pastDueSince)
 			return (
 				<div className="flex flex-col gap-1">
 					<SubscriptionStatusBadge status={org.subscriptionStatus} />
+					{overdue !== null && (
+						<span
+							className="text-destructive text-xs"
+							data-testid="days-overdue"
+						>
+							<Plural
+								value={overdue}
+								one="# day overdue"
+								other="# days overdue"
+							/>
+						</span>
+					)}
 					{org.planName && (
 						<span className="text-muted-foreground text-xs">
 							{org.planName}

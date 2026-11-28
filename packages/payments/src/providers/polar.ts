@@ -18,7 +18,9 @@ import {
 	type SubscriptionUpdateOptions,
 	type CustomerPortalSession,
 	type CustomerPortalOptions,
+	type BillingIssue,
 	type Invoice,
+	type PayInvoiceResult,
 	type WebhookEvent,
 } from '../types'
 
@@ -354,6 +356,15 @@ export class PolarProvider implements PaymentProvider {
 		throw new Error(
 			'Polar does not have a customer portal session API like Stripe. Direct customers to your custom billing management page.',
 		)
+	}
+
+	/** Polar has no invoice retry: nothing to show or pay (#237). */
+	async getBillingIssue(): Promise<BillingIssue> {
+		return { invoice: null, attempts: [] }
+	}
+
+	async payInvoice(): Promise<PayInvoiceResult> {
+		throw new Error('Retrying a payment is not supported by this provider')
 	}
 
 	async listInvoices(customerId: string, limit = 20): Promise<Invoice[]> {

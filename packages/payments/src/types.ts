@@ -96,6 +96,39 @@ export interface Invoice {
 	periodEnd: number
 }
 
+/**
+ * What is wrong with an unpaid subscription invoice (#237): the open invoice,
+ * and each failed payment attempt against it. Display facts only: the card
+ * brand and last four digits are shown to billing managers and never logged.
+ */
+export interface BillingIssueAttempt {
+	/** Unix seconds. */
+	at: number
+	brand: string | null
+	last4: string | null
+	/** Provider's short failure code, for example `card_declined`. */
+	reason: string | null
+}
+
+export interface BillingIssue {
+	invoice: {
+		id: string
+		amountDue: number
+		currency: string
+		attemptCount: number
+		/** Unix seconds of the provider's next automatic try, if any. */
+		nextPaymentAttempt: number | null
+		hostedInvoiceUrl: string | null
+		/** Unix seconds. */
+		created: number
+	} | null
+	/** Failed attempts, newest first. */
+	attempts: BillingIssueAttempt[]
+}
+
+export type PayInvoiceResult =
+	{ status: 'paid' } | { status: 'failed'; reason: string | null }
+
 export interface CheckoutSessionOptions {
 	priceId: string
 	quantity: number
@@ -162,6 +195,20 @@ export interface PaymentProvider {
 
 	// Invoices
 	listInvoices(customerId: string, limit?: number): Promise<Invoice[]>
+	/** The open invoice and its failed attempts for a past-due subscription (#237). */
+	getBillingIssue(
+		customerId: string,
+		subscriptionId: string,
+	): Promise<BillingIssue>
+	/**
+	 * Pays one open invoice with the customer's payment method on file. The
+	 * idempotency key makes a repeated call a no-op at the provider. A declined
+	 * card is a `failed` result, never a throw.
+	 */
+	payInvoice(
+		invoiceId: string,
+		options: { idempotencyKey: string },
+	): Promise<PayInvoiceResult>
 
 	// Webhooks
 	constructWebhookEvent(
