@@ -1,0 +1,77 @@
+---
+import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { getLocaleHref } from '@repo/common/site-locales'
+import AccountShell from '~/components/AccountShell.astro'
+import SitePage from '~/components/SitePage.astro'
+import { buildFavoritesLabels } from '~/lib/guest-account-labels'
+import { resolveMediaUrl } from '~/lib/media'
+import {
+	flattenItems,
+	isItemSoldOut,
+	lowestAvailablePrice,
+} from '~/lib/ordering/catalog'
+import { buildChannelMenuCategories } from '~/lib/ordering/menu-channel'
+import { formatMoney } from '~/lib/ordering/money'
+import { fetchPublishedSiteMenu } from '~/lib/org'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const requestedLocale = Astro.locals.requestedLocale
+const defaultLocale = Astro.locals.defaultLocale
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const labels = buildFavoritesLabels(i18n)
+const menu = await fetchPublishedSiteMenu({
+	slug: Astro.locals.orgSlug,
+	host: Astro.locals.customHost,
+	lng: requestedLocale,
+	channel: 'web',
+})
+const location =
+	menu?.locations.find((candidate) => candidate.isDefault) ?? menu?.locations[0]
+const currency = menu?.organization?.currency || 'USD'
+const categories = buildChannelMenuCategories(menu, {
+	channel: 'web',
+	locationId: location?.id ?? null,
+	locale: requestedLocale,
+	defaultLocale,
+	resolveImageUrl: resolveMediaUrl,
+})
+
+// The public menu as a small catalog: names, photos, prices, sold out. The
+// browser joins it with the guest's favorites (dish ids from the region), so a
+// dish that left the menu is simply not in the list. No guest data is here.
+const catalog = flattenItems(categories).map((item) => ({
+	id: item.id,
+	name: getLocalizedMenuValue(item.displayName, requestedLocale, defaultLocale),
+	imageUrl: item.imageUrl ?? null,
+	priceLabel: formatMoney(lowestAvailablePrice(item), currency, requestedLocale),
+	soldOut: isItemSoldOut(item),
+}))
+const menuHref = getLocaleHref('/menu', requestedLocale, requestedLocale, defaultLocale)
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'profile-favorites', title: labels.title, slug: 'profile/favorites', isHomePage: false, sections: [] }}
+	title={`${labels.title} - ${organization.name}`}
+>
+	<AccountShell current="favorites" title={labels.title} description={labels.description}>
+		<div
+			id="favorites-root"
+			class="space-y-4"
+			data-labels={JSON.stringify(labels)}
+			data-catalog={JSON.stringify(catalog)}
+			data-menu-href={menuHref}
+		>
+			<p class="sr-only" role="status">{labels.retry}</p>
+		</div>
+	</AccountShell>
+
+	<script>
+		import '../../scripts/profile-favorites.ts'
+	</script>
+</SitePage>

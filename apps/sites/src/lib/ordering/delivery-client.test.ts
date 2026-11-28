@@ -1,5 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const tenantFetch = vi.fn()
+vi.mock('~/lib/client-auth', () => ({
+	getOrgBinding: () => ({ slug: 'test-org' }),
+	tenantFetch: (...args: unknown[]) => tenantFetch(...args),
+}))
+
 import {
+	DeliveryRequestError,
+	requestDeliveryLocations,
+	requestDeliveryQuote,
 	type PlacesSearchState,
 	createPlacesSearch,
 	parseLocationsResult,
@@ -123,7 +133,6 @@ describe('createPlacesSearch', () => {
 	})
 })
 
-
 describe('fee tables in a quote (#244, #421)', () => {
 	const quote = (extra: Record<string, unknown> = {}) => ({
 		token: 't',
@@ -146,13 +155,18 @@ describe('fee tables in a quote (#244, #421)', () => {
 			],
 			byDistance: true,
 		}
-		const result = parseQuoteResult({ status: 'deliverable', quote: quote({ pricing }) })
+		const result = parseQuoteResult({
+			status: 'deliverable',
+			quote: quote({ pricing }),
+		})
 		expect(result).toMatchObject({ quote: { pricing } })
 	})
 
 	it('reads a quote from an older node that sends no pricing', () => {
 		const result = parseQuoteResult({ status: 'deliverable', quote: quote() })
-		expect(result.status === 'deliverable' && result.quote.pricing).toBeUndefined()
+		expect(
+			result.status === 'deliverable' && result.quote.pricing,
+		).toBeUndefined()
 	})
 
 	it('drops malformed pricing instead of trusting it', () => {
@@ -162,8 +176,13 @@ describe('fee tables in a quote (#244, #421)', () => {
 			{ baseFee: 5 },
 			'nope',
 		]) {
-			const result = parseQuoteResult({ status: 'deliverable', quote: quote({ pricing }) })
-			expect(result.status === 'deliverable' && result.quote.pricing).toBeUndefined()
+			const result = parseQuoteResult({
+				status: 'deliverable',
+				quote: quote({ pricing }),
+			})
+			expect(
+				result.status === 'deliverable' && result.quote.pricing,
+			).toBeUndefined()
 		}
 	})
 })
@@ -191,7 +210,10 @@ describe('parseLocationsResult (#161)', () => {
 	})
 
 	it('parses the ranked stores with their quotes', () => {
-		const result = parseLocationsResult({ status: 'ok', locations: [entry('a'), entry('b', false)] })
+		const result = parseLocationsResult({
+			status: 'ok',
+			locations: [entry('a'), entry('b', false)],
+		})
 		expect(result.status).toBe('ok')
 		if (result.status !== 'ok') return
 		expect(result.locations.map((l) => l.locationId)).toEqual(['a', 'b'])
@@ -206,9 +228,19 @@ describe('parseLocationsResult (#161)', () => {
 	})
 
 	it('parses an empty list, not found and unavailable', () => {
-		expect(parseLocationsResult({ status: 'ok', locations: [] })).toEqual({ status: 'ok', locations: [] })
-		expect(parseLocationsResult({ status: 'not_found' })).toEqual({ status: 'not_found' })
-		expect(parseLocationsResult({ status: 'unavailable', reason: 'geocoding_unavailable' })).toEqual({
+		expect(parseLocationsResult({ status: 'ok', locations: [] })).toEqual({
+			status: 'ok',
+			locations: [],
+		})
+		expect(parseLocationsResult({ status: 'not_found' })).toEqual({
+			status: 'not_found',
+		})
+		expect(
+			parseLocationsResult({
+				status: 'unavailable',
+				reason: 'geocoding_unavailable',
+			}),
+		).toEqual({
 			status: 'unavailable',
 			reason: 'geocoding_unavailable',
 		})
@@ -216,7 +248,102 @@ describe('parseLocationsResult (#161)', () => {
 
 	it('rejects a malformed answer', () => {
 		expect(() => parseLocationsResult(null)).toThrow()
-		expect(() => parseLocationsResult({ status: 'ok', locations: [{ name: 'x' }] })).toThrow()
+		expect(() =>
+			parseLocationsResult({ status: 'ok', locations: [{ name: 'x' }] }),
+		).toThrow()
 		expect(() => parseLocationsResult({ status: 'weird' })).toThrow()
+	})
+})
+
+describe('a saved address is quoted by id with the guest session (#113)', () => {
+	beforeEach(() => {
+		tenantFetch.mockReset()
+		vi.stubGlobal('document', {
+			documentElement: { dataset: { tenantApiUrl: 'https://region.test' } },
+		})
+	})
+	afterEach(() => vi.unstubAllGlobals())
+
+	const deliverable = {
+		status: 'deliverable',
+		quote: {
+			token: 't',
+			expiresAt: '2026-10-08T19:00:00Z',
+			address,
+			zoneId: 'z1',
+			zoneName: 'Loop',
+			deliveryFee: 3,
+			minimumOrder: 15,
+			eta: { min: 25, max: 40 },
+		},
+		savedAddress: { id: 'a1', label: 'Home', notes: 'Gate 4411' },
+	}
+
+	it('goes through the session-aware fetch and keeps the saved address in the answer', async () => {
+		tenantFetch.mockResolvedValue({
+			session: 'ok',
+			response: new Response(JSON.stringify(deliverable), { status: 200 }),
+		})
+		const result = await requestDeliveryQuote({
+			locationId: 'loc-1',
+			addressId: 'a1',
+			locale: 'en',
+		})
+		expect(result).toMatchObject({
+			status: 'deliverable',
+			savedAddress: { id: 'a1', label: 'Home', notes: 'Gate 4411' },
+		})
+		const [path, init] = tenantFetch.mock.calls[0] as [string, { body: string }]
+		expect(path).toBe('/delivery/quote')
+		expect(JSON.parse(init.body)).toMatchObject({
+			locationId: 'loc-1',
+			addressId: 'a1',
+			slug: 'test-org',
+		})
+	})
+
+	it('does not use a typed address when the session ended', async () => {
+		tenantFetch.mockResolvedValue({
+			session: 'signed_out',
+			response: new Response('{}', { status: 401 }),
+		})
+		await expect(
+			requestDeliveryQuote({
+				locationId: 'loc-1',
+				addressId: 'a1',
+				locale: 'en',
+			}),
+		).rejects.toMatchObject({ code: 'signed_out' })
+	})
+
+	it('raises the region code when the address is gone', async () => {
+		tenantFetch.mockResolvedValue({
+			session: 'ok',
+			response: new Response(JSON.stringify({ error: 'address_not_found' }), {
+				status: 404,
+			}),
+		})
+		const failure = await requestDeliveryQuote({
+			locationId: 'loc-1',
+			addressId: 'gone',
+			locale: 'en',
+		}).catch((error: unknown) => error)
+		expect(failure).toBeInstanceOf(DeliveryRequestError)
+		expect(failure).toMatchObject({ code: 'address_not_found', status: 404 })
+	})
+
+	it('picks the store for a saved address on a brand with several', async () => {
+		tenantFetch.mockResolvedValue({
+			session: 'ok',
+			response: new Response(JSON.stringify({ status: 'ok', locations: [] }), {
+				status: 200,
+			}),
+		})
+		await requestDeliveryLocations({
+			purpose: 'delivery',
+			addressId: 'a1',
+			locale: 'en',
+		})
+		expect(tenantFetch.mock.calls[0]![0]).toBe('/delivery/locations')
 	})
 })

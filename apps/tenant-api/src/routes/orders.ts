@@ -396,7 +396,28 @@ async function verifyOrderTurnstile(
 export async function resolveOrderingOrganization(
 	c: Context,
 	identity: { slug?: string; host?: string },
+	options: {
+		/**
+		 * The customer app has no browser Origin (#113): a request with none but a
+		 * valid customer token names the token's organization instead. Only the
+		 * delivery address routes ask for this; order placement never does.
+		 */
+		allowCustomerToken?: boolean
+	} = {},
 ): Promise<{ organization: PublishedOrganization } | { error: Response }> {
+	if (
+		options.allowCustomerToken &&
+		!c.req.header('Origin') &&
+		getBearerToken(c.req.header('Authorization'))
+	) {
+		try {
+			const auth = await authenticateCustomer(c)
+			// `authenticateCustomer` opened the organization's regional database.
+			return { organization: { ...auth.organization, hasProvisionedDb: true } }
+		} catch (response) {
+			return { error: response as Response }
+		}
+	}
 	const organization = await resolveOrganizationForBrowserAuth(
 		c.req.header('Origin'),
 		identity,

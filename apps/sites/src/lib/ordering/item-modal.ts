@@ -1057,6 +1057,10 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 			releaseTrap = trapFocus(dialog!)
 		}
 		motion.open()
+		// The heart in the modal (#158) follows the open dish.
+		document.dispatchEvent(
+			new CustomEvent('menuza:item-modal-open', { detail: { itemId } }),
+		)
 		document.addEventListener('keydown', onKeydown)
 		dialog!.scrollTop = 0
 		dialog!

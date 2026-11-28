@@ -55,11 +55,16 @@ describe('delivery pricing kept with the details (#244, #421)', () => {
 
 	it('round-trips the pricing a quote carried', () => {
 		const withPricing = { ...details, delivery: { ...delivery, pricing } }
-		expect(parseOrderDetails(JSON.stringify(withPricing), now)).toEqual(withPricing)
+		expect(parseOrderDetails(JSON.stringify(withPricing), now)).toEqual(
+			withPricing,
+		)
 	})
 
 	it('drops malformed pricing and keeps the single fee', () => {
-		const broken = { ...details, delivery: { ...delivery, pricing: { baseFee: 'x', steps: [] } } }
+		const broken = {
+			...details,
+			delivery: { ...delivery, pricing: { baseFee: 'x', steps: [] } },
+		}
 		const parsed = parseOrderDetails(JSON.stringify(broken), now)
 		expect(parsed?.delivery?.pricing).toBeUndefined()
 		expect(parsed?.delivery?.deliveryFee).toBe(3.5)
@@ -90,6 +95,34 @@ describe('delivery pricing kept with the details (#244, #421)', () => {
 			eta: { min: 20, max: 30 },
 			pricing,
 		})
+	})
+})
+
+describe('the saved address kept with the details (#113)', () => {
+	it('round-trips the saved address id and drops a malformed one', () => {
+		const saved = {
+			...details,
+			delivery: { ...delivery, savedAddressId: 'addr_1' },
+		}
+		expect(parseOrderDetails(JSON.stringify(saved), now)).toEqual(saved)
+		const junk = { ...details, delivery: { ...delivery, savedAddressId: 42 } }
+		expect(
+			parseOrderDetails(JSON.stringify(junk), now)?.delivery,
+		).not.toHaveProperty('savedAddressId')
+	})
+
+	it('builds the details with the saved address a quote was made for', () => {
+		const quote = {
+			token: 'tok',
+			expiresAt: '2026-10-08T19:00:00Z',
+			address: { formatted: 'F', line1: 'L', city: 'C' },
+			deliveryFee: 4,
+			minimumOrder: 8,
+			zoneName: 'Z',
+			eta: { min: 20, max: 30 },
+		}
+		expect(deliveryFromQuote(quote, '', 'addr_1').savedAddressId).toBe('addr_1')
+		expect(deliveryFromQuote(quote, '')).not.toHaveProperty('savedAddressId')
 	})
 })
 

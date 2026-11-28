@@ -2,8 +2,15 @@ import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { DropsScreen } from './drops-screen'
 import { MenuScreen } from './menu-screen'
+import { type HttpRequest } from '@/lib/api/http'
 import { i18n } from '@/lib/i18n/lingui'
-import { makeApp, ORGANIZATION, renderWithStore } from '@/test/app-harness'
+import {
+	makeApp,
+	ORGANIZATION,
+	PROFILE,
+	renderWithStore,
+	SIGNED_IN,
+} from '@/test/app-harness'
 
 const menuPayload = {
 	organization: { currency: 'USD' },
@@ -389,5 +396,114 @@ describe('MenuScreen dietary filter and order-type prices (#335, #412)', () => {
 		expect(await screen.findByText('$12.00')).toBeTruthy()
 		expect(screen.getByText('Delivery price $14.00')).toBeTruthy()
 		expect(screen.getAllByText(/Delivery price/)).toHaveLength(1)
+	})
+})
+
+describe('MenuScreen favorites (#158)', () => {
+	afterEach(() => {
+		i18n.activate('en')
+	})
+
+	const payload = {
+		organization: { currency: 'USD' },
+		menus: [
+			{
+				id: 'menu_1',
+				displayName: 'All day',
+				categories: [
+					{
+						id: 'cat_1',
+						displayName: 'Mains',
+						items: [
+							{
+								id: 'item_1',
+								displayName: 'Burger',
+								price: 10,
+								availabilityStatus: 'available',
+							},
+							{
+								id: 'item_2',
+								displayName: 'Soup',
+								price: 6,
+								availabilityStatus: 'unavailable',
+							},
+							{
+								id: 'item_3',
+								displayName: 'Pizza',
+								price: 12,
+								availabilityStatus: 'available',
+							},
+						],
+					},
+				],
+			},
+		],
+		promotions: [],
+	}
+
+	async function signedIn(favorites: unknown[]) {
+		const calls: Array<{ method: string; path: string }> = []
+		const app = makeApp(
+			{
+				'/resources/sites': { json: ORGANIZATION },
+				'/auth/me': { json: PROFILE },
+				'/customer/favorites': { json: { favorites, limit: 100 } },
+				'/customer/favorites/item_3': (request: HttpRequest) => {
+					calls.push({
+						method: request.method,
+						path: new URL(request.url).pathname,
+					})
+					return { json: { ok: true } }
+				},
+			} as never,
+			{ tokens: SIGNED_IN },
+		)
+		await app.store.start()
+		await waitFor(() =>
+			expect(app.store.getSnapshot().profileStatus).toBe('loaded'),
+		)
+		renderWithStore(
+			app.store,
+			<MenuScreen loadMenu={async () => payload} openPage={jest.fn()} />,
+		)
+		return calls
+	}
+
+	it('shows "Your favorites" above the menu with only dishes still on it, sold out marked', async () => {
+		await signedIn([
+			{ itemId: 'item_1', createdAt: 1 },
+			{ itemId: 'item_2', createdAt: 2 },
+			{ itemId: 'deleted', createdAt: 3 },
+		])
+		const row = await screen.findByTestId('favorites-row')
+		expect(row).toBeTruthy()
+		expect(screen.getByText('Your favorites')).toBeTruthy()
+		// Burger and Soup are in the row and again in Mains.
+		expect(screen.getAllByText('Burger')).toHaveLength(2)
+		expect(screen.getAllByText('Soup')).toHaveLength(2)
+		expect(screen.getAllByText('Sold out').length).toBeGreaterThanOrEqual(2)
+		expect(screen.queryByText('deleted')).toBeNull()
+	})
+
+	it('hearts a dish with one tap and asks the region', async () => {
+		const calls = await signedIn([])
+		await screen.findByText('Pizza')
+		expect(screen.queryByTestId('favorites-row')).toBeNull()
+		fireEvent.press(screen.getAllByLabelText('Add to favorites')[2]!)
+		await waitFor(() =>
+			expect(calls).toContainEqual({
+				method: 'PUT',
+				path: '/customer/favorites/item_3',
+			}),
+		)
+		expect(await screen.findByTestId('favorites-row')).toBeTruthy()
+	})
+
+	it('shows no hearts to a signed-out guest', async () => {
+		await renderOrdering(
+			<MenuScreen loadMenu={async () => payload} openPage={jest.fn()} />,
+		)
+		await screen.findByText('Pizza')
+		expect(screen.queryAllByLabelText('Add to favorites')).toHaveLength(0)
 	})
 })

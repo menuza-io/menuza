@@ -1,5 +1,5 @@
 import { type DeliveryFeePricing } from '@repo/common/delivery-fees'
-import { getOrgBinding } from '~/lib/client-auth'
+import { getOrgBinding, tenantFetch } from '~/lib/client-auth'
 
 /**
  * Delivery address lookup and coverage quotes. Calls go from the browser to
@@ -48,8 +48,20 @@ export type DeliveryUnavailableReason =
 	| 'store_location_missing'
 	| 'no_zones'
 
+/** The saved address (#113) a quote was made for. */
+export type QuotedSavedAddress = {
+	id: string
+	label: string
+	notes: string | null
+}
+
 export type DeliveryQuoteResult =
-	| { status: 'deliverable'; quote: DeliveryQuote }
+	| {
+			status: 'deliverable'
+			quote: DeliveryQuote
+			/** Set when the quote was asked for a saved address (`addressId`). */
+			savedAddress?: QuotedSavedAddress
+	  }
 	| {
 			status: 'out_of_range'
 			address: QuoteAddress | null
@@ -153,6 +165,13 @@ function parseAddress(value: unknown): QuoteAddress | null {
 	}
 }
 
+function parseSavedAddress(value: unknown): QuotedSavedAddress | null {
+	if (!value || typeof value !== 'object') return null
+	const a = value as Record<string, unknown>
+	if (!isString(a.id) || !a.id || !isString(a.label)) return null
+	return { id: a.id, label: a.label, notes: isString(a.notes) ? a.notes : null }
+}
+
 function parsePricing(value: unknown): DeliveryFeePricing | undefined {
 	if (!value || typeof value !== 'object') return undefined
 	const p = value as Record<string, unknown>
@@ -208,13 +227,19 @@ export function parseQuoteResult(value: unknown): DeliveryQuoteResult {
 	}
 	const v = value as Record<string, unknown>
 	switch (v.status) {
-		case 'deliverable':
+		case 'deliverable': {
+			const saved = parseSavedAddress(v.savedAddress)
 			return {
 				status: 'deliverable',
 				quote: parseQuote(v.quote as Record<string, unknown> | undefined),
+				...(saved ? { savedAddress: saved } : {}),
 			}
+		}
 		case 'out_of_range':
-			return { status: 'out_of_range', address: parseAddress(v.address) }
+			return {
+				status: 'out_of_range',
+				address: parseAddress(v.address),
+			}
 		case 'not_found':
 			return { status: 'not_found' }
 		case 'unavailable':
@@ -255,6 +280,8 @@ export async function requestDeliveryQuote(input: {
 	unit?: string
 	sessionToken?: string
 	locale: string
+	/** A saved address of the signed-in guest (#113), quoted again as it is now. */
+	addressId?: string
 	/** The items subtotal in major units, so the fee shown fits the cart. */
 	subtotal?: number
 	signal?: AbortSignal
@@ -267,10 +294,16 @@ export async function requestDeliveryQuote(input: {
 	if (input.subtotal !== undefined && input.subtotal > 0) {
 		body.subtotal = input.subtotal
 	}
+	if (input.addressId) body.addressId = input.addressId
 	if (input.placeId) body.placeId = input.placeId
 	if (input.address?.trim()) body.address = input.address.trim()
 	if (input.unit?.trim()) body.unit = input.unit.trim()
 	if (input.sessionToken) body.sessionToken = input.sessionToken
+	if (input.addressId) {
+		return parseQuoteResult(
+			await readJson(await signedInPost('/delivery/quote', body, input.signal)),
+		)
+	}
 	const response = await fetch(`${regionalUrl()}/delivery/quote`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -278,6 +311,31 @@ export async function requestDeliveryQuote(input: {
 		signal: input.signal,
 	})
 	return parseQuoteResult(await readJson(response))
+}
+
+/**
+ * A POST that needs the guest's customer token (a saved address, #113): the
+ * session is refreshed once when it expired, and a session the region refuses
+ * is a plain `signed_out` error, never a silent typed-address fallback.
+ */
+async function signedInPost(
+	path: string,
+	body: unknown,
+	signal?: AbortSignal,
+): Promise<Response> {
+	regionalUrl()
+	const { session, response } = await tenantFetch(path, {
+		method: 'POST',
+		body: JSON.stringify(body),
+		signal,
+	})
+	if (session !== 'ok') {
+		throw new DeliveryRequestError(
+			session === 'signed_out' ? 'signed_out' : 'session_unavailable',
+			401,
+		)
+	}
+	return response
 }
 
 /** One store of the picker (#161): how to reach it and, for delivery, its quote. */
@@ -323,7 +381,9 @@ export function parseLocationsResult(value: unknown): DeliveryLocationsResult {
 		return {
 			locationId: e.locationId,
 			name: e.name,
-			formattedAddress: isString(e.formattedAddress) ? e.formattedAddress : null,
+			formattedAddress: isString(e.formattedAddress)
+				? e.formattedAddress
+				: null,
 			distanceMeters: isNumber(e.distanceMeters) ? e.distanceMeters : null,
 			open: e.open !== false,
 			etaMinutes:
@@ -348,6 +408,8 @@ export async function requestDeliveryLocations(input: {
 	placeId?: string
 	address?: string
 	point?: { lat: number; lng: number }
+	/** A saved address of the signed-in guest (#113). */
+	addressId?: string
 	unit?: string
 	sessionToken?: string
 	locale: string
@@ -362,10 +424,18 @@ export async function requestDeliveryLocations(input: {
 	if (input.placeId) body.placeId = input.placeId
 	if (input.address?.trim()) body.address = input.address.trim()
 	if (input.point) body.point = input.point
+	if (input.addressId) body.addressId = input.addressId
 	if (input.unit?.trim()) body.unit = input.unit.trim()
 	if (input.sessionToken) body.sessionToken = input.sessionToken
 	if (input.subtotal !== undefined && input.subtotal > 0) {
 		body.subtotal = input.subtotal
+	}
+	if (input.addressId) {
+		return parseLocationsResult(
+			await readJson(
+				await signedInPost('/delivery/locations', body, input.signal),
+			),
+		)
 	}
 	const response = await fetch(`${regionalUrl()}/delivery/locations`, {
 		method: 'POST',

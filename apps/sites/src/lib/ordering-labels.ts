@@ -249,7 +249,34 @@ export function buildOrderDetailsLabels(i18n: I18n) {
 		),
 		distanceAway: keep(i18n, msg`{distance} away`, 'distance'),
 		scheduledOnly: i18n._(msg`Scheduled orders only`),
+		saved: buildSavedAddressLabels(i18n),
 	}
 }
+
+/** Saved delivery addresses at checkout (#113). */
+export function buildSavedAddressLabels(i18n: I18n) {
+	return {
+		heading: i18n._(msg`Saved addresses`),
+		defaultBadge: i18n._(msg`Default`),
+		saveThis: i18n._(msg`Save this address`),
+		nameLabel: i18n._(msg`Name this address`),
+		namePlaceholder: i18n._(msg`Home, Work…`),
+		home: i18n._(msg`Home`),
+		work: i18n._(msg`Work`),
+		notesLabel: i18n._(msg`Gate code or delivery note`),
+		save: i18n._(msg`Save address`),
+		saving: i18n._(msg`Saving…`),
+		saved: i18n._(msg`Address saved`),
+		limitReached: i18n._(
+			msg`You have 10 saved addresses. Remove one in your profile to add another.`,
+		),
+		failed: i18n._(msg`We couldn't save this address. Try again.`),
+		notDeliveredNow: i18n._(msg`We don't deliver here right now`),
+		notFound: i18n._(msg`This address is no longer saved.`),
+		signInAgain: i18n._(msg`Sign in again to use your saved addresses.`),
+	}
+}
+
+export type SavedAddressLabels = ReturnType<typeof buildSavedAddressLabels>
 
 export type OrderDetailsLabels = ReturnType<typeof buildOrderDetailsLabels>

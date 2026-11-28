@@ -528,6 +528,31 @@ describe('POST /delivery/quote with addressId (#113)', () => {
 		await destroyTenantDb('org_saved_addresses_2')
 	})
 
+	it('picks the store for a saved address on a brand with several locations', async () => {
+		const { address } = (await (await save()).json()) as {
+			address: { id: string }
+		}
+		const post = (bearer: string | null, addressId: string) =>
+			call('POST', '/delivery/locations', {
+				bearer,
+				body: { slug: 'test-org', purpose: 'delivery', addressId },
+			})
+		const ok = (await (await post(alice, address.id)).json()) as {
+			status: string
+			locations: Array<{
+				locationId: string
+				quote: { deliveryFee: number } | null
+			}>
+		}
+		expect(ok.status).toBe('ok')
+		expect(ok.locations[0]).toMatchObject({
+			locationId: 'loc-1',
+			quote: { deliveryFee: 3.99 },
+		})
+		expect((await post(null, address.id)).status).toBe(401)
+		expect((await post(bob, address.id)).status).toBe(404)
+	})
+
 	it('still quotes a typed address without any token', async () => {
 		const response = await call('POST', '/delivery/quote', {
 			bearer: null,
@@ -541,6 +566,61 @@ describe('POST /delivery/quote with addressId (#113)', () => {
 		expect(((await response.json()) as { status: string }).status).toBe(
 			'deliverable',
 		)
+	})
+})
+
+describe('the customer app has no browser Origin (#113)', () => {
+	const nativeCall = (
+		path: string,
+		body: unknown,
+		bearer: string | null = alice,
+	) =>
+		app.request(path, {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+			},
+			body: JSON.stringify(body),
+		})
+
+	it('finds a store, geocodes and saves with the token alone', async () => {
+		const found = (await (
+			await nativeCall('/delivery/locations', {
+				purpose: 'delivery',
+				placeId: 'dev_chi_wacker_233',
+				unit: 'Suite 4',
+			})
+		).json()) as {
+			status: string
+			locations: Array<{ locationId: string; quote: { token: string } | null }>
+		}
+		expect(found.status).toBe('ok')
+		const store = found.locations.find((location) => location.quote)!
+		const saved = await call('POST', '/customer/addresses', {
+			body: {
+				locationId: store.locationId,
+				quoteToken: store.quote!.token,
+				label: 'Home',
+			},
+		})
+		expect(saved.status).toBe(201)
+		const { address } = (await saved.json()) as {
+			address: { unit: string; line1: string }
+		}
+		expect(address).toMatchObject({
+			unit: 'Suite 4',
+			line1: '233 South Wacker Drive',
+		})
+	})
+
+	it('still needs a token when there is no Origin', async () => {
+		const response = await nativeCall(
+			'/delivery/locations',
+			{ purpose: 'delivery', placeId: 'dev_chi_wacker_233' },
+			null,
+		)
+		expect(response.status).toBe(404)
 	})
 })
 

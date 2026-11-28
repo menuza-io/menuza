@@ -387,6 +387,10 @@ msgstr "Add a note"
 msgid "Add a tip"
 msgstr "Add a tip"
 
+#: src/lib/guest-account-labels.ts:21
+msgid "Add an address"
+msgstr "Add an address"
+
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Add an email address first"
 msgstr "Add an email address first"
@@ -408,6 +412,10 @@ msgstr "Add gift card"
 msgid "Add more of the eligible items to use this code."
 msgstr "Add more of the eligible items to use this code."
 
+#: src/lib/guest-account-labels.ts:20
+msgid "Add one below, or save one while you check out for delivery."
+msgstr "Add one below, or save one while you check out for delivery."
+
 #: src/lib/ordering-labels.ts:51
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add the required items to your order to use this code."
@@ -422,13 +430,27 @@ msgstr "Add the required items to your order to use this code."
 msgid "Add to calendar"
 msgstr "Add to calendar"
 
+#: src/lib/guest-account-labels.ts:51
+msgid "Add to favorites"
+msgstr "Add to favorites"
+
 #: src/lib/ordering-labels.ts:65
 msgid "Add to order"
 msgstr "Add to order"
 
+#: src/lib/ordering-labels.ts:269
+msgid "Address saved"
+msgstr "Address saved"
+
+#: src/lib/guest-account-labels.ts:26
 #: src/lib/ordering-labels.ts:154
 msgid "Address suggestions"
 msgstr "Address suggestions"
+
+#: src/components/AccountShell.astro.ts:3
+#: src/lib/guest-account-labels.ts:15
+msgid "Addresses"
+msgstr "Addresses"
 
 #: src/lib/gift-cards/labels.ts:84
 msgid "Adjusted"
@@ -564,6 +586,7 @@ msgstr "Approve {reward}"
 msgid "Approved: {reward}."
 msgstr "Approved: {reward}."
 
+#: src/lib/guest-account-labels.ts:23
 #: src/lib/ordering-labels.ts:163
 msgid "Apt, suite or floor"
 msgstr "Apt, suite or floor"
@@ -700,6 +723,10 @@ msgstr "Booking terms"
 msgid "Booking…"
 msgstr "Booking…"
 
+#: src/lib/guest-account-labels.ts:57
+msgid "Browse the menu"
+msgstr "Browse the menu"
+
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Browse the shop"
@@ -745,6 +772,7 @@ msgstr "Call {phone}"
 msgid "Call the restaurant"
 msgstr "Call the restaurant"
 
+#: src/lib/guest-account-labels.ts:35
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Cancel"
@@ -857,6 +885,10 @@ msgstr "Change time or party size"
 msgid "Check a card's balance"
 msgstr "Check a card's balance"
 
+#: src/lib/guest-account-labels.ts:24
+msgid "Check address"
+msgstr "Check address"
+
 #: src/lib/reservations/labels.ts:388
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
@@ -925,6 +957,7 @@ msgstr "Checking your code…"
 msgid "Checking your payment…"
 msgstr "Checking your payment…"
 
+#: src/lib/guest-account-labels.ts:25
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Checking…"
 msgstr "Checking…"
@@ -1294,6 +1327,10 @@ msgstr "Declined: {reward}."
 msgid "Decrease quantity"
 msgstr "Decrease quantity"
 
+#: src/lib/ordering-labels.ts:260
+msgid "Default"
+msgstr "Default"
+
 #: src/lib/ordering-labels.ts:212
 msgid "Deliver here"
 msgstr "Deliver here"
@@ -1430,6 +1467,10 @@ msgstr "Discounts aren't available right now, so we removed your code. Please re
 msgid "Discounts aren't available right now. Please review your total and place your order again."
 msgstr "Discounts aren't available right now. Please review your total and place your order again."
 
+#: src/lib/guest-account-labels.ts:49
+msgid "Dishes you love, saved to this account."
+msgstr "Dishes you love, saved to this account."
+
 #: src/lib/catering/labels.ts:48
 msgid "Dishes: {amount} before tax"
 msgstr "Dishes: {amount} before tax"
@@ -1501,6 +1542,10 @@ msgstr "Earned"
 #: src/lib/loyalty/labels.ts:261
 msgid "Earning {multiplier}× points"
 msgstr "Earning {multiplier}× points"
+
+#: src/lib/guest-account-labels.ts:31
+msgid "Edit"
+msgstr "Edit"
 
 #: src/lib/gift-cards/labels.ts:22
 msgid "Eid"
@@ -1696,6 +1741,11 @@ msgstr "Explore menu"
 msgid "Explore our menu and add your favorite dishes."
 msgstr "Explore our menu and add your favorite dishes."
 
+#: src/components/AccountShell.astro.ts:3
+#: src/lib/guest-account-labels.ts:48
+msgid "Favorites"
+msgstr "Favorites"
+
 #: src/lib/reservations/labels.ts:394
 msgid "Fee"
 msgstr "Fee"
@@ -1794,6 +1844,10 @@ msgstr "Full name"
 #: src/lib/careers/labels.ts:14
 msgid "Full time"
 msgstr "Full time"
+
+#: src/lib/ordering-labels.ts:266
+msgid "Gate code or delivery note"
+msgstr "Gate code or delivery note"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Gate code, buzzer, or where to leave it"
@@ -1930,6 +1984,14 @@ msgstr "Hide details"
 #: src/lib/loyalty/labels.ts:236
 msgid "History"
 msgstr "History"
+
+#: src/lib/ordering-labels.ts:264
+msgid "Home"
+msgstr "Home"
+
+#: src/lib/ordering-labels.ts:263
+msgid "Home, Work…"
+msgstr "Home, Work…"
 
 #: src/lib/careers/labels.ts:31
 msgid "hour"
@@ -2230,6 +2292,10 @@ msgstr "Looks like you haven't added any dishes to your order yet."
 msgid "Make another reservation"
 msgstr "Make another reservation"
 
+#: src/lib/guest-account-labels.ts:34
+msgid "Make default"
+msgstr "Make default"
+
 #: src/lib/reservations/labels.ts:209
 msgid "Manage"
 msgstr "Manage"
@@ -2317,6 +2383,10 @@ msgstr "Msg and data rates may apply. Reply STOP to opt out."
 msgid "Name"
 msgstr "Name"
 
+#: src/lib/ordering-labels.ts:262
+msgid "Name this address"
+msgstr "Name this address"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "name@example.com"
 msgstr "name@example.com"
@@ -2345,6 +2415,7 @@ msgstr "Network error. Please try again."
 msgid "Never miss a drop"
 msgstr "Never miss a drop"
 
+#: src/lib/guest-account-labels.ts:67
 #: src/pages/menu.astro.ts:3
 msgid "Next"
 msgstr "Next"
@@ -2376,6 +2447,10 @@ msgstr "No drops right now."
 #: src/lib/reservations/labels.ts:456
 msgid "No experiences right now"
 msgstr "No experiences right now"
+
+#: src/lib/guest-account-labels.ts:55
+msgid "No favorites yet."
+msgstr "No favorites yet."
 
 #: src/pages/drop/[slug].astro.ts:3
 msgid "No longer available"
@@ -2430,6 +2505,10 @@ msgstr "No reward"
 #: src/lib/loyalty/labels.ts:136
 msgid "No rewards are available yet."
 msgstr "No rewards are available yet."
+
+#: src/lib/guest-account-labels.ts:19
+msgid "No saved addresses yet."
+msgstr "No saved addresses yet."
 
 #: src/pages/profile.astro.ts:3
 msgid "No saved payment methods yet."
@@ -3263,6 +3342,7 @@ msgstr "Prepayment"
 msgid "Preview · ordering opens {when}"
 msgstr "Preview · ordering opens {when}"
 
+#: src/lib/guest-account-labels.ts:66
 #: src/pages/menu.astro.ts:3
 msgid "Previous"
 msgstr "Previous"
@@ -3417,6 +3497,7 @@ msgid "Reject non-essential"
 msgstr "Reject non-essential"
 
 #: src/lib/gift-cards/labels.ts:89
+#: src/lib/guest-account-labels.ts:32
 #: src/lib/ordering-labels.ts:95
 #: src/lib/ordering-labels.ts:118
 #: src/pages/menu/checkout.astro.ts:3
@@ -3427,6 +3508,14 @@ msgstr "Remove"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Remove code {code}"
 msgstr "Remove code {code}"
+
+#: src/lib/guest-account-labels.ts:52
+msgid "Remove from favorites"
+msgstr "Remove from favorites"
+
+#: src/lib/guest-account-labels.ts:33
+msgid "Remove this address?"
+msgstr "Remove this address?"
 
 #: src/lib/catering/labels.ts:54
 msgid "Request a quote"
@@ -3535,6 +3624,11 @@ msgstr "Sale price"
 msgid "Save"
 msgstr "Save"
 
+#: src/lib/ordering-labels.ts:267
+msgid "Save address"
+msgstr "Save address"
+
+#: src/lib/guest-account-labels.ts:36
 #: src/lib/reservations/labels.ts:180
 msgid "Save changes"
 msgstr "Save changes"
@@ -3547,10 +3641,22 @@ msgstr "Save Changes"
 msgid "Save my choices"
 msgstr "Save my choices"
 
+#: src/lib/ordering-labels.ts:261
+msgid "Save this address"
+msgstr "Save this address"
+
+#: src/lib/ordering-labels.ts:259
+msgid "Saved addresses"
+msgstr "Saved addresses"
+
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "Saving..."
+
+#: src/lib/ordering-labels.ts:268
+msgid "Saving…"
+msgstr "Saving…"
 
 #: src/components/AppInviteSection.astro.ts:3
 msgid "Scan to get the app"
@@ -3568,6 +3674,7 @@ msgstr "Schedule"
 msgid "Scheduled orders only"
 msgstr "Scheduled orders only"
 
+#: src/lib/guest-account-labels.ts:22
 #: src/lib/ordering-labels.ts:152
 msgid "Search street address"
 msgstr "Search street address"
@@ -3717,10 +3824,16 @@ msgstr "Showing your code does not spend any points. You approve every reward yo
 
 #: src/components/SiteHeader.astro.ts:3
 #: src/lib/gift-cards/labels.ts:79
+#: src/lib/guest-account-labels.ts:40
+#: src/lib/guest-account-labels.ts:65
 #: src/lib/loyalty/labels.ts:71
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "Sign in"
+
+#: src/lib/ordering-labels.ts:276
+msgid "Sign in again to use your saved addresses."
+msgstr "Sign in again to use your saved addresses."
 
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Sign in to hear about offers"
@@ -3730,9 +3843,21 @@ msgstr "Sign in to hear about offers"
 msgid "Sign in to save gift cards to your account."
 msgstr "Sign in to save gift cards to your account."
 
+#: src/lib/guest-account-labels.ts:53
+msgid "Sign in to save your favorite dishes."
+msgstr "Sign in to save your favorite dishes."
+
+#: src/lib/guest-account-labels.ts:64
+msgid "Sign in to see your favorites."
+msgstr "Sign in to see your favorites."
+
 #: src/lib/loyalty/labels.ts:67
 msgid "Sign in to see your rewards"
 msgstr "Sign in to see your rewards"
+
+#: src/lib/guest-account-labels.ts:39
+msgid "Sign in to see your saved addresses."
+msgstr "Sign in to see your saved addresses."
 
 #: src/lib/ordering-labels.ts:41
 #: src/pages/menu/checkout.astro.ts:3
@@ -3747,6 +3872,7 @@ msgstr "Sign in with your phone number to see your points and use your rewards."
 msgid "Sign up"
 msgstr "Sign up"
 
+#: src/lib/guest-account-labels.ts:54
 #: src/lib/ordering-labels.ts:66
 #: src/lib/reservations/labels.ts:471
 msgid "Sold out"
@@ -3914,6 +4040,10 @@ msgstr "Taking you to the secure payment page…"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Tap again to leave this table"
 msgstr "Tap again to leave this table"
+
+#: src/lib/guest-account-labels.ts:56
+msgid "Tap the heart on a dish to keep it here."
+msgstr "Tap the heart on a dish to keep it here."
 
 #: src/lib/reservations/labels.ts:453
 msgid "Tasting menus, chef's tables and special events at {name}."
@@ -4290,6 +4420,10 @@ msgstr "There isn't enough {name} left today. Please go back to the menu to chan
 #: src/pages/menu/checkout.astro.ts:3
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "There isn't enough left today of: {names}. Please go back to the menu to change your order."
+
+#: src/lib/ordering-labels.ts:275
+msgid "This address is no longer saved."
+msgstr "This address is no longer saved."
 
 #: src/lib/catering/labels.ts:119
 msgid "This balance was cancelled. Contact the restaurant if you have a question."
@@ -4684,6 +4818,8 @@ msgid "Track this order in the app"
 msgstr "Track this order in the app"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/guest-account-labels.ts:38
+#: src/lib/guest-account-labels.ts:63
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:162
 #: src/lib/reservations/labels.ts:281
@@ -5030,6 +5166,10 @@ msgstr "We couldn't confirm your total. Please try again."
 msgid "We couldn't find that address"
 msgstr "We couldn't find that address"
 
+#: src/lib/guest-account-labels.ts:30
+msgid "We couldn't find that address."
+msgstr "We couldn't find that address."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't find this order"
 msgstr "We couldn't find this order"
@@ -5041,6 +5181,14 @@ msgstr "We couldn't get your location. Enter an address to sort by distance."
 #: src/lib/ordering-labels.ts:161
 msgid "We couldn't load address suggestions."
 msgstr "We couldn't load address suggestions."
+
+#: src/lib/guest-account-labels.ts:37
+msgid "We couldn't load your addresses."
+msgstr "We couldn't load your addresses."
+
+#: src/lib/guest-account-labels.ts:62
+msgid "We couldn't load your favorites."
+msgstr "We couldn't load your favorites."
 
 #: src/pages/profile/orders.astro.ts:3
 msgid "We couldn't load your orders."
@@ -5066,6 +5214,10 @@ msgstr "We couldn't restore your cart."
 msgid "We couldn't save that. Try again."
 msgstr "We couldn't save that. Try again."
 
+#: src/lib/ordering-labels.ts:273
+msgid "We couldn't save this address. Try again."
+msgstr "We couldn't save this address. Try again."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't send that. Please try again later."
 msgstr "We couldn't send that. Please try again later."
@@ -5077,6 +5229,10 @@ msgstr "We couldn't send your refund automatically. Please call the restaurant."
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "We couldn't start payment. Please try again."
+
+#: src/lib/guest-account-labels.ts:61
+msgid "We couldn't update your favorites. Try again."
+msgstr "We couldn't update your favorites. Try again."
 
 #: src/lib/catering/labels.ts:188
 msgid "We deliver catering orders to {where}."
@@ -5094,9 +5250,17 @@ msgstr "We deliver here"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "We did not hear back in time. You can join the waitlist again."
 
+#: src/lib/ordering-labels.ts:274
+msgid "We don't deliver here right now"
+msgstr "We don't deliver here right now"
+
 #: src/lib/ordering-labels.ts:174
 msgid "We don't deliver to this address yet"
 msgstr "We don't deliver to this address yet"
+
+#: src/lib/guest-account-labels.ts:28
+msgid "We don't deliver to this address yet, so it can't be saved."
+msgstr "We don't deliver to this address yet, so it can't be saved."
 
 #: src/lib/reservations/labels.ts:223
 msgid "We email you when your table is ready."
@@ -5267,6 +5431,10 @@ msgstr "Where should we deliver?"
 msgid "Where would you like to work?"
 msgstr "Where would you like to work?"
 
+#: src/lib/guest-account-labels.ts:17
+msgid "Where you like your delivery brought. Each address is checked against the delivery area every time you order."
+msgstr "Where you like your delivery brought. Each address is checked against the delivery area every time you order."
+
 #: src/lib/catering/labels.ts:134
 msgid "Which dietary needs can you meet?"
 msgstr "Which dietary needs can you meet?"
@@ -5274,6 +5442,10 @@ msgstr "Which dietary needs can you meet?"
 #: src/lib/ordering-labels.ts:88
 msgid "Whole"
 msgstr "Whole"
+
+#: src/lib/ordering-labels.ts:265
+msgid "Work"
+msgstr "Work"
 
 #: src/lib/careers/labels.ts:37
 msgid "year"
@@ -5330,6 +5502,14 @@ msgstr "You can still order for pickup."
 #: src/lib/loyalty/labels.ts:163
 msgid "You have {amount}"
 msgstr "You have {amount}"
+
+#: src/lib/ordering-labels.ts:271
+msgid "You have 10 saved addresses. Remove one in your profile to add another."
+msgstr "You have 10 saved addresses. Remove one in your profile to add another."
+
+#: src/lib/guest-account-labels.ts:59
+msgid "You have 100 favorites. Remove one to add another."
+msgstr "You have 100 favorites. Remove one to add another."
 
 #: src/lib/loyalty/labels.ts:233
 msgid "You have a new request to use a reward."
@@ -5483,6 +5663,10 @@ msgstr "Your email (for the receipt)"
 #: src/lib/catering/labels.ts:29
 msgid "Your event"
 msgstr "Your event"
+
+#: src/lib/guest-account-labels.ts:50
+msgid "Your favorites"
+msgstr "Your favorites"
 
 #: src/lib/reservations/labels.ts:78
 msgid "Your hold expired"

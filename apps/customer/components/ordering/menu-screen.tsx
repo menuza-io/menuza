@@ -23,6 +23,10 @@ import {
 } from '../../lib/ordering/offers'
 import { openWebsitePage } from '../../lib/ordering/open-site'
 import {
+	favoriteMenuItems,
+	useFavorites,
+} from '../../lib/ordering/use-favorites'
+import {
 	Badge,
 	Button,
 	Chip,
@@ -56,6 +60,8 @@ export function MenuScreen({
 	// #335: the guest's dietary choices; a dish shows only with every one.
 	const [diet, setDiet] = useState<DietaryTag[]>([])
 	const dietLabel = useDietaryLabel()
+	const favorites = useFavorites()
+	const [favoriteNotice, setFavoriteNotice] = useState<string | null>(null)
 	const locale = language.code
 	const defaultLocale = organization?.defaultLocale || 'en'
 
@@ -148,6 +154,17 @@ export function MenuScreen({
 		: []
 	const promotions = bannerOffers(livePromotions).shown
 	const currency = menu?.currency || 'USD'
+	// "Your favorites" (#158): the dishes still on the menu, sold out ones marked.
+	const favoriteRow = favoriteMenuItems(sections, favorites.favorites)
+	const toggleFavorite = async (itemId: string) => {
+		setFavoriteNotice(null)
+		const outcome = await favorites.toggle(itemId)
+		if (outcome === 'limit') {
+			setFavoriteNotice(t`You have 100 favorites. Remove one to add another.`)
+		} else if (outcome === 'failed') {
+			setFavoriteNotice(t`We could not update your favorites. Try again.`)
+		}
+	}
 
 	return (
 		<Screen padded={false}>
@@ -197,6 +214,26 @@ export function MenuScreen({
 							</Text>
 						</View>
 					) : null}
+					{favoriteRow.length > 0 ? (
+						<View className="gap-2" testID="favorites-row">
+							<Text variant="heading">{t`Your favorites`}</Text>
+							{favoriteRow.map(({ item }) => (
+								<MenuItemRow
+									key={item.id}
+									item={item}
+									currency={currency}
+									locale={locale}
+									promotions={livePromotions}
+									onPress={menuUrl ? () => openPage(menuUrl) : undefined}
+									favorite
+									onToggleFavorite={() => void toggleFavorite(item.id)}
+								/>
+							))}
+						</View>
+					) : null}
+					{favoriteNotice ? (
+						<Text variant="error">{favoriteNotice}</Text>
+					) : null}
 					{sections.length === 0 && diet.length > 0 ? (
 						<EmptyState
 							title={t`No dishes match these choices.`}
@@ -219,6 +256,12 @@ export function MenuScreen({
 										locale={locale}
 										promotions={livePromotions}
 										onPress={menuUrl ? () => openPage(menuUrl) : undefined}
+										favorite={favorites.ids.has(item.id)}
+										onToggleFavorite={
+											favorites.signedIn
+												? () => void toggleFavorite(item.id)
+												: undefined
+										}
 									/>
 								))}
 							</View>
@@ -271,12 +314,18 @@ function MenuItemRow({
 	locale,
 	promotions,
 	onPress,
+	favorite = false,
+	onToggleFavorite,
 }: {
 	item: MenuItemView
 	currency: string
 	locale: string
 	promotions: MenuPromotionView[]
 	onPress?: () => void
+	/** The dish is one of the guest's favorites (#158). */
+	favorite?: boolean
+	/** Shown only for a signed-in guest. */
+	onToggleFavorite?: () => void
 }) {
 	const { t } = useLingui()
 	const offerLabel = useOfferLabeler(currency, locale)
@@ -329,6 +378,19 @@ function MenuItemRow({
 				<Text variant="label" className="flex-1">
 					{name}
 				</Text>
+				{onToggleFavorite ? (
+					<Pressable
+						accessibilityRole="button"
+						accessibilityLabel={
+							favorite ? t`Remove from favorites` : t`Add to favorites`
+						}
+						accessibilityState={{ selected: favorite }}
+						hitSlop={8}
+						onPress={onToggleFavorite}
+					>
+						<Text variant="label">{favorite ? '♥' : '♡'}</Text>
+					</Pressable>
+				) : null}
 				<View className="items-end">
 					<Text variant="label">{item.soldOut ? t`Sold out` : price}</Text>
 					{sale ? (

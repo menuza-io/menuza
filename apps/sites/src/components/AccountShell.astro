@@ -3,7 +3,7 @@ import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
 
 interface Props {
-	current: 'account' | 'orders' | 'rewards'
+	current: 'account' | 'orders' | 'addresses' | 'favorites' | 'rewards'
 	title: string
 	description?: string
 }
@@ -16,6 +16,8 @@ const defaultLocale = Astro.locals.defaultLocale
 const accountNav = i18n._(msg`Account`)
 const ordersNav = i18n._(msg`Orders`)
 const rewardsNav = i18n._(msg`Rewards`)
+const addressesNav = i18n._(msg`Addresses`)
+const favoritesNav = i18n._(msg`Favorites`)
 const accountSettings = i18n._(msg`Account settings`)
 
 const accountHref = getLocaleHref(
@@ -37,10 +39,24 @@ const rewardsHref = getLocaleHref(
 	requestedLocale,
 	defaultLocale,
 )
+const addressesHref = getLocaleHref(
+	'/profile/addresses',
+	requestedLocale,
+	requestedLocale,
+	defaultLocale,
+)
+const favoritesHref = getLocaleHref(
+	'/profile/favorites',
+	requestedLocale,
+	requestedLocale,
+	defaultLocale,
+)
 
 const navItems = [
 	{ id: 'account' as const, label: accountNav, href: accountHref },
 	{ id: 'orders' as const, label: ordersNav, href: ordersHref },
+	{ id: 'addresses' as const, label: addressesNav, href: addressesHref },
+	{ id: 'favorites' as const, label: favoritesNav, href: favoritesHref },
 	{ id: 'rewards' as const, label: rewardsNav, href: rewardsHref },
 ]
 
@@ -99,6 +115,35 @@ function navClass(active: boolean) {
 								>
 									<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
 									<circle cx="12" cy="7" r="4" />
+								</svg>
+							) : item.id === 'addresses' ? (
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.75"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									class="size-4 shrink-0 opacity-70"
+									aria-hidden="true"
+								>
+									<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+									<circle cx="12" cy="10" r="3" />
+								</svg>
+							) : item.id === 'favorites' ? (
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.75"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									class="size-4 shrink-0 opacity-70"
+									aria-hidden="true"
+								>
+									<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
 								</svg>
 							) : item.id === 'rewards' ? (
 								<svg

@@ -1,0 +1,47 @@
+---
+import AccountShell from '~/components/AccountShell.astro'
+import SitePage from '~/components/SitePage.astro'
+import { buildAddressesPageLabels } from '~/lib/guest-account-labels'
+import { fetchPublishedSiteMenu } from '~/lib/org'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const labels = buildAddressesPageLabels(i18n)
+
+// A store the address search leans on (country and map bias). Public data only.
+const menu = await fetchPublishedSiteMenu({
+	slug: Astro.locals.orgSlug,
+	host: Astro.locals.customHost,
+	lng: Astro.locals.requestedLocale,
+})
+const deliveryLocations = (menu?.locations ?? []).filter(
+	(location) =>
+		(location.fulfillmentOptions as { delivery?: boolean } | null)?.delivery !== false,
+)
+const searchLocationId =
+	(deliveryLocations.find((location) => location.isDefault) ?? deliveryLocations[0])?.id ?? ''
+
+// Everything about a guest's addresses is filled in by the browser from the
+// regional tenant-api; this page renders none of it (docs/tenant-data-residency.md).
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'profile-addresses', title: labels.title, slug: 'profile/addresses', isHomePage: false, sections: [] }}
+	title={`${labels.title} - ${organization.name}`}
+>
+	<AccountShell current="addresses" title={labels.title} description={labels.description}>
+		<div id="saved-addresses-root" class="space-y-6" data-labels={JSON.stringify(labels)} data-location-id={searchLocationId} data-locale={Astro.locals.requestedLocale}>
+			<p class="sr-only" role="status">{labels.checking}</p>
+		</div>
+	</AccountShell>
+
+	<script>
+		import '../../scripts/profile-addresses.ts'
+	</script>
+</SitePage>

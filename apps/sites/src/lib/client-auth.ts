@@ -1,4 +1,5 @@
 import { browserLocaleHref } from '~/lib/locale'
+import { returnHref } from '~/lib/return-after-login'
 
 const ACCESS_TOKEN_KEY = 'tenant_access_token'
 const REFRESH_TOKEN_KEY = 'tenant_refresh_token'
@@ -257,7 +258,8 @@ export function redirectToLogin() {
 
 export function redirectHomeIfSignedIn() {
 	if (getAccessToken()) {
-		window.location.replace(browserLocaleHref('/'))
+		// Home, or the page a heart or a group order sent the guest from.
+		window.location.replace(returnHref('/'))
 	}
 }
 

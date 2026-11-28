@@ -749,7 +749,7 @@ const inputClass =
 						</div>
 						<div id="delivery-missing" class="hidden flex-col items-start gap-3 rounded-lg border border-dashed border-border p-4 [&:not(.hidden)]:flex sm:flex-row sm:items-center">
 							<div class="min-w-0 flex-1">
-								<p class="text-sm font-semibold text-foreground">{odLabels.addressMissingTitle}</p>
+								<p id="delivery-missing-title" class="text-sm font-semibold text-foreground" data-default={odLabels.addressMissingTitle} data-saved-out={odLabels.saved.notDeliveredNow}>{odLabels.addressMissingTitle}</p>
 								<p class="mt-0.5 text-sm text-muted-foreground">{odLabels.addressMissingBody}</p>
 							</div>
 							<button type="button" id="delivery-add-address" class="btn-secondary shrink-0" data-open-order-details data-order-details-tab="delivery">{odLabels.addAddress}</button>
@@ -1816,20 +1816,41 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 		async function refreshDeliveryQuote() {
 			const current = validDelivery()
 			if (!current) return
-			try {
-				const result = await requestDeliveryQuote({
+			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
+			const quoteFor = (savedAddressId?: string) =>
+				requestDeliveryQuote({
 					locationId: activeLocation?.id ?? '',
-					address: current.formatted,
+					...(savedAddressId ? { addressId: savedAddressId } : { address: current.formatted }),
 					unit: current.unit,
 					locale: meta.locale || 'en',
-					subtotal: cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0),
+					subtotal,
 				})
+			try {
+				// A saved address (#113) is quoted again by id, from the point a geocode
+				// saved, against the zones and fees as they are now. One that was deleted
+				// meanwhile falls back to its text like any typed address.
+				let savedAddressId = current.savedAddressId
+				let result: Awaited<ReturnType<typeof quoteFor>>
+				try {
+					result = await quoteFor(savedAddressId)
+				} catch (error) {
+					if (!savedAddressId || (error as { code?: string })?.code !== 'address_not_found') throw error
+					savedAddressId = undefined
+					result = await quoteFor()
+				}
+				const missingTitle = document.getElementById('delivery-missing-title')
 				if (result.status === 'deliverable') {
 					details = updateOrderDetails(orgId, details, {
-						delivery: deliveryFromQuote(result.quote, current.unit ?? ''),
+						delivery: deliveryFromQuote(result.quote, current.unit ?? '', savedAddressId),
 					})
+					if (missingTitle) missingTitle.textContent = missingTitle.dataset.default ?? ''
 				} else {
 					details = updateOrderDetails(orgId, details, { delivery: undefined })
+					// "We don't deliver here right now": a saved address that left the zones.
+					if (missingTitle) {
+						missingTitle.textContent =
+							(savedAddressId ? missingTitle.dataset.savedOut : missingTitle.dataset.default) ?? ''
+					}
 				}
 			} catch {
 				// Keep what we have.
