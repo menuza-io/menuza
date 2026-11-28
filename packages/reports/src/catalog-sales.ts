@@ -937,10 +937,10 @@ const orderProblemFields: ReportField[] = [
 	},
 	{
 		id: 'affected',
-		label: 'Value of the items named',
+		label: 'Value of the items reported',
 		type: 'currency',
-		sumLabel: 'Items named',
-		averageLabel: 'Average value of the items named',
+		sumLabel: 'Items reported',
+		averageLabel: 'Average value of the items reported',
 	},
 	{
 		id: 'refunded',
@@ -1028,17 +1028,17 @@ const orderProblemDishFields: ReportField[] = [
 	},
 	{
 		id: 'units',
-		label: 'Units named',
+		label: 'Units reported',
 		type: 'number',
-		sumLabel: 'Units named',
+		sumLabel: 'Units reported',
 		averageLabel: false,
 	},
 	{
 		id: 'amount',
-		label: 'Value of the units named',
+		label: 'Value of the units reported',
 		type: 'currency',
-		sumLabel: 'Value named',
-		averageLabel: 'Average value named',
+		sumLabel: 'Value reported',
+		averageLabel: 'Average value reported',
 	},
 	currencyField,
 ]

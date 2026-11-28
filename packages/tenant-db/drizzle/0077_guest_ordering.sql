@@ -156,6 +156,18 @@ CREATE UNIQUE INDEX `discount_issued_codes_normalized` ON `discount_issued_codes
 CREATE UNIQUE INDEX `discount_issued_codes_one_per_recipient` ON `discount_issued_codes` (`source_type`,`source_id`,`customer_id`);--> statement-breakpoint
 CREATE INDEX `idx_discount_issued_codes_discount` ON `discount_issued_codes` (`discount_id`);--> statement-breakpoint
 CREATE INDEX `idx_discount_issued_codes_customer` ON `discount_issued_codes` (`customer_id`);--> statement-breakpoint
+-- The rebuild above drops the table's update guard: put it back (as in 0055).
+CREATE TRIGGER `discount_issued_codes_fixed` BEFORE UPDATE ON `discount_issued_codes`
+WHEN NEW.id IS NOT OLD.id
+	OR NEW.discount_id IS NOT OLD.discount_id
+	OR NEW.code IS NOT OLD.code
+	OR NEW.normalized_code IS NOT OLD.normalized_code
+	OR NEW.source_type IS NOT OLD.source_type
+	OR NEW.source_id IS NOT OLD.source_id
+	OR NEW.expires_at IS NOT OLD.expires_at
+	OR NEW.created_at IS NOT OLD.created_at
+	OR (NEW.customer_id IS NOT OLD.customer_id AND NEW.customer_id IS NOT NULL)
+BEGIN SELECT RAISE(ABORT, 'discount_issued_codes rows only lose their customer'); END;--> statement-breakpoint
 ALTER TABLE `restaurant_orders` ADD `is_test` integer DEFAULT false NOT NULL;--> statement-breakpoint
 ALTER TABLE `restaurant_orders` ADD `test_print_answer` text;--> statement-breakpoint
 ALTER TABLE `restaurant_orders` ADD `test_print_answered_at` integer;--> statement-breakpoint
