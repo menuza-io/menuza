@@ -16,6 +16,7 @@ import {
 	type PendingAgreementView,
 } from '#app/components/legal/agreement-dialog.tsx'
 import { MarketingLayout } from '#app/components/marketing-layout.tsx'
+import { billingPastDueFor } from '#app/utils/billing/past-due.server.ts'
 import { agreementPromptFor } from '#app/utils/legal/agreements.server.ts'
 import { getUserDefaultOrganization } from '#app/utils/organization/organizations.server.ts'
 import { getTrialStatus } from '#app/utils/payments.server.ts'
@@ -32,6 +33,7 @@ export async function loader({
 
 	// Owners are asked to accept new Menuza agreements (#194, #89). The
 	// organization is the one in the address, else the person's default.
+	let billingPastDue: { orgSlug: string } | null = null
 	let agreementPrompt: {
 		pending: PendingAgreementView[]
 		blocking: boolean
@@ -60,6 +62,12 @@ export async function loader({
 				)[0]
 			: ((await getUserDefaultOrganization(userId))?.organization ?? null)
 		if (target?.id) {
+			// A past-due subscription shows a banner to the people who can fix it
+			// (#237); nobody else sees anything.
+			billingPastDue = await billingPastDueFor({
+				userId,
+				organization: { id: target.id, slug: target.slug },
+			})
 			agreementPrompt = {
 				...(await agreementPromptFor({
 					request,
@@ -117,6 +125,7 @@ export async function loader({
 		trialStatus,
 		extensionId: ENV.EXTENSION_ID,
 		agreementPrompt,
+		billingPastDue,
 	}
 }
 
@@ -127,6 +136,7 @@ export default function MarketingLayoutRoute() {
 		trialStatus,
 		extensionId,
 		agreementPrompt,
+		billingPastDue,
 	} = useLoaderData<{
 		isCollapsed: boolean
 		onboardingProgress: OnboardingProgressData | null
@@ -138,6 +148,7 @@ export default function MarketingLayoutRoute() {
 			canAccept: boolean
 			orgSlug: string | null
 		}
+		billingPastDue: { orgSlug: string } | null
 	}>()
 
 	return (
@@ -148,6 +159,7 @@ export default function MarketingLayoutRoute() {
 				onboardingProgress={onboardingProgress}
 				trialStatus={trialStatus}
 				extensionId={extensionId}
+				billingPastDue={billingPastDue}
 			>
 				<AppShellErrorScope>
 					<Outlet />

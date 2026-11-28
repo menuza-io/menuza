@@ -126,3 +126,20 @@ describe('repeat-orders schedule helpers', () => {
 		expect(formatHolidaySkipNote(null)).toBe('Skipped: closed for holiday')
 	})
 })
+
+describe('parseClosedSpecialDates with yearly repeats (#242)', () => {
+	it('expands a repeating closure over the asked range', () => {
+		const map = parseClosedSpecialDates(
+			[
+				{
+					date: '2026-12-25',
+					isOpen: false,
+					repeatsYearly: true,
+					note: 'Christmas',
+				},
+			],
+			{ from: '2027-12-01', to: '2027-12-31' },
+		)
+		expect([...map.entries()]).toEqual([['2027-12-25', 'Christmas']])
+	})
+})

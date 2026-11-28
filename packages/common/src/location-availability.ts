@@ -1,6 +1,7 @@
 import {
 	activePrayerPause,
 	buildOnlineLocationHours,
+	findSpecialHourForDate,
 	hasConfiguredHours,
 	locationLocalClock,
 	nextClosing,
@@ -366,7 +367,7 @@ export function endOfOrderingDay(
 	const tomorrow = addLocalDays(localDateOf(now, timezone), 1)
 	const midnight = localDateAndTimeToUtc(tomorrow.date, START_OF_DAY, timezone)
 	const special = Array.isArray(location.specialHours)
-		? location.specialHours.find((entry) => entry.date === tomorrow.date)
+		? findSpecialHourForDate(location.specialHours, tomorrow.date)
 		: undefined
 	const schedule = location.onlineHours || location.storeHours
 	let slots: SpecialHour['slots'] = []
@@ -565,7 +566,7 @@ function continuesPastMidnight(
 	if (slotEnd !== END_OF_DAY) return false
 	const next = addLocalDays(localDate, 1)
 	const special = Array.isArray(location.specialHours)
-		? location.specialHours.find((entry) => entry.date === next.date)
+		? findSpecialHourForDate(location.specialHours, next.date)
 		: undefined
 	let slots: SpecialHour['slots'] = []
 	if (special) {

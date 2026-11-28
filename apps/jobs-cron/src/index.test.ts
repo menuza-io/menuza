@@ -1307,10 +1307,12 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				'https://app.example.com/resources/jobs/menu-sync?nightly=1',
 				'https://app.example.com/resources/jobs/menu-check',
 				'https://app.example.com/resources/jobs/payment-account-check',
+				'https://app.example.com/resources/jobs/setup-reminders',
 			])
 			// One failing job does not stop the others from running.
 			expect(results.map((result) => result.status)).toEqual([
 				'rejected',
+				'fulfilled',
 				'fulfilled',
 				'fulfilled',
 				'fulfilled',

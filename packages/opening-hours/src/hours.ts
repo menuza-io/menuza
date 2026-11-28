@@ -5,6 +5,7 @@ import {
 	localParts,
 	zonedLocalToUtc,
 } from '@repo/zoned-time'
+import { findSpecialHourForDate } from './special-hours.ts'
 
 /**
  * Opening and online-ordering hours for every channel. Stored JSON shapes mirror
@@ -37,6 +38,8 @@ export type LocationSpecialHour = {
 	isOpen: boolean
 	slots: LocationTimeSlot[]
 	note?: string
+	/** Applies on this month and day of every later year too (#242). */
+	repeatsYearly?: boolean
 }
 
 export type MalformedHoursPolicy = 'open' | 'closed'
@@ -136,7 +139,10 @@ export function parseSpecialHours(
 	for (const item of value) {
 		if (!item || typeof item !== 'object')
 			return { value: null, malformed: true }
-		const { id, date, isOpen, slots, note } = item as Record<string, unknown>
+		const { id, date, isOpen, slots, note, repeatsYearly } = item as Record<
+			string,
+			unknown
+		>
 		if (
 			typeof date !== 'string' ||
 			!DATE.test(date) ||
@@ -152,6 +158,7 @@ export function parseSpecialHours(
 			isOpen,
 			slots: parsedSlots,
 			...(typeof note === 'string' && note.trim() ? { note: note.trim() } : {}),
+			...(repeatsYearly === true ? { repeatsYearly: true } : {}),
 		})
 	}
 	return { value: out.length > 0 ? out : null, malformed: false }
@@ -298,7 +305,7 @@ export function ruleForDate(
 	date: string,
 	kind: HoursScheduleKind = 'store',
 ): DayRule {
-	const special = hours.specialHours?.find((s) => s.date === date)
+	const special = findSpecialHourForDate(hours.specialHours, date)
 	if (special) {
 		if (!special.isOpen) {
 			return {

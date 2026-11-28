@@ -433,6 +433,21 @@
       "import": "./src/ordering-flags.ts",
       "default": "./src/ordering-flags.ts"
     },
+    "./setup-reminders": {
+      "types": "./src/setup-reminders.ts",
+      "import": "./src/setup-reminders.ts",
+      "default": "./src/setup-reminders.ts"
+    },
+    "./cancel-request": {
+      "types": "./src/cancel-request.ts",
+      "import": "./src/cancel-request.ts",
+      "default": "./src/cancel-request.ts"
+    },
+    "./hours-lint": {
+      "types": "./src/hours-lint.ts",
+      "import": "./src/hours-lint.ts",
+      "default": "./src/hours-lint.ts"
+    },
     "./location-availability": {
       "types": "./src/location-availability.ts",
       "import": "./src/location-availability.ts",

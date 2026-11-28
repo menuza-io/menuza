@@ -119,6 +119,16 @@ export const VERIFICATION_CODE_ATTEMPT_RATE_LIMIT: RateLimitConfig = {
 	windowMs: 15 * 60 * 1000,
 }
 
+/**
+ * Retry payment on a past-due subscription (#237): one try a minute per
+ * organization, so a double click or a stream of clicks cannot hammer the card.
+ */
+export const BILLING_RETRY_RATE_LIMIT: RateLimitConfig = {
+	scope: 'billing-retry-payment',
+	maxRequests: 1,
+	windowMs: 60 * 1000,
+}
+
 export const SHOP_CONNECT_ONBOARDING_RATE_LIMIT: RateLimitConfig = {
 	scope: 'shop-connect-onboarding',
 	maxRequests: isDev ? 10 : 1,

@@ -28,6 +28,7 @@ import {
 	SiteDomain,
 	sql,
 } from '@repo/database'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import {
 	createCustomHostname,
 	deleteCustomHostname,
@@ -37,7 +38,6 @@ import {
 } from '#app/utils/sites/cloudflare-custom-hostnames.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { findHostOwner } from '#app/utils/sites/site-host.server.ts'
-import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import { logWebsiteActivity } from '#app/utils/website/activity.server.ts'
 import {
 	platformDomains,

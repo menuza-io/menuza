@@ -1,3 +1,4 @@
+import { expandSpecialHours, specialHoursHorizonEnd } from '@repo/opening-hours'
 import { type AgentLanguage } from './constants.ts'
 import { type FlowGraph } from './flow.ts'
 import { type TrainingRule } from './rules.ts'
@@ -18,6 +19,8 @@ export type SpecialHours = {
 	isOpen: boolean
 	slots: ScheduleSlot[]
 	note?: string
+	/** Applies on this month and day of every later year too (#242). */
+	repeatsYearly?: boolean
 }
 
 /**
@@ -168,9 +171,12 @@ export function describeBusiness(
 	}
 
 	const today = localDate(business.timezone, now)
-	const upcoming = business.specialHours
-		.filter((special) => special.date >= today)
-		.slice(0, 5)
+	// Yearly repeats (#242) are listed as dated days, next occurrence first.
+	const upcoming = expandSpecialHours(
+		business.specialHours,
+		today,
+		specialHoursHorizonEnd(today),
+	).slice(0, 5)
 	if (upcoming.length) {
 		lines.push(
 			`Special hours:\n${upcoming

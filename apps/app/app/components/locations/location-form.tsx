@@ -8,6 +8,12 @@ import {
 	readAlcoholOnline,
 } from '@repo/common/alcohol-rules'
 import {
+	applyHoursFix,
+	hoursFingerprint,
+	lintHours,
+	type HoursFix,
+} from '@repo/common/hours-lint'
+import {
 	courseSettingsSchema,
 	DEFAULT_COURSES,
 } from '@repo/common/kitchen-ticket'
@@ -54,7 +60,7 @@ import {
 import { StatusButton } from '@repo/ui/status-button'
 import { Switch } from '@repo/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useFetcher } from 'react-router'
 import {
 	useDiscardKey,
@@ -100,6 +106,7 @@ import {
 } from './checkout-settings-cards'
 import { DeliveryZoneMap } from './delivery-zone-map'
 import { DeliveryZonesManager } from './delivery-zones-manager'
+import { HoursWarningsPanel } from './hours-warnings-panel'
 import {
 	LocationPolicyProvider,
 	LockableSection,
@@ -193,6 +200,9 @@ export interface InitialLocationData {
 	isDefault?: boolean
 	temporarilyClosed?: boolean
 	temporarilyClosedUntil?: string | null
+	/** The fingerprint of the saved hours and whether their warnings were dismissed (#275). */
+	savedHoursFingerprint?: string
+	hoursWarningsDismissed?: boolean
 }
 
 interface LocationFormProps {
@@ -389,6 +399,60 @@ function LocationFormBody({
 		checkoutSettings?.fee ?? null,
 	)
 	const [prepTime, setPrepTime] = useState(initialData?.prepTime ?? 15)
+
+	// Mistake warnings for the hours as edited (#275): never blocking, each with
+	// a one-click fix, dismissible until the hours change.
+	const dismissFetcher = useFetcher<{ ok?: boolean; error?: string }>()
+	const [dismissedFingerprint, setDismissedFingerprint] = useState<
+		string | null
+	>(
+		initialData?.hoursWarningsDismissed
+			? (initialData.savedHoursFingerprint ?? null)
+			: null,
+	)
+	const hoursInput = useMemo(
+		() => ({ storeHours, onlineHours, specialHours }),
+		[storeHours, onlineHours, specialHours],
+	)
+	const editedHoursFingerprint = useMemo(
+		() => hoursFingerprint(hoursInput),
+		[hoursInput],
+	)
+	const hoursWarnings = useMemo(
+		() =>
+			lintHours(hoursInput, {
+				timeZone: timezone,
+				syncOnline: syncOnlineWithStore,
+				prepMinutes: prepTime,
+			}),
+		[hoursInput, timezone, syncOnlineWithStore, prepTime],
+	)
+	const warningsDismissed = dismissedFingerprint === editedHoursFingerprint
+	const shownHoursWarnings = warningsDismissed ? [] : hoursWarnings
+	const applyFix = (fix: HoursFix) => {
+		const next = applyHoursFix(fix, {
+			storeHours,
+			onlineHours,
+			specialHours,
+		})
+		setStoreHours(next.storeHours)
+		setOnlineHours(next.onlineHours)
+		setSpecialHours(next.specialHours)
+	}
+	const unsavedHours =
+		isEditing &&
+		initialData?.savedHoursFingerprint !== undefined &&
+		initialData.savedHoursFingerprint !== editedHoursFingerprint
+	const dismissHoursWarnings = () => {
+		void dismissFetcher.submit(
+			{
+				intent: 'dismiss-hours-warnings',
+				fingerprint: editedHoursFingerprint,
+			},
+			{ method: 'POST' },
+		)
+		setDismissedFingerprint(editedHoursFingerprint)
+	}
 	// The old single large-order threshold (#355 moved the rule into the online
 	// ordering settings): no longer edited, posted back unchanged so saving never
 	// rewrites those columns.
@@ -966,6 +1030,25 @@ function LocationFormBody({
 												}}
 											/>
 
+											<HoursWarningsPanel
+												warnings={shownHoursWarnings}
+												scopes={['store', 'online']}
+												onFix={applyFix}
+												onDismiss={dismissHoursWarnings}
+												dismissing={dismissFetcher.state !== 'idle'}
+												dismissDisabledReason={
+													!isEditing
+														? _(
+																msg`Save the location first, then you can dismiss these.`,
+															)
+														: unsavedHours
+															? _(
+																	msg`Save your changes first, then you can dismiss these.`,
+																)
+															: null
+												}
+											/>
+
 											{orderingSettings ? (
 												<OnlineOrderingBuffersCard
 													values={{
@@ -1008,6 +1091,11 @@ function LocationFormBody({
 											<SpecialHoursPicker
 												specialHours={specialHours}
 												onChange={setSpecialHours}
+											/>
+											<HoursWarningsPanel
+												warnings={shownHoursWarnings}
+												scopes={['special']}
+												onFix={applyFix}
 											/>
 										</CardContent>
 									</Card>

@@ -295,6 +295,15 @@ function useItemText() {
 					title: _(msg`${location} has no opening hours`),
 					detail: _(msg`Guests cannot see when you are open.`),
 				}
+			case 'hours_look_wrong': {
+				const count = item.count ?? 1
+				return {
+					title: _(msg`${location} has opening hours that may be wrong`),
+					detail: _(
+						msg`${count} things to check, like a very short day or online hours outside store hours.`,
+					),
+				}
+			}
 			case 'menu_health_low': {
 				const score = item.score ?? 0
 				return {

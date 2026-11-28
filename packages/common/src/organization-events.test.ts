@@ -99,6 +99,10 @@ describe('organization event payloads', () => {
 			  "reminder_sent": [
 			    "reminderKind",
 			  ],
+			  "subscription_change_requested": [
+			    "reason",
+			    "requestKind",
+			  ],
 			}
 		`)
 	})

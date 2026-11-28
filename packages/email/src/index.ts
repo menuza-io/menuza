@@ -14,6 +14,7 @@ export { default as StaffingAlertEmail } from './templates/staffing-alert-email'
 export { default as DomainInstructionsEmail } from './templates/domain-instructions'
 export { default as ReplyToVerificationEmail } from './templates/reply-to-verification'
 export { default as PaymentAccountAlertEmail } from './templates/payment-account-alert'
+export { default as SetupReminderEmail } from './templates/setup-reminder'
 
 // Export types
 export type { OrganizationInviteEmailProps } from './templates/organization-invite'
@@ -31,6 +32,7 @@ export type { StaffingAlertEmailProps } from './templates/staffing-alert-email'
 export type { DomainInstructionsEmailProps } from './templates/domain-instructions'
 export type { ReplyToVerificationEmailProps } from './templates/reply-to-verification'
 export type { PaymentAccountAlertEmailProps } from './templates/payment-account-alert'
+export type { SetupReminderEmailProps } from './templates/setup-reminder'
 
 // Email theme tokens (mirror the app's shadcn design tokens)
 export {

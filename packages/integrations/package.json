@@ -46,6 +46,7 @@
     "@repo/common": "*",
     "@repo/config": "*",
     "@repo/database": "*",
+    "@repo/opening-hours": "*",
     "@repo/security": "*",
     "lru-cache": "^11.1.0",
     "msw": "^2.11.4",

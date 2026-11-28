@@ -15,7 +15,9 @@ import {
 	type SubscriptionUpdateOptions,
 	type CustomerPortalSession,
 	type CustomerPortalOptions,
+	type BillingIssue,
 	type Invoice,
+	type PayInvoiceResult,
 	type WebhookEvent,
 } from '../types'
 
@@ -438,6 +440,108 @@ export class StripeProvider implements PaymentProvider {
 			)
 			console.error('StripeProvider: Error fetching invoices:', publicError)
 			return []
+		}
+	}
+
+	async getBillingIssue(
+		customerId: string,
+		subscriptionId: string,
+	): Promise<BillingIssue> {
+		try {
+			const open = await this.stripe.invoices.list({
+				customer: customerId,
+				status: 'open',
+				limit: 10,
+			})
+			// Basil moved the subscription onto `parent`; older versions had it on
+			// the invoice itself. Prefer the invoice of this subscription.
+			const belongsToSubscription = (invoice: Stripe.Invoice) => {
+				const parent = (
+					invoice as unknown as {
+						parent?: { subscription_details?: { subscription?: unknown } }
+					}
+				).parent?.subscription_details?.subscription
+				const direct = (invoice as unknown as { subscription?: unknown })
+					.subscription
+				const id = parent ?? direct
+				return typeof id === 'string'
+					? id === subscriptionId
+					: typeof id === 'object' && id !== null
+						? (id as { id?: string }).id === subscriptionId
+						: false
+			}
+			const invoice =
+				open.data.find(belongsToSubscription) ??
+				open.data.find((candidate) => candidate.attempt_count > 0) ??
+				null
+			if (!invoice) return { invoice: null, attempts: [] }
+			const charges = await this.stripe.charges.list({
+				customer: customerId,
+				limit: 20,
+			})
+			const attempts = charges.data
+				.filter(
+					(charge) =>
+						charge.status === 'failed' && charge.created >= invoice.created - 1,
+				)
+				.sort((a, b) => b.created - a.created)
+				.map((charge) => ({
+					at: charge.created,
+					brand: charge.payment_method_details?.card?.brand ?? null,
+					last4: charge.payment_method_details?.card?.last4 ?? null,
+					reason: charge.failure_code ?? null,
+				}))
+			return {
+				invoice: {
+					id: invoice.id ?? '',
+					amountDue: invoice.amount_due,
+					currency: invoice.currency,
+					attemptCount: invoice.attempt_count,
+					nextPaymentAttempt: invoice.next_payment_attempt ?? null,
+					hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
+					created: invoice.created,
+				},
+				attempts,
+			}
+		} catch (error: unknown) {
+			const publicError = toPublicStripeError(
+				error,
+				'Failed to fetch the Stripe billing issue',
+			)
+			console.error(
+				'StripeProvider: Error fetching billing issue:',
+				publicError,
+			)
+			throw publicError
+		}
+	}
+
+	async payInvoice(
+		invoiceId: string,
+		options: { idempotencyKey: string },
+	): Promise<PayInvoiceResult> {
+		try {
+			const invoice = await this.stripe.invoices.pay(
+				invoiceId,
+				{},
+				{ idempotencyKey: options.idempotencyKey },
+			)
+			return invoice.status === 'paid'
+				? { status: 'paid' }
+				: { status: 'failed', reason: null }
+		} catch (error: unknown) {
+			if ((error as { type?: string })?.type === 'StripeCardError') {
+				return {
+					status: 'failed',
+					reason: (error as { code?: string }).code ?? null,
+				}
+			}
+			const publicError = toPublicStripeError(
+				error,
+				'Failed to pay the Stripe invoice',
+			)
+			console.error('StripeProvider: Error paying invoice:', publicError)
+			throw publicError
 		}
 	}
 

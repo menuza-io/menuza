@@ -247,6 +247,65 @@ describe('detectors', () => {
 		)
 	})
 
+	it('finds opening hours that look like a mistake until they are dismissed (#275)', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const week = JSON.stringify(
+			[
+				'monday',
+				'tuesday',
+				'wednesday',
+				'thursday',
+				'friday',
+				'saturday',
+				'sunday',
+			].map((day) => ({
+				day,
+				isOpen: true,
+				slots:
+					day === 'monday'
+						? [{ start: '10:00', end: '12:00' }]
+						: [{ start: '10:00', end: '22:00' }],
+			})),
+		)
+		const detectors = ATTENTION_DETECTORS.filter(
+			(d) => d.kind === 'hours_look_wrong',
+		)
+		const items = await runAttentionDetectors(
+			await context(organization.id, [
+				location({ storeHours: week, timezone: 'UTC' }),
+			]),
+			detectors,
+		)
+		expect(items).toEqual([
+			expect.objectContaining({
+				kind: 'hours_look_wrong',
+				locationId: 'loc_olaya',
+				count: 1,
+				dismissible: true,
+				urgency: 'todo',
+				href: '/settings/locations/loc_olaya',
+			}),
+		])
+		const { savedHoursWarnings } =
+			await import('#app/utils/location/hours-warnings.server.ts')
+		const { fingerprint } = savedHoursWarnings({
+			storeHours: week,
+			onlineHours: null,
+			specialHours: null,
+		})
+		const dismissed = await runAttentionDetectors(
+			await context(organization.id, [
+				location({
+					storeHours: week,
+					timezone: 'UTC',
+					hoursWarningsDismissedFor: fingerprint,
+				}),
+			]),
+			detectors,
+		)
+		expect(dismissed).toEqual([])
+	})
+
 	it('drops "payments not connected" once payments or pay at pickup are set', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		const payments = ATTENTION_DETECTORS.filter(

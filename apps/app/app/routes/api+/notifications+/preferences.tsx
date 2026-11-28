@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { INVENTORY_ALERT_WORKFLOWS } from '#app/utils/inventory/manager-alerts.ts'
 import { userHasOrgAccess } from '#app/utils/organization/organizations.server.ts'
 import { RESERVATION_ALERT_WORKFLOWS } from '#app/utils/reservations/manager-alerts.ts'
+import { SSO_FAILURE_WORKFLOW } from '#app/utils/sso/sso-alerts.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -39,6 +40,7 @@ const preferenceSchema = z.object({
 		'comment-mention-workflow',
 		'note-comment-workflow',
 		FORM_RESPONSE_WORKFLOW,
+		SSO_FAILURE_WORKFLOW,
 		...STAFFING_NOTIFICATION_WORKFLOWS,
 		...RESERVATION_ALERT_WORKFLOWS,
 		...INVENTORY_ALERT_WORKFLOWS,

@@ -53,11 +53,11 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { GoogleListingTab } from '#app/components/gbp/google-listing-tab.tsx'
+import { LocationCateringCard } from '#app/components/locations/location-catering-card.tsx'
 import {
 	type InitialLocationData,
 	LocationForm,
 } from '#app/components/locations/location-form.tsx'
-import { LocationCateringCard } from '#app/components/locations/location-catering-card.tsx'
 import { LocationOrderAlertsCard } from '#app/components/locations/location-order-alerts-card.tsx'
 import { LocationWebsiteCard } from '#app/components/locations/location-website-card.tsx'
 import { type OrderPolicyValues } from '#app/components/locations/order-policies-card.tsx'
@@ -72,6 +72,7 @@ import {
 	zoneTableProblemMessage,
 } from '#app/utils/location/delivery-zones.ts'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
+import { savedHoursWarnings } from '#app/utils/location/hours-warnings.server.ts'
 import { lockedSettingsChangedByFormSave } from '#app/utils/location/location-settings.server.ts'
 import { recordClosures } from '#app/utils/location/ordering-pause-history.server.ts'
 import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
@@ -210,6 +211,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
+	const savedHours = savedHoursWarnings(record)
+
 	const location: InitialLocationData = {
 		id: record.id,
 		name: record.name,
@@ -222,6 +225,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		isActive: record.isActive,
 		isDefault: record.isDefault,
 		temporarilyClosed: record.temporarilyClosed ?? false,
+		savedHoursFingerprint: savedHours.fingerprint,
+		hoursWarningsDismissed: savedHours.dismissed,
 		temporarilyClosedUntil: record.temporarilyClosedUntil
 			? record.temporarilyClosedUntil.toISOString().slice(0, 10)
 			: null,
@@ -457,6 +462,42 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const formData = await request.formData()
 	const intent = formData.get('intent')
+
+	// "Dismiss until the hours change" (#275): stored against the fingerprint of
+	// the saved hours, and only when the editor showed exactly those hours.
+	if (intent === 'dismiss-hours-warnings') {
+		const [existing] = await db
+			.select({
+				storeHours: OrganizationLocation.storeHours,
+				onlineHours: OrganizationLocation.onlineHours,
+				specialHours: OrganizationLocation.specialHours,
+			})
+			.from(OrganizationLocation)
+			.where(
+				and(
+					eq(OrganizationLocation.id, locationId),
+					eq(OrganizationLocation.organizationId, organization.id),
+				),
+			)
+			.limit(1)
+		if (!existing) {
+			return Response.json({ error: 'Location not found' }, { status: 404 })
+		}
+		const { fingerprint } = savedHoursWarnings(existing)
+		if (formData.get('fingerprint') !== fingerprint) {
+			return Response.json({ error: 'hours_changed' }, { status: 409 })
+		}
+		await db
+			.update(OrganizationLocation)
+			.set({ hoursWarningsDismissedFor: fingerprint })
+			.where(
+				and(
+					eq(OrganizationLocation.id, locationId),
+					eq(OrganizationLocation.organizationId, organization.id),
+				),
+			)
+		return Response.json({ ok: true })
+	}
 
 	if (intent === 'delete-location') {
 		const [existingLocation] = await db
@@ -741,15 +782,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	// closures so the uptime report shows them as lost time, not as hours the
 	// location was never meant to be open.
 	if (before) {
-		const asHours = (
-			value: {
-				timezone: string | null
-				isActive: boolean
-				storeHours: string | null
-				onlineHours: string | null
-				specialHours: string | null
-			},
-		) => ({
+		const asHours = (value: {
+			timezone: string | null
+			isActive: boolean
+			storeHours: string | null
+			onlineHours: string | null
+			specialHours: string | null
+		}) => ({
 			timeZone: value.timezone || 'UTC',
 			isActive: value.isActive,
 			storeHours: parseHoursJson(value.storeHours),

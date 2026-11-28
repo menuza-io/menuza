@@ -34,6 +34,7 @@ as the Admin cache route).
 | `0 3 * * *`    | `/resources/jobs/job-postings-expiry`                | Mark job postings past their closing date                                                                                             |
 | `0 3 * * *`    | `/resources/jobs/seat-reconcile`                     | Sync Stripe seat counts with active members                                                                                           |
 | `0 3 * * *`    | `/resources/jobs/seo-rank-check`                     | Weekly local rank check per keyword (#182)                                                                                            |
+| `0 3 * * *`    | `/resources/jobs/setup-reminders`                    | Setup reminders to owners who stalled before going live, at 1, 3 and 7 days (#271)                                                    |
 | `0 3 * * *`    | `/resources/jobs/search-console-sync`                | Search Console setup retry and 28-day fetch                                                                                           |
 | `0 4 * * *`    | `/resources/jobs/gdpr-erasure`                       | Process pending GDPR erasures                                                                                                         |
 | `0 4 * * *`    | `/resources/jobs/voice-retention`                    | Delete expired call recordings and caller data                                                                                        |

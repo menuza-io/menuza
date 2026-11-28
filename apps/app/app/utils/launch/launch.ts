@@ -212,6 +212,11 @@ export type LaunchLocationView = {
 	steps: LaunchStepView[]
 	requiredDone: number
 	requiredTotal: number
+	/**
+	 * Opening hours that look like a mistake (#275): how many warnings the saved
+	 * hours have, none once dismissed. A note on the hours step, never a block.
+	 */
+	hoursWarnings?: number
 }
 
 export type LaunchChecklist = {

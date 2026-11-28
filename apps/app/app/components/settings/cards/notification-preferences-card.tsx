@@ -48,6 +48,7 @@ function getWorkflowLabel(
 		'staffing-schedule-workflow': msg`Schedule: a week was published`,
 		'staffing-hiring-workflow': msg`Hiring: someone applied for a job`,
 		'form-response-workflow': msg`Website forms: a form got a new response`,
+		'sso-failure-workflow': msg`Single sign-on: sign-ins keep failing`,
 		'reservations.large_party_request': msg`Reservations: a large-party request is waiting`,
 		'reservations.waitlist_remote_join': msg`Reservations: a guest joined the waitlist remotely`,
 		'reservations.unassigned_conflict': msg`Reservations: a booking no longer has a table`,
@@ -135,6 +136,17 @@ const formWorkflows = [
 	{
 		id: 'form-response-workflow',
 		name: 'form-response-workflow',
+		critical: false,
+	},
+]
+
+// Single sign-on failure notices (#347) go to the people who run organization
+// settings, and are offered only where single sign-on is set up. Turning email
+// off mutes the emails; turning the app switch off mutes the notice.
+const ssoWorkflows = [
+	{
+		id: 'sso-failure-workflow',
+		name: 'sso-failure-workflow',
 		critical: false,
 	},
 ]
@@ -305,6 +317,7 @@ export function NotificationPreferencesCard({
 	showInventoryPriceAlerts = false,
 	showOrderAlerts = false,
 	showStationAlerts = false,
+	showSsoAlerts = false,
 }: {
 	organizationId: string
 	showStaffingAlerts?: boolean
@@ -316,6 +329,7 @@ export function NotificationPreferencesCard({
 	showInventoryPriceAlerts?: boolean
 	showOrderAlerts?: boolean
 	showStationAlerts?: boolean
+	showSsoAlerts?: boolean
 }) {
 	const fetcher = useFetcher<{ preferences: Preference[] }>()
 
@@ -334,6 +348,7 @@ export function NotificationPreferencesCard({
 		...(showScheduleAlerts ? scheduleWorkflows : []),
 		...(showHiringAlerts ? hiringWorkflows : []),
 		...(showFormAlerts ? formWorkflows : []),
+		...(showSsoAlerts ? ssoWorkflows : []),
 		...(showReservationsAlerts ? reservationsWorkflows : []),
 		...(showInventoryAlerts
 			? inventoryWorkflows.filter(

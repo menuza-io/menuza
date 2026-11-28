@@ -9,6 +9,7 @@
  * the stored text), so two locations compare equal when they behave the same,
  * whatever way the text was spelled.
  */
+import { findSpecialHourForDate } from '@repo/opening-hours'
 import { z } from 'zod'
 
 import {
@@ -274,7 +275,7 @@ export function summarizeSpecialHours(entries: readonly SpecialHour[]): string {
 			!entry.isOpen || entry.slots.length === 0
 				? 'closed'
 				: entry.slots.map((slot) => `${slot.start}-${slot.end}`).join(', ')
-		return `${entry.date} ${text}`
+		return `${entry.date}${entry.repeatsYearly ? ' (every year)' : ''} ${text}`
 	})
 	const more = sorted.length - shown.length
 	return more > 0 ? `${shown.join('; ')}; +${more} more` : shown.join('; ')
@@ -291,6 +292,7 @@ const specialHourValueSchema = z.object({
 	isOpen: z.boolean(),
 	slots: z.array(slotSchema).max(8),
 	note: z.string().max(200).optional(),
+	repeatsYearly: z.boolean().optional(),
 })
 
 /** Special hours without ids, sorted by date: what "the same" means. */
@@ -300,11 +302,12 @@ function normalizeSpecialHours(
 	list: readonly SpecialHour[],
 ): SpecialHoursValue {
 	return [...list]
-		.map(({ date, isOpen, slots, note }) => ({
+		.map(({ date, isOpen, slots, note, repeatsYearly }) => ({
 			date,
 			isOpen,
 			slots: slots.map((slot) => ({ start: slot.start, end: slot.end })),
 			...(note ? { note } : {}),
+			...(repeatsYearly ? { repeatsYearly: true } : {}),
 		}))
 		.sort((a, b) => a.date.localeCompare(b.date))
 }
@@ -361,8 +364,10 @@ export function mergeSpecialHours(
 			a.date.localeCompare(b.date),
 		)
 	}
-	const taken = new Set(target.map((entry) => entry.date))
-	const added = source.filter((entry) => !taken.has(entry.date)).map(fresh)
+	// A date a repeating entry already covers counts as taken (#242).
+	const added = source
+		.filter((entry) => !findSpecialHourForDate(target, entry.date))
+		.map(fresh)
 	return [...target, ...added].sort((a, b) => a.date.localeCompare(b.date))
 }
 
@@ -376,7 +381,7 @@ export function addHolidayToSpecialHours(
 	makeId: () => string,
 ): { added: boolean; entries: SpecialHour[] } {
 	const target = readSpecialHours(targetText)
-	if (target.some((entry) => entry.date === holiday.date)) {
+	if (findSpecialHourForDate(target, holiday.date)) {
 		return { added: false, entries: target }
 	}
 	return {

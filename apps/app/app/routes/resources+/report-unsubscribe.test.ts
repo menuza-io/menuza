@@ -1,6 +1,8 @@
+import { SETUP_REMINDER_WORKFLOW } from '@repo/common/setup-reminders'
 import {
 	db,
 	eq,
+	NotificationPreference,
 	ReportSchedule,
 	ReportScheduleRecipient,
 	SavedReport,
@@ -160,5 +162,36 @@ describe('unsubscribe from a report email (#121, #221)', () => {
 		expect(await monthlyResultsEmailEnabled(user.id, organization.id)).toBe(
 			false,
 		)
+	})
+})
+
+describe('unsubscribe from the setup reminder emails (#271)', () => {
+	it('switches the reminders off for that owner and organization only', async () => {
+		const { user, organization } = await setupTestOrgWithUser('admin')
+		const other = await setupTestOrgWithUser('admin')
+		const url = reportUnsubscribeUrl({
+			kind: 'setup',
+			organizationId: organization.id,
+			userId: user.id,
+		})
+		const response = await post(url, { body: 'List-Unsubscribe=One-Click' })
+		expect(response.status).toBe(200)
+		expect(await response.text()).toContain('You are unsubscribed')
+		const preferences = await db
+			.select()
+			.from(NotificationPreference)
+			.where(eq(NotificationPreference.userId, user.id))
+		expect(preferences).toHaveLength(1)
+		expect(preferences[0]).toMatchObject({
+			organizationId: organization.id,
+			workflow: SETUP_REMINDER_WORKFLOW,
+			email: false,
+		})
+		expect(
+			await db
+				.select()
+				.from(NotificationPreference)
+				.where(eq(NotificationPreference.userId, other.user.id)),
+		).toEqual([])
 	})
 })

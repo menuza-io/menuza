@@ -38,6 +38,14 @@ export const ORGANIZATION_EVENT_DEFINITIONS = {
 			previousStatus: short.nullable().optional(),
 		}),
 	},
+	subscription_change_requested: {
+		group: 'plan',
+		label: 'Cancel or downgrade requested',
+		payload: z.strictObject({
+			requestKind: short,
+			reason: short,
+		}),
+	},
 	launch_step_completed: {
 		group: 'launch',
 		label: 'Launch step completed',

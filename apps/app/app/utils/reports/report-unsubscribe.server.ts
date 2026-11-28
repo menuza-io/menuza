@@ -1,3 +1,4 @@
+import { SETUP_REMINDER_WORKFLOW } from '@repo/common/setup-reminders'
 import {
 	and,
 	db,
@@ -66,6 +67,14 @@ export async function applyReportUnsubscribe(
 			)
 		return { ok: true, kind: 'schedule' }
 	}
+	if (target.kind === 'setup') {
+		await setSetupReminderEmail({
+			userId: target.userId,
+			organizationId: target.organizationId,
+			email: false,
+		})
+		return { ok: true, kind: 'setup' }
+	}
 	await setMonthlyResultsEmail({
 		userId: target.userId,
 		organizationId: target.organizationId,
@@ -96,6 +105,48 @@ export async function setMonthlyResultsEmail(input: {
 			],
 			set: { email: input.email, updatedAt: new Date() },
 		})
+}
+
+/** An owner's switch for the setup reminder emails (#271): on unless they turned it off. */
+export async function setSetupReminderEmail(input: {
+	userId: string
+	organizationId: string
+	email: boolean
+}) {
+	await db
+		.insert(NotificationPreference)
+		.values({
+			userId: input.userId,
+			organizationId: input.organizationId,
+			workflow: SETUP_REMINDER_WORKFLOW,
+			email: input.email,
+		})
+		.onConflictDoUpdate({
+			target: [
+				NotificationPreference.userId,
+				NotificationPreference.organizationId,
+				NotificationPreference.workflow,
+			],
+			set: { email: input.email, updatedAt: new Date() },
+		})
+}
+
+export async function setupReminderEmailEnabled(
+	userId: string,
+	organizationId: string,
+): Promise<boolean> {
+	const [row] = await db
+		.select({ email: NotificationPreference.email })
+		.from(NotificationPreference)
+		.where(
+			and(
+				eq(NotificationPreference.userId, userId),
+				eq(NotificationPreference.organizationId, organizationId),
+				eq(NotificationPreference.workflow, SETUP_REMINDER_WORKFLOW),
+			),
+		)
+		.limit(1)
+	return row ? row.email : true
 }
 
 export async function monthlyResultsEmailEnabled(

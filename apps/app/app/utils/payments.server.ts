@@ -19,6 +19,7 @@ import {
 	Organization as OrganizationTable,
 	OrganizationEvent,
 	OrganizationRole,
+	sql,
 	User,
 	UserOrganization,
 } from '@repo/database'
@@ -32,6 +33,10 @@ import {
 } from '@repo/payments'
 import { data, redirect } from 'react-router'
 import { recordOrganizationEvent } from '#app/utils/organization-events.server.ts'
+import {
+	BILLING_RETRY_RATE_LIMIT,
+	checkRateLimit,
+} from '#app/utils/rate-limit.server.ts'
 import { getDomainUrl } from '../../../../packages/common/src/misc'
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -103,6 +108,7 @@ export async function updateOrganizationSubscription(
 		.select({
 			planName: OrganizationTable.planName,
 			subscriptionStatus: OrganizationTable.subscriptionStatus,
+			pastDueSince: OrganizationTable.pastDueSince,
 		})
 		.from(OrganizationTable)
 		.where(eq(OrganizationTable.id, organizationId))
@@ -111,6 +117,11 @@ export async function updateOrganizationSubscription(
 		.update(OrganizationTable)
 		.set({
 			...subscriptionData,
+			// Days overdue (#237): starts on the first past-due state, ends with it.
+			pastDueSince:
+				subscriptionData.subscriptionStatus === 'past_due'
+					? (before?.pastDueSince ?? new Date())
+					: null,
 			updatedAt: new Date(),
 		})
 		.where(eq(OrganizationTable.id, organizationId))
@@ -497,7 +508,15 @@ export async function handleSubscriptionChange(subscription: {
 		// keep the plan, but record that it is not being paid.
 		await db
 			.update(OrganizationTable)
-			.set({ subscriptionStatus: status, updatedAt: new Date() })
+			.set({
+				subscriptionStatus: status,
+				// Days overdue count from the first past-due event (#237).
+				pastDueSince:
+					status === 'past_due'
+						? sql`coalesce(${OrganizationTable.pastDueSince}, ${Date.now()})`
+						: null,
+				updatedAt: new Date(),
+			})
 			.where(
 				and(
 					eq(OrganizationTable.id, organization.id),
@@ -1028,5 +1047,155 @@ export async function cleanupDuplicateSubscriptions(
 		})
 	} catch (error) {
 		console.error('Error cleaning up duplicate subscriptions:', error)
+	}
+}
+
+/**
+ * The open invoice and the failed attempts behind a past-due subscription
+ * (#237), read live from the payment provider. Null when the provider cannot
+ * answer: the billing page then shows the banner's facts without the history.
+ */
+export async function loadBillingIssue(organization: {
+	stripeCustomerId: string | null
+	stripeSubscriptionId: string | null
+}) {
+	if (!organization.stripeCustomerId || !organization.stripeSubscriptionId) {
+		return null
+	}
+	try {
+		return await paymentProvider.getBillingIssue(
+			organization.stripeCustomerId,
+			organization.stripeSubscriptionId,
+		)
+	} catch (error) {
+		console.error('Failed to load the billing issue:', error)
+		return null
+	}
+}
+
+export type BillingRetryResult =
+	/** The open invoice was paid and the organization is no longer past due. */
+	| { status: 'paid' }
+	/** Nothing was open any more (paid elsewhere, or by the provider's own retry). */
+	| { status: 'already_paid' }
+	/** The card was declined; the invoice stays open. */
+	| { status: 'declined'; reason: string | null }
+	/** One try a minute per organization. */
+	| { status: 'rate_limited'; retryAt: Date }
+	| { status: 'not_past_due' }
+	| { status: 'unavailable' }
+
+/**
+ * Re-reads the subscription from the provider and stores its status (and the
+ * days-overdue start) so the banner follows what the provider holds now.
+ */
+async function syncSubscriptionStatus(organization: {
+	id: string
+	stripeSubscriptionId: string
+	stripeProductId: string | null
+	planName: string | null
+}) {
+	const current = await paymentProvider.retrieveSubscription(
+		organization.stripeSubscriptionId,
+	)
+	await updateOrganizationSubscription(organization.id, {
+		stripeSubscriptionId: organization.stripeSubscriptionId,
+		stripeProductId: organization.stripeProductId,
+		planName: organization.planName,
+		subscriptionStatus: current.status,
+	})
+	return current.status
+}
+
+/**
+ * "Retry payment" (#237): pays the organization's open subscription invoice
+ * with the card on file, once a minute at most, and idempotent at the provider
+ * (the key is the invoice and its attempt count, so a repeated call can never
+ * charge twice). It pays only the invoice the owner asked to pay. After a
+ * success the status is read back at once, so the banner goes immediately
+ * (the webhook then finds nothing left to change).
+ */
+export async function retryBillingPayment(organization: {
+	id: string
+	stripeCustomerId: string | null
+	stripeSubscriptionId: string | null
+	stripeProductId: string | null
+	planName: string | null
+	subscriptionStatus: string | null
+}): Promise<BillingRetryResult> {
+	if (
+		organization.subscriptionStatus !== 'past_due' ||
+		!organization.stripeCustomerId ||
+		!organization.stripeSubscriptionId
+	) {
+		return { status: 'not_past_due' }
+	}
+	const limit = await checkRateLimit(
+		{ type: 'org', value: organization.id },
+		BILLING_RETRY_RATE_LIMIT,
+	)
+	if (!limit.allowed) return { status: 'rate_limited', retryAt: limit.resetAt }
+	const target = {
+		id: organization.id,
+		stripeSubscriptionId: organization.stripeSubscriptionId,
+		stripeProductId: organization.stripeProductId,
+		planName: organization.planName,
+	}
+	try {
+		const issue = await paymentProvider.getBillingIssue(
+			organization.stripeCustomerId,
+			organization.stripeSubscriptionId,
+		)
+		if (!issue.invoice) {
+			// Nothing is open: the provider already settled it. Follow it.
+			await syncSubscriptionStatus(target)
+			return { status: 'already_paid' }
+		}
+		const result = await paymentProvider.payInvoice(issue.invoice.id, {
+			idempotencyKey: `billing-retry:${issue.invoice.id}:${issue.invoice.attemptCount}`,
+		})
+		if (result.status === 'failed') {
+			return { status: 'declined', reason: result.reason }
+		}
+		const status = await syncSubscriptionStatus(target)
+		if (status === 'past_due') {
+			// The provider can lag a moment behind a paid invoice: with nothing
+			// left open, the subscription is paying again.
+			const after = await paymentProvider.getBillingIssue(
+				organization.stripeCustomerId,
+				organization.stripeSubscriptionId,
+			)
+			if (!after.invoice) {
+				await updateOrganizationSubscription(organization.id, {
+					stripeSubscriptionId: organization.stripeSubscriptionId,
+					stripeProductId: organization.stripeProductId,
+					planName: organization.planName,
+					subscriptionStatus: 'active',
+				})
+			}
+		}
+		return { status: 'paid' }
+	} catch (error) {
+		console.error('Retrying the billing payment failed:', error)
+		return { status: 'unavailable' }
+	}
+}
+
+/**
+ * The end of the current billing period of a subscription (#379): the date a
+ * cancellation or downgrade request would take effect. Null when the provider
+ * cannot say, in which case the request is not offered (the owner must see the
+ * cutoff before confirming).
+ */
+export async function getSubscriptionPeriodEnd(
+	subscriptionId: string,
+): Promise<Date | null> {
+	try {
+		const subscription =
+			await paymentProvider.retrieveSubscription(subscriptionId)
+		return subscription.currentPeriodEnd ?? null
+	} catch (error) {
+		console.error('Failed to read the billing period end:', error)
+		return null
 	}
 }

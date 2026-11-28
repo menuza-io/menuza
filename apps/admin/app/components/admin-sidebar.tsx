@@ -176,6 +176,12 @@ export function AdminSidebar({
 			icon: FileTextIcon,
 		},
 		{
+			title: _(msg`Cancel requests`),
+			url: '/subscription-requests',
+			isActive: location.pathname.startsWith('/subscription-requests'),
+			icon: FileTextIcon,
+		},
+		{
 			title: _(msg`Font licences`),
 			url: '/font-licences',
 			isActive: location.pathname.startsWith('/font-licences'),

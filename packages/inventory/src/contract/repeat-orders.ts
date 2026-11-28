@@ -1,3 +1,4 @@
+import { expandSpecialHours } from '@repo/opening-hours'
 import { z } from 'zod'
 import { inventoryLocationIdSchema } from '../token.ts'
 import {
@@ -293,6 +294,12 @@ export function findDueRepeatDeliveryDate(input: {
  */
 export function parseClosedSpecialDates(
 	raw: unknown,
+	/**
+	 * Entries that repeat every year (#242) are expanded over this date range
+	 * (`YYYY-MM-DD`, inclusive). Without a range only the dates written down
+	 * count.
+	 */
+	range?: { from: string; to: string },
 ): Map<string, string | null> {
 	const closed = new Map<string, string | null>()
 	if (!raw) return closed
@@ -307,7 +314,19 @@ export function parseClosedSpecialDates(
 		}
 	}
 	if (!Array.isArray(parsed)) return closed
-	for (const entry of parsed) {
+	const entries = range
+		? expandSpecialHours(
+				parsed.filter(
+					(entry): entry is { date: string; repeatsYearly?: boolean } =>
+						Boolean(entry) &&
+						typeof entry === 'object' &&
+						typeof (entry as { date?: unknown }).date === 'string',
+				),
+				range.from,
+				range.to,
+			)
+		: parsed
+	for (const entry of entries) {
 		if (!entry || typeof entry !== 'object') continue
 		const record = entry as Record<string, unknown>
 		if (typeof record.date !== 'string' || !ISO_DATE_RE.test(record.date)) {

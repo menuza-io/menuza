@@ -2022,6 +2022,22 @@ report emails, monthly results, accounting journal; #231, #386, #121, #221,
   (`lib/gift-card-write.ts`). Person erasure: `gift-card-erasure.ts`. Docs:
   `docs/gift-cards.md`.
 
+**Account health (yearly special hours, hours warnings, past-due banner and
+retry, cancel requests, SSO failure alerts, setup reminders; #242, #275, #237,
+#379, #347, #271):**
+
+- Extends what exists; never add a second hours engine, banner, billing action,
+  email sender, scheduler, preference system or audit log. Special hours repeat
+  by `repeatsYearly`, read only through `@repo/opening-hours`
+  (`findSpecialHourForDate`, `expandSpecialHours`). Hours warnings are
+  `lintHours` in `@repo/common/hours-lint`. Past due is the stored webhook
+  status plus `Organization.pastDueSince`; Retry payment is
+  `PaymentProvider.payInvoice`. A cancel or downgrade is only a
+  `SubscriptionChangeRequest` row: nothing is cancelled, charged or deleted. SSO
+  failure notices carry the error kind, never a message. Setup reminders run on
+  the daily 03:00 slot behind the flag `launch.reminders`. One control plane
+  migration, `0087_account_health`. Docs: `docs/account-health.md`.
+
 **Website SEO (cuisine, keywords, generated pages, redirects, events, Search
 Console; #182, #137, #88, #184, #138):**
 

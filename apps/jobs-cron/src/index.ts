@@ -126,6 +126,9 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 		'/resources/jobs/menu-check',
 		// Daily payment account deadline reminders (#269) and dispute reminders (#187).
 		'/resources/jobs/payment-account-check',
+		// Setup reminders: the owner of an organization that stalled before going
+		// live gets one email about the next step at 1, 3 and 7 days (#271).
+		'/resources/jobs/setup-reminders',
 	],
 	'0 4 * * *': [
 		'/resources/jobs/gdpr-erasure',

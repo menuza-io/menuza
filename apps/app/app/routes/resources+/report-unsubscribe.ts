@@ -80,7 +80,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return new Response(
 		PAGE(
 			'Unsubscribe from this email?',
-			`<p>You will stop getting this report email. You can turn it back on in Settings, Notifications.</p><form method="post" action="${escapeHtml(action)}"><button type="submit" style="font:inherit;padding:.5rem 1rem;cursor:pointer;">Unsubscribe</button></form>`,
+			`<p>You will stop getting this email. You can turn it back on in Settings, Notifications.</p><form method="post" action="${escapeHtml(action)}"><button type="submit" style="font:inherit;padding:.5rem 1rem;cursor:pointer;">Unsubscribe</button></form>`,
 		),
 		{ status: 200, headers: HEADERS },
 	)

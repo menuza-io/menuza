@@ -3,7 +3,7 @@ import {
 	type InventoryLocationSettings,
 	type InventoryContextLocation,
 } from '@repo/inventory'
-import { isValidTimeZone } from '@repo/reservations'
+import { addDays, isValidTimeZone } from '@repo/reservations'
 import {
 	getTenantDb,
 	invLocationSettings,
@@ -171,7 +171,13 @@ export async function getLocationClosedSpecialDates(
 	locationId: string,
 ): Promise<Map<string, string | null>> {
 	const inv = await readRow(db, locationId)
-	return parseClosedSpecialDates(inv?.specialHours ?? null)
+	// Yearly repeats (#242) count over the next year, with a day of slack either
+	// side for the location's own time zone.
+	const today = new Date().toISOString().slice(0, 10)
+	return parseClosedSpecialDates(inv?.specialHours ?? null, {
+		from: addDays(today, -1),
+		to: addDays(today, 370),
+	})
 }
 
 /** The settings of every location the token covers that the region knows. */

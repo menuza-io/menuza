@@ -58,6 +58,11 @@ export interface SpecialHour {
 	isOpen: boolean
 	slots: TimeSlot[]
 	note?: string
+	/**
+	 * Repeats on this month and day of every later year (#242). Moving holidays
+	 * stay one-off. Optional and additive: absent means a one-off entry.
+	 */
+	repeatsYearly?: boolean
 }
 
 export interface LocationAddress {
@@ -249,6 +254,7 @@ export const SpecialHourSchema = z.object({
 	isOpen: z.boolean(),
 	slots: z.array(TimeSlotSchema),
 	note: z.string().optional(),
+	repeatsYearly: z.boolean().optional(),
 })
 
 export const LocationAddressSchema = z.object({

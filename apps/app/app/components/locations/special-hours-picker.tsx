@@ -3,6 +3,7 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type SpecialHour, type TimeSlot } from '@repo/common/location-types'
+import { nextSpecialHourDate } from '@repo/opening-hours'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -26,7 +27,7 @@ import {
 	SelectValue,
 } from '@repo/ui/select'
 import { Switch } from '@repo/ui/switch'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
 	const hour = Math.floor(i / 2)
@@ -53,6 +54,8 @@ export function SpecialHoursPicker({
 	const [newDate, setNewDate] = useState('')
 	const [newIsOpen, setNewIsOpen] = useState(false)
 	const [newNote, setNewNote] = useState('')
+	const [newRepeats, setNewRepeats] = useState(false)
+	const [showPast, setShowPast] = useState(false)
 	const [newSlots, setNewSlots] = useState<TimeSlot[]>([
 		{ start: '10:00', end: '16:00' },
 	])
@@ -66,12 +69,14 @@ export function SpecialHoursPicker({
 			isOpen: newIsOpen,
 			slots: newIsOpen ? newSlots : [],
 			note: newNote.trim() || undefined,
+			...(newRepeats ? { repeatsYearly: true } : {}),
 		}
 
 		onChange([...specialHours.filter((s) => s.date !== newDate), newEntry])
 		setIsOpen(false)
 		setNewDate('')
 		setNewNote('')
+		setNewRepeats(false)
 		setNewIsOpen(false)
 		setNewSlots([{ start: '10:00', end: '16:00' }])
 	}
@@ -79,6 +84,27 @@ export function SpecialHoursPicker({
 	const handleRemove = (id: string) => {
 		onChange(specialHours.filter((s) => s.id !== id))
 	}
+
+	// "Show past" is off by default (#242): the list holds upcoming entries and
+	// every repeating one, each with the date it applies on next.
+	const today = new Date().toLocaleDateString('en-CA')
+	const rows = useMemo(() => {
+		const all = specialHours.map((item) => ({
+			item,
+			next: nextSpecialHourDate(item, today),
+		}))
+		const upcoming = all
+			.filter((row) => row.next !== null)
+			.sort((a, b) => a.next!.localeCompare(b.next!))
+		const past = all
+			.filter((row) => row.next === null)
+			.sort((a, b) => b.item.date.localeCompare(a.item.date))
+		return { upcoming, past }
+	}, [specialHours, today])
+	const pastCount = rows.past.length
+	const visibleRows = showPast
+		? [...rows.upcoming, ...rows.past]
+		: rows.upcoming
 
 	return (
 		<div className={cn('space-y-4', className)}>
@@ -139,6 +165,27 @@ export function SpecialHoursPicker({
 									placeholder={_(msg`e.g. Christmas Day, Summer Festival`)}
 									value={newNote}
 									onChange={(e) => setNewNote(e.target.value)}
+								/>
+							</div>
+
+							<div className="flex items-center justify-between rounded-md border p-3">
+								<div className="space-y-0.5">
+									<Label htmlFor="special-repeats">
+										<Trans>Repeat every year</Trans>
+									</Label>
+									<p className="text-muted-foreground text-xs">
+										<Trans>
+											Repeats on the same date each year, like 25 December.
+											Holidays that move, such as Eid, Easter or Thanksgiving,
+											are not the same date every year: add those one year at a
+											time.
+										</Trans>
+									</p>
+								</div>
+								<Switch
+									id="special-repeats"
+									checked={newRepeats}
+									onCheckedChange={setNewRepeats}
 								/>
 							</div>
 
@@ -232,7 +279,20 @@ export function SpecialHoursPicker({
 				</Dialog>
 			</div>
 
-			{specialHours.length === 0 ? (
+			{rows.past.length > 0 ? (
+				<div className="flex items-center justify-end gap-2">
+					<Label htmlFor="special-show-past" className="text-xs">
+						<Trans>Show past ({pastCount})</Trans>
+					</Label>
+					<Switch
+						id="special-show-past"
+						checked={showPast}
+						onCheckedChange={setShowPast}
+					/>
+				</div>
+			) : null}
+
+			{visibleRows.length === 0 ? (
 				<div className="bg-muted/20 rounded-md border border-dashed p-4 text-center">
 					<p className="text-muted-foreground text-xs">
 						<Trans>No special hours or holiday closures scheduled.</Trans>
@@ -240,58 +300,69 @@ export function SpecialHoursPicker({
 				</div>
 			) : (
 				<div className="divide-border divide-y rounded-md border">
-					{specialHours
-						.sort((a, b) => a.date.localeCompare(b.date))
-						.map((item) => (
-							<div
-								key={item.id}
-								className="flex items-center justify-between p-3"
-							>
-								<div className="flex items-center gap-3">
-									<Icon
-										name="calendar"
-										className="text-muted-foreground size-4"
-									/>
-									<div>
-										<div className="flex items-center gap-2">
-											<span className="text-sm font-medium">{item.date}</span>
-											{item.note && (
-												<span className="text-muted-foreground text-xs">
-													({item.note})
-												</span>
-											)}
-										</div>
-										<div className="mt-0.5">
-											{item.isOpen ? (
-												<span className="text-muted-foreground text-xs">
-													{item.slots
-														.map((s) => `${s.start} - ${s.end}`)
-														.join(', ')}
-												</span>
-											) : (
-												<Badge
-													variant="outline"
-													className="text-destructive border-destructive/20 text-[10px]"
-												>
-													<Trans>Closed</Trans>
-												</Badge>
-											)}
-										</div>
+					{visibleRows.map(({ item, next }) => (
+						<div
+							key={item.id}
+							className="flex items-center justify-between p-3"
+							data-testid="special-hours-row"
+						>
+							<div className="flex items-center gap-3">
+								<Icon
+									name="calendar"
+									className="text-muted-foreground size-4"
+								/>
+								<div>
+									<div className="flex items-center gap-2">
+										<span className="text-sm font-medium">
+											{next ?? item.date}
+										</span>
+										{item.repeatsYearly ? (
+											<Badge
+												variant="secondary"
+												className="gap-1 text-[10px]"
+												title={_(msg`Repeats every year`)}
+											>
+												<Icon name="refresh-cw" className="size-3" />
+												<Trans>Every year</Trans>
+											</Badge>
+										) : null}
+										{item.note && (
+											<span className="text-muted-foreground text-xs">
+												({item.note})
+											</span>
+										)}
+									</div>
+									<div className="mt-0.5">
+										{item.isOpen ? (
+											<span className="text-muted-foreground text-xs">
+												{item.slots
+													.map((s) => `${s.start} - ${s.end}`)
+													.join(', ')}
+											</span>
+										) : (
+											<Badge
+												variant="outline"
+												className="text-destructive border-destructive/20 text-[10px]"
+											>
+												<Trans>Closed</Trans>
+											</Badge>
+										)}
 									</div>
 								</div>
-
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon-sm"
-									className="text-muted-foreground hover:text-destructive size-7"
-									onClick={() => handleRemove(item.id)}
-									title="Remove override"
-								>
-									<Icon name="trash-2" className="size-3.5" />
-								</Button>
 							</div>
-						))}
+
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-sm"
+								className="text-muted-foreground hover:text-destructive size-7"
+								onClick={() => handleRemove(item.id)}
+								title="Remove override"
+							>
+								<Icon name="trash-2" className="size-3.5" />
+							</Button>
+						</div>
+					))}
 				</div>
 			)}
 		</div>

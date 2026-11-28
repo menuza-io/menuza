@@ -13,16 +13,20 @@ import {
 	eq,
 } from '@repo/database'
 import { useLoaderData } from 'react-router'
+import { AdminChangeRequestsCard } from '#app/components/admin-change-requests-card.tsx'
 import { AdminContactsCard } from '#app/components/admin-contacts-card.tsx'
 import { AdminLaunchCard } from '#app/components/admin-launch-card.tsx'
 import { AdminOrganizationDetail } from '#app/components/admin-organization-detail.tsx'
 import { AdminOwnershipTransferCard } from '#app/components/admin-ownership-transfer-card.tsx'
+import { AdminSetupReminderCard } from '#app/components/admin-setup-reminder-card.tsx'
 import { OrganizationTabs } from '#app/components/organization-tabs.tsx'
 import {
 	listAssignments,
 	listTeamMembers,
 } from '#app/utils/assignments.server.ts'
 import { loadLaunchStatus } from '#app/utils/launch-status.server.ts'
+import { listSetupReminders } from '#app/utils/setup-reminder.server.ts'
+import { listChangeRequests } from '../../subscription-requests.server.ts'
 import { type Route } from './+types/$organizationId.ts'
 
 export async function loader({ request, params }: Route['LoaderArgs']) {
@@ -61,6 +65,13 @@ export async function loader({ request, params }: Route['LoaderArgs']) {
 
 	// The launch checklist, evaluated by the App (state and dates only).
 	const launchPromise = loadLaunchStatus(params.organizationId)
+	// The setup reminders sent to this organization (#271).
+	const reminderHistoryPromise = listSetupReminders(params.organizationId)
+	// Cancel and downgrade requests the owner sent (#379).
+	const changeRequestsPromise = listChangeRequests({
+		organizationId: params.organizationId,
+		limit: 5,
+	})
 
 	// Menuza contacts (#272) and the people the ownership transfer can name.
 	const [assignments, team, locations] = await Promise.all([
@@ -139,6 +150,8 @@ export async function loader({ request, params }: Route['LoaderArgs']) {
 				isAdmin: membership.organizationRoleId === 'org_role_admin',
 			})),
 		launch: await launchPromise,
+		changeRequests: await changeRequestsPromise,
+		reminderHistory: await reminderHistoryPromise,
 		recentActivity: recentActivity.map((activity) => ({
 			...activity,
 			metadata: activity.metadata ? JSON.parse(activity.metadata) : null,
@@ -173,7 +186,12 @@ export default function AdminOrganizationDetailPage() {
 				organization={data.organization}
 				recentActivity={data.recentActivity}
 			/>
+			<AdminChangeRequestsCard requests={data.changeRequests} />
 			<AdminLaunchCard result={data.launch} />
+			<AdminSetupReminderCard
+				organizationId={data.organization.id}
+				history={data.reminderHistory}
+			/>
 			<AdminContactsCard
 				organizationId={data.organization.id}
 				open={data.contacts.open}

@@ -1,7 +1,7 @@
 import { getFeatureFlag } from '@repo/common/feature-flags'
-import { TEST_ORDER_FLAG } from '@repo/common/test-orders'
 import { isUnavailableUntilExpired } from '@repo/common/location-availability'
 import { isLaunchStepKey } from '@repo/common/onboarding'
+import { TEST_ORDER_FLAG } from '@repo/common/test-orders'
 import {
 	and,
 	asc,
@@ -30,6 +30,7 @@ import {
 	loadLaunchFacts,
 	type LaunchFacts,
 } from '#app/utils/dashboards/regional-home.server.ts'
+import { savedHoursWarnings } from '#app/utils/location/hours-warnings.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import {
 	displayLocationName,
@@ -253,6 +254,10 @@ export async function loadLaunchChecklist({
 				address: OrganizationLocation.address,
 				storeHours: OrganizationLocation.storeHours,
 				onlineHours: OrganizationLocation.onlineHours,
+				specialHours: OrganizationLocation.specialHours,
+				timezone: OrganizationLocation.timezone,
+				hoursWarningsDismissedFor:
+					OrganizationLocation.hoursWarningsDismissedFor,
 				prepTime: OrganizationLocation.prepTime,
 				fulfillmentOptions: OrganizationLocation.fulfillmentOptions,
 				scheduling: OrganizationLocation.scheduling,
@@ -484,6 +489,7 @@ export async function loadLaunchChecklist({
 			steps: stepViews,
 			requiredDone: required.filter((step) => step.state === 'done').length,
 			requiredTotal: required.length,
+			hoursWarnings: savedHoursWarnings(location, now).visible.length,
 		}
 	})
 	// Recording is best effort: a failed write must not break the page.
