@@ -25,6 +25,7 @@ function data(overrides: Partial<AttentionData> = {}): AttentionData {
 		dismissedKeys: [],
 		regional: {
 			paymentReview: true,
+			orderProblems: false,
 			callFollowUps: false,
 			inventoryCounts: false,
 			offlineTablets: false,
@@ -113,6 +114,78 @@ describe('AttentionBlock', () => {
 		).toBeInTheDocument()
 	})
 
+	it('lists guest reports that waited a day for an answer, and only those (#191)', async () => {
+		fetchMock.mockImplementation(async (input: unknown) => {
+			const url = String(input)
+			if (url.endsWith('/orders-token')) {
+				return new Response(
+					JSON.stringify({
+						jwt: 'orders.jwt',
+						tenantApiUrl: 'http://tenant.test',
+					}),
+				)
+			}
+			return new Response(
+				JSON.stringify({
+					locations: [],
+					problems: [{ locationId: 'loc_olaya', open: 3, unanswered: 2 }],
+				}),
+			)
+		})
+		renderBlock(
+			data({
+				regional: {
+					paymentReview: false,
+					orderProblems: true,
+					callFollowUps: false,
+					inventoryCounts: false,
+					offlineTablets: false,
+				},
+			}),
+		)
+		const item = await screen.findByTestId('attention-item-order_problems')
+		expect(item).toHaveTextContent(
+			'2 guest reports at Olaya have waited a day for an answer',
+		)
+		expect(item.querySelector('a')?.getAttribute('href')).toContain(
+			'/orders/problems',
+		)
+	})
+
+	it('shows nothing for reports that are still within their first day', async () => {
+		fetchMock.mockImplementation(async (input: unknown) => {
+			if (String(input).endsWith('/orders-token')) {
+				return new Response(
+					JSON.stringify({
+						jwt: 'orders.jwt',
+						tenantApiUrl: 'http://tenant.test',
+					}),
+				)
+			}
+			return new Response(
+				JSON.stringify({
+					locations: [],
+					problems: [{ locationId: 'loc_olaya', open: 3, unanswered: 0 }],
+				}),
+			)
+		})
+		renderBlock(
+			data({
+				regional: {
+					paymentReview: false,
+					orderProblems: true,
+					callFollowUps: false,
+					inventoryCounts: false,
+					offlineTablets: false,
+				},
+			}),
+		)
+		await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+		expect(
+			screen.queryByTestId('attention-item-order_problems'),
+		).not.toBeInTheDocument()
+	})
+
 	it('shows a Station tablet that went silent during opening hours, and not one that is off for the night (#190)', async () => {
 		const now = Date.now()
 		fetchMock.mockImplementation(async (input: unknown) => {
@@ -150,6 +223,7 @@ describe('AttentionBlock', () => {
 			data({
 				regional: {
 					paymentReview: false,
+					orderProblems: false,
 					callFollowUps: false,
 					inventoryCounts: false,
 					offlineTablets: true,
@@ -196,6 +270,7 @@ describe('AttentionBlock', () => {
 			data({
 				regional: {
 					paymentReview: false,
+					orderProblems: false,
 					callFollowUps: false,
 					inventoryCounts: false,
 					offlineTablets: true,
@@ -220,6 +295,7 @@ describe('AttentionBlock', () => {
 				items: [],
 				regional: {
 					paymentReview: false,
+					orderProblems: false,
 					callFollowUps: false,
 					inventoryCounts: false,
 					offlineTablets: false,

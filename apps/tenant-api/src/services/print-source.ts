@@ -1,13 +1,12 @@
 import { and, asc, eq } from 'drizzle-orm'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
 import { zatcaQrPayload } from '@repo/common/pos-fiscal'
+import { type ReceiptInput } from '@repo/common/print-ticket'
 import {
-	type ReceiptInput,
-} from '@repo/common/print-ticket'
-import { parseLineCatalog, lineCatalogHasAlcohol } from '@repo/common/item-placement'
-import {
-	type ReceiptTargets,
-} from '@repo/common/receipt-extras'
+	parseLineCatalog,
+	lineCatalogHasAlcohol,
+} from '@repo/common/item-placement'
+import { type ReceiptTargets } from '@repo/common/receipt-extras'
 import {
 	posFiscalDocuments,
 	posOrders,
@@ -58,7 +57,10 @@ export async function loadPrintContext(
 		const menu = result.data.menu
 		const location = menu.locations.find((entry) => entry.id === locationId)
 		if (location) {
-			const organization = menu.organization as { name?: string; logoUrl?: string | null }
+			const organization = menu.organization as {
+				name?: string
+				logoUrl?: string | null
+			}
 			value = {
 				tickets: (location.stationSettings as { tickets?: unknown } | undefined)
 					?.tickets,
@@ -77,7 +79,10 @@ export async function loadPrintContext(
 		}
 	}
 	// A failed read is not kept long: the next ticket asks again.
-	cache.set(key, { at: result.ok ? Date.now() : Date.now() - FRESH_MS + 5_000, value })
+	cache.set(key, {
+		at: result.ok ? Date.now() : Date.now() - FRESH_MS + 5_000,
+		value,
+	})
 	if (cache.size > 200) cache.clear()
 	return value
 }
@@ -180,22 +185,36 @@ export async function loadReceiptForPrint(
 		if (!order) return null
 		const fees = [
 			order.deliveryFeeCents > 0
-				? { label: 'Delivery', cents: order.deliveryFeeCents - order.deliveryDiscountCents }
+				? {
+						label: 'Delivery',
+						cents: order.deliveryFeeCents - order.deliveryDiscountCents,
+					}
 				: null,
 			order.serviceFeeCents > 0
-				? { label: order.serviceFeeLabel || 'Service fee', cents: order.serviceFeeCents }
+				? {
+						label: order.serviceFeeLabel || 'Service fee',
+						cents: order.serviceFeeCents,
+					}
 				: null,
 			order.packagingFeeCents > 0
-				? { label: order.packagingFeeLabel || 'Packaging fee', cents: order.packagingFeeCents }
+				? {
+						label: order.packagingFeeLabel || 'Packaging fee',
+						cents: order.packagingFeeCents,
+					}
 				: null,
-		].filter((fee): fee is { label: string; cents: number } => Boolean(fee && fee.cents > 0))
+		].filter((fee): fee is { label: string; cents: number } =>
+			Boolean(fee && fee.cents > 0),
+		)
 		const adjustments = [
-			order.discountCents > 0 ? { label: 'Discount', cents: order.discountCents } : null,
+			order.discountCents > 0
+				? { label: 'Discount', cents: order.discountCents }
+				: null,
 			order.loyaltyDiscountCents > 0
 				? { label: 'Reward', cents: order.loyaltyDiscountCents }
 				: null,
 		].filter((a): a is { label: string; cents: number } => Boolean(a))
-		const paid = order.paymentStatus === 'paid' || order.paymentStatus === 'not_required'
+		const paid =
+			order.paymentStatus === 'paid' || order.paymentStatus === 'not_required'
 		return {
 			extras,
 			receipt: {
@@ -218,7 +237,11 @@ export async function loadReceiptForPrint(
 						: null,
 					totalCents: line.totalCents ?? 0,
 					options: (line.options ?? []).map((option) => ({
-						name: getLocalizedMenuValue(option.optionName ?? '', locale, locale),
+						name: getLocalizedMenuValue(
+							option.optionName ?? '',
+							locale,
+							locale,
+						),
 						quantity: option.quantity,
 						totalCents: option.totalCents,
 					})),
@@ -230,10 +253,14 @@ export async function loadReceiptForPrint(
 				taxCents: order.taxCents,
 				tipCents: order.tipCents,
 				totalCents: order.totalCents,
-				payments: [{ label: paid ? 'Paid' : 'Pay at handoff', cents: paid ? order.totalCents : 0 }].filter(
-					(p) => p.cents > 0 || !paid,
-				),
+				payments: [
+					{
+						label: paid ? 'Paid' : 'Pay at handoff',
+						cents: paid ? order.totalCents : 0,
+					},
+				].filter((p) => p.cents > 0 || !paid),
 				checkId: order.hasAlcohol === true,
+				testOrder: order.isTest === true,
 				kind: order.status === 'cancelled' ? 'void' : 'sale',
 				reprint: input.reprint,
 			},
@@ -244,7 +271,10 @@ export async function loadReceiptForPrint(
 		.select()
 		.from(posOrders)
 		.where(
-			and(eq(posOrders.id, input.orderId), eq(posOrders.locationId, input.locationId)),
+			and(
+				eq(posOrders.id, input.orderId),
+				eq(posOrders.locationId, input.locationId),
+			),
 		)
 		.limit(1)
 	if (!order) return null
@@ -256,7 +286,12 @@ export async function loadReceiptForPrint(
 	const [invoice] = await db
 		.select()
 		.from(posFiscalDocuments)
-		.where(and(eq(posFiscalDocuments.orderId, order.id), eq(posFiscalDocuments.kind, 'invoice')))
+		.where(
+			and(
+				eq(posFiscalDocuments.orderId, order.id),
+				eq(posFiscalDocuments.kind, 'invoice'),
+			),
+		)
 		.limit(1)
 	// The Phase 2 code of an onboarded unit when there is one; otherwise the
 	// Phase 1 code a VAT-registered location prints.
@@ -288,7 +323,9 @@ export async function loadReceiptForPrint(
 				0,
 			)) *
 		(line.quantity ?? 1)
-	const adjustments = (Array.isArray(order.adjustments) ? order.adjustments : []) as Array<{
+	const adjustments = (
+		Array.isArray(order.adjustments) ? order.adjustments : []
+	) as Array<{
 		label?: string
 		amountCents?: number
 	}>
@@ -298,7 +335,10 @@ export async function loadReceiptForPrint(
 			...base,
 			time: clock(order.rungUpAt),
 			number: order.number,
-			orderType: orderTypeOf(order.orderType, order.orderType === 'drive_through'),
+			orderType: orderTypeOf(
+				order.orderType,
+				order.orderType === 'drive_through',
+			),
 			tableLabel: order.tableLabel,
 			servedBy: order.staffName,
 			invoiceNumber: invoice ? String(invoice.counter) : null,
@@ -311,14 +351,20 @@ export async function loadReceiptForPrint(
 				options: (line.options ?? []).map((option) => ({
 					name: option.optionName ?? option.name ?? '',
 					quantity: option.quantity,
-					totalCents: (option.unitCents ?? 0) * (option.quantity ?? 1) * (line.quantity ?? 1),
+					totalCents:
+						(option.unitCents ?? 0) *
+						(option.quantity ?? 1) *
+						(line.quantity ?? 1),
 				})),
 				note: line.instructions || null,
 			})),
 			subtotalCents: order.subtotalCents,
 			adjustments: adjustments
 				.filter((a) => (a.amountCents ?? 0) > 0)
-				.map((a) => ({ label: a.label ?? 'Discount', cents: a.amountCents ?? 0 })),
+				.map((a) => ({
+					label: a.label ?? 'Discount',
+					cents: a.amountCents ?? 0,
+				})),
 			taxCents: order.taxCents,
 			taxInclusive: order.taxInclusive,
 			taxRatePercent: order.taxRatePercent,
@@ -332,12 +378,20 @@ export async function loadReceiptForPrint(
 				})),
 			refunds: payments
 				.filter((payment) => payment.kind === 'refund')
-				.map((payment) => ({ label: `Refunded · ${payment.method}`, cents: payment.amountCents })),
+				.map((payment) => ({
+					label: `Refunded · ${payment.method}`,
+					cents: payment.amountCents,
+				})),
 			balanceCents:
 				order.status === 'open' ? Math.max(0, order.totalCents - paidCents) : 0,
 			fiscalQr,
 			checkId: lineCatalogHasAlcohol(parseLineCatalog(order.lineCatalog)),
-			kind: order.status === 'void' ? 'void' : order.status === 'refunded' ? 'refund' : 'sale',
+			kind:
+				order.status === 'void'
+					? 'void'
+					: order.status === 'refunded'
+						? 'refund'
+						: 'sale',
 			reprint: input.reprint,
 		},
 	}

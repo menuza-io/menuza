@@ -194,8 +194,9 @@ describe('session refresh', () => {
 		const { session, response: res } = await tenantFetch('/loyalty/wallet')
 		expect(res.status).toBe(401)
 		expect(fetch).toHaveBeenCalledTimes(1)
-		// Untouched here; the login page forgets a session that cannot refresh.
-		expect(getAccessToken()).not.toBeNull()
+		// A half session is forgotten, so pages show the signed-out state and the
+		// login page does not send the guest straight back.
+		expect(getAccessToken()).toBeNull()
 		expect(session).toBe('signed_out')
 	})
 

@@ -16,6 +16,7 @@ import {
 	type SchedulingOptions,
 	type SpecialHour,
 } from '@repo/common/location-types'
+import { ORDER_PROBLEMS_FLAG } from '@repo/common/order-problems'
 import {
 	and,
 	asc,
@@ -944,6 +945,7 @@ export async function loadAttention({
 			dismissedKeys: [],
 			regional: {
 				paymentReview: false,
+				orderProblems: false,
 				callFollowUps: false,
 				inventoryCounts: false,
 				offlineTablets: false,
@@ -959,12 +961,16 @@ export async function loadAttention({
 		has,
 		now,
 	}
-	const [items, inventory, tabletsWatched] = await Promise.all([
-		runAttentionDetectors(ctx),
-		getInventoryNavAccess(userId, organizationId).catch(() => null),
-		// Tablets are watched for silence only while manager alerts are on (#190).
-		isOrderAlertsEnabled(organizationId).catch(() => false),
-	])
+	const [items, inventory, tabletsWatched, problemReportsOn] =
+		await Promise.all([
+			runAttentionDetectors(ctx),
+			getInventoryNavAccess(userId, organizationId).catch(() => null),
+			// Tablets are watched for silence only while manager alerts are on (#190).
+			isOrderAlertsEnabled(organizationId).catch(() => false),
+			getFeatureFlag(ORDER_PROBLEMS_FLAG, { organizationId }).catch(
+				() => false,
+			),
+		])
 	const scoped = hasLocations && locations.length > 0
 	return {
 		items: orderAttentionItems(items, dismissedKeys),
@@ -973,6 +979,8 @@ export async function loadAttention({
 			// The orders token needs menu read; location-scoped tokens see
 			// only their locations.
 			paymentReview: has(ORG_PERMISSIONS.READ_MENU_ANY),
+			orderProblems:
+				has(ORG_PERMISSIONS.READ_MENU_ANY) && problemReportsOn === true,
 			callFollowUps: has(ORG_PERMISSIONS.READ_PHONE_CALL_ANY),
 			inventoryCounts: Boolean(inventory?.counts) && scoped,
 			offlineTablets: tabletsWatched && has(ORG_PERMISSIONS.READ_MENU_ANY),

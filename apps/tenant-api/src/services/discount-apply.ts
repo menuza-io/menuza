@@ -38,6 +38,7 @@ import {
 } from 'drizzle-orm'
 import { inJsonList } from '../lib/chunked-in.ts'
 import { codesWithIssuedCode } from './discount-marketing-codes.ts'
+import { resolveProblemCreditForOrder } from './order-problem-credit.ts'
 import { memberForCustomerInTx } from './loyalty-member-service.ts'
 import { resolveReferralDiscountForOrder } from './loyalty-referral-service.ts'
 import { customerInAudience } from './marketing-audience-service.ts'
@@ -255,6 +256,16 @@ export async function prepareOrderDiscounts(
 				})
 			: null
 
+	// A credit a restaurant gave for an order problem (#191): one synthetic
+	// fixed-amount discount for the typed code, no coupon flag needed.
+	const problemCredit = typedCode
+		? await resolveProblemCreditForOrder(db, {
+				typedCode,
+				currency: priced.currency,
+				now: input.now.getTime(),
+			})
+		: null
+
 	const features = input.context.discounts?.features
 	const records = [
 		...(input.context.discounts?.discounts ?? []).filter((record) => {
@@ -264,6 +275,7 @@ export async function prepareOrderDiscounts(
 			return false
 		}),
 		...(referralOffer?.syntheticRecord ? [referralOffer.syntheticRecord] : []),
+		...(problemCredit ? [problemCredit.syntheticRecord] : []),
 	]
 	const baseCodes =
 		features?.coupons === true
@@ -274,7 +286,7 @@ export async function prepareOrderDiscounts(
 					input.now,
 				)
 			: []
-	const codes = referralOffer?.syntheticCode
+	const withReferral = referralOffer?.syntheticCode
 		? [
 				...baseCodes.filter(
 					(c) =>
@@ -283,6 +295,15 @@ export async function prepareOrderDiscounts(
 				referralOffer.syntheticCode,
 			]
 		: baseCodes
+	const codes = problemCredit
+		? [
+				...withReferral.filter(
+					(c) =>
+						c.normalizedCode !== problemCredit.syntheticCode.normalizedCode,
+				),
+				problemCredit.syntheticCode,
+			]
+		: withReferral
 	const localNow = discountLocalNow(priced, input.now)
 	const periods = discountPeriodKeys(localNow)
 	const customer = await discountCustomerFacts(db, input.customerId, input.now)
@@ -445,6 +466,8 @@ export async function discountCustomerFacts(
 		.where(
 			and(
 				eq(restaurantOrders.customerId, customerId),
+				// A free test order (#119) is not a first order.
+				eq(restaurantOrders.isTest, false),
 				inArray(restaurantOrders.status, [
 					// An order waiting for acceptance (#107) is an order placed.
 					'pending_acceptance',

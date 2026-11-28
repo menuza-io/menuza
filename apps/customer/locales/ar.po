@@ -14,7 +14,7 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. placeholder {0}: item.calories
-#: components/ordering/menu-screen.tsx:345
+#: components/ordering/menu-screen.tsx:407
 msgid "{0} Cal"
 msgstr "{0} سعرة"
 
@@ -34,7 +34,7 @@ msgstr "{amount} إضافية للوصول إلى {tier}"
 msgid "{amount} more to unlock {reward}"
 msgstr "{amount} إضافية للحصول على {reward}"
 
-#: components/ordering/menu-screen.tsx:420
+#: components/ordering/menu-screen.tsx:482
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "خصم {amount}"
@@ -67,11 +67,11 @@ msgstr "{n, plural, zero {{count} نقطة} one {نقطة واحدة} two {نق�
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, zero {{count} نجمة} one {نجمة واحدة} two {نجمتان} few {{count} نجوم} many {{count} نجمة} other {{count} نجمة}}"
 
-#: components/ordering/menu-screen.tsx:403
+#: components/ordering/menu-screen.tsx:465
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (بحد أقصى {count} لكل طلب)"
 
-#: components/ordering/menu-screen.tsx:399
+#: components/ordering/menu-screen.tsx:461
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (خصم يصل إلى {amount})"
 
@@ -79,7 +79,7 @@ msgstr "{name} (خصم يصل إلى {amount})"
 msgid "{percent} off"
 msgstr "خصم {percent}"
 
-#: components/ordering/menu-screen.tsx:412
+#: components/ordering/menu-screen.tsx:474
 msgid "{percentText} off"
 msgstr "خصم {percentText}"
 
@@ -111,7 +111,7 @@ msgstr "{points} لكل زيارة (مرة واحدة يوميًا)"
 msgid "{points} for every {amount} you spend"
 msgstr "{points} مقابل كل {amount} تنفقها"
 
-#: components/ordering/menu-screen.tsx:316
+#: components/ordering/menu-screen.tsx:365
 msgid "{price}, was {originalPrice}"
 msgstr "{price}، كان {originalPrice}"
 
@@ -167,6 +167,10 @@ msgstr "أضف بطاقة برمزها لتحتفظ بها هنا. ما زال �
 msgid "Add a gift card"
 msgstr "إضافة بطاقة هدايا"
 
+#: components/profile/addresses-section.tsx:242
+msgid "Add an address"
+msgstr "إضافة عنوان"
+
 #: components/profile/messages-section.tsx:154
 msgid "Add an email address first"
 msgstr "أضف عنوان بريد إلكتروني أولاً"
@@ -174,6 +178,10 @@ msgstr "أضف عنوان بريد إلكتروني أولاً"
 #: lib/gift-cards/labels.ts:55
 msgid "Add card"
 msgstr "إضافة البطاقة"
+
+#: components/ordering/menu-screen.tsx:385
+msgid "Add to favorites"
+msgstr "إضافة إلى المفضلة"
 
 #: lib/loyalty/labels.ts:113
 msgid "Adjusted by staff"
@@ -231,6 +239,11 @@ msgstr "الموافقة على {reward}"
 msgid "Approved: {reward}."
 msgstr "تمت الموافقة: {reward}."
 
+#: components/profile/addresses-section.tsx:187
+#: components/profile/addresses-section.tsx:295
+msgid "Apt, suite or floor"
+msgstr "الشقة أو الجناح أو الطابق"
+
 #: lib/reservations/messages.ts:102
 msgid "Arrived"
 msgstr "وصلت"
@@ -259,7 +272,7 @@ msgstr "رصيد منقول"
 msgid "Balance removed"
 msgstr "تمت إزالة الرصيد"
 
-#: components/profile/profile-screen.tsx:130
+#: components/profile/profile-screen.tsx:132
 msgid "Birthday (optional)"
 msgstr "تاريخ الميلاد (اختياري)"
 
@@ -282,6 +295,12 @@ msgstr "بمشاركة صورة، فإنك تسمح للمطعم بعرضها ف
 #: lib/reservations/messages.ts:96
 msgid "Call the restaurant"
 msgstr "اتصل بالمطعم"
+
+#: components/profile/addresses-section.tsx:122
+#: components/profile/addresses-section.tsx:212
+#: components/profile/addresses-section.tsx:319
+msgid "Cancel"
+msgstr "إلغاء"
 
 #: lib/reservations/messages.ts:90
 msgid "Cancel reservation"
@@ -313,7 +332,7 @@ msgstr "تغيير الوقت"
 msgid "Changed by the business"
 msgstr "عدّله النشاط التجاري"
 
-#: components/ordering/menu-screen.tsx:208
+#: components/ordering/menu-screen.tsx:245
 msgid "Check back later, or open the website menu."
 msgstr "عُد لاحقًا، أو افتح قائمة الموقع."
 
@@ -353,7 +372,7 @@ msgstr "اختر ما يُعلمك به هذا الهاتف."
 msgid "Choose what you hear from us, and how."
 msgstr "اختر ما تتلقاه منا وكيف."
 
-#: components/ordering/menu-screen.tsx:203
+#: components/ordering/menu-screen.tsx:240
 msgid "Clear a choice to see more of the menu."
 msgstr "ألغِ أحد الاختيارات لترى المزيد من القائمة."
 
@@ -410,7 +429,7 @@ msgstr "نسخ رابط الدعوة"
 msgid "Cost"
 msgstr "التكلفة"
 
-#: components/ordering/menu-screen.tsx:449
+#: components/ordering/menu-screen.tsx:511
 msgid "Dairy-free"
 msgstr "خالٍ من الألبان"
 
@@ -418,7 +437,7 @@ msgstr "خالٍ من الألبان"
 msgid "Date"
 msgstr "التاريخ"
 
-#: components/profile/profile-screen.tsx:143
+#: components/profile/profile-screen.tsx:145
 msgid "Day"
 msgstr "اليوم"
 
@@ -438,8 +457,12 @@ msgstr "مرفوضة"
 msgid "Declined: {reward}."
 msgstr "تم الرفض: {reward}."
 
-#: components/ordering/menu-screen.tsx:319
-#: components/ordering/menu-screen.tsx:348
+#: components/profile/addresses-section.tsx:93
+msgid "Default"
+msgstr "الافتراضي"
+
+#: components/ordering/menu-screen.tsx:368
+#: components/ordering/menu-screen.tsx:410
 msgid "Delivery price {deliveryPriceText}"
 msgstr "سعر التوصيل {deliveryPriceText}"
 
@@ -447,11 +470,11 @@ msgstr "سعر التوصيل {deliveryPriceText}"
 msgid "Dietary needs"
 msgstr "الاحتياجات الغذائية"
 
-#: components/ordering/menu-screen.tsx:184
+#: components/ordering/menu-screen.tsx:201
 msgid "Dietary preferences"
 msgstr "التفضيلات الغذائية"
 
-#: components/ordering/menu-screen.tsx:196
+#: components/ordering/menu-screen.tsx:213
 msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
 msgstr "الوسوم الغذائية وصف المطعم نفسه. اسأل الموظفين إن كانت لديك حساسية."
 
@@ -485,12 +508,16 @@ msgstr "اكتساب"
 msgid "Earning at {multiplier}× rate"
 msgstr "الكسب بمعدل {multiplier}×"
 
+#: components/profile/addresses-section.tsx:103
+msgid "Edit"
+msgstr "تعديل"
+
 #: lib/reservations/messages.ts:59
 msgid "Edit details"
 msgstr "تعديل البيانات"
 
 #: components/profile/messages-section.tsx:107
-#: components/profile/profile-screen.tsx:119
+#: components/profile/profile-screen.tsx:121
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
@@ -569,7 +596,7 @@ msgstr "لهذا العدد من الأشخاص، يرجى الاتصال على
 msgid "Free {item}"
 msgstr "{item} مجانًا"
 
-#: components/ordering/menu-screen.tsx:430
+#: components/ordering/menu-screen.tsx:492
 msgid "Free delivery"
 msgstr "توصيل مجاني"
 
@@ -580,6 +607,11 @@ msgstr "التعديل مجاني حتى {time}"
 #: lib/gift-cards/labels.ts:33
 msgid "Frozen"
 msgstr "مجمّدة"
+
+#: components/profile/addresses-section.tsx:193
+#: components/profile/addresses-section.tsx:308
+msgid "Gate code or delivery note"
+msgstr "رمز البوابة أو ملاحظة التوصيل"
 
 #: components/profile/notifications-section.tsx:150
 msgid "Get a message when your order is accepted or ready, when your booking is confirmed or coming up, and when a reward is waiting."
@@ -626,11 +658,11 @@ msgstr "بطاقات الهدايا غير متاحة حاليًا. يرجى ا�
 msgid "Give a friend {friendReward}, get {referrerPoints} after their first paid order."
 msgstr "امنح صديقًا {friendReward} واحصل على {referrerPoints} بعد أول طلب مدفوع له."
 
-#: components/ordering/menu-screen.tsx:447
+#: components/ordering/menu-screen.tsx:509
 msgid "Gluten-free"
 msgstr "خالٍ من الغلوتين"
 
-#: components/ordering/menu-screen.tsx:441
+#: components/ordering/menu-screen.tsx:503
 msgid "Halal"
 msgstr "حلال"
 
@@ -641,6 +673,10 @@ msgstr "إخفاء"
 #: lib/loyalty/labels.ts:104
 msgid "History"
 msgstr "السجل"
+
+#: components/profile/addresses-section.tsx:302
+msgid "Home, Work…"
+msgstr "المنزل، العمل…"
 
 #: lib/loyalty/labels.ts:42
 msgid "How you earn"
@@ -671,7 +707,7 @@ msgid "It was not placed from your signed-in account. You can still view it on t
 msgstr "لم يتم تقديمه من حسابك المسجَّل. ما زال بإمكانك عرضه على الموقع."
 
 #: components/auth/complete-name-screen.tsx:26
-#: components/profile/profile-screen.tsx:111
+#: components/profile/profile-screen.tsx:113
 msgid "Jane Doe"
 msgstr "سارة أحمد"
 
@@ -688,7 +724,7 @@ msgstr "انضم إلى قائمة الانتظار"
 msgid "Keep it"
 msgstr "الاحتفاظ به"
 
-#: components/profile/profile-screen.tsx:208
+#: components/profile/profile-screen.tsx:213
 msgid "Language"
 msgstr "اللغة"
 
@@ -724,7 +760,7 @@ msgstr "تحميل المزيد"
 msgid "Loading drops"
 msgstr "جارٍ تحميل الطروحات"
 
-#: components/ordering/menu-screen.tsx:120
+#: components/ordering/menu-screen.tsx:126
 msgid "Loading the menu"
 msgstr "جارٍ تحميل القائمة"
 
@@ -736,7 +772,7 @@ msgstr "جارٍ تحميل بطاقات الهدايا…"
 msgid "Loading your order"
 msgstr "جارٍ تحميل طلبك"
 
-#: components/profile/profile-screen.tsx:80
+#: components/profile/profile-screen.tsx:82
 msgid "Loading your profile…"
 msgstr "جارٍ تحميل ملفك الشخصي…"
 
@@ -750,8 +786,12 @@ msgstr "جارٍ تحميل مكافآتك…"
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
 
+#: components/profile/addresses-section.tsx:114
+msgid "Make default"
+msgstr "تعيين كافتراضي"
+
 #: app/(tabs)/_layout.tsx:52
-#: components/ordering/menu-screen.tsx:163
+#: components/ordering/menu-screen.tsx:180
 msgid "Menu"
 msgstr "القائمة"
 
@@ -763,11 +803,11 @@ msgstr "رسائل من {name}"
 msgid "Money added"
 msgstr "تمت إضافة مبلغ"
 
-#: components/profile/profile-screen.tsx:134
+#: components/profile/profile-screen.tsx:136
 msgid "Month"
 msgstr "الشهر"
 
-#: components/profile/profile-screen.tsx:152
+#: components/profile/profile-screen.tsx:154
 msgid "Month and day only. We use it to send you a birthday treat if you agreed to hear from us."
 msgstr "الشهر واليوم فقط. نستخدمه لنرسل لك هدية عيد ميلاد إذا وافقت على تلقي رسائلنا."
 
@@ -784,11 +824,16 @@ msgid "My reservations"
 msgstr "حجوزاتي"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/profile-screen.tsx:110
+#: components/profile/addresses-section.tsx:181
+#: components/profile/profile-screen.tsx:112
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
 msgstr "الاسم"
+
+#: components/profile/addresses-section.tsx:301
+msgid "Name this address"
+msgstr "سمِّ هذا العنوان"
 
 #: lib/gift-cards/labels.ts:75
 #: lib/loyalty/labels.ts:144
@@ -807,13 +852,17 @@ msgstr "لا يوجد نشاط بعد. ستظهر مشترياتك هنا."
 msgid "No connection. Please try again."
 msgstr "لا يوجد اتصال. حاول مرة أخرى."
 
-#: components/ordering/menu-screen.tsx:202
+#: components/ordering/menu-screen.tsx:239
 msgid "No dishes match these choices."
 msgstr "لا توجد أطباق تطابق هذه الاختيارات."
 
 #: components/ordering/drops-screen.tsx:160
 msgid "No drops right now."
 msgstr "لا توجد طروحات حاليًا."
+
+#: components/profile/favorites-section.tsx:74
+msgid "No favorites yet. Tap the heart on a dish to keep it here."
+msgstr "لا توجد مفضلات بعد. اضغط على القلب في أي طبق لإبقائه هنا."
 
 #: lib/gift-cards/labels.ts:21
 msgid "No gift cards saved yet"
@@ -834,6 +883,10 @@ msgstr "لا توجد طلبات حاليًا."
 #: lib/loyalty/labels.ts:54
 msgid "No rewards are available yet."
 msgstr "لا توجد مكافآت متاحة بعد."
+
+#: components/profile/addresses-section.tsx:77
+msgid "No saved addresses yet. Add one for quicker delivery."
+msgstr "لا توجد عناوين محفوظة بعد. أضف عنواناً لتوصيل أسرع."
 
 #: lib/reservations/messages.ts:32
 msgid "No tables left for this day."
@@ -867,7 +920,7 @@ msgstr "ليس الآن"
 msgid "Not taking online reservations on this day."
 msgstr "لا يوجد حجز عبر الإنترنت في هذا اليوم."
 
-#: components/ordering/menu-screen.tsx:207
+#: components/ordering/menu-screen.tsx:244
 msgid "Nothing on the menu right now."
 msgstr "لا يوجد شيء في القائمة حاليًا."
 
@@ -885,7 +938,7 @@ msgstr "الإشعارات متوقفة في إعدادات هاتفك. فعّل
 msgid "Notifications from {name}"
 msgstr "إشعارات من {name}"
 
-#: components/ordering/menu-screen.tsx:451
+#: components/ordering/menu-screen.tsx:513
 msgid "Nut-free"
 msgstr "خالٍ من المكسرات"
 
@@ -935,7 +988,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "يفتح في متصفحك. تُطبَّق نقاطك ومكافآتك عند الطلب هناك."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:371
+#: components/ordering/menu-screen.tsx:433
 msgid "Opens the website"
 msgstr "يفتح الموقع"
 
@@ -1013,7 +1066,7 @@ msgid "Payments aren't available right now."
 msgstr "الدفع غير متاح حاليًا."
 
 #: components/auth/login-screen.tsx:24
-#: components/profile/profile-screen.tsx:156
+#: components/profile/profile-screen.tsx:158
 #: lib/reservations/messages.ts:16
 msgid "Phone number"
 msgstr "رقم الهاتف"
@@ -1051,7 +1104,7 @@ msgstr "قيد التحضير"
 msgid "Profile"
 msgstr "الملف الشخصي"
 
-#: components/profile/profile-screen.tsx:164
+#: components/profile/profile-screen.tsx:166
 msgid "Profile saved."
 msgstr "تم حفظ الملف الشخصي."
 
@@ -1102,6 +1155,20 @@ msgstr "إزالة مكافأة الإحالة"
 #: lib/loyalty/labels.ts:109
 msgid "Refund adjustment"
 msgstr "تعديل بسبب استرداد"
+
+#: components/profile/addresses-section.tsx:124
+#: components/profile/addresses-section.tsx:132
+#: components/profile/favorites-section.tsx:102
+msgid "Remove"
+msgstr "إزالة"
+
+#: components/ordering/menu-screen.tsx:385
+msgid "Remove from favorites"
+msgstr "إزالة من المفضلة"
+
+#: components/profile/addresses-section.tsx:121
+msgid "Remove this address?"
+msgstr "إزالة هذا العنوان؟"
 
 #: lib/reservations/messages.ts:80
 msgid "Request sent"
@@ -1174,7 +1241,12 @@ msgstr "لا يمكن استخدام المكافآت حاليًا."
 msgid "Running late"
 msgstr "سأتأخر"
 
-#: components/profile/profile-screen.tsx:168
+#: components/profile/addresses-section.tsx:316
+msgid "Save address"
+msgstr "حفظ العنوان"
+
+#: components/profile/addresses-section.tsx:209
+#: components/profile/profile-screen.tsx:170
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
@@ -1202,7 +1274,7 @@ msgstr "أرسل طلبًا"
 msgid "Send code"
 msgstr "إرسال الرمز"
 
-#: components/ordering/menu-screen.tsx:428
+#: components/ordering/menu-screen.tsx:490
 msgid "Set price {amount}"
 msgstr "سعر ثابت {amount}"
 
@@ -1256,7 +1328,7 @@ msgstr "سجّل الدخول برقم هاتفك لتحتفظ ببطاقات ا
 msgid "Sign in with your phone number to see your points and use your rewards."
 msgstr "سجّل الدخول برقم هاتفك لمعرفة نقاطك واستخدام مكافآتك."
 
-#: components/profile/profile-screen.tsx:180
+#: components/profile/profile-screen.tsx:185
 msgid "Sign out"
 msgstr "تسجيل الخروج"
 
@@ -1264,7 +1336,8 @@ msgstr "تسجيل الخروج"
 msgid "Site address"
 msgstr "عنوان الموقع"
 
-#: components/ordering/menu-screen.tsx:333
+#: components/ordering/menu-screen.tsx:395
+#: components/profile/favorites-section.tsx:84
 msgid "Sold out"
 msgstr "نفد المخزون"
 
@@ -1291,7 +1364,7 @@ msgstr "يستخدم {points} مقابل خصم {amount}"
 msgid "Spent"
 msgstr "مُستخدم"
 
-#: components/ordering/menu-screen.tsx:453
+#: components/ordering/menu-screen.tsx:515
 msgid "Spicy"
 msgstr "حار"
 
@@ -1299,7 +1372,11 @@ msgstr "حار"
 msgid "Stops working in {time}"
 msgstr "يتوقف عن العمل خلال {time}"
 
-#: components/profile/profile-screen.tsx:198
+#: components/profile/addresses-section.tsx:288
+msgid "Street address"
+msgstr "عنوان الشارع"
+
+#: components/profile/profile-screen.tsx:203
 msgid "System default"
 msgstr "افتراضي النظام"
 
@@ -1363,7 +1440,7 @@ msgstr "تم حجز هذا الوقت للتو. اختر وقتًا آخر."
 msgid "The card ending in {last4} is already saved to your account."
 msgstr "البطاقة المنتهية بـ {last4} محفوظة بالفعل في حسابك."
 
-#: components/ordering/menu-screen.tsx:126
+#: components/ordering/menu-screen.tsx:132
 msgid "The menu could not be loaded."
 msgstr "تعذر تحميل القائمة."
 
@@ -1466,7 +1543,9 @@ msgstr "الإجمالي"
 
 #: components/auth/site-unavailable-screen.tsx:26
 #: components/ordering/drops-screen.tsx:117
-#: components/ordering/menu-screen.tsx:128
+#: components/ordering/menu-screen.tsx:134
+#: components/profile/addresses-section.tsx:72
+#: components/profile/favorites-section.tsx:69
 #: components/profile/orders-section.tsx:101
 #: components/ui/error-message.tsx:28
 #: lib/gift-cards/labels.ts:20
@@ -1497,7 +1576,7 @@ msgstr "اكتب الرمز الموجود في بريدك الإلكتروني 
 msgid "Up to {amount} off"
 msgstr "خصم حتى {amount}"
 
-#: components/profile/profile-screen.tsx:107
+#: components/profile/profile-screen.tsx:109
 msgid "Update your basic details below."
 msgstr "حدّث بياناتك الأساسية أدناه."
 
@@ -1514,7 +1593,7 @@ msgid "Use a different number"
 msgstr "استخدم رقمًا آخر"
 
 #: components/auth/site-unavailable-screen.tsx:34
-#: components/profile/profile-screen.tsx:184
+#: components/profile/profile-screen.tsx:189
 msgid "Use a different site"
 msgstr "استخدم موقعًا آخر"
 
@@ -1526,15 +1605,15 @@ msgstr "استخدم مكافأة عند الطلب، أو أظهر رمزك ع�
 msgid "Use at the till"
 msgstr "الاستخدام عند الصندوق"
 
-#: components/ordering/menu-screen.tsx:263
+#: components/ordering/menu-screen.tsx:306
 msgid "Use code {code}"
 msgstr "استخدم الرمز {code}"
 
-#: components/ordering/menu-screen.tsx:443
+#: components/ordering/menu-screen.tsx:505
 msgid "Vegan"
 msgstr "نباتي صرف"
 
-#: components/ordering/menu-screen.tsx:445
+#: components/ordering/menu-screen.tsx:507
 msgid "Vegetarian"
 msgstr "نباتي"
 
@@ -1574,14 +1653,31 @@ msgstr "قائمة الانتظار"
 msgid "We can't show this order here"
 msgstr "لا يمكننا عرض هذا الطلب هنا"
 
+#: components/profile/addresses-section.tsx:58
+msgid "We could not change your addresses. Try again."
+msgstr "تعذّر تغيير عناوينك. حاول مرة أخرى."
+
+#: components/profile/addresses-section.tsx:152
+msgid "We could not save this address. Try again."
+msgstr "تعذّر حفظ هذا العنوان. حاول مرة أخرى."
+
 #: components/orders/order-screen.tsx:247
 #: components/profile/orders-section.tsx:130
 msgid "We could not start this order again."
 msgstr "تعذّر علينا إعادة بدء هذا الطلب."
 
+#: components/ordering/menu-screen.tsx:165
+#: components/profile/favorites-section.tsx:97
+msgid "We could not update your favorites. Try again."
+msgstr "تعذّر تحديث مفضلاتك. حاول مرة أخرى."
+
 #: components/orders/order-screen.tsx:163
 msgid "We could not upload your photo. Please try again."
 msgstr "تعذر رفع صورتك. يُرجى المحاولة مرة أخرى."
+
+#: components/profile/addresses-section.tsx:258
+msgid "We couldn't find that address."
+msgstr "لم نتمكن من العثور على هذا العنوان."
 
 #: lib/i18n/app-error-message.ts:14
 msgid "We couldn't find that site. Check the address and try again."
@@ -1603,6 +1699,10 @@ msgstr "تعذّر علينا تفعيل الإشعارات. حاول مرة أ�
 #: lib/reservations/messages.ts:121
 msgid "We couldn't update your place in line. We'll keep trying."
 msgstr "تعذّر تحديث مكانك في الصف. سنواصل المحاولة."
+
+#: components/profile/addresses-section.tsx:263
+msgid "We don't deliver to this address yet, so it can't be saved."
+msgstr "لا نوصّل إلى هذا العنوان بعد، لذا لا يمكن حفظه."
 
 #: components/auth/verify-screen.tsx:40
 msgid "We sent a 6-digit code to {phone}."
@@ -1636,7 +1736,7 @@ msgstr "إزالة مكافأة الترحيب"
 msgid "Welcome! {points} added"
 msgstr "مرحبًا! تمت إضافة {points}"
 
-#: components/ordering/menu-screen.tsx:165
+#: components/ordering/menu-screen.tsx:182
 msgid "What is on the menu today. Checkout is on the website."
 msgstr "ما هو موجود في القائمة اليوم. إتمام الطلب يتم على الموقع."
 
@@ -1663,6 +1763,15 @@ msgstr "لديك بالفعل الحد الأقصى من الحجوزات الق
 #: lib/loyalty/labels.ts:153
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "أنت مسجّل الدخول إلى موقع آخر. يُرجى تسجيل الدخول مرة أخرى هنا."
+
+#: components/profile/addresses-section.tsx:57
+#: components/profile/addresses-section.tsx:151
+msgid "You have {limit} saved addresses. Remove one to add another."
+msgstr "لديك {limit} عناوين محفوظة. أزل واحداً لإضافة عنوان آخر."
+
+#: components/ordering/menu-screen.tsx:163
+msgid "You have 100 favorites. Remove one to add another."
+msgstr "لديك 100 مفضلة. أزل واحدة لإضافة أخرى."
 
 #: lib/loyalty/labels.ts:101
 msgid "You have a new request to use a reward."
@@ -1704,6 +1813,14 @@ msgstr "تم الحجز"
 msgid "You're number {position} in line"
 msgstr "أنت رقم {position} في الصف"
 
+#: components/profile/addresses-section.tsx:66
+msgid "Your addresses"
+msgstr "عناوينك"
+
+#: components/profile/addresses-section.tsx:70
+msgid "Your addresses could not be loaded."
+msgstr "تعذّر تحميل عناوينك."
+
 #: lib/loyalty/labels.ts:36
 msgid "Your balance is below zero because of a refund. New purchases will bring it back up."
 msgstr "رصيدك أقل من الصفر بسبب استرداد. سترفعه مشترياتك الجديدة مجددًا."
@@ -1727,6 +1844,15 @@ msgstr "رمزك عند الكاونتر"
 #: lib/reservations/messages.ts:42
 msgid "Your details"
 msgstr "بياناتك"
+
+#: components/ordering/menu-screen.tsx:219
+#: components/profile/favorites-section.tsx:57
+msgid "Your favorites"
+msgstr "مفضلاتك"
+
+#: components/profile/favorites-section.tsx:61
+msgid "Your favorites could not be loaded."
+msgstr "تعذّر تحميل مفضلاتك."
 
 #: lib/reservations/messages.ts:123
 msgid "Your hold ran out. Pick a time again."
@@ -1752,7 +1878,7 @@ msgstr "تعذّر تحميل طلباتك."
 msgid "Your payment is being checked. We'll confirm shortly."
 msgstr "يجري التحقق من دفعتك وسنؤكد قريبًا."
 
-#: components/profile/profile-screen.tsx:159
+#: components/profile/profile-screen.tsx:161
 msgid "Your phone number can't be changed here."
 msgstr "لا يمكن تغيير رقم هاتفك هنا."
 
@@ -1760,7 +1886,7 @@ msgstr "لا يمكن تغيير رقم هاتفك هنا."
 msgid "Your points"
 msgstr "نقاطك"
 
-#: components/profile/profile-screen.tsx:105
+#: components/profile/profile-screen.tsx:107
 msgid "Your profile"
 msgstr "ملفك الشخصي"
 

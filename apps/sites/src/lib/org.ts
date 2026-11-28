@@ -741,6 +741,8 @@ export type PublicSiteMenuPayload = {
 		upsell?: boolean
 		slotLimits?: boolean
 		dailyDishLimits?: boolean
+		/** `ordering.group` (#170): "Start a group order" is offered. */
+		group?: boolean
 		qrOrdering?:
 			boolean | { enabled?: boolean; dineIn?: boolean; online?: boolean }
 	}

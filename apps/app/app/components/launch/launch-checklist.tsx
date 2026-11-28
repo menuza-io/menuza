@@ -8,6 +8,7 @@ import { Input } from '@repo/ui/input'
 import { useEffect, useState } from 'react'
 import { Form, Link, useFetcher } from 'react-router'
 import { useHomeLocation } from '#app/components/dashboard/use-home-location.ts'
+import { PlaceTestOrderButton } from '#app/components/orders/place-test-order-button.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import { selectedLocations } from '#app/utils/dashboards/today.ts'
 import {
@@ -216,6 +217,7 @@ function StepRow({
 	canSkip,
 	canChoosePayAtPickup,
 	compact,
+	testOrdersEnabled,
 }: {
 	step: LaunchStepView
 	orgSlug: string
@@ -224,6 +226,7 @@ function StepRow({
 	canSkip: boolean
 	canChoosePayAtPickup: boolean
 	compact: boolean
+	testOrdersEnabled: boolean
 }) {
 	const { _ } = useLingui()
 	const text = STEP_TEXT[step.key]
@@ -255,6 +258,13 @@ function StepRow({
 					>
 						<Trans>Open</Trans>
 					</Link>
+					{step.key === 'launch_test_order' && testOrdersEnabled ? (
+						<PlaceTestOrderButton
+							orgSlug={orgSlug}
+							locationId={locationId}
+							size="sm"
+						/>
+					) : null}
 					{step.key === 'launch_payments' &&
 					canChoosePayAtPickup &&
 					!compact ? (
@@ -383,6 +393,7 @@ export function LaunchChecklistView({
 									canSkip={canSkip}
 									canChoosePayAtPickup={canChoosePayAtPickup}
 									compact={compact}
+									testOrdersEnabled={checklist.testOrdersEnabled === true}
 								/>
 							))}
 						</ol>

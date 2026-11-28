@@ -34,7 +34,9 @@ import { getGeocoder } from '../lib/geocoder.ts'
 import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import { getRouter } from '../lib/router.ts'
+import { findSavedAddress } from '../services/customer-addresses-service.ts'
 import { fetchOrderContext } from '../services/order-service.ts'
+import { authenticateCustomer } from './auth.ts'
 import { resolveOrderingOrganization } from './orders.ts'
 
 /**
@@ -178,10 +180,11 @@ publicDeliveryRoutes.get('/places', async (c) => {
 		)
 	}
 	const query = parsed.data
-	const organization = await resolveOrderingOrganization(c, {
-		slug: query.slug,
-		host: query.host,
-	})
+	const organization = await resolveOrderingOrganization(
+		c,
+		{ slug: query.slug, host: query.host },
+		{ allowCustomerToken: true },
+	)
 	if ('error' in organization) return organization.error
 	const orgId = organization.organization.id
 
@@ -615,6 +618,68 @@ export async function quoteDeliveryForPosLocation(
 	return { ok: true, body: outcome as Record<string, unknown> }
 }
 
+/**
+ * The signed-in guest's saved address as a geocoded place (#113): the point a
+ * successful geocode saved, no geocoder call. The customer token is required
+ * and must belong to the organization this origin names; a missing id and
+ * another guest's id answer the same 404.
+ */
+async function savedAddressPlace(
+	c: Context,
+	orgId: string,
+	addressId: string,
+): Promise<
+	| {
+			ok: true
+			place: GeoAddress
+			saved: {
+				id: string
+				label: string
+				notes: string | null
+				unit: string | null
+			}
+	  }
+	| { ok: false; response: Response }
+> {
+	let auth: Awaited<ReturnType<typeof authenticateCustomer>>
+	try {
+		auth = await authenticateCustomer(c)
+	} catch (response) {
+		if (response instanceof Response) return { ok: false, response }
+		throw response
+	}
+	const notFound = () =>
+		c.json(
+			{ error: 'address_not_found', message: 'Address not found.' },
+			404,
+			noStore(),
+		)
+	// The token's organization must be the one this origin names.
+	if (auth.orgId !== orgId) return { ok: false, response: notFound() }
+	const saved = await findSavedAddress(auth.db, auth.customerId, addressId)
+	if (!saved) return { ok: false, response: notFound() }
+	return {
+		ok: true,
+		place: {
+			formatted: saved.formatted,
+			line1: saved.line1,
+			city: saved.city,
+			state: saved.state ?? '',
+			postalCode: saved.postalCode ?? '',
+			country: saved.country ?? '',
+			lat: saved.lat,
+			lng: saved.lng,
+			placeId: '',
+		},
+		saved: {
+			id: saved.id,
+			label: saved.label,
+			notes: saved.notes,
+			unit: saved.unit,
+		},
+	}
+}
+
 // ---------------------------------------------------------------------------
 // POST /delivery/quote — geocode + coverage + signed quote token
 // ---------------------------------------------------------------------------
@@ -626,16 +691,25 @@ const quoteBodySchema = z
 		locationId: z.string().trim().min(1).max(100),
 		placeId: z.string().trim().min(1).max(512).optional(),
 		address: z.string().trim().min(3).max(300).optional(),
+		/**
+		 * A saved address of the signed-in guest (#113): quoted again against the
+		 * zones and fees as they are now, from the point a successful geocode saved.
+		 * Needs the customer token; another guest's id answers 404.
+		 */
+		addressId: z.string().trim().min(1).max(128).optional(),
 		unit: z.string().trim().max(50).optional(),
 		sessionToken: z.string().trim().min(1).max(100).optional(),
 		locale: z.string().max(20).optional(),
 		/** The items subtotal in major units, so the fee shown fits the cart. */
 		subtotal: z.number().min(0).max(1_000_000).optional(),
 	})
-	.refine((value) => Boolean(value.placeId || value.address), {
-		message: 'Choose an address',
-		path: ['address'],
-	})
+	.refine(
+		(value) => Boolean(value.placeId || value.address || value.addressId),
+		{
+			message: 'Choose an address',
+			path: ['address'],
+		},
+	)
 
 function unavailable(c: Context, reason: UnavailableReason) {
 	return c.json({ status: 'unavailable', reason }, 200, noStore())
@@ -655,10 +729,11 @@ publicDeliveryRoutes.post('/quote', async (c) => {
 		)
 	}
 	const body = parsed.data
-	const organization = await resolveOrderingOrganization(c, {
-		slug: body.slug,
-		host: body.host,
-	})
+	const organization = await resolveOrderingOrganization(
+		c,
+		{ slug: body.slug, host: body.host },
+		{ allowCustomerToken: true },
+	)
 	if ('error' in organization) return organization.error
 	const orgId = organization.organization.id
 
@@ -671,6 +746,31 @@ publicDeliveryRoutes.post('/quote', async (c) => {
 
 	const offered = deliveryOffered(location)
 	if (offered) return unavailable(c, offered)
+
+	// A saved address (#113): the guest's own row, re-quoted from the stored
+	// point. No geocoder is called; the zones, minimum and fee are the current
+	// ones, so an address outside every zone today answers `out_of_range`.
+	if (body.addressId) {
+		const resolved = await savedAddressPlace(c, orgId, body.addressId)
+		if (!resolved.ok) return resolved.response
+		const outcome = await evaluateDelivery(orgId, location, resolved.place, {
+			unit: body.unit || resolved.saved.unit || null,
+			subtotal: body.subtotal ?? null,
+			sign: true,
+		})
+		return c.json(
+			{
+				...outcome,
+				savedAddress: {
+					id: resolved.saved.id,
+					label: resolved.saved.label,
+					notes: resolved.saved.notes,
+				},
+			},
+			200,
+			noStore(),
+		)
+	}
 
 	const geocoded = await geocodeRequest(
 		orgId,
@@ -713,6 +813,8 @@ const locationsBodySchema = z
 				lng: z.number().min(-180).max(180),
 			})
 			.optional(),
+		/** A saved address of the signed-in guest (#113); needs the customer token. */
+		addressId: z.string().trim().min(1).max(128).optional(),
 		unit: z.string().trim().max(50).optional(),
 		sessionToken: z.string().trim().min(1).max(100).optional(),
 		locale: z.string().max(20).optional(),
@@ -720,7 +822,7 @@ const locationsBodySchema = z
 	})
 	.refine(
 		(value) =>
-			Boolean(value.placeId || value.address) ||
+			Boolean(value.placeId || value.address || value.addressId) ||
 			(value.purpose === 'pickup' && Boolean(value.point)),
 		{ message: 'Choose an address', path: ['address'] },
 	)
@@ -807,10 +909,11 @@ publicDeliveryRoutes.post('/locations', async (c) => {
 		)
 	}
 	const body = parsed.data
-	const organization = await resolveOrderingOrganization(c, {
-		slug: body.slug,
-		host: body.host,
-	})
+	const organization = await resolveOrderingOrganization(
+		c,
+		{ slug: body.slug, host: body.host },
+		{ allowCustomerToken: true },
+	)
 	if ('error' in organization) return organization.error
 	const orgId = organization.organization.id
 
@@ -840,7 +943,17 @@ publicDeliveryRoutes.post('/locations', async (c) => {
 	// One geocode per search, whatever the number of stores; a browser location
 	// needs none.
 	let point: { lat: number; lng: number; place: GeoAddress | null }
-	if (body.point && !body.placeId && !body.address) {
+	let savedUnit: string | null = null
+	if (body.addressId) {
+		const resolved = await savedAddressPlace(c, orgId, body.addressId)
+		if (!resolved.ok) return resolved.response
+		savedUnit = resolved.saved.unit
+		point = {
+			lat: resolved.place.lat,
+			lng: resolved.place.lng,
+			place: resolved.place,
+		}
+	} else if (body.point && !body.placeId && !body.address) {
 		point = { ...body.point, place: null }
 	} else {
 		const geocoded = await geocodeRequest(
@@ -882,7 +995,7 @@ publicDeliveryRoutes.post('/locations', async (c) => {
 		}
 		if (!point.place) continue
 		const outcome = await evaluateDelivery(orgId, location, point.place, {
-			unit: body.unit || null,
+			unit: body.unit || savedUnit || null,
 			subtotal: body.subtotal ?? null,
 			sign: true,
 			now,

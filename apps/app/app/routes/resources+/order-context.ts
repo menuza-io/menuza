@@ -16,6 +16,10 @@ import { type AlcoholContext } from '@repo/common/alcohol-rules'
 import { type CateringContext } from '@repo/common/catering'
 import { type DailyDishLimitsContext } from '@repo/common/daily-dish-limits'
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import {
+	GUEST_ORDERING_FLAG_KEYS,
+	type GuestOrderingFeatures,
+} from '@repo/common/guest-ordering'
 import { type LargeOrderAlertRule } from '@repo/common/operator-alerts'
 import {
 	foldQrOrderingFeatures,
@@ -142,6 +146,27 @@ export type OrderContextResponse = {
 	 * flag is off, which the region reads as off.
 	 */
 	catering?: CateringContext
+	/**
+	 * The guest-ordering switches (#119 test orders, #191 problem reports, #170
+	 * group orders). Only a literal `true` is on; the region reads anything else
+	 * as off.
+	 */
+	guestOrdering: GuestOrderingFeatures
+}
+
+async function readGuestOrderingFlags(
+	organizationId: string,
+): Promise<GuestOrderingFeatures> {
+	const [testOrders, problemReports, group] = await Promise.all([
+		getFeatureFlag(GUEST_ORDERING_FLAG_KEYS.testOrders, { organizationId }),
+		getFeatureFlag(GUEST_ORDERING_FLAG_KEYS.problemReports, { organizationId }),
+		getFeatureFlag(GUEST_ORDERING_FLAG_KEYS.group, { organizationId }),
+	])
+	return {
+		testOrders: testOrders === true,
+		problemReports: problemReports === true,
+		group: group === true,
+	}
 }
 
 async function readQrOrderingFeatures(
@@ -290,6 +315,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		slotLimits: await buildSlotLimitsContext(org.id),
 		dailyDishLimits: await buildDailyDishLimitsContext(org.id),
 		...(cateringContext ? { catering: cateringContext } : {}),
+		guestOrdering: await readGuestOrderingFlags(org.id),
 	}
 
 	return Response.json(response, {

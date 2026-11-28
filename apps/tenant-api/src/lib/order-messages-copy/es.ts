@@ -74,6 +74,9 @@ export const ES: OrderMessageCopy = {
 		arriving: 'Llega entre {from} y {to}',
 		arrivingAround: 'Llega hacia las {time}',
 		viewOrder: 'Ver tu pedido',
+		problemHint:
+			'¿Algún problema con tu pedido? Avisa al restaurante en la página de tu pedido.',
+		forPerson: 'Para {name}',
 		trackInApp: 'Sigue este pedido en la app',
 		storeAppStore: 'Descárgala en el App Store',
 		storePlayStore: 'Disponible en Google Play',
@@ -81,5 +84,7 @@ export const ES: OrderMessageCopy = {
 		pointsUnit: 'puntos',
 		starsUnit: 'estrellas',
 		footer: 'Este es un mensaje de servicio sobre tu pedido.',
+		testTag: 'Prueba',
+		testLabel: 'Pedido de prueba: no se cobró nada.',
 	},
 }

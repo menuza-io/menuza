@@ -48,6 +48,10 @@ msgstr "{amount} de descuento"
 msgid "{amount} per {unit}"
 msgstr "{amount} por {unit}"
 
+#: src/lib/ordering-labels.ts:372
+msgid "{amount} so far"
+msgstr "{amount} hasta ahora"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "{code} applied"
 msgstr "{code} aplicado"
@@ -86,6 +90,10 @@ msgstr "{count} min"
 #: src/lib/reservations/labels.ts:192
 msgid "{count} minutes late"
 msgstr "{count} minutos de retraso"
+
+#: src/lib/ordering-labels.ts:289
+msgid "{count} ordered"
+msgstr "{count} pedidos"
 
 #: src/lib/loyalty/labels.ts:300
 msgid "{credited} completed, {pending} pending, {points} earned"
@@ -310,6 +318,10 @@ msgstr "Una nota del restaurante"
 msgid "A payment for this tab is already on its way. Wait a moment, then check your tab."
 msgstr "Ya hay un pago en curso para esta cuenta. Espera un momento y revisa tu cuenta."
 
+#: src/lib/ordering-labels.ts:312
+msgid "A problem can't be reported on this order here."
+msgstr "Aquí no se puede avisar de un problema con este pedido."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "A team member is settling this tab. Please ask them for help."
 msgstr "Un miembro del equipo está cerrando esta cuenta. Pídele ayuda."
@@ -383,13 +395,25 @@ msgstr "Añade una dirección dentro de nuestra zona de entrega antes de realiza
 msgid "Add a note"
 msgstr "Añadir una nota"
 
+#: src/lib/ordering-labels.ts:292
+msgid "Add a photo (optional)"
+msgstr "Añade una foto (opcional)"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Add a tip"
 msgstr "Añadir propina"
 
+#: src/lib/guest-account-labels.ts:23
+msgid "Add an address"
+msgstr "Añadir una dirección"
+
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Add an email address first"
 msgstr "Añade primero una dirección de correo"
+
+#: src/lib/ordering-labels.ts:411
+msgid "Add at least one dish before you check out."
+msgstr "Añade al menos un plato antes de pagar."
 
 #: src/lib/gift-cards/labels.ts:73
 msgid "Add card"
@@ -408,6 +432,14 @@ msgstr "Añadir tarjeta regalo"
 msgid "Add more of the eligible items to use this code."
 msgstr "Añade más artículos válidos para usar este código."
 
+#: src/lib/ordering-labels.ts:382
+msgid "Add my cart to the group"
+msgstr "Añadir mi carrito al grupo"
+
+#: src/lib/guest-account-labels.ts:21
+msgid "Add one below, or save one while you check out for delivery."
+msgstr "Añade una abajo o guarda una al pagar un pedido a domicilio."
+
 #: src/lib/ordering-labels.ts:51
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add the required items to your order to use this code."
@@ -422,13 +454,39 @@ msgstr "Añade los artículos obligatorios a tu pedido para usar este código."
 msgid "Add to calendar"
 msgstr "Añadir al calendario"
 
+#: src/lib/guest-account-labels.ts:53
+msgid "Add to favorites"
+msgstr "Añadir a favoritos"
+
 #: src/lib/ordering-labels.ts:65
 msgid "Add to order"
 msgstr "Añadir al pedido"
 
+#: src/lib/ordering-labels.ts:360
+msgid "Add your own dishes. You only need a first name, no account."
+msgstr "Añade tus propios platos. Solo necesitas un nombre, sin cuenta."
+
+#: src/lib/ordering-labels.ts:387
+msgid "Added to the group order."
+msgstr "Añadido al pedido de grupo."
+
+#: src/lib/ordering-labels.ts:383
+msgid "Adding…"
+msgstr "Añadiendo…"
+
+#: src/lib/ordering-labels.ts:461
+msgid "Address saved"
+msgstr "Dirección guardada"
+
+#: src/lib/guest-account-labels.ts:28
 #: src/lib/ordering-labels.ts:154
 msgid "Address suggestions"
 msgstr "Sugerencias de direcciones"
+
+#: src/components/AccountShell.astro.ts:3
+#: src/lib/guest-account-labels.ts:15
+msgid "Addresses"
+msgstr "Direcciones"
 
 #: src/lib/gift-cards/labels.ts:84
 msgid "Adjusted"
@@ -497,6 +555,10 @@ msgstr "Importe a pagar ahora"
 msgid "Amount due: {amount}"
 msgstr "Importe a pagar: {amount}"
 
+#: src/lib/ordering-labels.ts:282
+msgid "An item is missing"
+msgstr "Falta un artículo"
+
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Analytics: help us count visits and see what works"
 msgstr "Analítica: nos ayuda a contar visitas y ver qué funciona"
@@ -513,6 +575,10 @@ msgstr "Preferencias alimentarias, salsa aparte, etc."
 #: src/lib/gift-cards/labels.ts:38
 msgid "Any location"
 msgstr "Cualquier local"
+
+#: src/lib/ordering-labels.ts:290
+msgid "Anything else we should know?"
+msgstr "¿Hay algo más que debamos saber?"
 
 #: src/lib/loyalty/labels.ts:326
 msgid "App"
@@ -564,6 +630,7 @@ msgstr "Aprobar {reward}"
 msgid "Approved: {reward}."
 msgstr "Aprobado: {reward}."
 
+#: src/lib/guest-account-labels.ts:25
 #: src/lib/ordering-labels.ts:163
 msgid "Apt, suite or floor"
 msgstr "Piso, apartamento o planta"
@@ -630,6 +697,10 @@ msgstr "Volver al menú"
 msgid "Back to shop"
 msgstr "Volver a la tienda"
 
+#: src/lib/ordering-labels.ts:425
+msgid "Back to the menu"
+msgstr "Volver al menú"
+
 #: src/lib/catering/labels.ts:91
 msgid "Balance later: {amount}"
 msgstr "Resto más adelante: {amount}"
@@ -653,6 +724,10 @@ msgstr "Antes de enviar tu pedido"
 #: src/lib/gift-cards/labels.ts:65
 msgid "Being prepared. Your card will be delivered within 2 hours."
 msgstr "En preparación. Tu tarjeta se entregará en un plazo de 2 horas."
+
+#: src/lib/ordering-labels.ts:348
+msgid "Between 15 minutes and 7 days from now. After it, nobody can add dishes."
+msgstr "Entre 15 minutos y 7 días desde ahora. Después, nadie puede añadir platos."
 
 #: src/components/BirthdayField.astro.ts:3
 msgid "Birthday (optional)"
@@ -700,6 +775,10 @@ msgstr "Condiciones de la reserva"
 msgid "Booking…"
 msgstr "Reservando…"
 
+#: src/lib/guest-account-labels.ts:59
+msgid "Browse the menu"
+msgstr "Ver el menú"
+
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Browse the shop"
@@ -745,6 +824,8 @@ msgstr "Llamar al {phone}"
 msgid "Call the restaurant"
 msgstr "Llamar al restaurante"
 
+#: src/lib/guest-account-labels.ts:37
+#: src/lib/ordering-labels.ts:296
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Cancel"
@@ -857,6 +938,10 @@ msgstr "Cambiar la hora o el número de personas"
 msgid "Check a card's balance"
 msgstr "Consultar el saldo de una tarjeta"
 
+#: src/lib/guest-account-labels.ts:26
+msgid "Check address"
+msgstr "Comprobar la dirección"
+
 #: src/lib/reservations/labels.ts:388
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
@@ -878,6 +963,10 @@ msgstr "Consultar saldo"
 #: src/lib/loyalty/labels.ts:216
 msgid "Check for requests"
 msgstr "Buscar solicitudes"
+
+#: src/lib/ordering-labels.ts:407
+msgid "Check out and pay"
+msgstr "Pagar y finalizar"
 
 #: src/lib/catering/labels.ts:65
 msgid "Check the choices for your dishes."
@@ -925,6 +1014,7 @@ msgstr "Comprobando tu código…"
 msgid "Checking your payment…"
 msgstr "Comprobando tu pago…"
 
+#: src/lib/guest-account-labels.ts:27
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Checking…"
 msgstr "Comprobando…"
@@ -995,9 +1085,17 @@ msgstr "Elige un mes y un día válidos."
 msgid "Choose a time"
 msgstr "Elige una hora"
 
+#: src/lib/ordering-labels.ts:433
+msgid "Choose a time at least 15 minutes from now."
+msgstr "Elige una hora al menos 15 minutos a partir de ahora."
+
 #: src/lib/ordering-labels.ts:214
 msgid "Choose a time to continue."
 msgstr "Elige una hora para continuar."
+
+#: src/lib/ordering-labels.ts:434
+msgid "Choose a time within 7 days."
+msgstr "Elige una hora dentro de 7 días."
 
 #: src/lib/gift-cards/labels.ts:47
 msgid "Choose an amount between {min} and {max}."
@@ -1023,13 +1121,25 @@ msgstr "Elige al menos 1 opción"
 msgid "Choose at least one dish."
 msgstr "Elige al menos un plato."
 
+#: src/lib/ordering-labels.ts:306
+msgid "Choose at least one item."
+msgstr "Elige al menos un artículo."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Choose at least one location."
 msgstr "Elige al menos una sede."
 
+#: src/lib/ordering-labels.ts:381
+msgid "Choose dishes from the menu"
+msgstr "Elegir platos del menú"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Choose every location that suits you."
 msgstr "Elige todas las sedes que te convengan."
+
+#: src/lib/ordering-labels.ts:409
+msgid "Choose pickup or delivery and the time at checkout. You pay for everything."
+msgstr "Elige recogida o entrega y la hora al pagar. Tú pagas todo."
 
 #: src/lib/catering/labels.ts:62
 msgid "Choose the event date and time."
@@ -1213,6 +1323,7 @@ msgstr "Copiar código"
 
 #: src/components/careers/ShareJob.astro.ts:3
 #: src/lib/loyalty/labels.ts:296
+#: src/lib/ordering-labels.ts:390
 msgid "Copy link"
 msgstr "Copiar enlace"
 
@@ -1232,6 +1343,10 @@ msgstr "Código de cupón"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Coupon code removed. Total {total}."
 msgstr "Código de cupón eliminado. Total {total}."
+
+#: src/lib/ordering-labels.ts:322
+msgid "Credit of {amount}: use code {code} on your next order before {date}."
+msgstr "Crédito de {amount}: usa el código {code} en tu próximo pedido antes del {date}."
 
 #: src/lib/loyalty/labels.ts:260
 msgid "Current tier: {tier}"
@@ -1293,6 +1408,10 @@ msgstr "Rechazado: {reward}."
 #: src/lib/ordering-labels.ts:94
 msgid "Decrease quantity"
 msgstr "Reducir cantidad"
+
+#: src/lib/ordering-labels.ts:452
+msgid "Default"
+msgstr "Predeterminada"
 
 #: src/lib/ordering-labels.ts:212
 msgid "Deliver here"
@@ -1430,6 +1549,10 @@ msgstr "Los descuentos no están disponibles ahora, así que quitamos tu código
 msgid "Discounts aren't available right now. Please review your total and place your order again."
 msgstr "Los descuentos no están disponibles ahora. Revisa el total y vuelve a hacer el pedido."
 
+#: src/lib/guest-account-labels.ts:51
+msgid "Dishes you love, saved to this account."
+msgstr "Los platos que te encantan, guardados en esta cuenta."
+
 #: src/lib/catering/labels.ts:48
 msgid "Dishes: {amount} before tax"
 msgstr "Platos: {amount} sin impuestos"
@@ -1455,6 +1578,7 @@ msgid "Do you provide plates, napkins and cutlery?"
 msgstr "¿Proporcionáis platos, servilletas y cubiertos?"
 
 #: src/lib/ordering-labels.ts:73
+#: src/lib/ordering-labels.ts:368
 msgid "Done"
 msgstr "Listo"
 
@@ -1502,6 +1626,10 @@ msgstr "Acumulado"
 msgid "Earning {multiplier}× points"
 msgstr "Ganando {multiplier}× puntos"
 
+#: src/lib/guest-account-labels.ts:33
+msgid "Edit"
+msgstr "Editar"
+
 #: src/lib/gift-cards/labels.ts:22
 msgid "Eid"
 msgstr "Eid"
@@ -1530,6 +1658,14 @@ msgstr "Envíame ofertas y novedades de {org} por correo"
 #: src/pages/menu/success.astro.ts:3
 msgid "Email me this receipt again"
 msgstr "Enviarme este recibo por correo otra vez"
+
+#: src/lib/ordering-labels.ts:417
+msgid "End the group order"
+msgstr "Terminar el pedido de grupo"
+
+#: src/lib/ordering-labels.ts:419
+msgid "End this group order for everyone? Every dish and name in it is deleted."
+msgstr "¿Terminar este pedido de grupo para todos? Se borran todos los platos y nombres."
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1696,6 +1832,11 @@ msgstr "Ver el menú"
 msgid "Explore our menu and add your favorite dishes."
 msgstr "Explora nuestro menú y añade tus platos favoritos."
 
+#: src/components/AccountShell.astro.ts:3
+#: src/lib/guest-account-labels.ts:50
+msgid "Favorites"
+msgstr "Favoritos"
+
 #: src/lib/reservations/labels.ts:394
 msgid "Fee"
 msgstr "Cargo"
@@ -1737,6 +1878,10 @@ msgstr "Terminar este pedido"
 #: src/lib/reservations/labels.ts:84
 msgid "First name"
 msgstr "Nombre"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "For {name}"
+msgstr "Para {name}"
 
 #: src/lib/reservations/labels.ts:128
 msgid "For a larger party, please contact the restaurant directly."
@@ -1794,6 +1939,10 @@ msgstr "Nombre completo"
 #: src/lib/careers/labels.ts:14
 msgid "Full time"
 msgstr "Tiempo completo"
+
+#: src/lib/ordering-labels.ts:458
+msgid "Gate code or delivery note"
+msgstr "Código de la puerta o nota de entrega"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Gate code, buzzer, or where to leave it"
@@ -1897,6 +2046,14 @@ msgstr "Combina bien con"
 msgid "Good to know"
 msgstr "Conviene saber"
 
+#: src/lib/ordering-labels.ts:340
+msgid "Group order"
+msgstr "Pedido de grupo"
+
+#: src/lib/ordering-labels.ts:373
+msgid "Group total"
+msgstr "Total del grupo"
+
 #: src/lib/reservations/labels.ts:469
 msgid "Guests"
 msgstr "Personas"
@@ -1930,6 +2087,18 @@ msgstr "Ocultar detalles"
 #: src/lib/loyalty/labels.ts:236
 msgid "History"
 msgstr "Historial"
+
+#: src/lib/ordering-labels.ts:456
+msgid "Home"
+msgstr "Casa"
+
+#: src/lib/ordering-labels.ts:455
+msgid "Home, Work…"
+msgstr "Casa, trabajo…"
+
+#: src/lib/ordering-labels.ts:365
+msgid "Host"
+msgstr "Anfitrión"
 
 #: src/lib/careers/labels.ts:31
 msgid "hour"
@@ -1971,6 +2140,14 @@ msgstr "Voy en camino"
 #: src/lib/reservations/labels.ts:191
 msgid "I am running late"
 msgstr "Voy a llegar tarde"
+
+#: src/lib/ordering-labels.ts:283
+msgid "I got the wrong item"
+msgstr "Recibí el artículo equivocado"
+
+#: src/lib/ordering-labels.ts:369
+msgid "I'm done"
+msgstr "Ya terminé"
 
 #: src/lib/reservations/labels.ts:310
 msgid "If a table opens up, we will contact you. You can cancel this request at any time."
@@ -2049,6 +2226,14 @@ msgstr "Está fuera de la zona de entrega de {location}. Aún puedes pedir para 
 msgid "Items"
 msgstr "Artículos"
 
+#: src/lib/ordering-labels.ts:363
+msgid "Join"
+msgstr "Unirme"
+
+#: src/lib/ordering-labels.ts:356
+msgid "Join {host}'s group order"
+msgstr "Únete al pedido de grupo de {host}"
+
 #: src/lib/loyalty/labels.ts:312
 msgid "Join and get {points} as a welcome bonus."
 msgstr "Únete y recibe {points} como bono de bienvenida."
@@ -2072,9 +2257,14 @@ msgstr "Unirse de nuevo a la lista de espera"
 msgid "Join the waitlist at {name} from anywhere. This page shows your place in line."
 msgstr "Únete a la lista de espera de {name} desde donde estés. Esta página muestra tu lugar en la fila."
 
+#: src/lib/ordering-labels.ts:364
 #: src/lib/reservations/labels.ts:221
 msgid "Joining…"
 msgstr "Uniéndote…"
+
+#: src/lib/ordering-labels.ts:293
+msgid "JPEG, PNG or WebP, up to 5 MB."
+msgstr "JPEG, PNG o WebP, hasta 5 MB."
 
 #: src/lib/reservations/labels.ts:280
 msgid "Keep my place"
@@ -2129,6 +2319,10 @@ msgstr "Cargo por cancelación tardía: {amount}."
 msgid "Latest time"
 msgstr "Hora más tardía"
 
+#: src/lib/ordering-labels.ts:412
+msgid "Leave the group order"
+msgstr "Salir del pedido de grupo"
+
 #: src/lib/reservations/labels.ts:277
 msgid "Leave the waitlist"
 msgstr "Salir de la lista de espera"
@@ -2136,6 +2330,10 @@ msgstr "Salir de la lista de espera"
 #: src/lib/reservations/labels.ts:278
 msgid "Leave the waitlist?"
 msgstr "¿Salir de la lista de espera?"
+
+#: src/lib/ordering-labels.ts:421
+msgid "Leave this group order? Your dishes are removed."
+msgstr "¿Salir de este pedido de grupo? Tus platos se eliminan."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Leave this table"
@@ -2172,6 +2370,7 @@ msgid "Limited menus you pre-order for a pickup window."
 msgstr "Menús limitados que reservas para recoger en un horario concreto."
 
 #: src/components/careers/ShareJob.astro.ts:3
+#: src/lib/ordering-labels.ts:391
 #: src/pages/events/[slug].astro.ts:3
 msgid "Link copied"
 msgstr "Enlace copiado"
@@ -2205,6 +2404,7 @@ msgstr "Cargando…"
 
 #: src/lib/catering/labels.ts:30
 #: src/lib/gift-cards/labels.ts:37
+#: src/lib/ordering-labels.ts:345
 #: src/lib/reservations/labels.ts:35
 msgid "Location"
 msgstr "Ubicación"
@@ -2213,6 +2413,10 @@ msgstr "Ubicación"
 #: src/pages/locations/index.astro.ts:3
 msgid "Locations"
 msgstr "Locales"
+
+#: src/lib/ordering-labels.ts:392
+msgid "Lock the order"
+msgstr "Bloquear el pedido"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
@@ -2226,9 +2430,21 @@ msgstr "Buscando mesas…"
 msgid "Looks like you haven't added any dishes to your order yet."
 msgstr "Parece que aún no has añadido ningún plato a tu pedido."
 
+#: src/lib/ordering-labels.ts:413
+msgid "Make a new link"
+msgstr "Crear un enlace nuevo"
+
+#: src/lib/ordering-labels.ts:415
+msgid "Make a new link? The old link stops working. People already in the group stay in it."
+msgstr "¿Crear un enlace nuevo? El enlace anterior dejará de funcionar. Quienes ya están en el grupo siguen en él."
+
 #: src/lib/reservations/labels.ts:156
 msgid "Make another reservation"
 msgstr "Hacer otra reserva"
+
+#: src/lib/guest-account-labels.ts:36
+msgid "Make default"
+msgstr "Hacer predeterminada"
 
 #: src/lib/reservations/labels.ts:209
 msgid "Manage"
@@ -2312,10 +2528,18 @@ msgstr "Lo más pedido"
 msgid "Msg and data rates may apply. Reply STOP to opt out."
 msgstr "Pueden aplicarse tarifas de mensajes y datos. Responde STOP para darte de baja."
 
+#: src/lib/ordering-labels.ts:284
+msgid "My order was late"
+msgstr "Mi pedido llegó tarde"
+
 #: src/lib/reservations/labels.ts:219
 #: src/pages/profile.astro.ts:3
 msgid "Name"
 msgstr "Nombre"
+
+#: src/lib/ordering-labels.ts:454
+msgid "Name this address"
+msgstr "Ponle nombre a esta dirección"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "name@example.com"
@@ -2345,6 +2569,7 @@ msgstr "Error de red. Inténtalo de nuevo."
 msgid "Never miss a drop"
 msgstr "No te pierdas ningún lanzamiento"
 
+#: src/lib/guest-account-labels.ts:69
 #: src/pages/menu.astro.ts:3
 msgid "Next"
 msgstr "Siguiente"
@@ -2369,6 +2594,10 @@ msgstr "Aún no hay tarjetas guardadas."
 msgid "No dishes match"
 msgstr "Ningún plato coincide"
 
+#: src/lib/ordering-labels.ts:371
+msgid "No dishes yet"
+msgstr "Aún no hay platos"
+
 #: src/pages/drops.astro.ts:3
 msgid "No drops right now."
 msgstr "No hay lanzamientos ahora mismo."
@@ -2377,6 +2606,11 @@ msgstr "No hay lanzamientos ahora mismo."
 msgid "No experiences right now"
 msgstr "No hay experiencias por ahora"
 
+#: src/lib/guest-account-labels.ts:57
+msgid "No favorites yet."
+msgstr "Aún no hay favoritos."
+
+#: src/lib/ordering-labels.ts:402
 #: src/pages/drop/[slug].astro.ts:3
 msgid "No longer available"
 msgstr "Ya no disponible"
@@ -2430,6 +2664,10 @@ msgstr "Sin recompensa"
 #: src/lib/loyalty/labels.ts:136
 msgid "No rewards are available yet."
 msgstr "Aún no hay recompensas disponibles."
+
+#: src/lib/guest-account-labels.ts:19
+msgid "No saved addresses yet."
+msgstr "Aún no hay direcciones guardadas."
 
 #: src/pages/profile.astro.ts:3
 msgid "No saved payment methods yet."
@@ -2492,6 +2730,10 @@ msgstr "No disponible para este pedido"
 msgid "Not available right now"
 msgstr "No disponible ahora"
 
+#: src/lib/ordering-labels.ts:370
+msgid "Not done yet"
+msgstr "Aún no termina"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Not enough left today"
 msgstr "Hoy no queda suficiente"
@@ -2515,6 +2757,10 @@ msgstr "No hay nada pendiente de pago en este pedido."
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Nothing on your tab yet. Add dishes and send them to the kitchen."
 msgstr "Todavía no hay nada en tu cuenta. Añade platos y envíalos a cocina."
+
+#: src/lib/ordering-labels.ts:264
+msgid "Nothing was charged. The restaurant can see it on its kitchen screens."
+msgstr "No se ha cobrado nada. El restaurante lo ve en las pantallas de su cocina."
 
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
@@ -2646,6 +2892,10 @@ msgstr "Hoy solo quedan {count} de {name}. Vuelve al menú para reducir la canti
 msgid "Only a few left"
 msgstr "Quedan pocos"
 
+#: src/lib/ordering-labels.ts:442
+msgid "Only the host can do that."
+msgstr "Eso solo lo puede hacer el anfitrión."
+
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
 msgstr "Abierto para pedidos"
@@ -2671,6 +2921,10 @@ msgstr "Abre el enlace de tu confirmación para gestionar una reserva."
 #: src/pages/menu.astro.ts:3
 msgid "Open until {time}"
 msgstr "Abierto hasta las {time}"
+
+#: src/lib/ordering-labels.ts:444
+msgid "Open your group order"
+msgstr "Abrir tu pedido de grupo"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Opening secure payment…"
@@ -2705,9 +2959,21 @@ msgstr "Pedir"
 msgid "Order {number}"
 msgstr "Pedido {number}"
 
+#: src/lib/ordering-labels.ts:397
+msgid "Order {number}: {status}"
+msgstr "Pedido {number}: {status}"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Order again"
 msgstr "Pedir de nuevo"
+
+#: src/lib/ordering-labels.ts:346
+msgid "Order by (optional)"
+msgstr "Pedir antes de (opcional)"
+
+#: src/lib/ordering-labels.ts:374
+msgid "Order by {time}"
+msgstr "Pedir antes de {time}"
 
 #: src/lib/catering/labels.ts:45
 msgid "Order by {when}"
@@ -2776,6 +3042,10 @@ msgstr "Tipo de pedido"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Order window"
 msgstr "Ventana de pedidos"
+
+#: src/lib/ordering-labels.ts:325
+msgid "Order with your credit"
+msgstr "Pide con tu crédito"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Ordering at the table is not available right now."
@@ -3068,6 +3338,10 @@ msgstr "Número de teléfono"
 msgid "Phone number cannot be changed at this time."
 msgstr "El número de teléfono no se puede cambiar ahora."
 
+#: src/lib/ordering-labels.ts:330
+msgid "Photo attached"
+msgstr "Foto adjunta"
+
 #: src/lib/reservations/labels.ts:480
 msgid "Photo of {name}"
 msgstr "Foto de {name}"
@@ -3263,6 +3537,7 @@ msgstr "Pago anticipado"
 msgid "Preview · ordering opens {when}"
 msgstr "Vista previa · los pedidos abren {when}"
 
+#: src/lib/guest-account-labels.ts:68
 #: src/pages/menu.astro.ts:3
 msgid "Previous"
 msgstr "Anterior"
@@ -3408,6 +3683,7 @@ msgstr "Reembolso en camino"
 msgid "Refunded"
 msgstr "Reembolsado"
 
+#: src/lib/ordering-labels.ts:318
 #: src/pages/menu/success.astro.ts:3
 msgid "Refunded {amount}"
 msgstr "Reembolsado: {amount}"
@@ -3417,8 +3693,10 @@ msgid "Reject non-essential"
 msgstr "Rechazar las no esenciales"
 
 #: src/lib/gift-cards/labels.ts:89
+#: src/lib/guest-account-labels.ts:34
 #: src/lib/ordering-labels.ts:95
 #: src/lib/ordering-labels.ts:118
+#: src/lib/ordering-labels.ts:388
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Remove"
 msgstr "Quitar"
@@ -3427,6 +3705,22 @@ msgstr "Quitar"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Remove code {code}"
 msgstr "Quitar el código {code}"
+
+#: src/lib/guest-account-labels.ts:54
+msgid "Remove from favorites"
+msgstr "Quitar de favoritos"
+
+#: src/lib/guest-account-labels.ts:35
+msgid "Remove this address?"
+msgstr "¿Quitar esta dirección?"
+
+#: src/lib/ordering-labels.ts:406
+msgid "Remove unavailable dishes"
+msgstr "Quitar platos no disponibles"
+
+#: src/lib/ordering-labels.ts:276
+msgid "Report a problem"
+msgstr "Avisar de un problema"
 
 #: src/lib/catering/labels.ts:54
 msgid "Request a quote"
@@ -3535,6 +3829,11 @@ msgstr "Precio de oferta"
 msgid "Save"
 msgstr "Guardar"
 
+#: src/lib/ordering-labels.ts:459
+msgid "Save address"
+msgstr "Guardar dirección"
+
+#: src/lib/guest-account-labels.ts:38
 #: src/lib/reservations/labels.ts:180
 msgid "Save changes"
 msgstr "Guardar cambios"
@@ -3547,10 +3846,22 @@ msgstr "Guardar cambios"
 msgid "Save my choices"
 msgstr "Guardar mis opciones"
 
+#: src/lib/ordering-labels.ts:453
+msgid "Save this address"
+msgstr "Guardar esta dirección"
+
+#: src/lib/ordering-labels.ts:451
+msgid "Saved addresses"
+msgstr "Direcciones guardadas"
+
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "Guardando..."
+
+#: src/lib/ordering-labels.ts:460
+msgid "Saving…"
+msgstr "Guardando…"
 
 #: src/components/AppInviteSection.astro.ts:3
 msgid "Scan to get the app"
@@ -3568,6 +3879,7 @@ msgstr "Programar"
 msgid "Scheduled orders only"
 msgstr "Solo pedidos programados"
 
+#: src/lib/guest-account-labels.ts:24
 #: src/lib/ordering-labels.ts:152
 msgid "Search street address"
 msgstr "Busca la dirección"
@@ -3621,6 +3933,10 @@ msgstr "Enviar solicitud"
 msgid "Send Code"
 msgstr "Enviar código"
 
+#: src/lib/ordering-labels.ts:294
+msgid "Send report"
+msgstr "Enviar aviso"
+
 #: src/lib/reservations/labels.ts:139
 msgid "Send request"
 msgstr "Enviar solicitud"
@@ -3640,6 +3956,7 @@ msgid "Sending..."
 msgstr "Enviando..."
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/ordering-labels.ts:295
 #: src/lib/reservations/labels.ts:296
 msgid "Sending…"
 msgstr "Enviando…"
@@ -3662,6 +3979,10 @@ msgstr "Tarifa de servicio"
 msgid "Share"
 msgstr "Compartir"
 
+#: src/lib/ordering-labels.ts:343
+msgid "Share a link. Everyone adds their own dishes, and you pay once."
+msgstr "Comparte un enlace. Cada uno añade sus platos y tú pagas una sola vez."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Share a photo from your order"
 msgstr "Comparte una foto de tu pedido"
@@ -3674,6 +3995,10 @@ msgstr "Comparte una foto de tu {dish}"
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
 msgstr "Compartir este empleo"
+
+#: src/lib/ordering-labels.ts:389
+msgid "Share this link"
+msgstr "Comparte este enlace"
 
 #: src/lib/loyalty/labels.ts:288
 msgid "Share your link. When a friend completes their first order, you earn {points}."
@@ -3717,10 +4042,17 @@ msgstr "Mostrar tu código no gasta puntos. Tú apruebas cada recompensa."
 
 #: src/components/SiteHeader.astro.ts:3
 #: src/lib/gift-cards/labels.ts:79
+#: src/lib/guest-account-labels.ts:42
+#: src/lib/guest-account-labels.ts:67
 #: src/lib/loyalty/labels.ts:71
+#: src/lib/ordering-labels.ts:355
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "Iniciar sesión"
+
+#: src/lib/ordering-labels.ts:468
+msgid "Sign in again to use your saved addresses."
+msgstr "Vuelve a iniciar sesión para usar tus direcciones guardadas."
 
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Sign in to hear about offers"
@@ -3730,9 +4062,25 @@ msgstr "Inicia sesión para recibir ofertas"
 msgid "Sign in to save gift cards to your account."
 msgstr "Inicia sesión para guardar tarjetas regalo en tu cuenta."
 
+#: src/lib/guest-account-labels.ts:55
+msgid "Sign in to save your favorite dishes."
+msgstr "Inicia sesión para guardar tus platos favoritos."
+
+#: src/lib/guest-account-labels.ts:66
+msgid "Sign in to see your favorites."
+msgstr "Inicia sesión para ver tus favoritos."
+
 #: src/lib/loyalty/labels.ts:67
 msgid "Sign in to see your rewards"
 msgstr "Inicia sesión para ver tus recompensas"
+
+#: src/lib/guest-account-labels.ts:41
+msgid "Sign in to see your saved addresses."
+msgstr "Inicia sesión para ver tus direcciones guardadas."
+
+#: src/lib/ordering-labels.ts:354
+msgid "Sign in to start a group order."
+msgstr "Inicia sesión para empezar un pedido de grupo."
 
 #: src/lib/ordering-labels.ts:41
 #: src/pages/menu/checkout.astro.ts:3
@@ -3747,6 +4095,7 @@ msgstr "Inicia sesión con tu número de teléfono para ver tus puntos y usar tu
 msgid "Sign up"
 msgstr "Suscribirse"
 
+#: src/lib/guest-account-labels.ts:56
 #: src/lib/ordering-labels.ts:66
 #: src/lib/reservations/labels.ts:471
 msgid "Sold out"
@@ -3755,6 +4104,10 @@ msgstr "Agotado"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Sold out for today"
 msgstr "Agotado por hoy"
+
+#: src/lib/ordering-labels.ts:404
+msgid "Some dishes are no longer available. Remove them before you check out."
+msgstr "Algunos platos ya no están disponibles. Quítalos antes de pagar."
 
 #: src/pages/menu.astro.ts:3
 msgid "Some items are no longer available and were left out:"
@@ -3796,6 +4149,10 @@ msgstr "Algunos precios cambiaron. Tu carrito muestra los precios actuales."
 msgid "Someone in my party has an allergy (add details in the notes)"
 msgstr "Alguien de mi grupo tiene una alergia (añade los detalles en las notas)"
 
+#: src/lib/ordering-labels.ts:286
+msgid "Something else"
+msgstr "Otra cosa"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Something in your order isn't available in that amount today. Please go back to the menu to change your order."
@@ -3811,6 +4168,7 @@ msgstr "Algo salió mal."
 #: src/lib/catering/labels.ts:83
 #: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:345
+#: src/lib/ordering-labels.ts:439
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "Algo salió mal. Inténtalo de nuevo."
@@ -3818,6 +4176,10 @@ msgstr "Algo salió mal. Inténtalo de nuevo."
 #: src/components/SitePopup.astro.ts:3
 msgid "Something went wrong. Try again."
 msgstr "Algo salió mal. Inténtalo de nuevo."
+
+#: src/lib/ordering-labels.ts:275
+msgid "Something wrong with your order?"
+msgstr "¿Algún problema con tu pedido?"
 
 #: src/pages/menu.astro.ts:3
 msgid "Special instructions"
@@ -3831,6 +4193,14 @@ msgstr "Instrucciones especiales"
 #: src/lib/reservations/labels.ts:201
 msgid "Special requests"
 msgstr "Peticiones especiales"
+
+#: src/lib/ordering-labels.ts:351
+msgid "Spend limit for the group (optional)"
+msgstr "Límite de gasto del grupo (opcional)"
+
+#: src/lib/ordering-labels.ts:350
+msgid "Spend limit per person (optional)"
+msgstr "Límite de gasto por persona (opcional)"
 
 #: src/lib/loyalty/labels.ts:220
 msgid "Spends {points} for {amount} off"
@@ -3860,6 +4230,18 @@ msgstr "estrella"
 #: src/pages/menu/success.astro.ts:3
 msgid "stars"
 msgstr "estrellas"
+
+#: src/lib/ordering-labels.ts:341
+msgid "Start a group order"
+msgstr "Empezar un pedido de grupo"
+
+#: src/lib/ordering-labels.ts:352
+msgid "Start the group order"
+msgstr "Empezar el pedido de grupo"
+
+#: src/lib/ordering-labels.ts:353
+msgid "Starting…"
+msgstr "Empezando…"
 
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
@@ -3915,6 +4297,10 @@ msgstr "Te llevamos a la página de pago segura…"
 msgid "Tap again to leave this table"
 msgstr "Toca de nuevo para salir de esta mesa"
 
+#: src/lib/guest-account-labels.ts:58
+msgid "Tap the heart on a dish to keep it here."
+msgstr "Toca el corazón de un plato para guardarlo aquí."
+
 #: src/lib/reservations/labels.ts:453
 msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "Menús degustación, mesas del chef y eventos especiales en {name}."
@@ -3931,6 +4317,10 @@ msgstr "Impuesto"
 msgid "Tax, tips and delivery fees do not count toward earning."
 msgstr "Los impuestos, las propinas y los gastos de envío no cuentan para acumular."
 
+#: src/lib/ordering-labels.ts:278
+msgid "Tell the restaurant what went wrong. They answer here, and by email or text if you gave them your details."
+msgstr "Cuéntale al restaurante qué salió mal. Responderá aquí y, si le diste tus datos, por correo o SMS."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Tell us a little about yourself. It takes a couple of minutes."
 msgstr "Cuéntanos un poco sobre ti. Solo lleva un par de minutos."
@@ -3946,6 +4336,14 @@ msgstr "Temporal"
 #: src/components/LegalLinks.astro.ts:3
 msgid "Terms of service"
 msgstr "Términos del servicio"
+
+#: src/lib/ordering-labels.ts:262
+msgid "Test order"
+msgstr "Pedido de prueba"
+
+#: src/components/ordering/TestOrderBanner.astro.ts:3
+msgid "Test order: you won't be charged"
+msgstr "Pedido de prueba: no se te cobrará"
 
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Text"
@@ -4011,6 +4409,10 @@ msgstr "Gracias. El restaurante ha recibido tu pago."
 msgid "Thank you. We received your request and will send you a quote by email."
 msgstr "Gracias. Hemos recibido tu solicitud y te enviaremos un presupuesto por correo electrónico."
 
+#: src/lib/ordering-labels.ts:298
+msgid "Thank you. We sent your report. The restaurant's answer will show here."
+msgstr "Gracias. Hemos enviado tu aviso. La respuesta del restaurante aparecerá aquí."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
 msgstr "Gracias. Tu solicitud se ha enviado. Si encaja, se pondrán en contacto contigo."
@@ -4045,6 +4447,10 @@ msgstr "No se pudo aplicar ese código de cupón."
 msgid "That date is too far ahead to book online."
 msgstr "Esa fecha queda demasiado lejos para reservar en línea."
 
+#: src/lib/ordering-labels.ts:435
+msgid "That dish cannot be added to a group order."
+msgstr "Ese plato no se puede añadir a un pedido de grupo."
+
 #: src/lib/catering/labels.ts:77
 msgid "That is more guests than we can cater online. Please call us."
 msgstr "Son más invitados de los que podemos atender en línea. Llámanos."
@@ -4052,6 +4458,10 @@ msgstr "Son más invitados de los que podemos atender en línea. Llámanos."
 #: src/lib/catering/labels.ts:80
 msgid "That is not available here. Choose pickup or delivery."
 msgstr "Eso no está disponible aquí. Elige recogida o entrega."
+
+#: src/lib/ordering-labels.ts:428
+msgid "That is over the spend limit for this group order."
+msgstr "Eso supera el límite de gasto de este pedido de grupo."
 
 #: src/lib/catering/labels.ts:67
 msgid "That is too far ahead. Please choose an earlier date."
@@ -4068,6 +4478,14 @@ msgstr "Ese número de personas no está disponible en línea."
 #: src/lib/reservations/labels.ts:518
 msgid "That party size needs a request. Please use the large-party option."
 msgstr "Ese número de personas requiere una solicitud. Usa la opción de grupo grande."
+
+#: src/lib/ordering-labels.ts:305
+msgid "That photo is bigger than 5 MB."
+msgstr "Esa foto pesa más de 5 MB."
+
+#: src/lib/ordering-labels.ts:304
+msgid "That photo is not a JPEG, PNG or WebP picture."
+msgstr "Esa foto no es una imagen JPEG, PNG o WebP."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That pickup slot just filled up. Please choose a different time."
@@ -4097,6 +4515,10 @@ msgstr "Esa recompensa ya no se aplica, así que se ha quitado."
 msgid "That reward would cover the whole tab, so it cannot be used when paying from your phone. Pick another reward or pay without one."
 msgstr "Esa recompensa cubriría toda la cuenta, así que no se puede usar al pagar desde el móvil. Elige otra recompensa o paga sin ninguna."
 
+#: src/lib/ordering-labels.ts:260
+msgid "That test code is not valid any more, so this is no longer a test. You can still place a real order."
+msgstr "Ese código de prueba ya no es válido, así que esto ya no es una prueba. Aún puedes hacer un pedido real."
+
 #: src/lib/reservations/labels.ts:487
 msgid "That time was just taken. Please choose another time."
 msgstr "Esa hora se acaba de ocupar. Elige otra."
@@ -4112,6 +4534,10 @@ msgstr "Esa propina es demasiado alta. Introduce un importe menor."
 msgid "The card does not have enough balance."
 msgstr "La tarjeta no tiene saldo suficiente."
 
+#: src/lib/ordering-labels.ts:395
+msgid "The deadline has passed. Nobody can add dishes."
+msgstr "Ha pasado el plazo. Nadie puede añadir platos."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "The delivery fee changed. Please review your total and place your order again."
 msgstr "La tarifa de envío ha cambiado. Revisa el total y vuelve a hacer el pedido."
@@ -4120,13 +4546,33 @@ msgstr "La tarifa de envío ha cambiado. Revisa el total y vuelve a hacer el ped
 msgid "The fee goes down as your order grows."
 msgstr "La tarifa baja a medida que crece tu pedido."
 
+#: src/lib/ordering-labels.ts:285
+msgid "The food was not right"
+msgstr "La comida no estaba bien"
+
 #: src/lib/gift-cards/labels.ts:95
 msgid "The gift card amount changed. Review the new total."
 msgstr "El importe de la tarjeta regalo cambió. Revisa el nuevo total."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "The group order changed. Go back to the group order, review it and check out again."
+msgstr "El pedido de grupo cambió. Vuelve al pedido de grupo, revísalo y paga de nuevo."
+
+#: src/lib/ordering-labels.ts:437
+msgid "The group order changed. Review it and check out again."
+msgstr "El pedido de grupo cambió. Revísalo y paga de nuevo."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The hold on your order was released. Please place a new order."
 msgstr "La reserva de tu pedido se liberó. Realiza un nuevo pedido."
+
+#: src/lib/ordering-labels.ts:394
+msgid "The host locked this order. Nobody can add dishes."
+msgstr "El anfitrión bloqueó este pedido. Nadie puede añadir platos."
+
+#: src/lib/ordering-labels.ts:396
+msgid "The host placed this order."
+msgstr "El anfitrión hizo este pedido."
 
 #: src/pages/menu.astro.ts:3
 msgid "The items from your call are no longer available. You can still order from the menu."
@@ -4200,6 +4646,10 @@ msgstr "El pago no se ha completado"
 msgid "The program is paused right now."
 msgstr "El programa está en pausa ahora."
 
+#: src/lib/ordering-labels.ts:329
+msgid "The restaurant"
+msgstr "El restaurante"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The restaurant accepted your order."
 msgstr "El restaurante aceptó tu pedido."
@@ -4207,6 +4657,10 @@ msgstr "El restaurante aceptó tu pedido."
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The restaurant asks for this once per tab."
 msgstr "El restaurante lo pide una vez por cuenta."
+
+#: src/lib/ordering-labels.ts:327
+msgid "The restaurant closed this report."
+msgstr "El restaurante cerró este aviso."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "The restaurant could not take your order"
@@ -4219,6 +4673,14 @@ msgstr "El restaurante está cerrado en esta fecha."
 #: src/lib/reservations/labels.ts:521
 msgid "The restaurant is not taking requests for that date."
 msgstr "El restaurante no acepta solicitudes para esa fecha."
+
+#: src/lib/ordering-labels.ts:319
+msgid "The restaurant refunded the items."
+msgstr "El restaurante reembolsó los artículos."
+
+#: src/lib/ordering-labels.ts:326
+msgid "The restaurant replied."
+msgstr "El restaurante respondió."
 
 #: src/lib/reservations/labels.ts:137
 msgid "The restaurant reviews large-party requests and replies to confirm."
@@ -4251,6 +4713,10 @@ msgstr "Se agotó el tiempo para pagar y la mesa se ha liberado."
 #: src/lib/reservations/labels.ts:414
 msgid "The time to pay ran out, or the booking was cancelled, and the table was released. You can book again."
 msgstr "Se agotó el tiempo para pagar o la reserva se canceló, y la mesa se ha liberado. Puedes reservar de nuevo."
+
+#: src/lib/ordering-labels.ts:310
+msgid "The time to report a problem with this order has passed. Call the restaurant if you need help."
+msgstr "Ha pasado el plazo para avisar de un problema con este pedido. Llama al restaurante si necesitas ayuda."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The total is now {amount}. Check it, then pay to continue."
@@ -4290,6 +4756,10 @@ msgstr "Hoy no queda suficiente {name}. Vuelve al menú para modificar tu pedido
 #: src/pages/menu/checkout.astro.ts:3
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "Hoy no queda suficiente de: {names}. Vuelve al menú para modificar tu pedido."
+
+#: src/lib/ordering-labels.ts:467
+msgid "This address is no longer saved."
+msgstr "Esta dirección ya no está guardada."
 
 #: src/lib/catering/labels.ts:119
 msgid "This balance was cancelled. Contact the restaurant if you have a question."
@@ -4420,6 +4890,22 @@ msgstr "Este formulario no está disponible actualmente."
 msgid "This group is too large to order from the table. Please ask a member of the team."
 msgstr "Este grupo es demasiado grande para pedir desde la mesa. Pregunta a alguien del equipo."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This group order can't be placed any more. Go back to the group order to see where it stands."
+msgstr "Este pedido de grupo ya no se puede hacer. Vuelve al pedido de grupo para ver cómo está."
+
+#: src/lib/ordering-labels.ts:431
+msgid "This group order has the most dishes allowed."
+msgstr "Este pedido de grupo tiene el máximo de platos permitido."
+
+#: src/lib/ordering-labels.ts:430
+msgid "This group order is full."
+msgstr "Este pedido de grupo está completo."
+
+#: src/lib/ordering-labels.ts:423
+msgid "This group order is no longer available. It may have ended, or the link is old."
+msgstr "Este pedido de grupo ya no está disponible. Puede que haya terminado o que el enlace sea antiguo."
+
 #: src/lib/reservations/labels.ts:427
 msgid "This has already been paid."
 msgstr "Esto ya se ha pagado."
@@ -4460,6 +4946,10 @@ msgstr "Este enlace ya no está disponible"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
 msgstr "Esta ubicación no está disponible para pedidos."
+
+#: src/lib/ordering-labels.ts:314
+msgid "This order already has the most reports allowed. Call the restaurant if you need help."
+msgstr "Este pedido ya tiene el máximo de avisos permitidos. Llama al restaurante si necesitas ayuda."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This order can't be cancelled here."
@@ -4557,6 +5047,10 @@ msgstr "Este recibo solo está disponible en el dispositivo utilizado para reali
 msgid "This restaurant can't take online orders right now. Please try again later."
 msgstr "Este restaurante no puede recibir pedidos en línea ahora mismo. Inténtalo de nuevo más tarde."
 
+#: src/lib/ordering-labels.ts:426
+msgid "This restaurant does not take group orders."
+msgstr "Este restaurante no acepta pedidos de grupo."
+
 #: src/lib/loyalty/labels.ts:190
 msgid "This reward covers your whole order. Choose to pay when you receive it."
 msgstr "Esta recompensa cubre todo tu pedido. Elige pagar al recibirlo."
@@ -4564,6 +5058,10 @@ msgstr "Esta recompensa cubre todo tu pedido. Elige pagar al recibirlo."
 #: src/lib/loyalty/labels.ts:340
 msgid "This reward is no longer available."
 msgstr "Esta recompensa ya no está disponible."
+
+#: src/components/ordering/TestOrderBanner.astro.ts:3
+msgid "This runs the whole order path for the restaurant. Nothing is paid, and it does not count as a sale."
+msgstr "Esto prueba todo el recorrido del pedido para el restaurante. No se paga nada y no cuenta como una venta."
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
@@ -4644,9 +5142,14 @@ msgstr "Demasiados intentos. Inténtalo de nuevo más tarde."
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Demasiados intentos. Espera un momento e inténtalo de nuevo."
 
+#: src/lib/ordering-labels.ts:308
 #: src/pages/menu/success.astro.ts:3
 msgid "Too many attempts. Try again in a moment."
 msgstr "Demasiados intentos. Inténtalo de nuevo en un momento."
+
+#: src/lib/ordering-labels.ts:440
+msgid "Too many requests. Try again in a moment."
+msgstr "Demasiadas solicitudes. Inténtalo de nuevo en un momento."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Too many requests. Try again later."
@@ -4684,8 +5187,11 @@ msgid "Track this order in the app"
 msgstr "Sigue este pedido en la app"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/guest-account-labels.ts:40
+#: src/lib/guest-account-labels.ts:65
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:162
+#: src/lib/ordering-labels.ts:441
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
@@ -4721,6 +5227,18 @@ msgstr "No se pudo enviar el formulario. Inténtalo de nuevo."
 msgid "Under review"
 msgstr "En revisión"
 
+#: src/lib/ordering-labels.ts:393
+msgid "Unlock"
+msgstr "Desbloquear"
+
+#: src/lib/ordering-labels.ts:375
+msgid "Up to {amount} each"
+msgstr "Hasta {amount} cada uno"
+
+#: src/lib/ordering-labels.ts:378
+msgid "Up to {amount} in all"
+msgstr "Hasta {amount} en total"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "up to {amount} off"
 msgstr "hasta {amount} de descuento"
@@ -4736,6 +5254,10 @@ msgstr "Hasta {amount} de descuento por pedido"
 #: src/lib/ordering-labels.ts:78
 msgid "Up to {count}"
 msgstr "Hasta {count}"
+
+#: src/lib/ordering-labels.ts:291
+msgid "Up to 1,000 characters."
+msgstr "Hasta 1000 caracteres."
 
 #: src/components/blocks/EventsBlock.astro.ts:3
 #: src/pages/events/[slug].astro.ts:3
@@ -4874,6 +5396,10 @@ msgstr "Ver pedido"
 msgid "View tab"
 msgstr "Ver cuenta"
 
+#: src/lib/ordering-labels.ts:401
+msgid "View the order"
+msgstr "Ver el pedido"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "View your receipt"
 msgstr "Ver tu recibo"
@@ -4899,6 +5425,7 @@ msgstr "Esperando el pago"
 msgid "Waiting for payment confirmation"
 msgstr "Esperando la confirmación del pago"
 
+#: src/lib/ordering-labels.ts:317
 #: src/pages/profile/orders.astro.ts:3
 msgid "Waiting for the restaurant"
 msgstr "Esperando al restaurante"
@@ -4918,6 +5445,10 @@ msgstr "¿Quieres ser el primero la próxima vez?"
 #: src/lib/reservations/labels.ts:236
 msgid "Want to dine today? Join the waitlist and we will tell you when a table is ready."
 msgstr "¿Quieres comer hoy? Únete a la lista de espera y te avisaremos cuando haya una mesa lista."
+
+#: src/lib/ordering-labels.ts:300
+msgid "We added this to your open report."
+msgstr "Lo hemos añadido a tu aviso abierto."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We applied a better discount instead of this code."
@@ -5030,6 +5561,10 @@ msgstr "No pudimos confirmar tu total. Inténtalo de nuevo."
 msgid "We couldn't find that address"
 msgstr "No encontramos esa dirección"
 
+#: src/lib/guest-account-labels.ts:32
+msgid "We couldn't find that address."
+msgstr "No pudimos encontrar esa dirección."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't find this order"
 msgstr "No pudimos encontrar este pedido"
@@ -5041,6 +5576,14 @@ msgstr "No pudimos obtener tu ubicación. Introduce una dirección para ordenar 
 #: src/lib/ordering-labels.ts:161
 msgid "We couldn't load address suggestions."
 msgstr "No pudimos cargar las sugerencias de direcciones."
+
+#: src/lib/guest-account-labels.ts:39
+msgid "We couldn't load your addresses."
+msgstr "No pudimos cargar tus direcciones."
+
+#: src/lib/guest-account-labels.ts:64
+msgid "We couldn't load your favorites."
+msgstr "No pudimos cargar tus favoritos."
 
 #: src/pages/profile/orders.astro.ts:3
 msgid "We couldn't load your orders."
@@ -5066,6 +5609,10 @@ msgstr "No pudimos restaurar tu carrito."
 msgid "We couldn't save that. Try again."
 msgstr "No pudimos guardarlo. Inténtalo de nuevo."
 
+#: src/lib/ordering-labels.ts:465
+msgid "We couldn't save this address. Try again."
+msgstr "No pudimos guardar esta dirección. Inténtalo de nuevo."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't send that. Please try again later."
 msgstr "No pudimos enviarlo. Inténtalo de nuevo más tarde."
@@ -5074,9 +5621,17 @@ msgstr "No pudimos enviarlo. Inténtalo de nuevo más tarde."
 msgid "We couldn't send your refund automatically. Please call the restaurant."
 msgstr "No pudimos enviar tu reembolso automáticamente. Llama al restaurante."
 
+#: src/lib/ordering-labels.ts:307
+msgid "We couldn't send your report. Please try again."
+msgstr "No pudimos enviar tu aviso. Inténtalo de nuevo."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "No pudimos iniciar el pago. Inténtalo de nuevo."
+
+#: src/lib/guest-account-labels.ts:63
+msgid "We couldn't update your favorites. Try again."
+msgstr "No pudimos actualizar tus favoritos. Inténtalo de nuevo."
 
 #: src/lib/catering/labels.ts:188
 msgid "We deliver catering orders to {where}."
@@ -5094,9 +5649,17 @@ msgstr "Entregamos aquí"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "No recibimos respuesta a tiempo. Puedes volver a unirte a la lista de espera."
 
+#: src/lib/ordering-labels.ts:466
+msgid "We don't deliver here right now"
+msgstr "Ahora mismo no entregamos aquí"
+
 #: src/lib/ordering-labels.ts:174
 msgid "We don't deliver to this address yet"
 msgstr "Aún no entregamos en esta dirección"
+
+#: src/lib/guest-account-labels.ts:30
+msgid "We don't deliver to this address yet, so it can't be saved."
+msgstr "Aún no entregamos en esta dirección, así que no se puede guardar."
 
 #: src/lib/reservations/labels.ts:223
 msgid "We email you when your table is ready."
@@ -5229,6 +5792,10 @@ msgstr "Bono de bienvenida revertido"
 msgid "Welcome! {points} added"
 msgstr "¡Bienvenido! Se añadieron {points}"
 
+#: src/lib/ordering-labels.ts:280
+msgid "What went wrong?"
+msgstr "¿Qué salió mal?"
+
 #: src/pages/events/index.astro.ts:3
 msgid "What's coming up at {name}"
 msgstr "Lo próximo en {name}"
@@ -5267,13 +5834,29 @@ msgstr "¿Dónde lo entregamos?"
 msgid "Where would you like to work?"
 msgstr "¿Dónde te gustaría trabajar?"
 
+#: src/lib/guest-account-labels.ts:17
+msgid "Where you like your delivery brought. Each address is checked against the delivery area every time you order."
+msgstr "Dónde quieres que te llevemos el pedido. Cada dirección se comprueba con la zona de entrega cada vez que pides."
+
 #: src/lib/catering/labels.ts:134
 msgid "Which dietary needs can you meet?"
 msgstr "¿Qué necesidades dietéticas podéis cubrir?"
 
+#: src/lib/ordering-labels.ts:288
+msgid "Which items?"
+msgstr "¿Qué artículos?"
+
+#: src/lib/ordering-labels.ts:367
+msgid "Who is in"
+msgstr "Quién participa"
+
 #: src/lib/ordering-labels.ts:88
 msgid "Whole"
 msgstr "Entera"
+
+#: src/lib/ordering-labels.ts:457
+msgid "Work"
+msgstr "Trabajo"
 
 #: src/lib/careers/labels.ts:37
 msgid "year"
@@ -5294,6 +5877,15 @@ msgstr "Sí, cancelar pedido"
 #: src/lib/reservations/labels.ts:279
 msgid "Yes, leave"
 msgstr "Sí, salir"
+
+#: src/lib/ordering-labels.ts:328
+#: src/lib/ordering-labels.ts:366
+msgid "You"
+msgstr "Tú"
+
+#: src/lib/ordering-labels.ts:432
+msgid "You already have the most group orders open."
+msgstr "Ya tienes el máximo de pedidos de grupo abiertos."
 
 #: src/lib/reservations/labels.ts:541
 msgid "You already have the most table alerts allowed for these contact details."
@@ -5330,6 +5922,14 @@ msgstr "Aún puedes pedir para recoger."
 #: src/lib/loyalty/labels.ts:163
 msgid "You have {amount}"
 msgstr "Tienes {amount}"
+
+#: src/lib/ordering-labels.ts:463
+msgid "You have 10 saved addresses. Remove one in your profile to add another."
+msgstr "Tienes 10 direcciones guardadas. Quita una en tu perfil para añadir otra."
+
+#: src/lib/guest-account-labels.ts:61
+msgid "You have 100 favorites. Remove one to add another."
+msgstr "Tienes 100 favoritos. Quita uno para añadir otro."
 
 #: src/lib/loyalty/labels.ts:233
 msgid "You have a new request to use a reward."
@@ -5444,6 +6044,10 @@ msgstr "Tu tarjeta fue rechazada o necesitó una verificación adicional. Intén
 msgid "Your cart is empty"
 msgstr "Tu carrito está vacío"
 
+#: src/lib/ordering-labels.ts:385
+msgid "Your cart is empty. Choose dishes from the menu, then come back and add them."
+msgstr "Tu carrito está vacío. Elige platos del menú y vuelve para añadirlos."
+
 #: src/lib/catering/labels.ts:85
 #: src/pages/catering/quote.astro.ts:3
 msgid "Your catering quote"
@@ -5483,6 +6087,18 @@ msgstr "Tu correo (para el recibo)"
 #: src/lib/catering/labels.ts:29
 msgid "Your event"
 msgstr "Tu evento"
+
+#: src/lib/guest-account-labels.ts:52
+msgid "Your favorites"
+msgstr "Tus favoritos"
+
+#: src/lib/ordering-labels.ts:362
+msgid "Your first name"
+msgstr "Tu nombre"
+
+#: src/lib/ordering-labels.ts:443
+msgid "Your group order"
+msgstr "Tu pedido de grupo"
 
 #: src/lib/reservations/labels.ts:78
 msgid "Your hold expired"
@@ -5583,6 +6199,14 @@ msgstr "Tu perfil"
 #: src/lib/loyalty/labels.ts:294
 msgid "Your referral code"
 msgstr "Tu código de recomendación"
+
+#: src/lib/ordering-labels.ts:302
+msgid "Your report was sent, but the photo could not be added."
+msgstr "Tu aviso se envió, pero no se pudo añadir la foto."
+
+#: src/lib/ordering-labels.ts:316
+msgid "Your reports"
+msgstr "Tus avisos"
 
 #: src/lib/reservations/labels.ts:315
 msgid "Your request was cancelled. We will not contact you about it."

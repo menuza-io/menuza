@@ -19,6 +19,8 @@ import {
 	Text,
 	TextField,
 } from '../ui'
+import { AddressesSection } from './addresses-section'
+import { FavoritesSection } from './favorites-section'
 import { MessagesSection } from './messages-section'
 import { NotificationsSection } from './notifications-section'
 import { OrdersSection } from './orders-section'
@@ -170,6 +172,9 @@ export function ProfileScreen() {
 				</Card>
 
 				<OrdersSection />
+
+				<AddressesSection />
+				<FavoritesSection />
 
 				<MessagesSection />
 				<NotificationsSection />

@@ -174,9 +174,10 @@ describe('home attention and launch routes', () => {
 			const res = await attention(await operatorJwt({ locationIds: ['loc_b'] }))
 			expect(await res.json()).toEqual({
 				locations: [{ locationId: 'loc_b', paymentReview: 1 }],
+				problems: [],
 			})
 			const none = await attention(await operatorJwt({ locationIds: [] }))
-			expect(await none.json()).toEqual({ locations: [] })
+			expect(await none.json()).toEqual({ locations: [], problems: [] })
 		})
 
 		it('refuses a forged token', async () => {
@@ -189,7 +190,7 @@ describe('home attention and launch routes', () => {
 		it('answers another organization only with its own counts', async () => {
 			const res = await attention(await operatorJwt({ tokenOrgId: otherOrgId }))
 			expect(res.status).toBe(200)
-			expect(await res.json()).toEqual({ locations: [] })
+			expect(await res.json()).toEqual({ locations: [], problems: [] })
 		})
 	})
 
@@ -227,6 +228,8 @@ describe('home attention and launch routes', () => {
 			expect(body).toEqual({
 				pairedLocationIds: ['loc_a'],
 				firstOrderAt: '2026-04-02T09:00:00.000Z',
+				// No test order was confirmed or run through the kitchen (#119).
+				testOrderDoneAt: null,
 			})
 		})
 
@@ -235,6 +238,7 @@ describe('home attention and launch routes', () => {
 			expect(await res.json()).toEqual({
 				pairedLocationIds: [],
 				firstOrderAt: null,
+				testOrderDoneAt: null,
 			})
 		})
 

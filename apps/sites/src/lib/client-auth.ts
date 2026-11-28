@@ -1,4 +1,5 @@
 import { browserLocaleHref } from '~/lib/locale'
+import { returnHref } from '~/lib/return-after-login'
 
 const ACCESS_TOKEN_KEY = 'tenant_access_token'
 const REFRESH_TOKEN_KEY = 'tenant_refresh_token'
@@ -210,7 +211,8 @@ function isOrganizationInactive(status: number, body: unknown): boolean {
  * - `ok`: the session stands (or was not needed); `response` is the route's
  *   own answer, which may still be an error for the caller to show.
  * - `signed_out`: the region refused the session for good (or there was
- *   none); the tokens are gone, except a half session the login page forgets.
+ *   none); the tokens are gone, a half session (an access token with nothing
+ *   to refresh it) included, so no page asks again or bounces to the login page.
  * - `transient`: the session could not be checked for now (refresh failed
  *   with a 5xx, 429 or lost connection, or the region answered
  *   `temporarily_unavailable`). The tokens are kept; treat it like a network
@@ -257,7 +259,8 @@ export function redirectToLogin() {
 
 export function redirectHomeIfSignedIn() {
 	if (getAccessToken()) {
-		window.location.replace(browserLocaleHref('/'))
+		// Home, or the page a heart or a group order sent the guest from.
+		window.location.replace(returnHref('/'))
 	}
 }
 
@@ -300,7 +303,13 @@ export async function tenantFetch(
 		}
 	}
 	if (res.status === 401) {
-		if (!getRefreshToken()) return { session: 'signed_out', response: res }
+		if (!getRefreshToken()) {
+			// An expired access token with nothing to refresh it: the session is
+			// over, so forget it (pages then show the signed-out state instead of
+			// asking again forever).
+			clearSessionTokens()
+			return { session: 'signed_out', response: res }
+		}
 		const outcome = await refreshSession()
 		if (outcome === 'refused') return { session: 'signed_out', response: res }
 		if (outcome === 'transient') return { session: 'transient', response: res }

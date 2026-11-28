@@ -109,7 +109,8 @@ export async function listPersonOrders(
 	}
 	if (!customer) return empty
 
-	const owned: SQL =
+	// A free test order (#119) is not part of a person's history.
+	const ownedBy: SQL =
 		customer.phoneVerified && customer.phone
 			? (or(
 					eq(restaurantOrders.customerId, customer.id),
@@ -119,6 +120,7 @@ export async function listPersonOrders(
 					),
 				) as SQL)
 			: eq(restaurantOrders.customerId, customer.id)
+	const owned: SQL = and(ownedBy, eq(restaurantOrders.isTest, false))!
 
 	const limit = Math.min(
 		Math.max(input.limit ?? PERSON_ORDERS_PAGE_SIZE, 1),

@@ -46,6 +46,7 @@ export type OrderEmailOrder = Pick<
 	| 'packagingFeeCents'
 	| 'packagingFeeLabel'
 	| 'pickupInstructions'
+	| 'guestMessages'
 	| 'utensilsRequested'
 	| 'totalCents'
 	| 'discountCents'
@@ -58,6 +59,7 @@ export type OrderEmailOrder = Pick<
 	| 'pickupTime'
 	| 'promisedAt'
 	| 'promisedUntil'
+	| 'isTest'
 > & {
 	/** Why it was cancelled; only guest-visible reasons are shown. */
 	cancelReason?: RestaurantOrder['cancelReason']
@@ -226,13 +228,17 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 		location: locationName,
 	}
 	const delivery = order.fulfillment === 'delivery'
+	// A free test order (#119): the confirmation is labelled test in the subject
+	// and above the lead, so nobody takes it for a real order.
+	const testTag = order.isTest ? `[${labels.testTag}] ` : ''
+	const testLead = order.isTest ? `${labels.testLabel} ` : ''
 	const copy = {
-		subject: fillCopy(entry.subject, values),
+		subject: `${testTag}${fillCopy(entry.subject, values)}`,
 		heading: fillCopy(entry.heading, values),
-		lead: fillCopy(
+		lead: `${testLead}${fillCopy(
 			delivery && entry.leadDelivery ? entry.leadDelivery : entry.lead,
 			values,
-		),
+		)}`,
 	}
 	const money = (cents: number) => formatMoney(cents, order.currency, locale)
 
@@ -357,8 +363,16 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 		)
 		.join('')
 
+	const forPerson = (name: string) => fillCopy(labels.forPerson, { name })
+	let rowPerson: string | undefined
 	const itemRows = lines
 		.map((line) => {
+			// A group order (#170): each person's dishes under "For Sam".
+			const personRow =
+				line.forName && line.forName !== rowPerson
+					? `<tr><td colspan="3" style="padding:10px 0 0;color:${muted};font-size:12px;font-weight:700;text-align:${align}" dir="auto">${escapeHtml(forPerson(line.forName))}</td></tr>`
+					: ''
+			rowPerson = line.forName
 			const name = getLocalizedMenuValue(line.itemName, locale, defaultLocale)
 			const choices = lineChoices(line, locale, defaultLocale)
 			const choicesHtml = choices
@@ -368,7 +382,7 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 			const noteHtml = note
 				? `<div style="font-size:12px;color:${muted};font-style:italic;margin-top:2px" dir="auto">“${escapeHtml(note)}”</div>`
 				: ''
-			return `<tr><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${align};vertical-align:top;width:32px">${escapeHtml(String(line.quantity))}×</td><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${align};vertical-align:top"><div dir="auto">${escapeHtml(name)}</div>${choicesHtml}${noteHtml}</td><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${end};vertical-align:top;white-space:nowrap">${escapeHtml(money(line.totalCents))}</td></tr>`
+			return `${personRow}<tr><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${align};vertical-align:top;width:32px">${escapeHtml(String(line.quantity))}×</td><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${align};vertical-align:top"><div dir="auto">${escapeHtml(name)}</div>${choicesHtml}${noteHtml}</td><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${end};vertical-align:top;white-space:nowrap">${escapeHtml(money(line.totalCents))}</td></tr>`
 		})
 		.join('')
 	const itemsHtml = itemRows
@@ -383,8 +397,17 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 				.join('')}</table>`
 		: ''
 
+	// "Something wrong?" (#191): only on the receipt, only when the restaurant took
+	// reports at placement, and only with a link to the order page to report on.
+	const problemHint =
+		input.kind === 'receipt' &&
+		linkUrl &&
+		(order.guestMessages as { problemReports?: boolean } | null)
+			?.problemReports === true
+			? labels.problemHint
+			: null
 	const ctaHtml = linkUrl
-		? `<div style="margin-top:24px;text-align:${align}"><a href="${escapeHtml(linkUrl)}" style="display:inline-block;padding:12px 22px;background:${primary};color:${primaryForeground};text-decoration:none;border-radius:${radius}px;font-size:15px;font-weight:600">${escapeHtml(labels.viewOrder)}</a></div>`
+		? `<div style="margin-top:24px;text-align:${align}"><a href="${escapeHtml(linkUrl)}" style="display:inline-block;padding:12px 22px;background:${primary};color:${primaryForeground};text-decoration:none;border-radius:${radius}px;font-size:15px;font-weight:600">${escapeHtml(labels.viewOrder)}</a></div>${problemHint ? `<p style="margin:12px 0 0;color:${muted};font-size:13px;text-align:${align}">${escapeHtml(problemHint)}</p>` : ''}`
 		: ''
 	const inviteLinks =
 		input.kind === 'receipt'
@@ -473,7 +496,12 @@ ${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}${codesHtml}
 	for (const [label, value] of rows) textLines.push(`${label}: ${value}`)
 	if (lines.length > 0) {
 		textLines.push('', `${labels.items}:`)
+		let textPerson: string | undefined
 		for (const line of lines) {
+			if (line.forName && line.forName !== textPerson) {
+				textLines.push(forPerson(line.forName))
+			}
+			textPerson = line.forName
 			const name = getLocalizedMenuValue(line.itemName, locale, defaultLocale)
 			const choices = lineChoices(line, locale, defaultLocale)
 			textLines.push(
@@ -484,11 +512,13 @@ ${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}${codesHtml}
 		for (const [label, value] of totals) textLines.push(`${label}: ${value}`)
 	}
 	if (linkUrl) textLines.push('', `${labels.viewOrder}: ${linkUrl}`)
+	if (problemHint) textLines.push(problemHint)
 	if (inviteLinks.length > 0) {
 		textLines.push('', `${labels.trackInApp}:`)
 		for (const link of inviteLinks) textLines.push(`${link.label}: ${link.url}`)
 	}
-	for (const link of codeLinks) textLines.push('', `${link.caption}: ${link.url}`)
+	for (const link of codeLinks)
+		textLines.push('', `${link.caption}: ${link.url}`)
 	textLines.push('', labels.footer)
 
 	return { subject: copy.subject, html, text: textLines.join('\n') }

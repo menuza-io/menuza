@@ -862,6 +862,36 @@
       "types": "./src/pdf.ts",
       "import": "./src/pdf.ts",
       "default": "./src/pdf.ts"
+    },
+    "./saved-addresses": {
+      "types": "./src/saved-addresses.ts",
+      "import": "./src/saved-addresses.ts",
+      "default": "./src/saved-addresses.ts"
+    },
+    "./guest-favorites": {
+      "types": "./src/guest-favorites.ts",
+      "import": "./src/guest-favorites.ts",
+      "default": "./src/guest-favorites.ts"
+    },
+    "./test-orders": {
+      "types": "./src/test-orders.ts",
+      "import": "./src/test-orders.ts",
+      "default": "./src/test-orders.ts"
+    },
+    "./order-problems": {
+      "types": "./src/order-problems.ts",
+      "import": "./src/order-problems.ts",
+      "default": "./src/order-problems.ts"
+    },
+    "./group-orders": {
+      "types": "./src/group-orders.ts",
+      "import": "./src/group-orders.ts",
+      "default": "./src/group-orders.ts"
+    },
+    "./guest-ordering": {
+      "types": "./src/guest-ordering.ts",
+      "import": "./src/guest-ordering.ts",
+      "default": "./src/guest-ordering.ts"
     }
   },
   "scripts": {

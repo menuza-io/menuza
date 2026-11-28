@@ -7,10 +7,13 @@ import {
 	clearCheckoutAttempt,
 	fetchOrderReceipt,
 	fetchOrderingOptions,
+	fetchOrderProblems,
 	fetchOrderWithCredential,
 	orderLines,
 	resendOrderLink,
+	submitOrderProblem,
 	submitRegionalOrder,
+	uploadOrderProblemPhoto,
 } from './order-client.ts'
 import { type CartItem } from './types.ts'
 
@@ -127,6 +130,96 @@ describe('regional order client', () => {
 			code: 'region_unavailable',
 		})
 		expect(fetch).not.toHaveBeenCalled()
+	})
+	it('sends the one-time test code in the X-Test-Order header, only when there is one (#119)', async () => {
+		using ignoredSetup = setup()
+		const placed = {
+			ok: true,
+			status: 201,
+			json: async () => ({
+				order: {
+					id: 'o1',
+					number: 'A1',
+					status: 'accepted',
+					paymentStatus: 'not_required',
+					currency: 'USD',
+					subtotalCents: 2000,
+					taxCents: 0,
+					deliveryFeeCents: 0,
+					tipCents: 0,
+					totalCents: 2000,
+					holdExpiresAt: null,
+				},
+				receiptToken: 'r'.repeat(40),
+			}),
+		}
+		const fetch = vi.fn().mockResolvedValue(placed)
+		vi.stubGlobal('fetch', fetch)
+		await submitRegionalOrder(
+			{ lines: [] },
+			{ testOrderCode: 'tc1.loc.nonce.1.mac' },
+		)
+		const [, init] = fetch.mock.calls[0] as [string, RequestInit]
+		expect((init.headers as Record<string, string>)['X-Test-Order']).toBe(
+			'tc1.loc.nonce.1.mac',
+		)
+		await submitRegionalOrder({ lines: [] })
+		const [, plain] = fetch.mock.calls[1] as [string, RequestInit]
+		expect(plain.headers as Record<string, string>).not.toHaveProperty(
+			'X-Test-Order',
+		)
+	})
+	it('talks to the region about order problem reports with the receipt credential, never App (#191)', async () => {
+		using ignoredSetup = setup()
+		const fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			json: async () => ({ problemId: 'p1' }),
+		})
+		vi.stubGlobal('fetch', fetch)
+		const credential = { kind: 'receipt', token: 'r'.repeat(40) } as const
+		await fetchOrderProblems('o 1', credential)
+		const [readUrl, readInit] = fetch.mock.calls[0] as [string, RequestInit]
+		expect(readUrl).toBe(
+			'https://regional.example/orders/o%201/problems?slug=cafe',
+		)
+		expect(readInit.headers).toEqual({
+			Authorization: `Bearer ${'r'.repeat(40)}`,
+		})
+		await submitOrderProblem(
+			'o1',
+			credential,
+			{ kind: 'missing_item', items: [{ lineIndex: 0 }], note: 'cold' },
+			'attempt-key-12345678',
+		)
+		const [postUrl, postInit] = fetch.mock.calls[1] as [string, RequestInit]
+		expect(postUrl).toBe('https://regional.example/orders/o1/problems')
+		expect(postInit.method).toBe('POST')
+		expect(
+			(postInit.headers as Record<string, string>)['Idempotency-Key'],
+		).toBe('attempt-key-12345678')
+		expect(JSON.parse(String(postInit.body))).toEqual({
+			slug: 'cafe',
+			kind: 'missing_item',
+			items: [{ lineIndex: 0 }],
+			note: 'cold',
+		})
+		const photo = new Blob([new Uint8Array([1, 2])], { type: 'image/png' })
+		await uploadOrderProblemPhoto(
+			'o1',
+			'p1',
+			{ kind: 'link', token: 'a'.repeat(64) },
+			photo,
+		)
+		const [photoUrl, photoInit] = fetch.mock.calls[2] as [string, RequestInit]
+		expect(photoUrl).toBe(
+			'https://regional.example/orders/o1/problems/p1/photo?slug=cafe',
+		)
+		expect(photoInit.body).toBe(photo)
+		expect(photoInit.headers).toMatchObject({
+			'Content-Type': 'image/png',
+			'X-Order-Link': 'a'.repeat(64),
+		})
 	})
 	it('clears the attempt so a later order mints a fresh key', async () => {
 		using ignoredSetup = setup()

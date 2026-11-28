@@ -16,6 +16,12 @@ import {
 interface Props {
 	heading: string
 	labels: { previous: string; next: string }
+	/**
+	 * `favorites` (#158): the same rail for "Your favorites". It is rendered empty
+	 * and hidden: favorites live in the region, so the browser fills it (and shows
+	 * it) once it knows them. Any number of cards, one or more.
+	 */
+	variant?: 'popular' | 'favorites'
 	cards: Array<{
 		id: string
 		name: string
@@ -37,7 +43,9 @@ interface Props {
 	}>
 }
 
-const { heading, labels, cards } = Astro.props
+const { heading, labels, cards, variant = 'popular' } = Astro.props
+const isFavorites = variant === 'favorites'
+const headingId = isFavorites ? 'favorites-heading' : 'popular-heading'
 const plusIcon = '<path d="M5 12h14"/><path d="M12 5v14"/>'
 const chevron = '<path d="m9 18 6-6-6-6"/>'
 const iconAttrs = {
@@ -54,11 +62,18 @@ const cardBase =
 	'js-popular-card group relative flex w-64 shrink-0 snap-start flex-col overflow-hidden text-start focus-ring disabled:cursor-default sm:w-72'
 ---
 
-{cards.length >= 2 ? (
-	<section class="pt-8 sm:pt-12" aria-labelledby="popular-heading" data-search-hide data-popular-rail>
+{isFavorites || cards.length >= 2 ? (
+	<section
+		class="pt-8 sm:pt-12"
+		aria-labelledby={headingId}
+		data-search-hide
+		data-popular-rail
+		data-favorites-rail={isFavorites ? '' : undefined}
+		hidden={isFavorites}
+	>
 		<div class={siteContainer}>
 			<div class="mb-4 flex items-end justify-between gap-4">
-				<h2 id="popular-heading" class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{heading}</h2>
+				<h2 id={headingId} class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{heading}</h2>
 				<div class="hidden gap-2 pointer-fine:flex">
 					<button type="button" class="icon-btn" data-rail-step="-1" aria-label={labels.previous}>
 						<svg {...iconAttrs} class="size-4 -scale-x-100 rtl:scale-x-100" set:html={chevron} />
@@ -72,7 +87,7 @@ const cardBase =
 				data-rail
 				class="fade-x -mx-5 flex snap-x snap-mandatory scroll-px-5 items-stretch gap-3 overflow-x-auto px-5 pt-1 pb-3 no-scrollbar sm:-mx-8 sm:scroll-px-8 sm:gap-4 sm:px-8"
 			>
-				{cards.map((card) => (
+				{(isFavorites ? [] : cards).map((card) => (
 					<button
 						type="button"
 						class:list={[
@@ -145,6 +160,7 @@ const cardBase =
 					</button>
 				))}
 			</div>
+			{isFavorites ? <div data-favorites-notice-slot></div> : null}
 		</div>
 	</section>
 ) : null}

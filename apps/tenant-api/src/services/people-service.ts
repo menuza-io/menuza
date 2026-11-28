@@ -350,7 +350,7 @@ export function peopleCte(
 			GROUP BY guest_id
 		), ord AS (
 			SELECT customer_id, COUNT(*) AS n, MAX(ts) AS last_at FROM (
-				SELECT customer_id, created_at * 1000 AS ts FROM restaurant_orders WHERE customer_id IS NOT NULL
+				SELECT customer_id, created_at * 1000 AS ts FROM restaurant_orders WHERE customer_id IS NOT NULL AND is_test = 0
 				UNION ALL
 				SELECT customer_id, created_at * 1000 AS ts FROM shop_orders WHERE customer_id IS NOT NULL
 			) GROUP BY customer_id
@@ -763,7 +763,7 @@ export async function queryPeople(
 	let hasOrders = false
 	if (access.customers && !opts.lean) {
 		const o = await db.all<{ n: number }>(
-			sql`SELECT (EXISTS (SELECT 1 FROM restaurant_orders WHERE customer_id IS NOT NULL) OR EXISTS (SELECT 1 FROM shop_orders WHERE customer_id IS NOT NULL)) AS n`,
+			sql`SELECT (EXISTS (SELECT 1 FROM restaurant_orders WHERE customer_id IS NOT NULL AND is_test = 0) OR EXISTS (SELECT 1 FROM shop_orders WHERE customer_id IS NOT NULL)) AS n`,
 		)
 		hasOrders = Number(o[0]?.n ?? 0) === 1
 	}
@@ -943,7 +943,12 @@ async function ordersSummary(
 	const [restaurant] = await db
 		.select({ n: count(), last: max(restaurantOrders.createdAt) })
 		.from(restaurantOrders)
-		.where(eq(restaurantOrders.customerId, customerId))
+		.where(
+			and(
+				eq(restaurantOrders.customerId, customerId),
+				eq(restaurantOrders.isTest, false),
+			),
+		)
 	const [shop] = await db
 		.select({ n: count(), last: max(shopOrders.createdAt) })
 		.from(shopOrders)
@@ -966,7 +971,12 @@ async function ordersSummary(
 				dropId: restaurantOrders.dropId,
 			})
 			.from(restaurantOrders)
-			.where(eq(restaurantOrders.customerId, customerId))
+			.where(
+				and(
+					eq(restaurantOrders.customerId, customerId),
+					eq(restaurantOrders.isTest, false),
+				),
+			)
 			.orderBy(desc(restaurantOrders.createdAt))
 			.limit(1)
 		if (latest) lastOrderChannel = restaurantSalesChannel(latest)

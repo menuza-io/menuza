@@ -1,3 +1,4 @@
+import { ORDER_PROBLEMS_FLAG } from '@repo/common/order-problems'
 import {
 	_OrganizationPermissionToRole,
 	and,
@@ -373,6 +374,28 @@ describe('loadAttention', () => {
 		expect(JSON.stringify(data)).not.toMatch(/phone|email|contact|customer/i)
 	})
 
+	it('reads unanswered guest order problem reports only while the flag is on (#191)', async () => {
+		const { organization, user } = await setupTestOrgWithUser('admin')
+		const off = await loadAttention({
+			userId: user.id,
+			organization: { id: organization.id },
+			now,
+		})
+		expect(off.regional.orderProblems).toBe(false)
+		await db.insert(ConfigFlag).values({
+			key: ORDER_PROBLEMS_FLAG,
+			value: true,
+			level: 'organization',
+			organizationId: organization.id,
+		})
+		const on = await loadAttention({
+			userId: user.id,
+			organization: { id: organization.id },
+			now,
+		})
+		expect(on.regional.orderProblems).toBe(true)
+	})
+
 	it('shows a member without the right permissions nothing to act on', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		const viewer = await createMember(organization.id, [])
@@ -384,6 +407,7 @@ describe('loadAttention', () => {
 		expect(data.items).toEqual([])
 		expect(data.regional).toEqual({
 			paymentReview: false,
+			orderProblems: false,
 			callFollowUps: false,
 			inventoryCounts: false,
 			offlineTablets: false,

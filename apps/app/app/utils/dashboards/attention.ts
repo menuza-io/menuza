@@ -18,6 +18,7 @@ export const ATTENTION_KINDS = [
 	'payments_not_connected',
 	'payment_account_action_needed',
 	'payment_review',
+	'order_problems',
 	'ordering_paused',
 	'no_active_menu',
 	'site_unpublished',
@@ -49,6 +50,8 @@ export const ATTENTION_URGENCY: Record<AttentionKind, AttentionUrgency> = {
 	payments_not_connected: 'urgent',
 	payment_account_action_needed: 'urgent',
 	payment_review: 'urgent',
+	// A guest's order problem report waited 24 hours for an answer (#191).
+	order_problems: 'todo',
 	ordering_paused: 'urgent',
 	no_active_menu: 'urgent',
 	site_unpublished: 'todo',
@@ -144,6 +147,8 @@ export type AttentionItem = {
 export type RegionalAttentionAccess = {
 	/** Orders in "Payment needs review" (orders token). */
 	paymentReview: boolean
+	/** Guest order problem reports waiting 24 hours (orders token, flag on, #191). */
+	orderProblems: boolean
 	/** Phone calls with an open follow-up (calls token). */
 	callFollowUps: boolean
 	/** Inventory counts waiting for review (inventory token). */
@@ -217,6 +222,16 @@ export const paymentReviewCountsSchema = z.object({
 			paymentReview: z.number().int().nonnegative(),
 		}),
 	),
+	/** Open and unanswered guest problem reports per location (#191). */
+	problems: z
+		.array(
+			z.object({
+				locationId: z.string(),
+				open: z.number().int().nonnegative(),
+				unanswered: z.number().int().nonnegative(),
+			}),
+		)
+		.catch([]),
 })
 
 export const callFollowUpsSchema = z.object({

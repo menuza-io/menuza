@@ -193,6 +193,8 @@ async function loadEligibleOrderAndDishes(
 				eq(restaurantOrders.id, orderId),
 				eq(restaurantOrders.orgId, orgId),
 				eq(restaurantOrders.customerId, customerId),
+				// A free test order (#119) is not a dish anyone ate.
+				eq(restaurantOrders.isTest, false),
 			),
 		)
 		.get()

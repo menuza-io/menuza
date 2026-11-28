@@ -35,6 +35,21 @@ export const ORDER_GUEST_CANCEL_LIMITS = {
 	checkOrder: { max: 60, windowMs: 10 * 60_000 },
 	/** Those reads from one address. */
 	checkAddress: { max: 300, windowMs: 10 * 60_000 },
+	// Guest order problem reports (#191): sending one (and its photo), and the
+	// page's read of the reports, per order and per address.
+	problemOrder: { max: 8, windowMs: 10 * 60_000 },
+	problemAddress: { max: 30, windowMs: 10 * 60_000 },
+	problemReadOrder: { max: 60, windowMs: 10 * 60_000 },
+	problemReadAddress: { max: 300, windowMs: 10 * 60_000 },
+	// Group orders (#170): the page polls every 5 seconds, so reads are generous;
+	// writes and joins are bounded per group and per address.
+	groupReadGroup: { max: 4000, windowMs: 10 * 60_000 },
+	// Per address the budgets leave room for an office behind one egress
+	// address: a dozen people polling a group every 5 seconds is 1,440 reads.
+	groupReadAddress: { max: 2500, windowMs: 10 * 60_000 },
+	groupWriteGroup: { max: 600, windowMs: 10 * 60_000 },
+	groupWriteAddress: { max: 300, windowMs: 10 * 60_000 },
+	groupJoinAddress: { max: 60, windowMs: 10 * 60_000 },
 } as const
 
 export type OrderGuestCancelBucket = keyof typeof ORDER_GUEST_CANCEL_LIMITS
@@ -44,6 +59,15 @@ const BUCKET_NAMES: Record<OrderGuestCancelBucket, string> = {
 	cancelAddress: 'order_guest_cancel.ip',
 	checkOrder: 'order_guest_cancel_check.order',
 	checkAddress: 'order_guest_cancel_check.ip',
+	problemOrder: 'order_problem.order',
+	problemAddress: 'order_problem.ip',
+	problemReadOrder: 'order_problem_read.order',
+	problemReadAddress: 'order_problem_read.ip',
+	groupReadGroup: 'order_group_read.group',
+	groupReadAddress: 'order_group_read.ip',
+	groupWriteGroup: 'order_group_write.group',
+	groupWriteAddress: 'order_group_write.ip',
+	groupJoinAddress: 'order_group_join.ip',
 }
 
 const SLOT_MS = 60_000
@@ -58,6 +82,7 @@ export async function countOrderGuestCancelAttempt(
 	bucket: OrderGuestCancelBucket,
 	subject: string,
 	now = Date.now(),
+	options: { giveBackRefused?: boolean } = {},
 ): Promise<OrderGuestCancelLimitResult> {
 	const { max, windowMs } = ORDER_GUEST_CANCEL_LIMITS[bucket]
 	const name = BUCKET_NAMES[bucket]
@@ -95,6 +120,22 @@ export async function countOrderGuestCancelAttempt(
 	await pruneOld(db, now).catch(() => {})
 	const total = rows.reduce((sum, row) => sum + row.count, 0)
 	if (total <= max) return { ok: true }
+	if (options.giveBackRefused) {
+		// A refused request spends nothing: a blocked client does not push its
+		// own release further away (and a poll the page retries stays cheap).
+		await retryOnSqliteBusy(() =>
+			db
+				.update(loyaltyRateCounters)
+				.set({ count: sql`max(${loyaltyRateCounters.count} - 1, 0)` })
+				.where(
+					and(
+						eq(loyaltyRateCounters.bucket, name),
+						eq(loyaltyRateCounters.subjectHash, subjectHash),
+						eq(loyaltyRateCounters.windowStart, slot),
+					),
+				),
+		).catch(() => {})
+	}
 	const oldest = Math.min(...rows.map((row) => row.windowStart))
 	return {
 		ok: false,

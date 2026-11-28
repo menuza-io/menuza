@@ -211,6 +211,43 @@ const htmlClass =
 				} catch (error) {}
 			})()
 		</script>
+		{/*
+			A test-order code (`#test=…`, #119) and a group order's join link
+			(`#join=…`, #170) are capabilities as well: move them out of the address
+			bar before any analytics tag can read the page URL. The menu and group
+			scripts pick them up from this tab's session storage. The address is
+			cleaned even when storage is blocked (the capability is then lost, which
+			is better than leaking it).
+		*/}
+		<script is:inline>
+			;(function () {
+				try {
+					var hash = window.location.hash
+					if (hash.indexOf('test=') === -1 && hash.indexOf('join=') === -1) return
+					var params = new URLSearchParams(hash.slice(1))
+					var keys = { test: 'menuza_pending_test', join: 'menuza_pending_join' }
+					var changed = false
+					for (var name in keys) {
+						var value = params.get(name)
+						if (value === null) continue
+						params.delete(name)
+						changed = true
+						try {
+							if (value) sessionStorage.setItem(keys[name], value)
+						} catch (error) {}
+					}
+					if (!changed) return
+					var rest = params.toString()
+					history.replaceState(
+						history.state,
+						'',
+						window.location.pathname +
+							window.location.search +
+							(rest ? '#' + rest : ''),
+					)
+				} catch (error) {}
+			})()
+		</script>
 		<SiteAnalyticsIntegrations
 			facebookPixelId={facebookPixelId}
 			googleTagManagerId={googleTagManagerId}

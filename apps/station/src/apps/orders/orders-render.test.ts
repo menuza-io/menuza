@@ -101,10 +101,12 @@ const detailOf = (
 let host: HTMLDivElement
 let root: Root
 const command = vi.fn(async () => true)
+const testPrint = vi.fn(async (_answer: 'yes' | 'no') => true)
 const pinActionError = vi.fn()
 beforeEach(() => {
 	localStorage.clear()
 	command.mockClear()
+	testPrint.mockClear()
 	pinActionError.mockClear()
 	vi.stubGlobal(
 		'ResizeObserver',
@@ -172,12 +174,13 @@ function draw(
 		close: vi.fn(),
 		command,
 		refund: vi.fn(async () => true),
+		testPrint,
 		revealContact: vi.fn(async () => {}),
 		recordReprint: vi.fn(),
 		revealing: false,
 		...over,
 	})
-	 
+
 	act(() =>
 		root.render(
 			h(
@@ -866,5 +869,54 @@ describe('automatic kitchen printing (#363)', () => {
 		)
 		expect(print).toHaveBeenCalledTimes(1)
 		expect(onPaper[0]).toContain('CANCELLED')
+	})
+})
+
+describe('a free test order (#119)', () => {
+	const open = (values: Partial<PosOnlineOrderDetail>) =>
+		draw({ selected: 'o1', detail: detailOf(values) })
+	const section = () => document.querySelector('[data-order-test-section]')
+
+	it('is badged TEST in the inbox and has no badge on a real order', () => {
+		draw({}, [
+			summary({ id: 't1', isTest: true, testPrintAnswer: null }),
+			summary({ id: 'r1' }),
+		])
+		const badges = document.querySelectorAll('[data-order-test]')
+		expect(badges).toHaveLength(1)
+		expect(badges[0]!.textContent).toBe('TEST')
+	})
+
+	it('asks "Did the ticket print?" and sends the answer', () => {
+		open({ isTest: true, testPrintAnswer: null })
+		expect(section()!.textContent).toContain('TEST')
+		expect(section()!.textContent).toContain('Did the ticket print?')
+		act(() =>
+			document
+				.querySelector<HTMLButtonElement>('[data-test-print-yes]')!
+				.click(),
+		)
+		expect(testPrint).toHaveBeenCalledExactlyOnceWith('yes')
+		act(() =>
+			document
+				.querySelector<HTMLButtonElement>('[data-test-print-no]')!
+				.click(),
+		)
+		expect(testPrint).toHaveBeenLastCalledWith('no')
+	})
+
+	it('says it printed, or points to printer setup, once answered', () => {
+		open({ isTest: true, testPrintAnswer: 'yes' })
+		expect(document.querySelector('[data-test-print="yes"]')).not.toBeNull()
+		expect(document.querySelector('[data-test-print-yes]')).toBeNull()
+		open({ isTest: true, testPrintAnswer: 'no' })
+		expect(
+			document.querySelector('[data-test-print="no"]')!.textContent,
+		).toContain('Settings')
+	})
+
+	it('shows nothing about it on a real order', () => {
+		open({})
+		expect(section()).toBeNull()
 	})
 })

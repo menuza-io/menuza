@@ -76,6 +76,39 @@ function show(
 	return onUpdate
 }
 
+describe('OrderDetail: a group order reads by person (#170)', () => {
+	it('puts each person’s dishes under "For Sam", once, and nothing on an ordinary order', () => {
+		const line = (name: string, forName?: string) => ({
+			itemName: name,
+			quantity: 1,
+			unitPriceCents: 1000,
+			totalCents: 1000,
+			instructions: null,
+			...(forName ? { forName } : {}),
+			options: [],
+		})
+		show(
+			order({
+				lines: [
+					line('Burger', 'Hana'),
+					line('Fries', 'Sam'),
+					line('Salad', 'Sam'),
+					line('Soup', 'Lee'),
+				],
+			}),
+		)
+		expect(
+			screen.getAllByTestId('order-line-person').map((row) => row.textContent),
+		).toEqual(['For Hana', 'For Sam', 'For Lee'])
+		expect(screen.getAllByTestId('order-line')).toHaveLength(4)
+	})
+
+	it('shows no person headings on an ordinary order', () => {
+		show(order())
+		expect(screen.queryByTestId('order-line-person')).toBeNull()
+	})
+})
+
 describe('OrderDetail: recorded steps in the Activity list (#243)', () => {
 	const at = Date.UTC(2026, 9, 19, 10, 0)
 	const steps = [

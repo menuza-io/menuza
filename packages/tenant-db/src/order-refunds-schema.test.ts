@@ -80,6 +80,8 @@ describe('order refunds tenant schema (0025_loyalty, 0044)', () => {
 			'restaurant_order_refunds_no_update',
 			'restaurant_order_refunds_valid_insert',
 			'restaurant_orders_cancel_fields_valid',
+			// A test order cannot become a real one (#119, 0077).
+			'restaurant_orders_is_test_final',
 			'restaurant_orders_refunded_cents_guard',
 		])
 		await insertOrder(client, 'o_1')

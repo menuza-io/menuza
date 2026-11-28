@@ -13,6 +13,7 @@ import {
 import {
 	DEPROVISION_RECORDING_BUDGET_MS,
 	deleteOrganizationGuestPhotos,
+	deleteOrganizationOrderProblemPhotos,
 	deleteOrganizationRecordings,
 	type PrefixDeleteResult,
 } from '../lib/recording-storage.ts'
@@ -121,6 +122,10 @@ async function runTenantDbCommand(
 				runInBackground: (task) => runInBackground(c, task),
 			})
 			await deleteOrganizationGuestPhotos(orgId, {
+				budgetMs: DEPROVISION_RECORDING_BUDGET_MS,
+				runInBackground: (task) => runInBackground(c, task),
+			})
+			await deleteOrganizationOrderProblemPhotos(orgId, {
 				budgetMs: DEPROVISION_RECORDING_BUDGET_MS,
 				runInBackground: (task) => runInBackground(c, task),
 			})

@@ -1456,6 +1456,23 @@ interrupted. See `docs/multi-location.md` and `docs/pos.md`.
   `applyOrderStatusPatchInTx` in `order-service.ts`. Docs:
   `docs/restaurant-ordering-contract.md`.
 
+**Guest ordering conveniences (saved addresses, favorites, test orders, order
+problem reports, group orders; #113, #158, #119, #191, #170):**
+
+- All guest content is regional (tenant-db `0077_guest_ordering`; control plane
+  `0086`, three flags only) and browser-direct. Flags `launch.test_order`,
+  `ordering.problem_reports`, `ordering.group` (default off) reach the region as
+  `guestOrdering` in the order context. Never a second cart, token, refund,
+  discount-code or notification system: a test order is `is_test` on the one
+  order (excluded by `countedOrderCondition`), a problem refund is the normal
+  refund intent or recorded refund, a credit is a `discount_issued_codes` row
+  (`resolveProblemCreditForOrder`), a group checkout is the normal
+  `POST /orders` with `groupId` (the region prices the group's own lines and
+  claims the group in the order's transaction).
+- Person erasure must cover each new guest table and the `forName` labels on
+  orders (`person-erasure-pii-columns.test.ts`). Sites never proxies any of it.
+- Canonical doc: `docs/guest-ordering.md`.
+
 **Checkout tips, service fee and cart upsells (#118, #123, #114):**
 
 - Tip choices: `OrganizationLocation.tipSettings` (control plane, JSON,

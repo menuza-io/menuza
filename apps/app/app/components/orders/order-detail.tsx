@@ -6,6 +6,7 @@ import {
 	type OrderRejectReason,
 } from '@repo/common/restaurant-orders'
 import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
+import { TEST_ORDER_BADGE } from '@repo/common/test-orders'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -167,6 +168,11 @@ function promisedClock(
  * Actions sit in a footer that stays in reach; recording a refund sits with
  * the payment, because a closed order can still give money back.
  */
+/** A group order's "For Sam" heading over one person's dishes (#170). */
+function PersonHeading({ name }: { name: string }) {
+	return <Trans>For {name}</Trans>
+}
+
 export function OrderDetail({
 	order,
 	orgSlug,
@@ -296,12 +302,14 @@ export function OrderDetail({
 	// are refunded through the payment provider.
 	const canRecordRefund =
 		canWrite &&
+		!order.isTest &&
 		Boolean(onRecordRefund) &&
 		paidAtHandoff &&
 		!onTab &&
 		refundableCents(order) > 0
 	const canProviderRefund =
 		canWrite &&
+		!order.isTest &&
 		canRefund &&
 		paidOnline &&
 		!onTab &&
@@ -831,6 +839,19 @@ export function OrderDetail({
 									<Trans>Came from: </Trans>
 									<span dir="auto">{cameFromLabel}</span>
 								</p>
+								{order.isTest ? (
+									<p
+										className="flex flex-wrap items-center gap-2 font-medium"
+										data-testid="order-test"
+									>
+										<Badge variant="secondary">{TEST_ORDER_BADGE}</Badge>
+										<span>
+											<Trans>
+												A test order: nothing was charged, and it is not a sale.
+											</Trans>
+										</span>
+									</p>
+								) : null}
 								{order.largeOrderExtraMinutes ? (
 									<p className="font-medium" data-testid="order-large-order">
 										<Trans>Large order +{largeOrderExtraMinutes} min</Trans>
@@ -991,45 +1012,57 @@ export function OrderDetail({
 								</thead>
 								<tbody>
 									{order.lines.map((line, index) => (
-										<tr
-											key={index}
-											className="border-input border-b border-dashed"
-											data-testid="order-line"
-										>
-											<td className="py-3 pe-3 align-top tabular-nums">
-												{line.quantity}
-											</td>
-											<td className="py-3 pe-3 align-top">
-												<p className="flex flex-wrap items-center gap-2 wrap-anywhere">
-													<span>{localizedName(line.itemName, locale)}</span>
-													{line.kind === 'custom' ? (
-														<Badge variant="outline">
-															<Trans>Custom item</Trans>
-														</Badge>
+										<Fragment key={index}>
+											{line.forName &&
+											line.forName !== order.lines[index - 1]?.forName ? (
+												<tr data-testid="order-line-person">
+													<td
+														colSpan={3}
+														className="text-muted-foreground pt-3 text-xs font-semibold uppercase"
+													>
+														<PersonHeading name={line.forName} />
+													</td>
+												</tr>
+											) : null}
+											<tr
+												className="border-input border-b border-dashed"
+												data-testid="order-line"
+											>
+												<td className="py-3 pe-3 align-top tabular-nums">
+													{line.quantity}
+												</td>
+												<td className="py-3 pe-3 align-top">
+													<p className="flex flex-wrap items-center gap-2 wrap-anywhere">
+														<span>{localizedName(line.itemName, locale)}</span>
+														{line.kind === 'custom' ? (
+															<Badge variant="outline">
+																<Trans>Custom item</Trans>
+															</Badge>
+														) : null}
+													</p>
+													{line.options.length || line.variantNames?.length ? (
+														<p className="text-muted-foreground text-xs">
+															{[
+																...(line.variantNames ?? []),
+																...line.options.map((option) =>
+																	option.quantity > 1
+																		? `${option.quantity} × ${localizedName(option.optionName, locale)}`
+																		: localizedName(option.optionName, locale),
+																),
+															].join(', ')}
+														</p>
 													) : null}
-												</p>
-												{line.options.length || line.variantNames?.length ? (
-													<p className="text-muted-foreground text-xs">
-														{[
-															...(line.variantNames ?? []),
-															...line.options.map((option) =>
-																option.quantity > 1
-																	? `${option.quantity} × ${localizedName(option.optionName, locale)}`
-																	: localizedName(option.optionName, locale),
-															),
-														].join(', ')}
-													</p>
-												) : null}
-												{line.instructions ? (
-													<p className="mt-0.5 text-xs wrap-anywhere italic">
-														{line.instructions}
-													</p>
-												) : null}
-											</td>
-											<td className="py-3 text-end align-top tabular-nums">
-												<bdi>{money(line.totalCents)}</bdi>
-											</td>
-										</tr>
+													{line.instructions ? (
+														<p className="mt-0.5 text-xs wrap-anywhere italic">
+															{line.instructions}
+														</p>
+													) : null}
+												</td>
+												<td className="py-3 text-end align-top tabular-nums">
+													<bdi>{money(line.totalCents)}</bdi>
+												</td>
+											</tr>
+										</Fragment>
 									))}
 								</tbody>
 								<tfoot data-testid="order-totals">

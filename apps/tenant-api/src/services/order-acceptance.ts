@@ -1,3 +1,5 @@
+import { runGroupOrdersTick } from './group-orders-service.ts'
+import { runOrderProblemsTickForOrg } from './order-problems-service.ts'
 import { printDueScheduledOrders } from './print-hooks.ts'
 import { processPushReceipts } from './push-service.ts'
 import { and, asc, eq, lte, min } from 'drizzle-orm'
@@ -19,6 +21,7 @@ import {
 	type OrderMessagesTickResult,
 } from './order-message-send.ts'
 import { runCateringTickForOrg } from './catering-tick.ts'
+import { runTestOrdersTick } from './test-orders-service.ts'
 import { rotateOrgIds } from './loyalty-tick-service.ts'
 import { processOwedCancelRefunds } from './order-provider-refund-service.ts'
 import {
@@ -248,12 +251,39 @@ export async function runOrdersTickForOrg(
 			return null
 		},
 	)
+	// Free test orders (#119) finish themselves after two hours, and their spent
+	// codes are forgotten after a day. Counts only.
+	const testOrders = await runTestOrdersTick(orgId, db, now).catch(
+		(error: unknown) => {
+			console.error('Test orders tick failed', orgId, errorLogFields(error))
+			return null
+		},
+	)
+	// Guest order problem reports (#191): new-report alerts the App could not
+	// take earlier, and the reminder after 24 hours without an answer. Ids and
+	// a fixed kind word only.
+	const problems = await runOrderProblemsTickForOrg(orgId, db, now).catch(
+		(error: unknown) => {
+			console.error('Order problems tick failed', orgId, errorLogFields(error))
+			return null
+		},
+	)
+	// Group orders (#170): a group with no activity for seven days is deleted.
+	const groups = await runGroupOrdersTick(orgId, db, now).catch(
+		(error: unknown) => {
+			console.error('Group orders tick failed', orgId, errorLogFields(error))
+			return null
+		},
+	)
 	const due = [
 		messages.nextDueAt,
 		acceptance.nextDeadlineAt,
 		alerts?.nextDueAt ?? null,
 		prints.nextDueAt,
 		catering?.nextDueAt ?? null,
+		testOrders?.nextDueAt ?? null,
+		problems?.nextDueAt ?? null,
+		groups?.nextDueAt ?? null,
 	].filter((at): at is number => at !== null)
 	const nextDueAt = due.length > 0 ? Math.min(...due) : null
 	return {

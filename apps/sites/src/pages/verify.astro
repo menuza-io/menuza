@@ -83,6 +83,7 @@ if (!organization) {
 		tenantJson,
 	} from '~/lib/client-auth'
 	import { browserLocaleHref } from '~/lib/locale'
+	import { returnHref } from '~/lib/return-after-login'
 
 	redirectHomeIfSignedIn()
 
@@ -157,10 +158,12 @@ if (!organization) {
 							: undefined,
 				})
 				sessionStorage.removeItem('pending_phone')
+				// A guest who came from a heart or a group order goes back there
+				// (after the name step, which keeps the remembered path).
 				window.location.href =
 					data.needsName === true
 						? browserLocaleHref('/complete-name')
-						: browserLocaleHref('/')
+						: returnHref('/')
 			} else {
 				showError(tenantErrorMessage(data, invalidLabel))
 			}

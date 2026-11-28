@@ -63,3 +63,36 @@ describe('popular rail photos', () => {
 		expect(tags[1]).not.toContain('data-photo-test')
 	})
 })
+
+describe('favorites rail (#158)', () => {
+	async function favorites(cards: unknown[] = []) {
+		const container = await AstroContainer.create()
+		return container.renderToString(PopularRow as never, {
+			props: {
+				variant: 'favorites',
+				heading: 'Your favorites',
+				labels: { previous: 'Previous', next: 'Next' },
+				cards,
+			},
+		})
+	}
+
+	it('renders an empty, hidden rail for the browser to fill, even with no cards', async () => {
+		const html = await favorites()
+		expect(html).toContain('data-favorites-rail')
+		expect(html).toMatch(/<section[^>]*\bhidden\b/u)
+		expect(html).toContain('Your favorites')
+		expect(html).toContain('id="favorites-heading"')
+		expect(html).toContain('data-rail')
+		expect(html).not.toContain('js-popular-card')
+		expect(html).toContain('data-favorites-notice-slot')
+	})
+
+	it('keeps the popular rail hidden below two dishes and unhidden otherwise', async () => {
+		const popular = await render([card('a')])
+		expect(popular).not.toContain('data-popular-rail')
+		const two = await render([card('a'), card('b')])
+		expect(two).toContain('id="popular-heading"')
+		expect(two).not.toContain('data-favorites-rail')
+	})
+})

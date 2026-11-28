@@ -181,6 +181,15 @@ function summary(
 		...(order.rejectedReason
 			? { rejectedReason: clip(order.rejectedReason, 40) }
 			: {}),
+		...(order.isTest
+			? {
+					isTest: true,
+					testPrintAnswer:
+						order.testPrintAnswer === 'yes' || order.testPrintAnswer === 'no'
+							? order.testPrintAnswer
+							: null,
+				}
+			: {}),
 	}
 }
 
@@ -529,6 +538,7 @@ export async function onlineOrderDetail(
 			...(kitchenMark(line.kitchenHighlight)
 				? { highlight: kitchenMark(line.kitchenHighlight) }
 				: {}),
+			...(line.forName ? { forName: clip(line.forName, 60) } : {}),
 			variantNames: (line.variantNames ?? []).map((name) =>
 				clip(name, MENU_TEXT_MAX),
 			),

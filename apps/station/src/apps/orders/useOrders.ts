@@ -355,6 +355,10 @@ export function useOrders(
 			selected
 				? write(selected, () => api.command(selected, command), command.action)
 				: Promise.resolve(false),
+		testPrint: (answer: 'yes' | 'no') =>
+			selected
+				? write(selected, () => api.testPrint(selected, answer), 'test_print')
+				: Promise.resolve(false),
 		refund: (refund: PosOnlineOrderRefund, idempotencyKey: string) =>
 			selected
 				? write(

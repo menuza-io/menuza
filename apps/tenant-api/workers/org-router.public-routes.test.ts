@@ -281,6 +281,88 @@ describe('resolveOrgId for consent, subscription and public form routes', () => 
 		expect(await resolveOrgId(resend('https://evil.example'), env)).toBeNull()
 	})
 
+	it('routes order problem reports (#191): the JSON by body identity, the raw photo by query, both by Origin', async () => {
+		resolveOrganizationForBrowserAuth.mockImplementation(
+			async (origin, identity) =>
+				origin === 'https://acme.example' && identity.slug === 'acme'
+					? { id: ORG }
+					: null,
+		)
+		const read = new Request(`${base}/orders/ord_1/problems?slug=acme`, {
+			headers: {
+				Origin: 'https://acme.example',
+				'X-Order-Link': 'a'.repeat(64),
+			},
+		})
+		expect(await resolveOrgId(read, env)).toBe(ORG)
+		const body = JSON.stringify({ slug: 'acme', kind: 'late', items: [] })
+		const report = (origin: string) =>
+			new Request(`${base}/orders/ord_1/problems`, {
+				method: 'POST',
+				headers: {
+					Origin: origin,
+					'Content-Type': 'application/json',
+					'Content-Length': String(body.length),
+				},
+				body,
+			})
+		expect(await resolveOrgId(report('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(report('https://evil.example'), env)).toBeNull()
+		const photo = (origin: string, query = '?slug=acme') =>
+			new Request(`${base}/orders/ord_1/problems/p1/photo${query}`, {
+				method: 'POST',
+				headers: { Origin: origin, 'Content-Type': 'image/jpeg' },
+				body: new Uint8Array([0xff, 0xd8, 0xff]),
+			})
+		expect(await resolveOrgId(photo('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(photo('https://evil.example'), env)).toBeNull()
+	})
+
+	it('routes group orders (#170): JSON bodies and bodiless DELETEs by Origin and slug, never by a client org id', async () => {
+		resolveOrganizationForBrowserAuth.mockImplementation(
+			async (origin, identity) =>
+				origin === 'https://acme.example' && identity.slug === 'acme'
+					? { id: ORG }
+					: null,
+		)
+		const token = { 'X-Group-Token': `gs1.${'a'.repeat(64)}` }
+		const read = new Request(`${base}/orders/group/g1?slug=acme`, {
+			headers: { Origin: 'https://acme.example', ...token },
+		})
+		expect(await resolveOrgId(read, env)).toBe(ORG)
+		const body = JSON.stringify({
+			slug: 'acme',
+			firstName: 'Sam',
+			orgId: OTHER,
+		})
+		const join = (origin: string) =>
+			new Request(`${base}/orders/group/g1/join`, {
+				method: 'POST',
+				headers: {
+					Origin: origin,
+					'Content-Type': 'application/json',
+					'Content-Length': String(body.length),
+					...token,
+				},
+				body,
+			})
+		expect(await resolveOrgId(join('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(join('https://evil.example'), env)).toBeNull()
+		const remove = (origin: string, query = '?slug=acme') =>
+			new Request(`${base}/orders/group/g1/lines/l1${query}`, {
+				method: 'DELETE',
+				headers: { Origin: origin, ...token },
+			})
+		expect(await resolveOrgId(remove('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(remove('https://evil.example'), env)).toBeNull()
+		expect(
+			await resolveOrgId(
+				remove('https://acme.example', `?orgId=${OTHER}`),
+				env,
+			),
+		).toBeNull()
+	})
+
 	it('refuses an oversized post even when the query names the organization', async () => {
 		resolveOrganizationForBrowserAuth.mockResolvedValue({ id: ORG })
 		const request = new Request(`${base}/forms/f1/submissions?slug=acme`, {

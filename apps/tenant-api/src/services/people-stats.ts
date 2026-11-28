@@ -197,7 +197,7 @@ export function peopleStatsCtes(
 	if (scope) {
 		const present: SQL[] = [
 			sql`SELECT 'c_' || customer_id AS key FROM restaurant_orders
-				WHERE customer_id IS NOT NULL ${orderLoc}`,
+				WHERE customer_id IS NOT NULL AND is_test = 0 ${orderLoc}`,
 		]
 		if (dining) {
 			present.push(sql`SELECT ${RSV_PERSON_KEY} AS key

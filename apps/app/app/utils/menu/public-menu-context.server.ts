@@ -16,6 +16,7 @@ import {
 } from '@repo/common/calorie-display'
 import { cashDiscountAllowedIn } from '@repo/common/cash-discount'
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import { GROUP_ORDER_FLAG } from '@repo/common/group-orders'
 import { focalPointOf, type FocalPoint } from '@repo/common/image-focal'
 import { readCourseSettings } from '@repo/common/kitchen-ticket'
 import {
@@ -83,13 +84,13 @@ import { type OrderContextDiscounts } from '@repo/discounts'
 import { type AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
 import { ENV } from 'varlock/env'
 import {
-	buildPublicMenuDiscounts,
-	type PublicMenuPromotion,
-} from '#app/utils/discounts/order-context.server.ts'
-import {
 	buildPublicCatering,
 	type PublicCatering,
 } from '#app/utils/catering/public-catering.server.ts'
+import {
+	buildPublicMenuDiscounts,
+	type PublicMenuPromotion,
+} from '#app/utils/discounts/order-context.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import { isDailyDishLimitsEnabled } from '#app/utils/orders/daily-dish-limits.server.ts'
 import { isSlotLimitsEnabled } from '#app/utils/orders/slot-limits.server.ts'
@@ -197,6 +198,8 @@ export interface PublicSiteMenuPayload {
 		 * cap itself is never in this payload.
 		 */
 		dailyDishLimits?: boolean
+		/** `ordering.group` (#170): Sites offers "Start a group order". */
+		group?: boolean
 		/** `qr_ordering.*` flags (#220): aligns poster channel gating with `tenant-api`. */
 		qrOrdering?: QrOrderingFeatures
 	}
@@ -873,6 +876,9 @@ export async function buildPublicSiteMenuPayload(
 			upsell: await isUpsellEnabled(org.id),
 			slotLimits: await isSlotLimitsEnabled(org.id),
 			dailyDishLimits: await isDailyDishLimitsEnabled(org.id),
+			group:
+				(await getFeatureFlag(GROUP_ORDER_FLAG, { organizationId: org.id })) ===
+				true,
 			qrOrdering: foldQrOrderingFeatures({
 				enabled: await getFeatureFlag(QR_ORDERING_FLAG_KEYS.enabled, {
 					organizationId: org.id,

@@ -68,6 +68,7 @@ function getWorkflowLabel(
 		orders_payment_review: msg`Orders: a payment needs review`,
 		ordering_paused_long: msg`Orders: online ordering has been paused or busy for too long`,
 		orders_large: msg`Orders: a large order arrives`,
+		orders_problem: msg`Orders: a guest reported a problem with an order`,
 		station_offline: msg`Kitchen tablets: a tablet goes offline`,
 	}
 	return _(labels[workflowName]) || workflowName

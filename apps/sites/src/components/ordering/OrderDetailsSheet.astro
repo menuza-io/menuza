@@ -132,6 +132,11 @@ const truckIcon =
 
 			{/* Delivery */}
 			<section data-od-panel="delivery" class="hidden pt-5" aria-label={labels.delivery}>
+				{/* A signed-in guest's saved addresses (#113): filled by the browser from the region. */}
+				<div data-od-saved hidden class="mb-5">
+					<h3 class="mb-2 text-sm font-semibold text-foreground">{labels.saved.heading}</h3>
+					<div data-od-saved-list class="grid gap-2"></div>
+				</div>
 				<div data-od-address-block>
 					<label for="od-address" class="mb-1.5 block text-sm font-semibold text-foreground">{labels.addressLabel}</label>
 					<div class="relative">
@@ -172,6 +177,7 @@ const truckIcon =
 					</div>
 				</div>
 				<div data-od-result class="mt-5 empty:hidden" aria-live="polite"></div>
+				<div data-od-save-address hidden class="mt-4"></div>
 			</section>
 
 			{/* Pickup */}
@@ -345,6 +351,10 @@ const truckIcon =
 	} from '~/lib/ordering/delivery-client'
 	import { readCartSubtotal } from '~/lib/ordering/delivery-fee'
 	import { el, isComposingKey, lockScroll } from '~/lib/ordering/dom'
+	import {
+		mountSaveAddressForm,
+		mountSavedAddressPicker,
+	} from '~/lib/ordering/saved-addresses-ui'
 	import { createMoneyFormatter, fillTemplate } from '~/lib/ordering/money'
 	import { fetchOrderingOptions } from '~/lib/ordering/order-client'
 	import {
@@ -436,6 +446,9 @@ const truckIcon =
 		const saveLabel = q('[data-od-save-label]')!
 		const saveSpinner = q('[data-od-save-spinner]')!
 		const footerHint = q('[data-od-footer-hint]')!
+		const savedRoot = q('[data-od-saved]')!
+		const savedList = q('[data-od-saved-list]')!
+		const saveOfferRoot = q('[data-od-save-address]')!
 
 		// ---------- draft state (committed only on Save) ----------
 		let mode: FulfillmentMode = 'pickup'
@@ -447,6 +460,8 @@ const truckIcon =
 		let quotedUnit = ''
 		let lastPlaceId: string | null = null
 		let lastAddressText = ''
+		// The saved address (#113) being used: quoted again by id, never by text.
+		let savedId: string | null = null
 		let sessionToken = createSessionToken()
 		let predictions: PlacePrediction[] = []
 		let searchState: PlacesSearchState = { status: 'idle', query: '' }
@@ -800,7 +815,9 @@ const truckIcon =
 				case 'out_of_range': {
 					const { wrap, text } = quote.noStore
 						? card('warning', ICON.mapOff, L.noStoreTitle, L.noStoreBody)
-						: card(
+						: savedId
+							? card('warning', ICON.mapOff, L.saved.notDeliveredNow, fillTemplate(L.outOfRangeBody, { location: location()?.name ?? '' }))
+							: card(
 								'warning',
 								ICON.mapOff,
 								L.outOfRangeTitle,
@@ -1084,12 +1101,53 @@ const truckIcon =
 			quote = deliveryAvailable ? { status: 'idle' } : { status: 'unavailable_options' }
 		}
 
+		// ---------- saved addresses (#113) ----------
+		const picker = mountSavedAddressPicker({
+			root: savedRoot as HTMLElement,
+			list: savedList as HTMLElement,
+			labels: L.saved,
+			onPick: (address) => {
+				savedId = address.id
+				lastPlaceId = null
+				lastAddressText = ''
+				storeChoices = []
+				pinnedStore = false
+				closeSuggestions()
+				addressInput.value = address.formatted
+				unitInput.value = address.unit ?? ''
+				clearBtn.classList.remove('hidden')
+				picker.select(address.id)
+				saveForm.offer(null)
+				// Always quoted again as the zones and fees are now.
+				void runQuote()
+			},
+		})
+		const saveForm = mountSaveAddressForm({
+			root: saveOfferRoot as HTMLElement,
+			labels: L.saved,
+			onSaved: (address) => {
+				savedId = address.id
+				void picker.refresh().then(() => picker.select(address.id))
+			},
+		})
+		/** "Save this address" is offered for a typed address that was just quoted. */
+		function updateSaveOffer() {
+			if (quote.status === 'deliverable' && !savedId) {
+				saveForm.offer({ locationId, quoteToken: quote.quote.token })
+			} else {
+				saveForm.offer(null)
+			}
+		}
+
 		function tryAnother() {
 			storeChoices = []
 			pinnedStore = false
 			addressInput.value = ''
 			lastPlaceId = null
 			lastAddressText = ''
+			savedId = null
+			picker.select(null)
+			saveForm.offer(null)
 			clearBtn.classList.add('hidden')
 			resetQuote()
 			sessionToken = createSessionToken()
@@ -1107,7 +1165,8 @@ const truckIcon =
 			const result = await requestDeliveryLocations({
 				purpose: 'delivery',
 				placeId: lastPlaceId ?? undefined,
-				address: lastPlaceId ? undefined : lastAddressText,
+				address: lastPlaceId || savedId ? undefined : lastAddressText,
+				addressId: savedId ?? undefined,
 				unit,
 				sessionToken,
 				locale: data.locale,
@@ -1137,11 +1196,12 @@ const truckIcon =
 			quote = { status: 'deliverable', quote: choice.quote }
 			quotedUnit = unitInput.value.trim()
 			void loadOptions()
+			updateSaveOffer()
 			render()
 		}
 
 		async function runQuote(): Promise<DeliveryQuoteResult | null> {
-			if (!lastPlaceId && !lastAddressText) return null
+			if (!lastPlaceId && !lastAddressText && !savedId) return null
 			quoteController?.abort()
 			const controller = new AbortController()
 			quoteController = controller
@@ -1155,7 +1215,8 @@ const truckIcon =
 					: await requestDeliveryQuote({
 							locationId,
 							placeId: lastPlaceId ?? undefined,
-							address: lastPlaceId ? undefined : lastAddressText,
+							address: lastPlaceId || savedId ? undefined : lastAddressText,
+							addressId: savedId ?? undefined,
 							unit,
 							sessionToken,
 							locale: data.locale,
@@ -1170,9 +1231,17 @@ const truckIcon =
 				if (result.status === 'deliverable' && !addressInput.matches(':focus')) {
 					addressInput.value = result.quote.address.formatted
 				}
+				updateSaveOffer()
 				return result
 			} catch (error) {
 				if ((error as { name?: string })?.name === 'AbortError') return null
+				// A saved address that is gone (deleted elsewhere) or a session that
+				// ended is said plainly, never quoted from a guess.
+				if (savedId && (error as { code?: string })?.code === 'address_not_found') {
+					savedId = null
+					picker.select(null)
+					void picker.refresh()
+				}
 				quote = { status: 'error' }
 				return null
 			} finally {
@@ -1194,6 +1263,9 @@ const truckIcon =
 			}
 			lastPlaceId = null
 			lastAddressText = ''
+			savedId = null
+			picker.select(null)
+			saveForm.offer(null)
 			// A new address is a new search: the best store wins again.
 			storeChoices = []
 			pinnedStore = false
@@ -1287,7 +1359,7 @@ const truckIcon =
 
 		// ---------- save ----------
 		function toDelivery(result: Extract<DeliveryQuoteResult, { status: 'deliverable' }>): OrderDetailsDelivery {
-			return deliveryFromQuote(result.quote, quotedUnit)
+			return deliveryFromQuote(result.quote, quotedUnit, savedId ?? undefined)
 		}
 
 		function setSaving(value: boolean) {
@@ -1303,8 +1375,8 @@ const truckIcon =
 			if (mode === 'delivery') {
 				if (quote.status !== 'deliverable') return
 				// The unit is signed into the quote; re-check when it changed.
-				if (unitInput.value.trim() !== quotedUnit && (lastPlaceId || lastAddressText || quote.quote.address.formatted)) {
-					if (!lastPlaceId && !lastAddressText) lastAddressText = quote.quote.address.formatted
+				if (unitInput.value.trim() !== quotedUnit && (lastPlaceId || lastAddressText || savedId || quote.quote.address.formatted)) {
+					if (!lastPlaceId && !lastAddressText && !savedId) lastAddressText = quote.quote.address.formatted
 					setSaving(true)
 					const result = await runQuote()
 					setSaving(false)
@@ -1350,6 +1422,7 @@ const truckIcon =
 			searchState = { status: 'idle', query: '' }
 			lastPlaceId = null
 			lastAddressText = ''
+			savedId = saved.delivery?.savedAddressId ?? null
 			storeChoices = []
 			pinnedStore = false
 			if (saved.delivery) {
@@ -1380,6 +1453,8 @@ const truckIcon =
 			}
 			clearBtn.classList.toggle('hidden', !addressInput.value)
 			renderSuggestions()
+			saveForm.offer(null)
+			void picker.refresh().then(() => picker.select(savedId))
 		}
 
 		function open(tab?: OrderDetailsTab | null) {

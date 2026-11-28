@@ -48,6 +48,10 @@ msgstr "خصم {amount}"
 msgid "{amount} per {unit}"
 msgstr "{amount} لكل {unit}"
 
+#: src/lib/ordering-labels.ts:372
+msgid "{amount} so far"
+msgstr "{amount} حتى الآن"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "{code} applied"
 msgstr "تم تطبيق {code}"
@@ -86,6 +90,10 @@ msgstr "{count} دقيقة"
 #: src/lib/reservations/labels.ts:192
 msgid "{count} minutes late"
 msgstr "متأخر {count} دقيقة"
+
+#: src/lib/ordering-labels.ts:289
+msgid "{count} ordered"
+msgstr "طُلب {count}"
 
 #: src/lib/loyalty/labels.ts:300
 msgid "{credited} completed, {pending} pending, {points} earned"
@@ -310,6 +318,10 @@ msgstr "ملاحظة من المطعم"
 msgid "A payment for this tab is already on its way. Wait a moment, then check your tab."
 msgstr "دفعة هذا الحساب في طريقها بالفعل. انتظر لحظة، ثم راجع حسابك."
 
+#: src/lib/ordering-labels.ts:312
+msgid "A problem can't be reported on this order here."
+msgstr "لا يمكن الإبلاغ عن مشكلة في هذا الطلب من هنا."
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "A team member is settling this tab. Please ask them for help."
 msgstr "أحد أعضاء الفريق يسوّي هذا الحساب. يُرجى طلب المساعدة منه."
@@ -383,13 +395,25 @@ msgstr "أضف عنوان توصيل ضمن منطقة التوصيل قبل إ�
 msgid "Add a note"
 msgstr "أضف ملاحظة"
 
+#: src/lib/ordering-labels.ts:292
+msgid "Add a photo (optional)"
+msgstr "أضف صورة (اختياري)"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Add a tip"
 msgstr "أضف إكرامية"
 
+#: src/lib/guest-account-labels.ts:23
+msgid "Add an address"
+msgstr "إضافة عنوان"
+
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Add an email address first"
 msgstr "أضف عنوان بريد إلكتروني أولاً"
+
+#: src/lib/ordering-labels.ts:411
+msgid "Add at least one dish before you check out."
+msgstr "أضف طبقًا واحدًا على الأقل قبل الدفع."
 
 #: src/lib/gift-cards/labels.ts:73
 msgid "Add card"
@@ -408,6 +432,14 @@ msgstr "إضافة بطاقة هدايا"
 msgid "Add more of the eligible items to use this code."
 msgstr "أضف المزيد من العناصر المؤهلة لاستخدام هذا الرمز."
 
+#: src/lib/ordering-labels.ts:382
+msgid "Add my cart to the group"
+msgstr "أضف سلتي إلى الطلب الجماعي"
+
+#: src/lib/guest-account-labels.ts:21
+msgid "Add one below, or save one while you check out for delivery."
+msgstr "أضف عنواناً أدناه، أو احفظ واحداً أثناء إتمام طلب التوصيل."
+
 #: src/lib/ordering-labels.ts:51
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Add the required items to your order to use this code."
@@ -422,13 +454,39 @@ msgstr "أضف العناصر المطلوبة إلى طلبك لاستخدام 
 msgid "Add to calendar"
 msgstr "أضف إلى التقويم"
 
+#: src/lib/guest-account-labels.ts:53
+msgid "Add to favorites"
+msgstr "إضافة إلى المفضلة"
+
 #: src/lib/ordering-labels.ts:65
 msgid "Add to order"
 msgstr "إضافة إلى الطلب"
 
+#: src/lib/ordering-labels.ts:360
+msgid "Add your own dishes. You only need a first name, no account."
+msgstr "أضف أطباقك. تحتاج فقط إلى اسمك الأول دون حساب."
+
+#: src/lib/ordering-labels.ts:387
+msgid "Added to the group order."
+msgstr "تمت الإضافة إلى الطلب الجماعي."
+
+#: src/lib/ordering-labels.ts:383
+msgid "Adding…"
+msgstr "جارٍ الإضافة…"
+
+#: src/lib/ordering-labels.ts:461
+msgid "Address saved"
+msgstr "تم حفظ العنوان"
+
+#: src/lib/guest-account-labels.ts:28
 #: src/lib/ordering-labels.ts:154
 msgid "Address suggestions"
 msgstr "عناوين مقترحة"
+
+#: src/components/AccountShell.astro.ts:3
+#: src/lib/guest-account-labels.ts:15
+msgid "Addresses"
+msgstr "العناوين"
 
 #: src/lib/gift-cards/labels.ts:84
 msgid "Adjusted"
@@ -497,6 +555,10 @@ msgstr "المبلغ المستحق الآن"
 msgid "Amount due: {amount}"
 msgstr "المبلغ المستحق: {amount}"
 
+#: src/lib/ordering-labels.ts:282
+msgid "An item is missing"
+msgstr "صنف ناقص"
+
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Analytics: help us count visits and see what works"
 msgstr "التحليلات: تساعدنا على عدّ الزيارات ومعرفة ما ينجح"
@@ -513,6 +575,10 @@ msgstr "أي تفضيلات غذائية، صلصة جانبية، إلخ."
 #: src/lib/gift-cards/labels.ts:38
 msgid "Any location"
 msgstr "أي فرع"
+
+#: src/lib/ordering-labels.ts:290
+msgid "Anything else we should know?"
+msgstr "هل هناك شيء آخر يجب أن نعرفه؟"
 
 #: src/lib/loyalty/labels.ts:326
 msgid "App"
@@ -564,6 +630,7 @@ msgstr "الموافقة على {reward}"
 msgid "Approved: {reward}."
 msgstr "تمت الموافقة: {reward}."
 
+#: src/lib/guest-account-labels.ts:25
 #: src/lib/ordering-labels.ts:163
 msgid "Apt, suite or floor"
 msgstr "الشقة أو الجناح أو الطابق"
@@ -630,6 +697,10 @@ msgstr "العودة إلى القائمة"
 msgid "Back to shop"
 msgstr "العودة إلى المتجر"
 
+#: src/lib/ordering-labels.ts:425
+msgid "Back to the menu"
+msgstr "العودة إلى القائمة"
+
 #: src/lib/catering/labels.ts:91
 msgid "Balance later: {amount}"
 msgstr "الرصيد لاحقًا: {amount}"
@@ -653,6 +724,10 @@ msgstr "قبل أن نرسل طلبك"
 #: src/lib/gift-cards/labels.ts:65
 msgid "Being prepared. Your card will be delivered within 2 hours."
 msgstr "قيد التجهيز. ستصل بطاقتك خلال ساعتين."
+
+#: src/lib/ordering-labels.ts:348
+msgid "Between 15 minutes and 7 days from now. After it, nobody can add dishes."
+msgstr "بين 15 دقيقة و7 أيام من الآن. بعده لا يمكن لأحد إضافة أطباق."
 
 #: src/components/BirthdayField.astro.ts:3
 msgid "Birthday (optional)"
@@ -700,6 +775,10 @@ msgstr "شروط الحجز"
 msgid "Booking…"
 msgstr "جارٍ الحجز…"
 
+#: src/lib/guest-account-labels.ts:59
+msgid "Browse the menu"
+msgstr "تصفّح القائمة"
+
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Browse the shop"
@@ -745,6 +824,8 @@ msgstr "اتصل على {phone}"
 msgid "Call the restaurant"
 msgstr "اتصل بالمطعم"
 
+#: src/lib/guest-account-labels.ts:37
+#: src/lib/ordering-labels.ts:296
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Cancel"
@@ -857,6 +938,10 @@ msgstr "تغيير الوقت أو عدد الأشخاص"
 msgid "Check a card's balance"
 msgstr "تحقق من رصيد بطاقة"
 
+#: src/lib/guest-account-labels.ts:26
+msgid "Check address"
+msgstr "تحقق من العنوان"
+
 #: src/lib/reservations/labels.ts:388
 #: src/pages/menu/success.astro.ts:3
 msgid "Check again"
@@ -878,6 +963,10 @@ msgstr "تحقق من الرصيد"
 #: src/lib/loyalty/labels.ts:216
 msgid "Check for requests"
 msgstr "التحقق من وجود طلبات"
+
+#: src/lib/ordering-labels.ts:407
+msgid "Check out and pay"
+msgstr "الدفع وإتمام الطلب"
 
 #: src/lib/catering/labels.ts:65
 msgid "Check the choices for your dishes."
@@ -925,6 +1014,7 @@ msgstr "نتحقق من رمزك…"
 msgid "Checking your payment…"
 msgstr "جارٍ التحقق من دفعتك…"
 
+#: src/lib/guest-account-labels.ts:27
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Checking…"
 msgstr "جارٍ التحقق…"
@@ -995,9 +1085,17 @@ msgstr "اختر شهراً ويوماً صحيحين."
 msgid "Choose a time"
 msgstr "اختر وقتًا"
 
+#: src/lib/ordering-labels.ts:433
+msgid "Choose a time at least 15 minutes from now."
+msgstr "اختر وقتًا بعد 15 دقيقة على الأقل من الآن."
+
 #: src/lib/ordering-labels.ts:214
 msgid "Choose a time to continue."
 msgstr "اختر وقتًا للمتابعة."
+
+#: src/lib/ordering-labels.ts:434
+msgid "Choose a time within 7 days."
+msgstr "اختر وقتًا خلال 7 أيام."
 
 #: src/lib/gift-cards/labels.ts:47
 msgid "Choose an amount between {min} and {max}."
@@ -1023,13 +1121,25 @@ msgstr "اختر خيارًا واحدًا على الأقل"
 msgid "Choose at least one dish."
 msgstr "اختر طبقًا واحدًا على الأقل."
 
+#: src/lib/ordering-labels.ts:306
+msgid "Choose at least one item."
+msgstr "اختر صنفًا واحدًا على الأقل."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Choose at least one location."
 msgstr "اختر فرعًا واحدًا على الأقل."
 
+#: src/lib/ordering-labels.ts:381
+msgid "Choose dishes from the menu"
+msgstr "اختر أطباقًا من القائمة"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Choose every location that suits you."
 msgstr "اختر كل فرع يناسبك."
+
+#: src/lib/ordering-labels.ts:409
+msgid "Choose pickup or delivery and the time at checkout. You pay for everything."
+msgstr "اختر الاستلام أو التوصيل والوقت عند الدفع. أنت تدفع ثمن كل شيء."
 
 #: src/lib/catering/labels.ts:62
 msgid "Choose the event date and time."
@@ -1213,6 +1323,7 @@ msgstr "نسخ الرمز"
 
 #: src/components/careers/ShareJob.astro.ts:3
 #: src/lib/loyalty/labels.ts:296
+#: src/lib/ordering-labels.ts:390
 msgid "Copy link"
 msgstr "نسخ الرابط"
 
@@ -1232,6 +1343,10 @@ msgstr "رمز القسيمة"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Coupon code removed. Total {total}."
 msgstr "تمت إزالة رمز القسيمة. الإجمالي {total}."
+
+#: src/lib/ordering-labels.ts:322
+msgid "Credit of {amount}: use code {code} on your next order before {date}."
+msgstr "رصيد بقيمة {amount}: استخدم الرمز {code} في طلبك القادم قبل {date}."
 
 #: src/lib/loyalty/labels.ts:260
 msgid "Current tier: {tier}"
@@ -1293,6 +1408,10 @@ msgstr "تم الرفض: {reward}."
 #: src/lib/ordering-labels.ts:94
 msgid "Decrease quantity"
 msgstr "تقليل الكمية"
+
+#: src/lib/ordering-labels.ts:452
+msgid "Default"
+msgstr "الافتراضي"
 
 #: src/lib/ordering-labels.ts:212
 msgid "Deliver here"
@@ -1430,6 +1549,10 @@ msgstr "الخصومات غير متاحة الآن، لذلك أزلنا رمز
 msgid "Discounts aren't available right now. Please review your total and place your order again."
 msgstr "الخصومات غير متاحة الآن. راجع الإجمالي ثم أعد تقديم الطلب."
 
+#: src/lib/guest-account-labels.ts:51
+msgid "Dishes you love, saved to this account."
+msgstr "الأطباق التي تحبها، محفوظة في هذا الحساب."
+
 #: src/lib/catering/labels.ts:48
 msgid "Dishes: {amount} before tax"
 msgstr "الأطباق: {amount} قبل الضريبة"
@@ -1455,6 +1578,7 @@ msgid "Do you provide plates, napkins and cutlery?"
 msgstr "هل توفرون الأطباق والمناديل وأدوات المائدة؟"
 
 #: src/lib/ordering-labels.ts:73
+#: src/lib/ordering-labels.ts:368
 msgid "Done"
 msgstr "تم"
 
@@ -1502,6 +1626,10 @@ msgstr "اكتساب"
 msgid "Earning {multiplier}× points"
 msgstr "كسب {multiplier}× نقاط"
 
+#: src/lib/guest-account-labels.ts:33
+msgid "Edit"
+msgstr "تعديل"
+
 #: src/lib/gift-cards/labels.ts:22
 msgid "Eid"
 msgstr "العيد"
@@ -1530,6 +1658,14 @@ msgstr "أرسلوا لي عروض وأخبار {org} بالبريد الإلك�
 #: src/pages/menu/success.astro.ts:3
 msgid "Email me this receipt again"
 msgstr "أرسل لي هذا الإيصال بالبريد مرة أخرى"
+
+#: src/lib/ordering-labels.ts:417
+msgid "End the group order"
+msgstr "إنهاء الطلب الجماعي"
+
+#: src/lib/ordering-labels.ts:419
+msgid "End this group order for everyone? Every dish and name in it is deleted."
+msgstr "إنهاء هذا الطلب الجماعي للجميع؟ سيتم حذف كل طبق واسم فيه."
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropStatusChip.astro.ts:3
@@ -1696,6 +1832,11 @@ msgstr "تصفح القائمة"
 msgid "Explore our menu and add your favorite dishes."
 msgstr "تصفح قائمتنا وأضف أطباقك المفضلة."
 
+#: src/components/AccountShell.astro.ts:3
+#: src/lib/guest-account-labels.ts:50
+msgid "Favorites"
+msgstr "المفضلة"
+
 #: src/lib/reservations/labels.ts:394
 msgid "Fee"
 msgstr "رسوم"
@@ -1737,6 +1878,10 @@ msgstr "أكمل هذا الطلب"
 #: src/lib/reservations/labels.ts:84
 msgid "First name"
 msgstr "الاسم الأول"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "For {name}"
+msgstr "لـ {name}"
 
 #: src/lib/reservations/labels.ts:128
 msgid "For a larger party, please contact the restaurant directly."
@@ -1794,6 +1939,10 @@ msgstr "الاسم الكامل"
 #: src/lib/careers/labels.ts:14
 msgid "Full time"
 msgstr "دوام كامل"
+
+#: src/lib/ordering-labels.ts:458
+msgid "Gate code or delivery note"
+msgstr "رمز البوابة أو ملاحظة التوصيل"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Gate code, buzzer, or where to leave it"
@@ -1897,6 +2046,14 @@ msgstr "يتماشى معه جيدًا"
 msgid "Good to know"
 msgstr "معلومات مفيدة"
 
+#: src/lib/ordering-labels.ts:340
+msgid "Group order"
+msgstr "طلب جماعي"
+
+#: src/lib/ordering-labels.ts:373
+msgid "Group total"
+msgstr "إجمالي المجموعة"
+
 #: src/lib/reservations/labels.ts:469
 msgid "Guests"
 msgstr "الضيوف"
@@ -1930,6 +2087,18 @@ msgstr "إخفاء التفاصيل"
 #: src/lib/loyalty/labels.ts:236
 msgid "History"
 msgstr "السجل"
+
+#: src/lib/ordering-labels.ts:456
+msgid "Home"
+msgstr "المنزل"
+
+#: src/lib/ordering-labels.ts:455
+msgid "Home, Work…"
+msgstr "المنزل، العمل…"
+
+#: src/lib/ordering-labels.ts:365
+msgid "Host"
+msgstr "المضيف"
 
 #: src/lib/careers/labels.ts:31
 msgid "hour"
@@ -1971,6 +2140,14 @@ msgstr "أنا في الطريق"
 #: src/lib/reservations/labels.ts:191
 msgid "I am running late"
 msgstr "سأتأخر"
+
+#: src/lib/ordering-labels.ts:283
+msgid "I got the wrong item"
+msgstr "استلمت صنفًا خاطئًا"
+
+#: src/lib/ordering-labels.ts:369
+msgid "I'm done"
+msgstr "انتهيت"
 
 #: src/lib/reservations/labels.ts:310
 msgid "If a table opens up, we will contact you. You can cancel this request at any time."
@@ -2049,6 +2226,14 @@ msgstr "هذا العنوان خارج منطقة التوصيل لدى {locatio
 msgid "Items"
 msgstr "الأصناف"
 
+#: src/lib/ordering-labels.ts:363
+msgid "Join"
+msgstr "انضم"
+
+#: src/lib/ordering-labels.ts:356
+msgid "Join {host}'s group order"
+msgstr "انضم إلى الطلب الجماعي لـ {host}"
+
 #: src/lib/loyalty/labels.ts:312
 msgid "Join and get {points} as a welcome bonus."
 msgstr "انضم واحصل على {points} كمكافأة ترحيب."
@@ -2072,9 +2257,14 @@ msgstr "انضم إلى قائمة الانتظار مجددًا"
 msgid "Join the waitlist at {name} from anywhere. This page shows your place in line."
 msgstr "انضم إلى قائمة الانتظار في {name} من أي مكان. تعرض هذه الصفحة دورك في القائمة."
 
+#: src/lib/ordering-labels.ts:364
 #: src/lib/reservations/labels.ts:221
 msgid "Joining…"
 msgstr "جارٍ الانضمام…"
+
+#: src/lib/ordering-labels.ts:293
+msgid "JPEG, PNG or WebP, up to 5 MB."
+msgstr "JPEG أو PNG أو WebP، حتى 5 ميغابايت."
 
 #: src/lib/reservations/labels.ts:280
 msgid "Keep my place"
@@ -2129,6 +2319,10 @@ msgstr "رسوم الإلغاء المتأخر: {amount}."
 msgid "Latest time"
 msgstr "أقصى وقت"
 
+#: src/lib/ordering-labels.ts:412
+msgid "Leave the group order"
+msgstr "مغادرة الطلب الجماعي"
+
 #: src/lib/reservations/labels.ts:277
 msgid "Leave the waitlist"
 msgstr "مغادرة قائمة الانتظار"
@@ -2136,6 +2330,10 @@ msgstr "مغادرة قائمة الانتظار"
 #: src/lib/reservations/labels.ts:278
 msgid "Leave the waitlist?"
 msgstr "مغادرة قائمة الانتظار؟"
+
+#: src/lib/ordering-labels.ts:421
+msgid "Leave this group order? Your dishes are removed."
+msgstr "مغادرة هذا الطلب الجماعي؟ ستتم إزالة أطباقك."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Leave this table"
@@ -2172,6 +2370,7 @@ msgid "Limited menus you pre-order for a pickup window."
 msgstr "قوائم محدودة تطلبها مسبقًا لاستلامها في وقت محدد."
 
 #: src/components/careers/ShareJob.astro.ts:3
+#: src/lib/ordering-labels.ts:391
 #: src/pages/events/[slug].astro.ts:3
 msgid "Link copied"
 msgstr "تم نسخ الرابط"
@@ -2205,6 +2404,7 @@ msgstr "جارٍ التحميل…"
 
 #: src/lib/catering/labels.ts:30
 #: src/lib/gift-cards/labels.ts:37
+#: src/lib/ordering-labels.ts:345
 #: src/lib/reservations/labels.ts:35
 msgid "Location"
 msgstr "الفرع"
@@ -2213,6 +2413,10 @@ msgstr "الفرع"
 #: src/pages/locations/index.astro.ts:3
 msgid "Locations"
 msgstr "الفروع"
+
+#: src/lib/ordering-labels.ts:392
+msgid "Lock the order"
+msgstr "قفل الطلب"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
@@ -2226,9 +2430,21 @@ msgstr "جارٍ البحث عن طاولات…"
 msgid "Looks like you haven't added any dishes to your order yet."
 msgstr "يبدو أنك لم تضف أي أطباق إلى طلبك بعد."
 
+#: src/lib/ordering-labels.ts:413
+msgid "Make a new link"
+msgstr "إنشاء رابط جديد"
+
+#: src/lib/ordering-labels.ts:415
+msgid "Make a new link? The old link stops working. People already in the group stay in it."
+msgstr "إنشاء رابط جديد؟ سيتوقف الرابط القديم عن العمل. يبقى الأشخاص الموجودون في المجموعة فيها."
+
 #: src/lib/reservations/labels.ts:156
 msgid "Make another reservation"
 msgstr "إجراء حجز آخر"
+
+#: src/lib/guest-account-labels.ts:36
+msgid "Make default"
+msgstr "تعيين كافتراضي"
 
 #: src/lib/reservations/labels.ts:209
 msgid "Manage"
@@ -2312,10 +2528,18 @@ msgstr "الأكثر طلبًا"
 msgid "Msg and data rates may apply. Reply STOP to opt out."
 msgstr "قد تُطبَّق رسوم الرسائل والبيانات. أرسل STOP لإلغاء الاشتراك."
 
+#: src/lib/ordering-labels.ts:284
+msgid "My order was late"
+msgstr "تأخر طلبي"
+
 #: src/lib/reservations/labels.ts:219
 #: src/pages/profile.astro.ts:3
 msgid "Name"
 msgstr "الاسم"
+
+#: src/lib/ordering-labels.ts:454
+msgid "Name this address"
+msgstr "سمِّ هذا العنوان"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "name@example.com"
@@ -2345,6 +2569,7 @@ msgstr "خطأ في الشبكة. حاول مرة أخرى."
 msgid "Never miss a drop"
 msgstr "لا تفوّت أي طرح"
 
+#: src/lib/guest-account-labels.ts:69
 #: src/pages/menu.astro.ts:3
 msgid "Next"
 msgstr "التالي"
@@ -2369,6 +2594,10 @@ msgstr "لا توجد بطاقات محفوظة بعد."
 msgid "No dishes match"
 msgstr "لا توجد أطباق مطابقة"
 
+#: src/lib/ordering-labels.ts:371
+msgid "No dishes yet"
+msgstr "لا أطباق بعد"
+
 #: src/pages/drops.astro.ts:3
 msgid "No drops right now."
 msgstr "لا توجد طروحات حاليًا."
@@ -2377,6 +2606,11 @@ msgstr "لا توجد طروحات حاليًا."
 msgid "No experiences right now"
 msgstr "لا توجد تجارب حاليًا"
 
+#: src/lib/guest-account-labels.ts:57
+msgid "No favorites yet."
+msgstr "لا توجد مفضلات بعد."
+
+#: src/lib/ordering-labels.ts:402
 #: src/pages/drop/[slug].astro.ts:3
 msgid "No longer available"
 msgstr "لم يعد متاحًا"
@@ -2430,6 +2664,10 @@ msgstr "بدون مكافأة"
 #: src/lib/loyalty/labels.ts:136
 msgid "No rewards are available yet."
 msgstr "لا توجد مكافآت متاحة بعد."
+
+#: src/lib/guest-account-labels.ts:19
+msgid "No saved addresses yet."
+msgstr "لا توجد عناوين محفوظة بعد."
 
 #: src/pages/profile.astro.ts:3
 msgid "No saved payment methods yet."
@@ -2492,6 +2730,10 @@ msgstr "غير متاحة لهذا الطلب"
 msgid "Not available right now"
 msgstr "غير متاح حاليًا"
 
+#: src/lib/ordering-labels.ts:370
+msgid "Not done yet"
+msgstr "لم ينتهِ بعد"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Not enough left today"
 msgstr "الكمية المتبقية اليوم غير كافية"
@@ -2515,6 +2757,10 @@ msgstr "لا يوجد مبلغ مستحق على هذا الطلب."
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Nothing on your tab yet. Add dishes and send them to the kitchen."
 msgstr "لا شيء في حسابك بعد. أضف أطباقًا وأرسلها إلى المطبخ."
+
+#: src/lib/ordering-labels.ts:264
+msgid "Nothing was charged. The restaurant can see it on its kitchen screens."
+msgstr "لم يُحاسَب أي مبلغ. يمكن للمطعم رؤيته على شاشات المطبخ."
 
 #: src/lib/reservations/labels.ts:295
 msgid "Notify me"
@@ -2646,6 +2892,10 @@ msgstr "بقي {count} فقط من {name} اليوم. يرجى العودة إل
 msgid "Only a few left"
 msgstr "لم يتبقَّ سوى القليل"
 
+#: src/lib/ordering-labels.ts:442
+msgid "Only the host can do that."
+msgstr "المضيف فقط يمكنه فعل ذلك."
+
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
 msgstr "مفتوح للطلبات"
@@ -2671,6 +2921,10 @@ msgstr "افتح الرابط الوارد في رسالة التأكيد لإد
 #: src/pages/menu.astro.ts:3
 msgid "Open until {time}"
 msgstr "مفتوح حتى {time}"
+
+#: src/lib/ordering-labels.ts:444
+msgid "Open your group order"
+msgstr "افتح طلبك الجماعي"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Opening secure payment…"
@@ -2705,9 +2959,21 @@ msgstr "اطلب"
 msgid "Order {number}"
 msgstr "الطلب {number}"
 
+#: src/lib/ordering-labels.ts:397
+msgid "Order {number}: {status}"
+msgstr "الطلب {number}: {status}"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Order again"
 msgstr "اطلب مجددًا"
+
+#: src/lib/ordering-labels.ts:346
+msgid "Order by (optional)"
+msgstr "اطلب قبل (اختياري)"
+
+#: src/lib/ordering-labels.ts:374
+msgid "Order by {time}"
+msgstr "اطلب قبل {time}"
 
 #: src/lib/catering/labels.ts:45
 msgid "Order by {when}"
@@ -2776,6 +3042,10 @@ msgstr "نوع الطلب"
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Order window"
 msgstr "فترة الطلبات"
+
+#: src/lib/ordering-labels.ts:325
+msgid "Order with your credit"
+msgstr "اطلب برصيدك"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Ordering at the table is not available right now."
@@ -3068,6 +3338,10 @@ msgstr "رقم الهاتف"
 msgid "Phone number cannot be changed at this time."
 msgstr "لا يمكن تغيير رقم الهاتف حالياً."
 
+#: src/lib/ordering-labels.ts:330
+msgid "Photo attached"
+msgstr "تم إرفاق صورة"
+
 #: src/lib/reservations/labels.ts:480
 msgid "Photo of {name}"
 msgstr "صورة {name}"
@@ -3263,6 +3537,7 @@ msgstr "دفع مسبق"
 msgid "Preview · ordering opens {when}"
 msgstr "معاينة · يفتح الطلب {when}"
 
+#: src/lib/guest-account-labels.ts:68
 #: src/pages/menu.astro.ts:3
 msgid "Previous"
 msgstr "السابق"
@@ -3408,6 +3683,7 @@ msgstr "الاسترداد في الطريق"
 msgid "Refunded"
 msgstr "تم الاسترداد"
 
+#: src/lib/ordering-labels.ts:318
 #: src/pages/menu/success.astro.ts:3
 msgid "Refunded {amount}"
 msgstr "تم استرداد {amount}"
@@ -3417,8 +3693,10 @@ msgid "Reject non-essential"
 msgstr "رفض غير الأساسية"
 
 #: src/lib/gift-cards/labels.ts:89
+#: src/lib/guest-account-labels.ts:34
 #: src/lib/ordering-labels.ts:95
 #: src/lib/ordering-labels.ts:118
+#: src/lib/ordering-labels.ts:388
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Remove"
 msgstr "حذف"
@@ -3427,6 +3705,22 @@ msgstr "حذف"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Remove code {code}"
 msgstr "إزالة الرمز {code}"
+
+#: src/lib/guest-account-labels.ts:54
+msgid "Remove from favorites"
+msgstr "إزالة من المفضلة"
+
+#: src/lib/guest-account-labels.ts:35
+msgid "Remove this address?"
+msgstr "إزالة هذا العنوان؟"
+
+#: src/lib/ordering-labels.ts:406
+msgid "Remove unavailable dishes"
+msgstr "إزالة الأطباق غير المتوفرة"
+
+#: src/lib/ordering-labels.ts:276
+msgid "Report a problem"
+msgstr "أبلغ عن مشكلة"
 
 #: src/lib/catering/labels.ts:54
 msgid "Request a quote"
@@ -3535,6 +3829,11 @@ msgstr "سعر التخفيض"
 msgid "Save"
 msgstr "حفظ"
 
+#: src/lib/ordering-labels.ts:459
+msgid "Save address"
+msgstr "حفظ العنوان"
+
+#: src/lib/guest-account-labels.ts:38
 #: src/lib/reservations/labels.ts:180
 msgid "Save changes"
 msgstr "حفظ التغييرات"
@@ -3547,10 +3846,22 @@ msgstr "حفظ التغييرات"
 msgid "Save my choices"
 msgstr "حفظ اختياراتي"
 
+#: src/lib/ordering-labels.ts:453
+msgid "Save this address"
+msgstr "احفظ هذا العنوان"
+
+#: src/lib/ordering-labels.ts:451
+msgid "Saved addresses"
+msgstr "العناوين المحفوظة"
+
 #: src/pages/complete-name.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
+
+#: src/lib/ordering-labels.ts:460
+msgid "Saving…"
+msgstr "جارٍ الحفظ…"
 
 #: src/components/AppInviteSection.astro.ts:3
 msgid "Scan to get the app"
@@ -3568,6 +3879,7 @@ msgstr "جدولة"
 msgid "Scheduled orders only"
 msgstr "للطلبات المجدولة فقط"
 
+#: src/lib/guest-account-labels.ts:24
 #: src/lib/ordering-labels.ts:152
 msgid "Search street address"
 msgstr "ابحث عن عنوان الشارع"
@@ -3621,6 +3933,10 @@ msgstr "إرسال الطلب"
 msgid "Send Code"
 msgstr "إرسال الرمز"
 
+#: src/lib/ordering-labels.ts:294
+msgid "Send report"
+msgstr "إرسال البلاغ"
+
 #: src/lib/reservations/labels.ts:139
 msgid "Send request"
 msgstr "إرسال الطلب"
@@ -3640,6 +3956,7 @@ msgid "Sending..."
 msgstr "جارٍ الإرسال..."
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/ordering-labels.ts:295
 #: src/lib/reservations/labels.ts:296
 msgid "Sending…"
 msgstr "جارٍ الإرسال…"
@@ -3662,6 +3979,10 @@ msgstr "رسوم الخدمة"
 msgid "Share"
 msgstr "مشاركة"
 
+#: src/lib/ordering-labels.ts:343
+msgid "Share a link. Everyone adds their own dishes, and you pay once."
+msgstr "شارك رابطًا. يضيف كل شخص أطباقه وتدفع أنت مرة واحدة."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Share a photo from your order"
 msgstr "شارك صورة من طلبك"
@@ -3674,6 +3995,10 @@ msgstr "شارك صورة لطبق {dish}"
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
 msgstr "مشاركة هذه الوظيفة"
+
+#: src/lib/ordering-labels.ts:389
+msgid "Share this link"
+msgstr "شارك هذا الرابط"
 
 #: src/lib/loyalty/labels.ts:288
 msgid "Share your link. When a friend completes their first order, you earn {points}."
@@ -3717,10 +4042,17 @@ msgstr "عرض رمزك لا يستهلك أي نقاط. أنت من يوافق 
 
 #: src/components/SiteHeader.astro.ts:3
 #: src/lib/gift-cards/labels.ts:79
+#: src/lib/guest-account-labels.ts:42
+#: src/lib/guest-account-labels.ts:67
 #: src/lib/loyalty/labels.ts:71
+#: src/lib/ordering-labels.ts:355
 #: src/pages/login.astro.ts:3
 msgid "Sign in"
 msgstr "تسجيل الدخول"
+
+#: src/lib/ordering-labels.ts:468
+msgid "Sign in again to use your saved addresses."
+msgstr "سجّل الدخول مجدداً لاستخدام عناوينك المحفوظة."
 
 #: src/components/marketing/MarketingConsentBoxes.astro.ts:3
 msgid "Sign in to hear about offers"
@@ -3730,9 +4062,25 @@ msgstr "سجّل الدخول لتصلك العروض"
 msgid "Sign in to save gift cards to your account."
 msgstr "سجّل الدخول لحفظ بطاقات الهدايا في حسابك."
 
+#: src/lib/guest-account-labels.ts:55
+msgid "Sign in to save your favorite dishes."
+msgstr "سجّل الدخول لحفظ أطباقك المفضلة."
+
+#: src/lib/guest-account-labels.ts:66
+msgid "Sign in to see your favorites."
+msgstr "سجّل الدخول لرؤية مفضلاتك."
+
 #: src/lib/loyalty/labels.ts:67
 msgid "Sign in to see your rewards"
 msgstr "سجّل الدخول لعرض مكافآتك"
+
+#: src/lib/guest-account-labels.ts:41
+msgid "Sign in to see your saved addresses."
+msgstr "سجّل الدخول لرؤية عناوينك المحفوظة."
+
+#: src/lib/ordering-labels.ts:354
+msgid "Sign in to start a group order."
+msgstr "سجّل الدخول لبدء طلب جماعي."
 
 #: src/lib/ordering-labels.ts:41
 #: src/pages/menu/checkout.astro.ts:3
@@ -3747,6 +4095,7 @@ msgstr "سجّل الدخول برقم هاتفك لعرض نقاطك واستخ
 msgid "Sign up"
 msgstr "سجّل"
 
+#: src/lib/guest-account-labels.ts:56
 #: src/lib/ordering-labels.ts:66
 #: src/lib/reservations/labels.ts:471
 msgid "Sold out"
@@ -3755,6 +4104,10 @@ msgstr "نفد المخزون"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Sold out for today"
 msgstr "نفد اليوم"
+
+#: src/lib/ordering-labels.ts:404
+msgid "Some dishes are no longer available. Remove them before you check out."
+msgstr "بعض الأطباق لم تعد متوفرة. أزلها قبل الدفع."
 
 #: src/pages/menu.astro.ts:3
 msgid "Some items are no longer available and were left out:"
@@ -3796,6 +4149,10 @@ msgstr "تغيرت بعض الأسعار. تعرض سلتك الأسعار ال�
 msgid "Someone in my party has an allergy (add details in the notes)"
 msgstr "أحد أفراد مجموعتي لديه حساسية (أضف التفاصيل في الملاحظات)"
 
+#: src/lib/ordering-labels.ts:286
+msgid "Something else"
+msgstr "شيء آخر"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Something in your order isn't available in that amount today. Please go back to the menu to change your order."
@@ -3811,6 +4168,7 @@ msgstr "حدث خطأ ما."
 #: src/lib/catering/labels.ts:83
 #: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:345
+#: src/lib/ordering-labels.ts:439
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
@@ -3818,6 +4176,10 @@ msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
 #: src/components/SitePopup.astro.ts:3
 msgid "Something went wrong. Try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
+
+#: src/lib/ordering-labels.ts:275
+msgid "Something wrong with your order?"
+msgstr "هل هناك مشكلة في طلبك؟"
 
 #: src/pages/menu.astro.ts:3
 msgid "Special instructions"
@@ -3831,6 +4193,14 @@ msgstr "تعليمات خاصة"
 #: src/lib/reservations/labels.ts:201
 msgid "Special requests"
 msgstr "طلبات خاصة"
+
+#: src/lib/ordering-labels.ts:351
+msgid "Spend limit for the group (optional)"
+msgstr "حد الإنفاق للمجموعة (اختياري)"
+
+#: src/lib/ordering-labels.ts:350
+msgid "Spend limit per person (optional)"
+msgstr "حد الإنفاق لكل شخص (اختياري)"
 
 #: src/lib/loyalty/labels.ts:220
 msgid "Spends {points} for {amount} off"
@@ -3860,6 +4230,18 @@ msgstr "نجمة"
 #: src/pages/menu/success.astro.ts:3
 msgid "stars"
 msgstr "نجوم"
+
+#: src/lib/ordering-labels.ts:341
+msgid "Start a group order"
+msgstr "ابدأ طلبًا جماعيًا"
+
+#: src/lib/ordering-labels.ts:352
+msgid "Start the group order"
+msgstr "ابدأ الطلب الجماعي"
+
+#: src/lib/ordering-labels.ts:353
+msgid "Starting…"
+msgstr "جارٍ البدء…"
 
 #: src/lib/gift-cards/labels.ts:91
 msgid "Still to pay: {amount}"
@@ -3915,6 +4297,10 @@ msgstr "جارٍ نقلك إلى صفحة الدفع الآمنة…"
 msgid "Tap again to leave this table"
 msgstr "اضغط مرة أخرى لمغادرة هذه الطاولة"
 
+#: src/lib/guest-account-labels.ts:58
+msgid "Tap the heart on a dish to keep it here."
+msgstr "اضغط على القلب في أي طبق لإبقائه هنا."
+
 #: src/lib/reservations/labels.ts:453
 msgid "Tasting menus, chef's tables and special events at {name}."
 msgstr "قوائم تذوق وطاولات الشيف وفعاليات خاصة في {name}."
@@ -3931,6 +4317,10 @@ msgstr "الضريبة"
 msgid "Tax, tips and delivery fees do not count toward earning."
 msgstr "لا تُحتسب الضرائب والإكراميات ورسوم التوصيل عند احتساب المكافآت."
 
+#: src/lib/ordering-labels.ts:278
+msgid "Tell the restaurant what went wrong. They answer here, and by email or text if you gave them your details."
+msgstr "أخبر المطعم بما حدث. سيردون هنا، وبالبريد الإلكتروني أو رسالة نصية إن أعطيتهم بياناتك."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Tell us a little about yourself. It takes a couple of minutes."
 msgstr "حدّثنا قليلًا عن نفسك. يستغرق الأمر دقيقتين."
@@ -3946,6 +4336,14 @@ msgstr "مؤقت"
 #: src/components/LegalLinks.astro.ts:3
 msgid "Terms of service"
 msgstr "شروط الخدمة"
+
+#: src/lib/ordering-labels.ts:262
+msgid "Test order"
+msgstr "طلب تجريبي"
+
+#: src/components/ordering/TestOrderBanner.astro.ts:3
+msgid "Test order: you won't be charged"
+msgstr "طلب تجريبي: لن يتم خصم أي مبلغ منك"
 
 #: src/components/marketing/MessagesSection.astro.ts:3
 msgid "Text"
@@ -4011,6 +4409,10 @@ msgstr "شكرًا لك. استلم المطعم دفعتك."
 msgid "Thank you. We received your request and will send you a quote by email."
 msgstr "شكرًا لك. استلمنا طلبك وسنرسل لك عرض سعر بالبريد الإلكتروني."
 
+#: src/lib/ordering-labels.ts:298
+msgid "Thank you. We sent your report. The restaurant's answer will show here."
+msgstr "شكرًا لك. أرسلنا بلاغك. سيظهر رد المطعم هنا."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
 msgstr "شكرًا لك. تم إرسال طلبك. إذا بدا مناسبًا فسيتواصلون معك."
@@ -4045,6 +4447,10 @@ msgstr "تعذّر تطبيق رمز القسيمة."
 msgid "That date is too far ahead to book online."
 msgstr "هذا التاريخ بعيد جدًا للحجز عبر الإنترنت."
 
+#: src/lib/ordering-labels.ts:435
+msgid "That dish cannot be added to a group order."
+msgstr "لا يمكن إضافة هذا الطبق إلى طلب جماعي."
+
 #: src/lib/catering/labels.ts:77
 msgid "That is more guests than we can cater online. Please call us."
 msgstr "هذا العدد من الضيوف أكبر مما نستطيع تلبيته عبر الإنترنت. يرجى الاتصال بنا."
@@ -4052,6 +4458,10 @@ msgstr "هذا العدد من الضيوف أكبر مما نستطيع تلب�
 #: src/lib/catering/labels.ts:80
 msgid "That is not available here. Choose pickup or delivery."
 msgstr "هذا غير متاح هنا. اختر الاستلام أو التوصيل."
+
+#: src/lib/ordering-labels.ts:428
+msgid "That is over the spend limit for this group order."
+msgstr "هذا يتجاوز حد الإنفاق لهذا الطلب الجماعي."
 
 #: src/lib/catering/labels.ts:67
 msgid "That is too far ahead. Please choose an earlier date."
@@ -4068,6 +4478,14 @@ msgstr "هذا العدد من الأشخاص غير متاح عبر الإنت�
 #: src/lib/reservations/labels.ts:518
 msgid "That party size needs a request. Please use the large-party option."
 msgstr "هذا العدد يتطلب تقديم طلب. يرجى استخدام خيار المجموعات الكبيرة."
+
+#: src/lib/ordering-labels.ts:305
+msgid "That photo is bigger than 5 MB."
+msgstr "هذه الصورة أكبر من 5 ميغابايت."
+
+#: src/lib/ordering-labels.ts:304
+msgid "That photo is not a JPEG, PNG or WebP picture."
+msgstr "هذه الصورة ليست بصيغة JPEG أو PNG أو WebP."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That pickup slot just filled up. Please choose a different time."
@@ -4097,6 +4515,10 @@ msgstr "لم تعد تلك المكافأة تنطبق، لذا أزلناها."
 msgid "That reward would cover the whole tab, so it cannot be used when paying from your phone. Pick another reward or pay without one."
 msgstr "ستغطي تلك المكافأة الحساب بالكامل، لذا لا يمكن استخدامها عند الدفع من هاتفك. اختر مكافأة أخرى أو ادفع بدون مكافأة."
 
+#: src/lib/ordering-labels.ts:260
+msgid "That test code is not valid any more, so this is no longer a test. You can still place a real order."
+msgstr "رمز الاختبار هذا لم يعد صالحًا، لذا لم يعد هذا طلبًا تجريبيًا. لا يزال بإمكانك تقديم طلب حقيقي."
+
 #: src/lib/reservations/labels.ts:487
 msgid "That time was just taken. Please choose another time."
 msgstr "تم حجز هذا الوقت للتو. يرجى اختيار وقت آخر."
@@ -4112,6 +4534,10 @@ msgstr "هذه الإكرامية كبيرة جدًا. يرجى إدخال مب�
 msgid "The card does not have enough balance."
 msgstr "رصيد البطاقة غير كافٍ."
 
+#: src/lib/ordering-labels.ts:395
+msgid "The deadline has passed. Nobody can add dishes."
+msgstr "انتهى الموعد النهائي. لا يمكن لأحد إضافة أطباق."
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "The delivery fee changed. Please review your total and place your order again."
 msgstr "تغيّرت رسوم التوصيل. يُرجى مراجعة الإجمالي وإرسال طلبك مرة أخرى."
@@ -4120,13 +4546,33 @@ msgstr "تغيّرت رسوم التوصيل. يُرجى مراجعة الإجم
 msgid "The fee goes down as your order grows."
 msgstr "تنخفض الرسوم كلما زاد طلبك."
 
+#: src/lib/ordering-labels.ts:285
+msgid "The food was not right"
+msgstr "الطعام لم يكن كما ينبغي"
+
 #: src/lib/gift-cards/labels.ts:95
 msgid "The gift card amount changed. Review the new total."
 msgstr "تغيّر مبلغ بطاقة الهدايا. راجع الإجمالي الجديد."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "The group order changed. Go back to the group order, review it and check out again."
+msgstr "تغيّر الطلب الجماعي. ارجع إلى الطلب الجماعي وراجعه ثم أتمم الدفع مرة أخرى."
+
+#: src/lib/ordering-labels.ts:437
+msgid "The group order changed. Review it and check out again."
+msgstr "تغيّر الطلب الجماعي. راجعه ثم أتمم الدفع مرة أخرى."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The hold on your order was released. Please place a new order."
 msgstr "انتهت مهلة حجز طلبك. يرجى تقديم طلب جديد."
+
+#: src/lib/ordering-labels.ts:394
+msgid "The host locked this order. Nobody can add dishes."
+msgstr "قفل المضيف هذا الطلب. لا يمكن لأحد إضافة أطباق."
+
+#: src/lib/ordering-labels.ts:396
+msgid "The host placed this order."
+msgstr "قام المضيف بتقديم هذا الطلب."
 
 #: src/pages/menu.astro.ts:3
 msgid "The items from your call are no longer available. You can still order from the menu."
@@ -4200,6 +4646,10 @@ msgstr "لم تتم عملية الدفع"
 msgid "The program is paused right now."
 msgstr "البرنامج متوقف مؤقتًا الآن."
 
+#: src/lib/ordering-labels.ts:329
+msgid "The restaurant"
+msgstr "المطعم"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The restaurant accepted your order."
 msgstr "قبل المطعم طلبك."
@@ -4207,6 +4657,10 @@ msgstr "قبل المطعم طلبك."
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The restaurant asks for this once per tab."
 msgstr "يطلب المطعم هذا مرة واحدة لكل حساب."
+
+#: src/lib/ordering-labels.ts:327
+msgid "The restaurant closed this report."
+msgstr "أغلق المطعم هذا البلاغ."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "The restaurant could not take your order"
@@ -4219,6 +4673,14 @@ msgstr "المطعم مغلق في هذا التاريخ."
 #: src/lib/reservations/labels.ts:521
 msgid "The restaurant is not taking requests for that date."
 msgstr "المطعم لا يقبل الطلبات لهذا التاريخ."
+
+#: src/lib/ordering-labels.ts:319
+msgid "The restaurant refunded the items."
+msgstr "قام المطعم برد ثمن الأصناف."
+
+#: src/lib/ordering-labels.ts:326
+msgid "The restaurant replied."
+msgstr "ردّ المطعم."
 
 #: src/lib/reservations/labels.ts:137
 msgid "The restaurant reviews large-party requests and replies to confirm."
@@ -4251,6 +4713,10 @@ msgstr "انتهى وقت الدفع وتم تحرير الطاولة."
 #: src/lib/reservations/labels.ts:414
 msgid "The time to pay ran out, or the booking was cancelled, and the table was released. You can book again."
 msgstr "انتهى وقت الدفع أو تم إلغاء الحجز وتم تحرير الطاولة. يمكنك الحجز من جديد."
+
+#: src/lib/ordering-labels.ts:310
+msgid "The time to report a problem with this order has passed. Call the restaurant if you need help."
+msgstr "انتهى وقت الإبلاغ عن مشكلة في هذا الطلب. اتصل بالمطعم إذا احتجت إلى مساعدة."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The total is now {amount}. Check it, then pay to continue."
@@ -4290,6 +4756,10 @@ msgstr "لا تتوفر كمية كافية من {name} اليوم. يرجى ا�
 #: src/pages/menu/checkout.astro.ts:3
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "لا تتوفر كمية كافية اليوم من: {names}. يرجى العودة إلى القائمة لتعديل طلبك."
+
+#: src/lib/ordering-labels.ts:467
+msgid "This address is no longer saved."
+msgstr "لم يعد هذا العنوان محفوظاً."
 
 #: src/lib/catering/labels.ts:119
 msgid "This balance was cancelled. Contact the restaurant if you have a question."
@@ -4420,6 +4890,22 @@ msgstr "هذا النموذج غير متاح حاليًا."
 msgid "This group is too large to order from the table. Please ask a member of the team."
 msgstr "هذه المجموعة كبيرة جدًا للطلب من الطاولة. يرجى سؤال أحد أفراد الفريق."
 
+#: src/pages/menu/checkout.astro.ts:3
+msgid "This group order can't be placed any more. Go back to the group order to see where it stands."
+msgstr "لم يعد بالإمكان تقديم هذا الطلب الجماعي. ارجع إليه لمعرفة حالته."
+
+#: src/lib/ordering-labels.ts:431
+msgid "This group order has the most dishes allowed."
+msgstr "وصل هذا الطلب الجماعي إلى الحد الأقصى من الأطباق."
+
+#: src/lib/ordering-labels.ts:430
+msgid "This group order is full."
+msgstr "هذا الطلب الجماعي ممتلئ."
+
+#: src/lib/ordering-labels.ts:423
+msgid "This group order is no longer available. It may have ended, or the link is old."
+msgstr "لم يعد هذا الطلب الجماعي متاحًا. ربما انتهى أو الرابط قديم."
+
 #: src/lib/reservations/labels.ts:427
 msgid "This has already been paid."
 msgstr "تم دفع هذا المبلغ بالفعل."
@@ -4460,6 +4946,10 @@ msgstr "هذا الرابط لم يعد متاحًا"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
 msgstr "هذا الموقع غير متاح للطلب."
+
+#: src/lib/ordering-labels.ts:314
+msgid "This order already has the most reports allowed. Call the restaurant if you need help."
+msgstr "وصل هذا الطلب إلى الحد الأقصى من البلاغات المسموح بها. اتصل بالمطعم إذا احتجت إلى مساعدة."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This order can't be cancelled here."
@@ -4557,6 +5047,10 @@ msgstr "هذا الإيصال متاح فقط على الجهاز الذي أُ�
 msgid "This restaurant can't take online orders right now. Please try again later."
 msgstr "لا يستطيع هذا المطعم استقبال الطلبات عبر الإنترنت الآن. يرجى المحاولة لاحقًا."
 
+#: src/lib/ordering-labels.ts:426
+msgid "This restaurant does not take group orders."
+msgstr "هذا المطعم لا يقبل الطلبات الجماعية."
+
 #: src/lib/loyalty/labels.ts:190
 msgid "This reward covers your whole order. Choose to pay when you receive it."
 msgstr "تغطي هذه المكافأة طلبك بالكامل. اختر الدفع عند استلامه."
@@ -4564,6 +5058,10 @@ msgstr "تغطي هذه المكافأة طلبك بالكامل. اختر ال�
 #: src/lib/loyalty/labels.ts:340
 msgid "This reward is no longer available."
 msgstr "هذه المكافأة لم تعد متاحة."
+
+#: src/components/ordering/TestOrderBanner.astro.ts:3
+msgid "This runs the whole order path for the restaurant. Nothing is paid, and it does not count as a sale."
+msgstr "يختبر هذا مسار الطلب كاملًا للمطعم. لا يتم دفع أي مبلغ ولا يُحتسب كعملية بيع."
 
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
@@ -4644,9 +5142,14 @@ msgstr "محاولات كثيرة جدًا. حاول مرة أخرى لاحقً�
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلًا ثم المحاولة مرة أخرى."
 
+#: src/lib/ordering-labels.ts:308
 #: src/pages/menu/success.astro.ts:3
 msgid "Too many attempts. Try again in a moment."
 msgstr "محاولات كثيرة جدًا. حاول مرة أخرى بعد قليل."
+
+#: src/lib/ordering-labels.ts:440
+msgid "Too many requests. Try again in a moment."
+msgstr "طلبات كثيرة جدًا. حاول مرة أخرى بعد قليل."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Too many requests. Try again later."
@@ -4684,8 +5187,11 @@ msgid "Track this order in the app"
 msgstr "تتبّع هذا الطلب في التطبيق"
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/guest-account-labels.ts:40
+#: src/lib/guest-account-labels.ts:65
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:162
+#: src/lib/ordering-labels.ts:441
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
@@ -4721,6 +5227,18 @@ msgstr "تعذّر إرسال النموذج. يُرجى المحاولة مرة
 msgid "Under review"
 msgstr "قيد المراجعة"
 
+#: src/lib/ordering-labels.ts:393
+msgid "Unlock"
+msgstr "فتح القفل"
+
+#: src/lib/ordering-labels.ts:375
+msgid "Up to {amount} each"
+msgstr "حتى {amount} للشخص"
+
+#: src/lib/ordering-labels.ts:378
+msgid "Up to {amount} in all"
+msgstr "حتى {amount} إجمالًا"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "up to {amount} off"
 msgstr "خصم يصل إلى {amount}"
@@ -4736,6 +5254,10 @@ msgstr "خصم يصل إلى {amount} لكل طلب"
 #: src/lib/ordering-labels.ts:78
 msgid "Up to {count}"
 msgstr "حتى {count}"
+
+#: src/lib/ordering-labels.ts:291
+msgid "Up to 1,000 characters."
+msgstr "حتى 1000 حرف."
 
 #: src/components/blocks/EventsBlock.astro.ts:3
 #: src/pages/events/[slug].astro.ts:3
@@ -4874,6 +5396,10 @@ msgstr "عرض الطلب"
 msgid "View tab"
 msgstr "عرض الحساب"
 
+#: src/lib/ordering-labels.ts:401
+msgid "View the order"
+msgstr "عرض الطلب"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "View your receipt"
 msgstr "عرض الإيصال"
@@ -4899,6 +5425,7 @@ msgstr "في انتظار الدفع"
 msgid "Waiting for payment confirmation"
 msgstr "بانتظار تأكيد الدفع"
 
+#: src/lib/ordering-labels.ts:317
 #: src/pages/profile/orders.astro.ts:3
 msgid "Waiting for the restaurant"
 msgstr "بانتظار المطعم"
@@ -4918,6 +5445,10 @@ msgstr "تريد الأولوية في المرة القادمة؟"
 #: src/lib/reservations/labels.ts:236
 msgid "Want to dine today? Join the waitlist and we will tell you when a table is ready."
 msgstr "تريد تناول الطعام اليوم؟ انضم إلى قائمة الانتظار وسنخبرك عندما تصبح الطاولة جاهزة."
+
+#: src/lib/ordering-labels.ts:300
+msgid "We added this to your open report."
+msgstr "أضفنا هذا إلى بلاغك المفتوح."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We applied a better discount instead of this code."
@@ -5030,6 +5561,10 @@ msgstr "تعذر تأكيد الإجمالي. حاول مرة أخرى."
 msgid "We couldn't find that address"
 msgstr "لم نتمكن من العثور على هذا العنوان"
 
+#: src/lib/guest-account-labels.ts:32
+msgid "We couldn't find that address."
+msgstr "لم نتمكن من العثور على هذا العنوان."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't find this order"
 msgstr "تعذّر العثور على هذا الطلب"
@@ -5041,6 +5576,14 @@ msgstr "تعذّر الحصول على موقعك. أدخل عنوانًا لل�
 #: src/lib/ordering-labels.ts:161
 msgid "We couldn't load address suggestions."
 msgstr "تعذّر تحميل العناوين المقترحة."
+
+#: src/lib/guest-account-labels.ts:39
+msgid "We couldn't load your addresses."
+msgstr "تعذّر تحميل عناوينك."
+
+#: src/lib/guest-account-labels.ts:64
+msgid "We couldn't load your favorites."
+msgstr "تعذّر تحميل مفضلاتك."
 
 #: src/pages/profile/orders.astro.ts:3
 msgid "We couldn't load your orders."
@@ -5066,6 +5609,10 @@ msgstr "تعذر استعادة سلتك."
 msgid "We couldn't save that. Try again."
 msgstr "تعذّر الحفظ. حاول مرة أخرى."
 
+#: src/lib/ordering-labels.ts:465
+msgid "We couldn't save this address. Try again."
+msgstr "تعذّر حفظ هذا العنوان. حاول مرة أخرى."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't send that. Please try again later."
 msgstr "تعذر الإرسال. يرجى المحاولة لاحقًا."
@@ -5074,9 +5621,17 @@ msgstr "تعذر الإرسال. يرجى المحاولة لاحقًا."
 msgid "We couldn't send your refund automatically. Please call the restaurant."
 msgstr "تعذّر إرسال المبلغ المسترد تلقائيًا. يرجى الاتصال بالمطعم."
 
+#: src/lib/ordering-labels.ts:307
+msgid "We couldn't send your report. Please try again."
+msgstr "تعذّر إرسال بلاغك. حاول مرة أخرى."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
 msgstr "تعذّر بدء الدفع. حاول مرة أخرى."
+
+#: src/lib/guest-account-labels.ts:63
+msgid "We couldn't update your favorites. Try again."
+msgstr "تعذّر تحديث مفضلاتك. حاول مرة أخرى."
 
 #: src/lib/catering/labels.ts:188
 msgid "We deliver catering orders to {where}."
@@ -5094,9 +5649,17 @@ msgstr "نوصّل إلى هنا"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "لم نتلقَّ ردًا في الوقت المناسب. يمكنك الانضمام إلى قائمة الانتظار مجددًا."
 
+#: src/lib/ordering-labels.ts:466
+msgid "We don't deliver here right now"
+msgstr "لا نوصّل إلى هنا حالياً"
+
 #: src/lib/ordering-labels.ts:174
 msgid "We don't deliver to this address yet"
 msgstr "لا نوصّل إلى هذا العنوان بعد"
+
+#: src/lib/guest-account-labels.ts:30
+msgid "We don't deliver to this address yet, so it can't be saved."
+msgstr "لا نوصّل إلى هذا العنوان بعد، لذا لا يمكن حفظه."
 
 #: src/lib/reservations/labels.ts:223
 msgid "We email you when your table is ready."
@@ -5229,6 +5792,10 @@ msgstr "إلغاء مكافأة الترحيب"
 msgid "Welcome! {points} added"
 msgstr "مرحبًا! تمت إضافة {points}"
 
+#: src/lib/ordering-labels.ts:280
+msgid "What went wrong?"
+msgstr "ما الذي حدث؟"
+
 #: src/pages/events/index.astro.ts:3
 msgid "What's coming up at {name}"
 msgstr "ما الجديد في {name}"
@@ -5267,13 +5834,29 @@ msgstr "إلى أين نوصّل طلبك؟"
 msgid "Where would you like to work?"
 msgstr "أين تود أن تعمل؟"
 
+#: src/lib/guest-account-labels.ts:17
+msgid "Where you like your delivery brought. Each address is checked against the delivery area every time you order."
+msgstr "الأماكن التي تحب أن يصلك الطلب إليها. يُتحقق من كل عنوان مقابل منطقة التوصيل في كل مرة تطلب فيها."
+
 #: src/lib/catering/labels.ts:134
 msgid "Which dietary needs can you meet?"
 msgstr "ما الاحتياجات الغذائية التي يمكنكم تلبيتها؟"
 
+#: src/lib/ordering-labels.ts:288
+msgid "Which items?"
+msgstr "أي الأصناف؟"
+
+#: src/lib/ordering-labels.ts:367
+msgid "Who is in"
+msgstr "المشاركون"
+
 #: src/lib/ordering-labels.ts:88
 msgid "Whole"
 msgstr "كاملة"
+
+#: src/lib/ordering-labels.ts:457
+msgid "Work"
+msgstr "العمل"
 
 #: src/lib/careers/labels.ts:37
 msgid "year"
@@ -5294,6 +5877,15 @@ msgstr "نعم، ألغِ الطلب"
 #: src/lib/reservations/labels.ts:279
 msgid "Yes, leave"
 msgstr "نعم، مغادرة"
+
+#: src/lib/ordering-labels.ts:328
+#: src/lib/ordering-labels.ts:366
+msgid "You"
+msgstr "أنت"
+
+#: src/lib/ordering-labels.ts:432
+msgid "You already have the most group orders open."
+msgstr "لديك بالفعل أقصى عدد من الطلبات الجماعية المفتوحة."
 
 #: src/lib/reservations/labels.ts:541
 msgid "You already have the most table alerts allowed for these contact details."
@@ -5330,6 +5922,14 @@ msgstr "لا يزال بإمكانك الطلب للاستلام."
 #: src/lib/loyalty/labels.ts:163
 msgid "You have {amount}"
 msgstr "لديك {amount}"
+
+#: src/lib/ordering-labels.ts:463
+msgid "You have 10 saved addresses. Remove one in your profile to add another."
+msgstr "لديك 10 عناوين محفوظة. أزل واحداً من ملفك الشخصي لإضافة عنوان آخر."
+
+#: src/lib/guest-account-labels.ts:61
+msgid "You have 100 favorites. Remove one to add another."
+msgstr "لديك 100 مفضلة. أزل واحدة لإضافة أخرى."
 
 #: src/lib/loyalty/labels.ts:233
 msgid "You have a new request to use a reward."
@@ -5444,6 +6044,10 @@ msgstr "تم رفض بطاقتك أو تطلبت تحققًا إضافيًا. ح
 msgid "Your cart is empty"
 msgstr "سلة طلباتك فارغة"
 
+#: src/lib/ordering-labels.ts:385
+msgid "Your cart is empty. Choose dishes from the menu, then come back and add them."
+msgstr "سلتك فارغة. اختر أطباقًا من القائمة ثم عد لإضافتها."
+
 #: src/lib/catering/labels.ts:85
 #: src/pages/catering/quote.astro.ts:3
 msgid "Your catering quote"
@@ -5483,6 +6087,18 @@ msgstr "بريدك الإلكتروني (للإيصال)"
 #: src/lib/catering/labels.ts:29
 msgid "Your event"
 msgstr "مناسبتك"
+
+#: src/lib/guest-account-labels.ts:52
+msgid "Your favorites"
+msgstr "مفضلاتك"
+
+#: src/lib/ordering-labels.ts:362
+msgid "Your first name"
+msgstr "اسمك الأول"
+
+#: src/lib/ordering-labels.ts:443
+msgid "Your group order"
+msgstr "طلبك الجماعي"
 
 #: src/lib/reservations/labels.ts:78
 msgid "Your hold expired"
@@ -5583,6 +6199,14 @@ msgstr "ملفك الشخصي"
 #: src/lib/loyalty/labels.ts:294
 msgid "Your referral code"
 msgstr "رمز الإحالة الخاص بك"
+
+#: src/lib/ordering-labels.ts:302
+msgid "Your report was sent, but the photo could not be added."
+msgstr "تم إرسال بلاغك، لكن تعذّر إضافة الصورة."
+
+#: src/lib/ordering-labels.ts:316
+msgid "Your reports"
+msgstr "بلاغاتك"
 
 #: src/lib/reservations/labels.ts:315
 msgid "Your request was cancelled. We will not contact you about it."

@@ -152,6 +152,13 @@ export const posOnlineOrderSummarySchema = z.strictObject({
 	 * nobody decided). Present only on rejected orders.
 	 */
 	rejectedReason: z.string().max(40).nullable().optional(),
+	/**
+	 * A free test order (#119): badge it TEST and ask "Did the ticket print?".
+	 * Left out unless set.
+	 */
+	isTest: z.boolean().optional(),
+	/** The answer to that question, once given. */
+	testPrintAnswer: z.enum(['yes', 'no']).nullable().optional(),
 })
 export type PosOnlineOrderSummary = z.infer<typeof posOnlineOrderSummarySchema>
 
@@ -286,6 +293,8 @@ const lineSchema = z.strictObject({
 	),
 	kitchenName: menuText.optional(),
 	highlight: z.enum(['none', 'allergy', 'attention', 'long_prep']).optional(),
+	/** A group order (#170): whose dish this is ("For Sam"). */
+	forName: z.string().max(60).optional(),
 	courseId: z.string().max(40).optional(),
 	courseName: menuText.optional(),
 	coursePosition: z.number().int().optional(),
@@ -334,15 +343,15 @@ export const posOnlineOrderDetailSchema = z.strictObject({
 		largeOrderExtraMinutes: z.number().int().nonnegative().optional(),
 		/** Over the location's large-order alert threshold at placement (#300). */
 		largeOrder: z.boolean().optional(),
-	/** The guest stated an allergy at checkout (#294). */
-	guestAllergy: z.boolean().optional(),
-	/** The order has alcohol: "Check ID" (#167). */
-	checkId: z.boolean().optional(),
-	/**
-	 * A cloud printer at the location prints this order's tickets (#117): the
-	 * tablet leaves automatic printing to it and sends a reprint to it.
-	 */
-	cloudPrinters: z.boolean().optional(),
+		/** The guest stated an allergy at checkout (#294). */
+		guestAllergy: z.boolean().optional(),
+		/** The order has alcohol: "Check ID" (#167). */
+		checkId: z.boolean().optional(),
+		/**
+		 * A cloud printer at the location prints this order's tickets (#117): the
+		 * tablet leaves automatic printing to it and sends a reprint to it.
+		 */
+		cloudPrinters: z.boolean().optional(),
 		discountCents: z.number().int(),
 		loyaltyDiscountCents: z.number().int(),
 		paidAt: z.number().int().nullable(),

@@ -663,7 +663,12 @@ export function createDemoKitchen(
 		return feed()
 	}
 
-	return { feed, command, configure }
+	/** A demo kitchen has no test orders to ask about: the question never shows. */
+	async function testPrint(_orderId: string, _answer: 'yes' | 'no') {
+		return feed()
+	}
+
+	return { feed, command, configure, testPrint }
 }
 
 /** One per tab, so the demo keeps its progress while staff move between apps. */

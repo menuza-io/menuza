@@ -17,6 +17,8 @@ import {
 	giftCards,
 	guestPhotoSubmissions,
 	journeyRuns,
+	orderProblemReplies,
+	orderProblems,
 	journeyStepExecutions,
 	marketingCampaigns,
 	marketingJourneys,
@@ -1372,5 +1374,109 @@ describe('guest dish photos erasure (#148)', () => {
 		expect(addedRow.orderId).toBeNull()
 		const otherRow = remaining.find((r) => r.id === 'gp_other')!
 		expect(otherRow.customerId).toBe(customerB)
+	})
+
+	it('erases an order problem report: the note, the photo and the words of the thread go, the kind, status and amounts stay (#191)', async () => {
+		Object.assign(process.env, s3Env)
+		const deletedUrls: string[] = []
+		vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+			if ((init as RequestInit | undefined)?.method === 'DELETE') {
+				deletedUrls.push(String(url))
+				return new Response(null, { status: 204 })
+			}
+			return new Response(null, { status: 404 })
+		})
+		const customer = await seedPerson(db, {
+			name: NAME,
+			phone: PHONE,
+			email: EMAIL,
+		})
+		await db.insert(restaurantOrders).values({
+			id: 'ord_problem',
+			orgId: orgA,
+			customerId: customer,
+			number: 'ORD-P1',
+			locale: 'en',
+			status: 'completed',
+			paymentMethod: 'handoff',
+			paymentStatus: 'paid',
+			fulfillment: 'pickup',
+			locationId: 'loc_1',
+			locationName: 'Main',
+			contactName: NAME,
+			contactPhone: PHONE,
+			contactEmail: EMAIL,
+			currency: 'USD',
+			subtotalCents: 1000,
+			taxCents: 0,
+			totalCents: 1000,
+			lines: '[]',
+			idempotencyKey: 'idem-problem-order',
+			requestHash: 'hash-problem-order',
+			receiptTokenHash: 'receipt-hash-problem',
+		})
+		await db.insert(orderProblems).values({
+			id: 'prob_1',
+			orderId: 'ord_problem',
+			locationId: 'loc_1',
+			kind: 'missing_item',
+			itemRefs: [
+				{
+					lineIndex: 0,
+					itemId: 'item_1',
+					name: 'Burger',
+					quantity: 1,
+					amountCents: 1000,
+				},
+			],
+			note: 'Nobody told me it would be this cold',
+			photoKey: `order-problems/${orgA}/cold.jpg`,
+			photoContentType: 'image/jpeg',
+			status: 'answered',
+			resolution: 'refund',
+			refundCents: 1000,
+		})
+		await db.insert(orderProblemReplies).values([
+			{
+				problemId: 'prob_1',
+				kind: 'report',
+				authorKind: 'guest',
+				body: 'Nobody told me it would be this cold',
+			},
+			{
+				problemId: 'prob_1',
+				kind: 'refund',
+				authorKind: 'operator',
+				authorId: 'op_1',
+				body: `Sorry ${NAME}, refunded`,
+			},
+		])
+
+		await erasePerson(db, { customerId: customer }, { actorId: 'op_erase' })
+
+		const [problem] = await db.select().from(orderProblems).all()
+		expect(problem).toMatchObject({
+			id: 'prob_1',
+			note: null,
+			photoKey: null,
+			photoContentType: null,
+			kind: 'missing_item',
+			status: 'answered',
+			resolution: 'refund',
+			refundCents: 1000,
+		})
+		const thread = await db.select().from(orderProblemReplies).all()
+		expect(thread).toHaveLength(2)
+		expect(thread.every((entry) => entry.body === null)).toBe(true)
+		expect(thread.map((entry) => entry.kind).sort()).toEqual([
+			'refund',
+			'report',
+		])
+		expect(deletedUrls).toContain(
+			`https://s3.example.test/recordings/order-problems/${orgA}/cold.jpg`,
+		)
+		expect(
+			await tablesContaining(db, ['Nobody told me', NAME, 'cold.jpg']),
+		).toEqual([])
 	})
 })

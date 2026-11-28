@@ -60,9 +60,12 @@ import { alertTextRoutes } from './routes/alert-texts.ts'
 import { phoneLookupRoutes } from './routes/phone-lookup.ts'
 import { smsStatusWebhookRoutes } from './routes/sms-status.ts'
 import { provisionRoutes } from './routes/provision.ts'
+import { groupOrderRoutes } from './routes/group-orders.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
 import { publicDeliveryRoutes } from './routes/delivery.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
+import { customerAddressRoutes } from './routes/customer-addresses.ts'
+import { customerFavoriteRoutes } from './routes/customer-favorites.ts'
 import { customerOrderRoutes } from './routes/customer-orders.ts'
 import { pushRoutes } from './routes/push.ts'
 import {
@@ -397,7 +400,10 @@ export function createTenantApiApp() {
 	)
 	app.use(
 		'/webhooks/invoice-mail',
-		rateLimit('invoice-mail-webhook', { windowMs: 60 * 1000, maxRequests: 120 }),
+		rateLimit('invoice-mail-webhook', {
+			windowMs: 60 * 1000,
+			maxRequests: 120,
+		}),
 	)
 	app.use(
 		'/webhooks/sms-status/*',
@@ -487,8 +493,12 @@ export function createTenantApiApp() {
 	app.route('/subscriptions', subscriptionRoutes)
 	app.route('/shop', shopRoutes)
 	app.route('/customer/orders', customerOrderRoutes)
+	app.route('/customer/addresses', customerAddressRoutes)
+	app.route('/customer/favorites', customerFavoriteRoutes)
 	app.route('/push', pushRoutes)
 	app.route('/forms', publicFormRoutes)
+	// Group orders (#170) before `/orders`, so a group id is never an order id.
+	app.route('/orders/group', groupOrderRoutes)
 	app.route('/orders', publicOrderRoutes)
 	app.route('/delivery', publicDeliveryRoutes)
 	app.route('/analytics', analyticsRoutes)

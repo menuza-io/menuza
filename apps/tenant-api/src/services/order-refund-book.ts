@@ -315,6 +315,14 @@ export async function bookOrderProviderRefundInTx(
 	order: RestaurantOrder,
 	input: ProviderRefundBooking,
 ): Promise<OrderRefundBooked | BookFailure> {
+	// A free test order (#119) took no money: there is nothing to give back.
+	if (order.isTest) {
+		return bookFailure(
+			409,
+			'test_order_not_refundable',
+			'A test order was not charged, so it cannot be refunded.',
+		)
+	}
 	const requestHash = refundRequestHash({
 		kind: 'provider',
 		amountCents:

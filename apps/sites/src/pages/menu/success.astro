@@ -6,12 +6,13 @@ import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
 import AppInviteSection from '~/components/AppInviteSection.astro'
 import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
-import { translate } from '~/lib/ordering-labels'
+import { buildOrderProblemLabels, buildTestOrderLabels, translate } from '~/lib/ordering-labels'
 import { formatMoney } from '~/lib/ordering/money'
 import { fetchPublishedDrops, fetchPublishedSiteMenu } from '~/lib/org'
 
 const organization = Astro.locals.organization
 const i18n = Astro.locals.i18n
+const testOrderLabels = buildTestOrderLabels(i18n)
 const orgSlug = Astro.locals.orgSlug
 const customHost = Astro.locals.customHost
 const requestedLocale =
@@ -158,6 +159,8 @@ const successLabels = {
 	locale: requestedLocale,
 	organizationId: organization.id,
 	currency: menuPayload?.organization?.currency || 'USD',
+	// "Something wrong?" (#191): drawn by the browser from the region's answer.
+	problems: buildOrderProblemLabels(i18n),
 	menuHref,
 	dropBaseHref,
 	dropTitles,
@@ -204,6 +207,7 @@ const successLabels = {
 	refunded: translate(i18n, msg`Refunded {amount}`, { amount: '{amount}' }),
 	readyDesc: i18n._(msg`Your order is ready.`),
 	completedDesc: i18n._(msg`This order is complete.`),
+	forPerson: translate(i18n, msg`For {name}`, { name: '{name}' }),
 	cancelButton: i18n._(msg`Cancel order`),
 	cancelCountdown: translate(i18n, msg`You can cancel this order for another {time}.`, { time: '{time}' }),
 	cancelConfirmTitle: i18n._(msg`Cancel this order?`),
@@ -382,6 +386,11 @@ const valueClass = 'price font-medium text-foreground'
 						))}
 					</ol>
 					<span id="order-status-badge" class="badge tone-neutral mt-4"></span>
+					{/* A free test order (#119): said plainly, the region marks it. */}
+					<p id="order-test-banner" hidden class="tone-warning mx-auto mt-4 max-w-md rounded-lg border p-3 text-sm" role="status">
+						<span class="font-semibold">{testOrderLabels.successTitle}</span>
+						<span class="text-foreground/80"> · {testOrderLabels.successBody}</span>
+					</p>
 					{/* Live: filled and cleared by the status poll. */}
 					<p id="order-promised" class="mt-4 hidden text-base font-semibold text-balance text-foreground [&:not(.hidden)]:block" role="status" dir="auto"></p>
 					<p id="order-refund-note" class="mt-3 hidden text-sm font-medium text-foreground [&:not(.hidden)]:block" dir="auto"></p>
@@ -402,6 +411,10 @@ const valueClass = 'price font-medium text-foreground'
 					</div>
 				</section>
 				<p id="cancel-note" role="status" class="text-center text-sm font-medium text-foreground empty:hidden" dir="auto"></p>
+
+				{/* "Something wrong?" (#191). Hidden until the region says the
+				    restaurant takes reports and this order can have one (or has some). */}
+				<section id="order-problems" hidden class="surface space-y-4 p-5 sm:p-6"></section>
 
 				{/* Online payment states */}
 				<div id="payment-pending" class:list={[noticeClass, 'tone-warning hidden']} role="status">
@@ -674,6 +687,7 @@ const valueClass = 'price font-medium text-foreground'
 			PAYMENT_POLL_INTERVAL_MS,
 		} from '~/lib/ordering/payment-poll'
 		import { startCountdown } from '~/lib/ordering/countdown'
+		import { mountOrderProblems } from '~/lib/ordering/order-problems-ui'
 		import {
 			cancelHiddenKey,
 			cancelRefusalKey,
@@ -721,6 +735,7 @@ const valueClass = 'price font-medium text-foreground'
 			instructions: string | null
 			/** The size or other variant chosen ("Large"). */
 			variantNames?: string[]
+			forName?: string
 			options: Array<{
 				groupId: string
 				groupName: string
@@ -736,6 +751,8 @@ const valueClass = 'price font-medium text-foreground'
 		type ReceiptOrder = {
 			id: string
 			number: string
+			/** A free test order (#119). */
+			isTest?: boolean
 			status: string
 			paymentStatus: string
 			/** `online` or `handoff`, when the region sends it. */
@@ -917,6 +934,8 @@ const valueClass = 'price font-medium text-foreground'
 			const statusEl = document.getElementById('order-status-badge')
 
 			if (orderNumEl) orderNumEl.textContent = `#${order.number}`
+			const testBanner = document.getElementById('order-test-banner')
+			if (testBanner) testBanner.hidden = order.isTest !== true
 			// Visual progress: received → preparing → ready. Statuses outside
 			// that path (cancelled, expired) hide the timeline and keep the badge.
 			const stepIndex = (
@@ -1029,7 +1048,20 @@ const valueClass = 'price font-medium text-foreground'
 			}
 
 			if (itemsListEl) {
-				const rows = (order.lines ?? []).map((line) => {
+				// A group order (#170): each person's dishes under "For Sam", once.
+				let lastPerson: string | undefined
+				const rows = (order.lines ?? []).flatMap((line) => {
+					const out: HTMLElement[] = []
+					if (line.forName && line.forName !== lastPerson) {
+						const head = createEl(
+							'li',
+							'pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground',
+							fillTemplate(labels.forPerson || 'For {name}', { name: line.forName }),
+						)
+						head.setAttribute('dir', 'auto')
+						out.push(head)
+					}
+					lastPerson = line.forName
 					const row = createEl('li', 'flex gap-3 py-3')
 					row.appendChild(
 						createEl(
@@ -1068,7 +1100,8 @@ const valueClass = 'price font-medium text-foreground'
 					row.appendChild(
 						createEl('span', 'price shrink-0 text-sm text-foreground', formatCents(line.totalCents)),
 					)
-					return row
+					out.push(row)
+					return out
 				})
 				itemsListEl.replaceChildren(...rows)
 			}
@@ -1698,6 +1731,36 @@ const valueClass = 'price font-medium text-foreground'
 			renderReceipt(order)
 			syncPaymentView(order)
 			applyStatusHeading()
+			// A status change (completed, cancelled) can open or close the window;
+			// the 30 second look below covers the restaurant's answers.
+			if (order.status !== problemsStatus) {
+				problemsStatus = order.status
+				void problems?.refresh()
+			}
+		}
+		let problemsStatus = ''
+
+		// "Something wrong?" (#191): the region's own answers, drawn by the browser.
+		let problems: { refresh: () => Promise<void> } | null = null
+		async function startProblems(order: ReceiptOrder) {
+			const root = document.getElementById('order-problems')
+			if (!root || !orderId || problems) return
+			const money = createMoneyFormatter(order.currency || labels.currency || 'USD', labels.locale)
+			problems = await mountOrderProblems({
+				root,
+				orderId,
+				credential: currentCredential,
+				labels: labels.problems,
+				locale: labels.locale || 'en',
+				currency: order.currency || labels.currency || 'USD',
+				formatMoney: money,
+				creditHref: (code: string) =>
+					`${labels.menuHref}${String(labels.menuHref).includes('?') ? '&' : '?'}coupon=${encodeURIComponent(code)}`,
+			})
+			// The restaurant answers while the page is open: look again every 30 seconds.
+			window.setInterval(() => {
+				if (document.visibilityState === 'visible') void problems?.refresh()
+			}, 30_000)
 		}
 
 		function startLiveStatus(initial: ReceiptOrder) {
@@ -1899,6 +1962,7 @@ const valueClass = 'price font-medium text-foreground'
 			wireResend()
 			wireCancel()
 			startLiveStatus(order)
+			void startProblems(order)
 		}
 
 		document.getElementById('success-retry')?.addEventListener('click', () => {

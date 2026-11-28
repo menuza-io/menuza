@@ -34,6 +34,14 @@ const stepButton = 'icon-btn size-9 border-0'
 		{/* In flow (not overlaid) so scrolled content never slides under the handle. */}
 		<div class="mx-auto mt-2 mb-1 h-1 w-9 shrink-0 rounded-full bg-muted-foreground/30 sm:hidden" aria-hidden="true"></div>
 
+		{/* The heart (#158): hidden until the menu script knows the open dish. */}
+		<button
+			type="button"
+			id="modal-favorite-btn"
+			hidden
+			class="icon-btn absolute end-14 top-3 z-10 size-9 bg-background/90 shadow-elev-1 backdrop-blur-sm"
+		></button>
+
 		<button
 			type="button"
 			id="close-item-modal"

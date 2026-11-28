@@ -20,11 +20,14 @@ import OrderBar from '~/components/ordering/OrderBar.astro'
 import OrderDetailsSheet from '~/components/ordering/OrderDetailsSheet.astro'
 import OrderingLabels from '~/components/ordering/OrderingLabels.astro'
 import PopularRow from '~/components/ordering/PopularRow.astro'
+import TestOrderBanner from '~/components/ordering/TestOrderBanner.astro'
 import StickyCategoryNav from '~/components/ordering/StickyCategoryNav.astro'
 import TableTab from '~/components/ordering/TableTab.astro'
+import { buildFavoritesLabels } from '~/lib/guest-account-labels'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { formatOrderingResume, summarizeHours } from '~/lib/menu-hours'
 import {
+	buildGroupOrderLabels,
 	buildOrderDetailsLabels,
 	buildOrderingLabels,
 	translate,
@@ -200,6 +203,14 @@ const carouselLabels = {
 	previous: i18n._(msg`Previous`),
 	next: i18n._(msg`Next`),
 }
+// Favorite dishes (#158): the heart, and the row the browser fills once it
+// knows which dishes this guest favorited (they live in the region).
+const favoritesLabels = buildFavoritesLabels(i18n)
+// Group orders (#170): "Start a group order", or "Open your group order" for a
+// browser that is already in one. Offered only while `ordering.group` is on.
+const groupEnabled = menuPayload?.features?.group === true
+const groupLabels = buildGroupOrderLabels(i18n)
+const groupHref = getLocaleHref('/menu/group', requestedLocale, requestedLocale, defaultLocale)
 const viewOrderLabel = i18n._(msg`View order`)
 const yourOrderLabel = i18n._(msg`Your order`)
 const subtotalLabel = i18n._(msg`Subtotal`)
@@ -811,7 +822,21 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			class="mt-6 lg:hidden"
 		/>
 
+		<TestOrderBanner />
+		<PopularRow variant="favorites" heading={favoritesLabels.row} labels={carouselLabels} cards={[]} />
+		<script id="favorites-labels" type="application/json" is:inline set:html={JSON.stringify(favoritesLabels).replace(/</g, '\\u003c')} />
 		<PopularRow heading={mostOrderedLabel} labels={carouselLabels} cards={popularCards} />
+		{groupEnabled ? (
+			<div class:list={[siteContainer, 'pt-6']} data-group-entry>
+				<a
+					id="group-entry-link"
+					href={groupHref}
+					class="btn-secondary w-full sm:w-auto"
+					data-start-label={groupLabels.startHeading}
+					data-open-label={groupLabels.openGroup}
+				>{groupLabels.startHeading}</a>
+			</div>
+		) : null}
 
 		<div class:list={[siteContainer, 'pt-8 sm:pt-10']}>
 			<div
@@ -1055,6 +1080,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			menuPricingPayload,
 		} from '~/lib/ordering/cart-discounts'
 		import { createCartStore } from '~/lib/ordering/cart-store'
+		import { loadGroupSession } from '~/lib/ordering/group-client'
 		import { mountCartUi } from '~/lib/ordering/cart-ui'
 		import {
 			createDiscountQuotes,
@@ -1074,6 +1100,8 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		} from '~/lib/ordering/coupon-retry'
 		import { createItemModal } from '~/lib/ordering/item-modal'
 		import { initPhotoTests, recordPhotoTestAdd } from '~/lib/photo-test-client'
+		import { mountMenuFavorites } from '~/lib/ordering/favorites-ui'
+		import { mountTestOrderBanner } from '../scripts/test-order-banner'
 		import { addSuggestion, suggestForCart } from '~/lib/ordering/upsell'
 		import { buildUpsellRow } from '~/lib/ordering/upsell-row'
 		import { createShownCounter, recordUpsell } from '~/lib/ordering/upsell-stats'
@@ -1831,6 +1859,25 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			modal.open(itemId, opener)
 		})
 		modal?.openFromUrl()
+
+		// A free test order (#119): keep the code out of the address bar, say so.
+		mountTestOrderBanner(orgId)
+
+		// Group orders (#170): a browser already in a group is sent back to it.
+		const groupEntry = document.getElementById('group-entry-link')
+		if (groupEntry && loadGroupSession(orgId)) {
+			groupEntry.textContent = groupEntry.dataset.openLabel ?? groupEntry.textContent
+		}
+
+		// Favorite dishes (#158): hearts, the modal's heart and "Your favorites".
+		const favoritesLabelsEl = document.getElementById('favorites-labels')
+		if (favoritesLabelsEl?.textContent) {
+			mountMenuFavorites({
+				labels: JSON.parse(favoritesLabelsEl.textContent),
+				rail: document.querySelector<HTMLElement>('[data-favorites-rail]'),
+				modalHeart: document.getElementById('modal-favorite-btn') as HTMLButtonElement | null,
+			})
+		}
 
 		// Category navigation
 		const navs = Array.from(document.querySelectorAll<HTMLElement>('[data-category-nav]'))

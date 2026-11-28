@@ -50,6 +50,10 @@ export type OrderCopyLabels = {
 	/** Delivery with a promised start only: `{time}`. */
 	arrivingAround: string
 	viewOrder: string
+	/** Receipt only, when the restaurant takes problem reports (#191). */
+	problemHint: string
+	/** A group order (#170): the heading over one person's dishes, `{name}`. */
+	forPerson: string
 	/** Receipt only, with the branded app's live stores (#196). */
 	trackInApp: string
 	storeAppStore: string
@@ -58,6 +62,9 @@ export type OrderCopyLabels = {
 	pointsUnit: string
 	starsUnit: string
 	footer: string
+	/** A free test order (#119): the subject tag, and the line above the lead. */
+	testTag: string
+	testLabel: string
 }
 
 export type OrderMessageCopy = {

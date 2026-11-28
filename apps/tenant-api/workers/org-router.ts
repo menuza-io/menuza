@@ -185,7 +185,14 @@ async function orgIdFromOrderIdentity(
 			.catch(() => ({}))
 		const parsed = orderIdentitySchema.safeParse(body)
 		if (!parsed.success) return null
-		identity = parsed.data
+		// A request without a JSON body (a DELETE of a group order dish #170, the
+		// raw photo of an order problem #191) names its organization in the query
+		// like a read. A body's own identity always wins; the Origin must still
+		// belong to the organization it names.
+		identity = {
+			slug: parsed.data.slug ?? url.searchParams.get('slug') ?? undefined,
+			host: parsed.data.host ?? url.searchParams.get('host') ?? undefined,
+		}
 	}
 	const organization = await resolveOrganizationForBrowserAuth(
 		request.headers.get('Origin') ?? undefined,
@@ -623,6 +630,21 @@ export async function resolveOrgId(
 	// would fall back to a filesystem database).
 	if (pathname.startsWith('/operator')) {
 		return orgIdFromOperatorJwt(request, env)
+	}
+
+	// Delivery address search, store picker and quotes (#161, #113): the
+	// browser's Origin names the organization (plus slug or host hints), never a
+	// client orgId. A quote of a saved address reads the guest's own row, so a
+	// customer token is a valid signal too (the handler re-checks it against the
+	// origin-bound organization).
+	if (
+		pathname === '/delivery/places' ||
+		pathname === '/delivery/quote' ||
+		pathname === '/delivery/locations'
+	) {
+		const fromJwt = await orgIdFromCustomerJwt(request, env)
+		if (fromJwt) return fromJwt
+		return orgIdFromOrderIdentity(request, url)
 	}
 
 	if (pathname === '/orders' || pathname.startsWith('/orders/')) {

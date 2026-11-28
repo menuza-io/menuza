@@ -3,6 +3,9 @@ import { useLingui } from '@lingui/react'
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
+import { ORDER_PROBLEMS_FLAG } from '@repo/common/order-problems'
+import { TEST_ORDER_FLAG, TEST_ORDER_BADGE } from '@repo/common/test-orders'
+import { getFeatureFlag } from '@repo/common/feature-flags'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { PageTitle } from '@repo/ui/page-title'
@@ -30,6 +33,7 @@ import { OrdersBell } from '#app/components/orders/orders-bell.tsx'
 import { PrepScheduleBanner } from '#app/components/orders/prep-schedule-banner.tsx'
 import { SlotLimitsPanel } from '#app/components/orders/slot-limits-panel.tsx'
 import { WaitingLane } from '#app/components/orders/waiting-lane.tsx'
+import { PlaceTestOrderButton } from '#app/components/orders/place-test-order-button.tsx'
 import { OpenTabs } from '#app/components/qr/open-tabs.tsx'
 import { useNewOrderAlerts } from '#app/hooks/use-new-order-alerts.ts'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
@@ -104,10 +108,22 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		: false
 	// Catering (#124): the Catering tab shows only while the flag is on.
 	const showCatering = await isCateringEnabled(organization.id)
+	// Free test orders (#119): the button shows only while the flag is on.
+	const testOrdersEnabled =
+		(await getFeatureFlag(TEST_ORDER_FLAG, {
+			organizationId: organization.id,
+		})) === true
+	// Guest order problem reports (#191): the Problems link shows only while on.
+	const problemReportsEnabled =
+		(await getFeatureFlag(ORDER_PROBLEMS_FLAG, {
+			organizationId: organization.id,
+		})) === true
 	return data(
 		{
 			orgSlug,
 			canWrite,
+			testOrdersEnabled,
+			problemReportsEnabled,
 			canRefund,
 			loyaltyEnabled,
 			// Tabs show while QR ordering is on, even with dine-in switched off,
@@ -136,6 +152,8 @@ export default function OrdersInbox() {
 		orgSlug,
 		canViewCustomers,
 		canWrite,
+		testOrdersEnabled,
+		problemReportsEnabled,
 		showTabs,
 		showCatering,
 		loyaltyEnabled,
@@ -205,10 +223,18 @@ export default function OrdersInbox() {
 	const timeZoneOf = (orderId: string) =>
 		orders.find((order) => order.id === orderId)?.timeZone ?? null
 
-	const waiting = orders.filter(
+	const [hideTests, setHideTests] = useState(false)
+	const [testLocationId, setTestLocationId] = useState(
+		orderingControls[0]?.id ?? '',
+	)
+	const visible = hideTests ? orders.filter((order) => !order.isTest) : orders
+	const hasTests = orders.some((order) => order.isTest)
+	const waiting = visible.filter(
 		(order) => order.status === WAITING_ORDER_STATUS,
 	)
-	const others = orders.filter((order) => order.status !== WAITING_ORDER_STATUS)
+	const others = visible.filter(
+		(order) => order.status !== WAITING_ORDER_STATUS,
+	)
 
 	return (
 		<div className="mx-auto w-full max-w-4xl space-y-6 py-8 md:px-6 lg:px-8">
@@ -220,6 +246,17 @@ export default function OrdersInbox() {
 					)}
 				/>
 				<div className="flex flex-col items-end gap-2">
+					{problemReportsEnabled ? (
+						<Button
+							variant="outline"
+							nativeButton={false}
+							render={<Link to={`/${orgSlug}/orders/problems`} />}
+							data-testid="orders-problems-link"
+						>
+							<Icon name="message-square" className="size-4" />
+							<Trans>Problems</Trans>
+						</Button>
+					) : null}
 					{showCatering ? (
 						<Button
 							variant="outline"
@@ -230,6 +267,29 @@ export default function OrdersInbox() {
 							<Icon name="building" className="size-4" />
 							<Trans>Catering</Trans>
 						</Button>
+					) : null}
+					{testOrdersEnabled && canWrite && orderingControls.length > 0 ? (
+						<div className="flex flex-col items-end gap-1">
+							{orderingControls.length > 1 ? (
+								<select
+									aria-label={_(msg`Location for the test order`)}
+									className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+									value={testLocationId}
+									onChange={(event) => setTestLocationId(event.target.value)}
+									data-testid="test-order-location"
+								>
+									{orderingControls.map((location) => (
+										<option key={location.id} value={location.id}>
+											{location.name}
+										</option>
+									))}
+								</select>
+							) : null}
+							<PlaceTestOrderButton
+								orgSlug={orgSlug}
+								locationId={testLocationId}
+							/>
+						</div>
 					) : null}
 					<Button
 						variant="outline"
@@ -300,6 +360,17 @@ export default function OrdersInbox() {
 						request={request}
 						onChanged={() => void refresh()}
 					/>
+					{hasTests ? (
+						<label className="flex items-center gap-2 text-sm">
+							<input
+								type="checkbox"
+								checked={hideTests}
+								onChange={(event) => setHideTests(event.target.checked)}
+								data-testid="hide-test-orders"
+							/>
+							<Trans>Hide test orders</Trans>
+						</label>
+					) : null}
 					<PrepScheduleBanner locations={orderingControls} />
 					<OrderingControls
 						orgSlug={orgSlug}
@@ -382,6 +453,15 @@ export default function OrdersInbox() {
 												>
 													<bdi dir="ltr">{order.number}</bdi>
 												</Link>
+												{order.isTest ? (
+													<Badge
+														variant="secondary"
+														className="ms-2"
+														data-testid="order-row-test"
+													>
+														{TEST_ORDER_BADGE}
+													</Badge>
+												) : null}
 												{order.largeOrder ? (
 													<Badge
 														variant="secondary"

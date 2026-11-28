@@ -398,8 +398,9 @@ export const restaurantOrderLoyaltySource: LoyaltySourceAdapter = {
 			.from(restaurantOrders)
 			.where(eq(restaurantOrders.id, sourceId))
 			.get()
-		// A tab's rounds are part of the tab's purchase, never their own.
-		if (!order || order.tabId) return null
+		// A tab's rounds are part of the tab's purchase, never their own. A free
+		// test order (#119) earns and spends nothing.
+		if (!order || order.tabId || order.isTest) return null
 		return {
 			currency: order.currency,
 			totalMinor: order.totalCents,

@@ -74,6 +74,9 @@ export const DE: OrderMessageCopy = {
 		arriving: 'Ankunft zwischen {from} und {to}',
 		arrivingAround: 'Ankunft gegen {time}',
 		viewOrder: 'Bestellung ansehen',
+		problemHint:
+			'Stimmt etwas mit Ihrer Bestellung nicht? Sagen Sie es dem Restaurant auf Ihrer Bestellseite.',
+		forPerson: 'Für {name}',
 		trackInApp: 'Verfolge diese Bestellung in der App',
 		storeAppStore: 'Laden im App Store',
 		storePlayStore: 'Jetzt bei Google Play',
@@ -81,5 +84,7 @@ export const DE: OrderMessageCopy = {
 		pointsUnit: 'Punkte',
 		starsUnit: 'Sterne',
 		footer: 'Dies ist eine Servicenachricht zu deiner Bestellung.',
+		testTag: 'Test',
+		testLabel: 'Testbestellung: Es wurde nichts berechnet.',
 	},
 }

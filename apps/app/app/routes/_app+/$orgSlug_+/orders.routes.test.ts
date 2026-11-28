@@ -101,6 +101,8 @@ describe('orders routes', () => {
 			payLinksEnabled: false,
 			orderEditsEnabled: false,
 			isUsNode: true,
+			// Guest order problem reports (#191) are off unless enabled.
+			problemReportsEnabled: false,
 		})
 	})
 

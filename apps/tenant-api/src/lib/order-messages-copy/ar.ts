@@ -74,6 +74,8 @@ export const AR: OrderMessageCopy = {
 		arriving: 'يصل بين {from} و{to}',
 		arrivingAround: 'يصل نحو {time}',
 		viewOrder: 'عرض طلبك',
+		problemHint: 'هل هناك مشكلة في طلبك؟ أخبر المطعم من صفحة طلبك.',
+		forPerson: 'لـ {name}',
 		trackInApp: 'تتبع هذا الطلب في التطبيق',
 		storeAppStore: 'نزّله من App Store',
 		storePlayStore: 'احصل عليه من Google Play',
@@ -81,5 +83,7 @@ export const AR: OrderMessageCopy = {
 		pointsUnit: 'نقطة',
 		starsUnit: 'نجمة',
 		footer: 'هذه رسالة خدمة بخصوص طلبك.',
+		testTag: 'تجريبي',
+		testLabel: 'طلب تجريبي: لم يتم خصم أي مبلغ.',
 	},
 }

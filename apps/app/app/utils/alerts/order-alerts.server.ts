@@ -261,6 +261,26 @@ export function requestsFromEvent(event: OrdersNotifyEvent): AlertRequest[] {
 					recipientTopic: null,
 				},
 			]
+		case 'order_problem':
+			// A guest's report about an order (#191): the kind is a fixed word, the
+			// order a number. The note, the photo and the items stay in the region.
+			return [
+				{
+					kind: 'orders_problem',
+					entityId: event.eventId,
+					locationId: event.locationId,
+					subject: {
+						kind: 'orders_problem',
+						orderNumber: event.orderNumber,
+						problemKind: event.problemKind,
+						unanswered: event.unanswered,
+					},
+					critical: false,
+					permission: ordersPermission,
+					hoursMarginMs: ORDER_ALERT_HOURS_MARGIN_MS,
+					recipientTopic: null,
+				},
+			]
 		case 'station_offline': {
 			const critical = isCriticalAlert('station_offline', {
 				allKitchenTabletsOffline: event.allKitchenOffline,

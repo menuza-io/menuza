@@ -25,6 +25,7 @@ import {
 	getTenantDb,
 	type TenantDatabase,
 	loyaltyPurchases,
+	orderProblems,
 	qrTabPayments,
 	qrTabRefunds,
 	qrTabs,
@@ -686,6 +687,39 @@ export async function applyProviderRefundStatus(
 							)
 							.returning({ id: table.id })
 						if (settled.length === 0) return answer(row.status, false)
+						if (input.status === 'failed' && found.ledger === 'order') {
+							// A guest problem report answered with this refund (#191) is
+							// open again: no money moved, so the answer did not happen.
+							// Skipped when a newer report holds the order's one open slot.
+							await tx
+								.update(orderProblems)
+								.set({
+									status: 'open',
+									resolution: null,
+									resolvedBy: null,
+									resolvedAt: null,
+									refundId: null,
+									refundCents: null,
+									updatedAt: now,
+								})
+								.where(
+									and(
+										eq(orderProblems.refundId, row.id),
+										eq(orderProblems.status, 'answered'),
+										notExists(
+											tx
+												.select({ id: sql`1` })
+												.from(orderProblems)
+												.where(
+													and(
+														eq(orderProblems.orderId, found.row.orderId),
+														eq(orderProblems.status, 'open'),
+													),
+												),
+										),
+									),
+								)
+						}
 						if (lateSuccess) {
 							console.warn(
 								'Order refund succeeded after it was settled failed',

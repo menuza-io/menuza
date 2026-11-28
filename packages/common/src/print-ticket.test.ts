@@ -26,7 +26,9 @@ const texts = (doc: TicketDoc) =>
 					: [],
 	)
 
-const ticket = (over: Partial<KitchenTicketInput> = {}): KitchenTicketInput => ({
+const ticket = (
+	over: Partial<KitchenTicketInput> = {},
+): KitchenTicketInput => ({
 	number: 'W-0951',
 	time: '18 Nov, 14:02',
 	orderType: 'pickup',
@@ -61,6 +63,31 @@ describe('the kitchen ticket document', () => {
 		expect(doc.cut).toBe(true)
 	})
 
+	it('prints a group order under "For Sam" once per person (#170)', () => {
+		const doc = buildKitchenTicket({
+			ticket: ticket({
+				lines: [
+					{ quantity: 1, name: 'Burger', forName: 'Hana' },
+					{ quantity: 1, name: 'Fries', forName: 'Sam' },
+					{ quantity: 2, name: 'Salad', forName: 'Sam' },
+					{ quantity: 1, name: 'Soup', forName: 'Lee' },
+				],
+			}),
+			widthMm: 80,
+		})
+		const lines = texts(doc)
+		const heads = lines.filter((line) => line.startsWith('For '))
+		expect(heads).toEqual(['For Hana', 'For Sam', 'For Lee'])
+		expect(lines.indexOf('For Sam')).toBeLessThan(lines.indexOf('1x Fries'))
+		expect(lines.indexOf('1x Fries')).toBeLessThan(lines.indexOf('For Lee'))
+		// A normal ticket has none.
+		expect(
+			texts(buildKitchenTicket({ ticket: ticket(), widthMm: 80 })).some((l) =>
+				l.startsWith('For '),
+			),
+		).toBe(false)
+	})
+
 	it('marks highlighted lines with words and a box or inverse text, never colour', () => {
 		const doc = buildKitchenTicket({ ticket: ticket(), widthMm: 80 })
 		const attention = doc.blocks.find(
@@ -74,7 +101,9 @@ describe('the kitchen ticket document', () => {
 		expect(allergy).toMatchObject({ invert: true })
 		expect((allergy as { text: string }).text).toBe('ALLERGY: 1x Satay')
 		// A dish with no highlight prints as it always did.
-		const plain = doc.blocks.find((b) => b.t === 'text' && b.text === '1x Fries')
+		const plain = doc.blocks.find(
+			(b) => b.t === 'text' && b.text === '1x Fries',
+		)
 		expect(plain).toBeDefined()
 		expect((plain as { boxed?: boolean }).boxed).toBeUndefined()
 	})
@@ -85,7 +114,10 @@ describe('the kitchen ticket document', () => {
 			widthMm: 58,
 		})
 		expect(doc.blocks).toContainEqual(
-			expect.objectContaining({ text: 'ALLERGY STATED BY GUEST', invert: true }),
+			expect.objectContaining({
+				text: 'ALLERGY STATED BY GUEST',
+				invert: true,
+			}),
 		)
 		expect(doc.blocks).toContainEqual(
 			expect.objectContaining({ text: 'CHECK ID', boxed: true }),
@@ -128,7 +160,7 @@ describe('the kitchen ticket document', () => {
 		expect(JSON.stringify(without)).not.toMatch(/card|cvv|iban|payment/i)
 	})
 
-	it('follows the location\'s ticket settings: a hidden field is hidden on paper', () => {
+	it("follows the location's ticket settings: a hidden field is hidden on paper", () => {
 		const tickets = resolveTickets({
 			kitchen: { itemNotes: { show: false }, highlights: { show: false } },
 		})
@@ -145,7 +177,10 @@ describe('the kitchen ticket document', () => {
 		})
 		expect(texts(cancelled)[0]).toBe('CANCELLED')
 		const changes = buildKitchenTicket({
-			ticket: ticket({ kind: 'changes', removed: [{ quantity: 1, name: 'Salad' }] }),
+			ticket: ticket({
+				kind: 'changes',
+				removed: [{ quantity: 1, name: 'Salad' }],
+			}),
 			widthMm: 80,
 		})
 		expect(texts(changes).join('\n')).toContain('Taken off')
@@ -192,7 +227,10 @@ describe('the receipt document', () => {
 			review: { show: true, caption: null },
 			app: { show: true, caption: null },
 		},
-		targets: { reviewUrl: 'https://g.page/r/x/review', appUrl: 'https://s.test/get-app' },
+		targets: {
+			reviewUrl: 'https://g.page/r/x/review',
+			appUrl: 'https://s.test/get-app',
+		},
 		logo: { width: 8, height: 1, data: 'gA==' },
 	}
 
@@ -202,8 +240,14 @@ describe('the receipt document', () => {
 		const qrs = doc.blocks.filter((b) => b.t === 'qr')
 		expect(qrs).toHaveLength(3)
 		expect(qrs[0]).toEqual({ t: 'qr', data: 'ZATCA-PAYLOAD', size: 'fiscal' })
-		expect(qrs[1]).toMatchObject({ size: 'small', caption: 'Enjoyed it? Tell us' })
-		expect(qrs[2]).toMatchObject({ size: 'small', caption: 'Order ahead next time' })
+		expect(qrs[1]).toMatchObject({
+			size: 'small',
+			caption: 'Enjoyed it? Tell us',
+		})
+		expect(qrs[2]).toMatchObject({
+			size: 'small',
+			caption: 'Order ahead next time',
+		})
 		// The fiscal block is the same with or without marketing.
 		const plain = buildReceipt({ receipt, widthMm: 80 })
 		expect(plain.blocks.find((b) => b.t === 'qr')).toEqual(qrs[0])

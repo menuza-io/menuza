@@ -593,6 +593,8 @@ export function createDemoOrders(start = Date.now()): OrdersApi & {
 		},
 		detail: async (id) => respond(find(id)),
 		contact: async (id) => findInInbox(id).contact,
+		// The demo has no test orders: there is no question to answer.
+		testPrint: async (id) => respond(find(id)),
 		controls: async () => controlsNow(),
 		pause: async (command) => {
 			const now = Date.now()

@@ -597,6 +597,15 @@ export function Orders({
 	)
 }
 
+/** "For Sam": a group order's dish owner, isolated so mixed scripts read right. */
+function ForPerson({ name }: { name: string }) {
+	return (
+		<Trans>
+			For <bdi>{name}</bdi>
+		</Trans>
+	)
+}
+
 function OrderBadges({
 	order,
 	now,
@@ -623,6 +632,12 @@ function OrderBadges({
 			{late ? (
 				<Badge tone="danger">
 					<Trans>Late</Trans>
+				</Badge>
+			) : null}
+			{order.isTest ? (
+				// A free test order (#119): never a guest, never cooked for one.
+				<Badge tone="warning" data-order-test>
+					<Trans>TEST</Trans>
 				</Badge>
 			) : null}
 			<Badge tone="primary">
@@ -1229,6 +1244,8 @@ function OrderSheet({
 						canSeeContact={grants?.contact === true && !readOnly}
 						onReveal={() => void orders.revealContact()}
 						revealing={orders.revealing}
+						onTestPrint={(answer) => void orders.testPrint(answer)}
+						testPrintBusy={busy}
 						now={orders.now}
 						time={time}
 						money={money}
@@ -1323,6 +1340,8 @@ function OrderDetailBody({
 	canSeeContact,
 	onReveal,
 	revealing,
+	onTestPrint,
+	testPrintBusy,
 	now,
 	time,
 	money,
@@ -1332,6 +1351,9 @@ function OrderDetailBody({
 	canSeeContact: boolean
 	onReveal: () => void
 	revealing: boolean
+	/** Answers "Did the ticket print?" on a free test order (#119). */
+	onTestPrint: (answer: 'yes' | 'no') => void
+	testPrintBusy: boolean
 	/** The server's time, as the inbox uses it. */
 	now: number
 	time: Intl.DateTimeFormat
@@ -1340,6 +1362,61 @@ function OrderDetailBody({
 	const { _ } = useLingui()
 	return (
 		<div className="flex flex-col gap-5">
+			{detail.isTest ? (
+				<section
+					aria-label={_(t`Test order`)}
+					className="flex flex-col gap-2 text-sm"
+					data-order-test-section
+				>
+					<p className="flex flex-wrap items-center gap-2 font-semibold">
+						<Badge tone="warning">
+							<Trans>TEST</Trans>
+						</Badge>
+						<Trans>Nothing was charged and it is not a sale.</Trans>
+					</p>
+					{detail.testPrintAnswer === 'yes' ? (
+						<p data-test-print="yes">
+							<Trans>The ticket printed.</Trans>
+						</p>
+					) : detail.testPrintAnswer === 'no' ? (
+						<p data-test-print="no">
+							<Trans>
+								The ticket did not print. Check that the printer is on, has
+								paper and is set up in Settings → Terminals in the App.
+							</Trans>
+						</p>
+					) : null}
+					{detail.testPrintAnswer !== 'yes' ? (
+						<div
+							role="group"
+							aria-labelledby={`test-print-${detail.id}`}
+							className="flex flex-wrap items-center gap-2"
+						>
+							<span id={`test-print-${detail.id}`} className="font-medium">
+								<Trans>Did the ticket print?</Trans>
+							</span>
+							<Button
+								size="md"
+								variant="outline"
+								disabled={testPrintBusy}
+								onClick={() => onTestPrint('yes')}
+								data-test-print-yes
+							>
+								<Trans>Yes</Trans>
+							</Button>
+							<Button
+								size="md"
+								variant="outline"
+								disabled={testPrintBusy}
+								onClick={() => onTestPrint('no')}
+								data-test-print-no
+							>
+								<Trans>No</Trans>
+							</Button>
+						</div>
+					) : null}
+				</section>
+			) : null}
 			{detail.status === 'pending_acceptance' ? (
 				<section
 					aria-label={_(t`Waiting for you`)}
@@ -2418,6 +2495,14 @@ export function PrintedTicket({
 					<Trans>Check ID</Trans>
 				</div>
 			) : null}
+			{detail.isTest ? (
+				<div
+					className="my-1 flex items-center justify-center gap-1 border-2 px-1.5 text-center font-semibold"
+					data-test-order
+				>
+					<Trans>TEST ORDER</Trans>
+				</div>
+			) : null}
 			{kind === 'guest' && f('guestContact').show ? (
 				<div className={cn('text-center', f('guestContact').cls)}>
 					<bdi>{detail.guestName}</bdi> ·{' '}
@@ -2472,6 +2557,12 @@ export function PrintedTicket({
 					) : null}
 					{group.lines.map((line, index) => (
 						<div key={index} className={cn('mb-1', f('items').cls)}>
+							{line.forName &&
+							line.forName !== group.lines[index - 1]?.forName ? (
+								<div className="font-semibold" data-order-for>
+									<ForPerson name={line.forName} />
+								</div>
+							) : null}
 							<div className="flex justify-between gap-2">
 								<span>
 									{line.quantity}×{' '}

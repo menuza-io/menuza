@@ -196,6 +196,8 @@ export const kdsLineSchema = z.object({
 	/** Localized kitchen name. The screen resolves it; `name` stays the guest name. */
 	kitchenName: z.string().max(500).optional(),
 	highlight: kitchenHighlightSchema.optional(),
+	/** A group order (#170): whose dish this is ("For Sam"). Omitted otherwise. */
+	forName: z.string().max(60).optional(),
 	/** Set on dine-in courses. A held line is on the ticket and is not late. */
 	courseId: z.string().max(40).optional(),
 	courseName: z.string().max(60).optional(),
@@ -262,6 +264,14 @@ export const kdsTicketSchema = z.object({
 	guestAllergy: z.boolean().optional(),
 	/** The order has alcohol: the ticket says "Check ID" (#167). Left out unless set. */
 	checkId: z.boolean().optional(),
+	/**
+	 * A free test order (#119): the kitchen screen badges it TEST and asks "Did
+	 * the ticket print?". Left out unless set, so other tickets keep their
+	 * fingerprints.
+	 */
+	isTest: z.boolean().optional(),
+	/** The answer to that question, once given: `yes` or `no`. */
+	testPrintAnswer: z.enum(['yes', 'no']).nullable().optional(),
 })
 export type KdsTicket = z.infer<typeof kdsTicketSchema>
 export const kdsFeedSchema = z.object({

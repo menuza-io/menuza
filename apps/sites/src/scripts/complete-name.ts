@@ -6,7 +6,7 @@ import {
 	tenantFetch,
 } from '~/lib/client-auth'
 import { BIRTHDAY_ERROR, readBirthdayField } from '~/lib/birthday-field'
-import { browserLocaleHref } from '~/lib/locale'
+import { returnHref } from '~/lib/return-after-login'
 import {
 	readConsentChoice,
 	readConsentTextVersion,
@@ -51,7 +51,7 @@ export function initCompleteNamePage() {
 				customer?: { needsName?: boolean; name?: string }
 			}
 			if (data.customer && data.customer.needsName !== true) {
-				window.location.replace(browserLocaleHref('/'))
+				window.location.replace(returnHref('/'))
 			}
 		} catch {
 			// Stay on the form if profile cannot be loaded
@@ -105,7 +105,7 @@ export function initCompleteNamePage() {
 					readConsentChoice(consentRoot),
 					readConsentTextVersion(consentRoot),
 				)
-				window.location.href = browserLocaleHref('/')
+				window.location.href = returnHref('/')
 			} else {
 				showError(
 					data.error === BIRTHDAY_ERROR

@@ -47,6 +47,14 @@ export function organizationGuestPhotoPrefix(orgId: string) {
 	return `guest-photos/${orgId}/`
 }
 
+/**
+ * Photos a guest attached to an order problem report (#191) live in the same
+ * region bucket under `order-problems/<orgId>/<random>.<ext>`.
+ */
+export function organizationOrderProblemPrefix(orgId: string) {
+	return `order-problems/${orgId}/`
+}
+
 type RecordingStorageConfig = {
 	bucket: string
 	region: string
@@ -627,6 +635,38 @@ export async function deleteOrganizationGuestPhotos(
 				if (rest.status !== 'deleted') {
 					console.error(
 						'Could not delete every guest photo of a deprovisioned org',
+						{ orgId, prefix, ...rest },
+					)
+				}
+			}),
+		)
+	}
+	return result.status
+}
+
+/** Deletes every order problem photo of a deprovisioned organization (#191). */
+export async function deleteOrganizationOrderProblemPhotos(
+	orgId: string,
+	options: {
+		budgetMs: number
+		runInBackground: (task: Promise<void>) => void
+	},
+): Promise<PrefixDeleteResult['status']> {
+	const prefix = organizationOrderProblemPrefix(orgId)
+	const deadline = Date.now() + options.budgetMs
+	const result = await deleteRecordingsWithPrefix(prefix, { deadline })
+	if (result.status === 'failed') {
+		console.error(
+			'Could not delete every order problem photo of a deprovisioned org',
+			{ orgId, prefix, deleted: result.deleted, failed: result.failed },
+		)
+	}
+	if (result.status === 'incomplete') {
+		options.runInBackground(
+			deleteRecordingsWithPrefix(prefix).then((rest) => {
+				if (rest.status !== 'deleted') {
+					console.error(
+						'Could not delete every order problem photo of a deprovisioned org',
 						{ orgId, prefix, ...rest },
 					)
 				}

@@ -27,6 +27,12 @@ export type OrderDetailsDelivery = {
 	 * saved before fee tables existed: `deliveryFee` then stands.
 	 */
 	pricing?: DeliveryFeePricing
+	/**
+	 * The saved address (#113) this delivery was quoted for. Checkout asks the
+	 * region about it again by id, so the point a geocode saved is quoted against
+	 * the zones and fees as they are now.
+	 */
+	savedAddressId?: string
 }
 
 export type OrderDetails = {
@@ -114,6 +120,9 @@ function parseDelivery(value: unknown): OrderDetailsDelivery | undefined {
 		zoneName: v.zoneName,
 		eta: { min: eta.min, max: eta.max },
 		...(parsePricing(v.pricing) ? { pricing: parsePricing(v.pricing) } : {}),
+		...(isString(v.savedAddressId) && v.savedAddressId
+			? { savedAddressId: v.savedAddressId }
+			: {}),
 	}
 }
 
@@ -136,6 +145,7 @@ export function deliveryFromQuote(
 		pricing?: DeliveryFeePricing
 	},
 	quotedUnit = '',
+	savedAddressId?: string,
 ): OrderDetailsDelivery {
 	const unit = quote.address.unit || quotedUnit
 	return {
@@ -153,6 +163,7 @@ export function deliveryFromQuote(
 		zoneName: quote.zoneName,
 		eta: quote.eta,
 		...(quote.pricing ? { pricing: quote.pricing } : {}),
+		...(savedAddressId ? { savedAddressId } : {}),
 	}
 }
 
