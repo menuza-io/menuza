@@ -8,6 +8,7 @@ import {
 	groupCarts,
 	orderProblemReplies,
 	orderProblems,
+	printJobs,
 	customerPushDevices,
 	customerPushPreferences,
 	pushMessages,
@@ -1147,6 +1148,18 @@ export async function erasePerson(
 								),
 							)
 					},
+				)
+				// A cloud printer's ticket carries the guest's first name, the delivery
+				// address and a group's "For Sam" labels: the jobs go with the orders.
+				await forEachInChunks([...restaurantOrderIds], (chunk) =>
+					tx
+						.delete(printJobs)
+						.where(
+							and(
+								eq(printJobs.sourceType, 'restaurant_order'),
+								inArray(printJobs.sourceId, chunk),
+							),
+						),
 				)
 				// A group order's "For Sam" labels are first names of other people: the
 				// receipt and ticket keep the dishes, not the names.

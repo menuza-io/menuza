@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { brand } from '@repo/config/brand'
 import {
+	ORDER_PROBLEM_MAX_GUEST_ENTRIES,
 	ORDER_PROBLEM_MAX_PER_ORDER,
 	ORDER_PROBLEM_UNANSWERED_MS,
 	ORDER_PROBLEM_WINDOW_MS,
@@ -33,6 +34,7 @@ import { deriveReceiptToken } from '../services/order-service.ts'
 import { renderOrderEmail } from '../lib/order-messages-email.ts'
 import { setTenantEmailDevCapture } from '../lib/tenant-email.ts'
 import { deriveOrderLinkToken } from '../lib/order-link.ts'
+import { applyProviderRefundStatus } from '../services/order-provider-refund-service.ts'
 import { setProblemNotifyDepsForTest } from '../lib/order-problem-notify.ts'
 import {
 	findActiveOrganizationById,
@@ -42,6 +44,7 @@ import {
 	clearProblemFlagCacheForTest,
 	openProblemsOlderThan,
 	runOrderProblemsTickForOrg,
+	submitGuestProblem,
 } from '../services/order-problems-service.ts'
 import { mintTestOrderCodeForOrg } from '../services/test-orders-service.ts'
 import {
@@ -530,11 +533,30 @@ describe('guest order problem reports (#191)', () => {
 			expect(JSON.stringify(problemAlerts())).not.toContain('Rana')
 		})
 
-		it('works with the forwardable order link too', async () => {
+		it('an open report takes at most ten additions', async () => {
 			const order = await place()
-			const link = deriveOrderLinkToken(orgId, order.id)
-			const sent = await report(order.id, { link })
-			expect(sent.status).toBe(201)
+			await complete(order.id)
+			const [row] = await (
+				await db()
+			)
+				.select()
+				.from(restaurantOrders)
+				.where(eq(restaurantOrders.id, order.id))
+			const send = () =>
+				submitGuestProblem(orgId, row!, {
+					request: {
+						kind: 'missing_item',
+						items: [{ lineIndex: 0, quantity: 1 }],
+						note: 'again',
+					},
+					idempotencyKey: key(),
+				})
+			for (let index = 0; index < ORDER_PROBLEM_MAX_GUEST_ENTRIES; index++) {
+				expect((await send()).ok).toBe(true)
+			}
+			const over = await send()
+			expect(over.ok).toBe(false)
+			if (!over.ok) expect(over.failure.status).toBe(429)
 		})
 
 		it('a repeated submission is the same entry, and a second one adds to the open report', async () => {
@@ -608,6 +630,43 @@ describe('guest order problem reports (#191)', () => {
 				receiptToken: theirs.receiptToken,
 			})
 			expect(read.status).toBe(404)
+		})
+
+		it('the forwardable order link reads a redacted view and can neither report nor attach a photo', async () => {
+			const order = await place()
+			await complete(order.id)
+			const created = (await (
+				await report(order.id, { receiptToken: order.receiptToken })
+			).json()) as { problemId: string }
+			const link = deriveOrderLinkToken(orgId, order.id)
+			const read = await guest(order.id, '/problems', { link })
+			expect(read.status).toBe(200)
+			const view = (await read.json()) as {
+				reportable: { allowed: boolean; reason: string | null }
+				problems: Array<{
+					note: string | null
+					entries: Array<{ body: string | null }>
+				}>
+			}
+			expect(view.reportable).toMatchObject({
+				allowed: false,
+				reason: 'receipt_required',
+			})
+			expect(view.problems).toHaveLength(1)
+			expect(view.problems[0]!.note).toBeNull()
+			expect(
+				view.problems[0]!.entries.every((entry) => entry.body === null),
+			).toBe(true)
+			const filed = await report(order.id, { link })
+			expect(filed.status).toBe(403)
+			const photo = await guest(
+				order.id,
+				`/problems/${created.problemId}/photo`,
+				{ link },
+				{ method: 'POST', raw: new Uint8Array([1, 2, 3]) },
+			)
+			expect(photo.status).toBe(403)
+			expect(await (await db()).select().from(orderProblems)).toHaveLength(1)
 		})
 
 		it('refuses a capability made for another organization', async () => {
@@ -847,7 +906,15 @@ describe('guest order problem reports (#191)', () => {
 			body: unknown,
 			jwt?: Promise<string> | string,
 		) {
-			return Promise.resolve(jwt).then((token) =>
+			// A credit is a cash-equivalent code: it needs the refund grant.
+			const grant =
+				jwt === undefined &&
+				typeof body === 'object' &&
+				body !== null &&
+				(body as { action?: string }).action === 'credit'
+					? operatorJwt({ refundProvider: true })
+					: jwt
+			return Promise.resolve(grant).then((token) =>
 				operator(`/problems/${problemId}/answer`, {
 					method: 'POST',
 					body,
@@ -1089,6 +1156,139 @@ describe('guest order problem reports (#191)', () => {
 			} else {
 				expect(again.status).toBeGreaterThanOrEqual(400)
 			}
+		})
+
+		it('a credit needs the refund grant, never an impersonated session, and never exceeds the order', async () => {
+			const { order, problemId } = await open()
+			const denied = await answer(
+				problemId,
+				{ action: 'credit', amountCents: 100 },
+				operatorJwt(),
+			)
+			expect(denied.status).toBe(403)
+			expect(((await denied.json()) as { error: string }).error).toBe(
+				'credit_forbidden',
+			)
+			const tooMuch = await answer(
+				problemId,
+				{ action: 'credit', amountCents: 5_000_000 },
+				operatorJwt({ refundProvider: true }),
+			)
+			expect(tooMuch.status).toBe(422)
+			expect(((await tooMuch.json()) as { error: string }).error).toBe(
+				'credit_too_large',
+			)
+			expect(
+				await (await db()).select().from(discountIssuedCodes),
+			).toHaveLength(0)
+			const [row] = await (await db()).select().from(orderProblems)
+			expect(row!.status).toBe('open')
+		})
+
+		it('a refund claims the report first: a credit answered in the middle is refused and no code is minted', async () => {
+			const { order, problemId } = await open()
+			await (
+				await db()
+			)
+				.update(restaurantOrders)
+				.set({ paymentStatus: 'paid' })
+				.where(eq(restaurantOrders.id, order.id))
+			// Somebody else's refund has claimed the report and is still booking.
+			await (
+				await db()
+			)
+				.update(orderProblems)
+				.set({
+					status: 'answered',
+					resolution: 'refund',
+					resolvedBy: 'someone-else',
+					resolvedAt: Date.now(),
+				})
+				.where(eq(orderProblems.id, problemId))
+			const credit = await answer(problemId, {
+				action: 'credit',
+				amountCents: 100,
+			})
+			expect(credit.status).toBe(409)
+			expect(
+				await (await db()).select().from(discountIssuedCodes),
+			).toHaveLength(0)
+			const again = await answer(problemId, { action: 'refund' })
+			expect(again.status).toBe(409)
+			expect(
+				await (await db()).select().from(restaurantOrderRefunds),
+			).toHaveLength(0)
+		})
+
+		it('gives the claim back when the refund is refused, so the report can be answered again', async () => {
+			const { order, problemId } = await open()
+			await (
+				await db()
+			)
+				.update(restaurantOrders)
+				.set({
+					paymentMethod: 'online',
+					paymentStatus: 'paid',
+					paymentProcessor: 'connect',
+					paymentSessionId: 'cs_test_claim',
+					paidAt: new Date(),
+				})
+				.where(eq(restaurantOrders.id, order.id))
+			const tooMuch = await answer(
+				problemId,
+				{ action: 'refund', amountCents: order.totalCents + 5000 },
+				operatorJwt({ refundProvider: true }),
+			)
+			expect(tooMuch.status).toBeGreaterThanOrEqual(400)
+			const [row] = await (await db()).select().from(orderProblems)
+			expect(row).toMatchObject({
+				status: 'open',
+				resolution: null,
+				resolvedBy: null,
+				refundId: null,
+			})
+			const reply = await answer(problemId, {
+				action: 'reply',
+				message: 'Looking into it',
+			})
+			expect(reply.status).toBe(200)
+		})
+
+		it('a provider refund that later fails opens the report again', async () => {
+			const { order, problemId } = await open()
+			await (
+				await db()
+			)
+				.update(restaurantOrders)
+				.set({
+					paymentMethod: 'online',
+					paymentStatus: 'paid',
+					paymentProcessor: 'connect',
+					paymentSessionId: 'cs_test_fail',
+					paidAt: new Date(),
+				})
+				.where(eq(restaurantOrders.id, order.id))
+			const response = await answer(
+				problemId,
+				{ action: 'refund', amountCents: 300 },
+				operatorJwt({ refundProvider: true }),
+			)
+			expect(response.status).toBe(200)
+			const [refund] = await (await db()).select().from(restaurantOrderRefunds)
+			const settled = await applyProviderRefundStatus({
+				orgId,
+				refundId: refund!.id,
+				status: 'failed',
+				failureCode: 'card_declined',
+			})
+			expect(settled.ok).toBe(true)
+			const [row] = await (await db()).select().from(orderProblems)
+			expect(row).toMatchObject({
+				status: 'open',
+				resolution: null,
+				refundId: null,
+				refundCents: null,
+			})
 		})
 
 		it('an expired credit does not apply', async () => {
@@ -1361,6 +1561,7 @@ describe('guest order problem reports (#191)', () => {
 			await operator(`/problems/${b.problemId}/answer`, {
 				method: 'POST',
 				body: { action: 'credit', amountCents: 300 },
+				jwt: await operatorJwt({ refundProvider: true }),
 			})
 			const definition = {
 				timeframe: { preset: 'last_30_days' },

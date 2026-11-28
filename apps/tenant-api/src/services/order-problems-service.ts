@@ -5,6 +5,7 @@ import {
 	affectedItemsCents,
 	ORDER_PROBLEM_CREDIT_DEFAULT_DAYS,
 	ORDER_PROBLEM_CREDIT_DISCOUNT_ID,
+	ORDER_PROBLEM_MAX_GUEST_ENTRIES,
 	ORDER_PROBLEM_MAX_PER_ORDER,
 	ORDER_PROBLEM_PHOTO_MAX_BYTES,
 	ORDER_PROBLEM_WINDOW_MS,
@@ -37,7 +38,7 @@ import {
 	type RestaurantOrder,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, asc, desc, eq, inArray, isNull, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 
 import { runInBackground } from '../lib/background.ts'
 import { errorLogFields } from '../lib/error-log.ts'
@@ -235,8 +236,10 @@ function guestProblemView(
 	problem: OrderProblem,
 	entries: readonly EntryRow[],
 	codes: Map<string, string>,
+	redacted = false,
 ): GuestOrderProblem {
-	const code = problem.creditCodeId ? codes.get(problem.creditCodeId) : null
+	const code =
+		problem.creditCodeId && !redacted ? codes.get(problem.creditCodeId) : null
 	return {
 		id: problem.id,
 		kind: problem.kind,
@@ -247,7 +250,7 @@ function guestProblemView(
 			name: item.name,
 			quantity: item.quantity,
 		})),
-		note: problem.note,
+		note: redacted ? null : problem.note,
 		hasPhoto: Boolean(problem.photoKey),
 		refund:
 			problem.refundCents != null ? { amountCents: problem.refundCents } : null,
@@ -259,7 +262,9 @@ function guestProblemView(
 						expiresAt: problem.creditExpiresAt,
 					}
 				: null,
-		entries: entryViews(entries),
+		entries: entryViews(entries).map((entry) =>
+			redacted ? { ...entry, body: null } : entry,
+		),
 	}
 }
 
@@ -303,6 +308,7 @@ export async function readGuestProblems(
 	orgId: string,
 	order: RestaurantOrder,
 	now: number = Date.now(),
+	via: 'receipt' | 'link' = 'receipt',
 ): Promise<GuestOrderProblemsResponse> {
 	const db = await getTenantDb(orgId)
 	const enabled = await problemReportsEnabled(orgId, order, { now })
@@ -312,12 +318,21 @@ export async function readGuestProblems(
 		problems.map((problem) => problem.id),
 	)
 	const codes = await creditCodesOf(db, problems)
+	// The forwardable link is read-only and redacted: no note, no words of the
+	// thread and no credit code (a cash-equivalent), and it cannot report.
+	const redacted = via !== 'receipt'
 	return {
 		enabled,
-		reportable: reportability(order, problems.length, enabled, now),
-		lines: enabled ? lineViews(order) : [],
+		reportable: redacted
+			? {
+					allowed: false,
+					reason: 'receipt_required',
+					until: reportability(order, problems.length, enabled, now).until,
+				}
+			: reportability(order, problems.length, enabled, now),
+		lines: enabled && !redacted ? lineViews(order) : [],
 		problems: problems.map((problem) =>
-			guestProblemView(problem, entries.get(problem.id) ?? [], codes),
+			guestProblemView(problem, entries.get(problem.id) ?? [], codes, redacted),
 		),
 	}
 }
@@ -473,6 +488,22 @@ export async function submitGuestProblem(
 				const note = input.request.note?.trim() || null
 
 				if (open) {
+					const [guestEntries] = await tx
+						.select({ count: sql<number>`count(*)` })
+						.from(orderProblemReplies)
+						.where(
+							and(
+								eq(orderProblemReplies.problemId, open.id),
+								eq(orderProblemReplies.authorKind, 'guest'),
+							),
+						)
+					if ((guestEntries?.count ?? 0) >= ORDER_PROBLEM_MAX_GUEST_ENTRIES) {
+						return orderFailure(
+							429,
+							'problem_limit_reached',
+							'This report already has the most additions allowed.',
+						)
+					}
 					// A second report adds to the first: new items join it, the
 					// words become an entry of the thread.
 					const known = new Map(
@@ -1048,11 +1079,16 @@ export type AnswerProblemResult = OrderServiceResult<{
 	refundIntent?: { refundId: string; status: string; replayed: boolean }
 }>
 
+/** A refund claim older than this, with no refund recorded, may be taken over. */
+const STALE_REFUND_CLAIM_MS = 120_000
+
 /**
- * The operator's one-tap answer. A refund goes first and is idempotent by a key
- * made from the report, so a retry after a failed write completes the answer
- * without refunding twice; the report is then marked answered with a
- * compare-and-set on `open`, so two people answering at once settle it once.
+ * The operator's one-tap answer. The report is claimed first with a
+ * compare-and-set on `open`, so two people answering at once (a refund and a
+ * credit, say) settle it once. A refund is booked after the claim, idempotent
+ * by a key made from the report; when booking is refused the claim is given
+ * back, and a claim that never booked (a crash) can be taken over after two
+ * minutes, completing the answer without refunding twice.
  */
 export async function answerOrderProblem(
 	orgId: string,
@@ -1077,7 +1113,13 @@ export async function answerOrderProblem(
 		.where(eq(restaurantOrders.id, problem.orderId))
 		.limit(1)
 	if (!order) return orderFailure(404, 'problem_not_found', 'Report not found.')
-	if (problem.status !== 'open') {
+	const staleRefundClaim =
+		problem.status === 'answered' &&
+		problem.resolution === 'refund' &&
+		problem.refundId === null &&
+		problem.resolvedAt !== null &&
+		problem.resolvedAt <= now - STALE_REFUND_CLAIM_MS
+	if (problem.status !== 'open' && !staleRefundClaim) {
 		return orderFailure(
 			409,
 			'problem_already_answered',
@@ -1106,6 +1148,42 @@ export async function answerOrderProblem(
 		code: string
 	} | null = null
 
+	let preClaimed = false
+	const releaseRefundClaim = async () => {
+		try {
+			await runExclusive(orgId, () =>
+				retryOnSqliteBusy(() =>
+					db
+						.update(orderProblems)
+						.set({
+							status: 'open',
+							resolution: null,
+							resolvedBy: null,
+							resolvedAt: null,
+							updatedAt: now,
+						})
+						.where(
+							and(
+								eq(orderProblems.id, problem.id),
+								eq(orderProblems.status, 'answered'),
+								eq(orderProblems.resolvedBy, operator.userId),
+								isNull(orderProblems.refundId),
+							),
+						),
+				),
+			)
+		} catch (error) {
+			// A newer report on the order holds the single open slot: the claim
+			// stays and a person can reopen it; nothing is lost.
+			console.warn(
+				'Order problem claim not released',
+				orgId,
+				problem.id,
+				errorLogFields(error),
+			)
+		}
+	}
+
 	if (request.action === 'refund') {
 		const amountCents = request.amountCents ?? affected
 		if (amountCents < 1) {
@@ -1122,55 +1200,105 @@ export async function answerOrderProblem(
 				'Nothing was paid for this order, so there is nothing to refund. Give a credit instead.',
 			)
 		}
+		if (order.paymentMethod === 'online' && !operator.refundProvider) {
+			return orderFailure(
+				403,
+				'refund_forbidden',
+				'Refunding an online payment needs the right to refund orders.',
+			)
+		}
 		const key = `order-problem:${problem.id}:refund`
+		// Claim the report before any money moves: a second answer (a credit, a
+		// refund by someone else) now finds it taken.
+		const claimedForRefund = await runExclusive(orgId, () =>
+			retryOnSqliteBusy(async () => {
+				const rows = await db
+					.update(orderProblems)
+					.set({
+						status: 'answered',
+						resolution: 'refund',
+						resolvedBy: operator.userId,
+						resolvedAt: now,
+						updatedAt: now,
+					})
+					.where(
+						and(
+							eq(orderProblems.id, problem.id),
+							or(
+								eq(orderProblems.status, 'open'),
+								and(
+									eq(orderProblems.status, 'answered'),
+									eq(orderProblems.resolution, 'refund'),
+									isNull(orderProblems.refundId),
+									lte(orderProblems.resolvedAt, now - STALE_REFUND_CLAIM_MS),
+								),
+							),
+						),
+					)
+					.returning({ id: orderProblems.id })
+				return rows.length > 0
+			}),
+		)
+		if (!claimedForRefund) {
+			return orderFailure(
+				409,
+				'problem_already_answered',
+				'This report has already been answered.',
+			)
+		}
+		preClaimed = true
 		let refundId: string
 		let refundedCents = amountCents
-		if (order.paymentMethod === 'online') {
-			if (!operator.refundProvider) {
-				return orderFailure(
-					403,
-					'refund_forbidden',
-					'Refunding an online payment needs the right to refund orders.',
-				)
+		try {
+			if (order.paymentMethod === 'online') {
+				const booked = await createProviderRefundIntent({
+					orgId,
+					orderRef: order.id,
+					amount: { amountCents },
+					note: REFUND_NOTE,
+					idempotencyKey: key,
+					origin: 'operator',
+					actorId: operator.userId,
+					now,
+					kick: true,
+					loyaltyAccess: {
+						refundLoyalty: operator.refundLoyalty,
+						impersonated: operator.impersonated,
+					},
+					locationIds: operator.locationIds,
+				})
+				if (!booked.ok) {
+					await releaseRefundClaim()
+					return booked
+				}
+				refundId = booked.data.refund.refundId
+				refundedCents = booked.data.refund.amountCents
+				refundIntent = {
+					refundId,
+					status: booked.data.refund.status,
+					replayed: booked.data.replayed,
+				}
+			} else {
+				const recorded = await recordOrderRefund(orgId, order.id, {
+					request: { amountCents, note: REFUND_NOTE },
+					actorId: operator.userId,
+					idempotencyKey: key,
+					loyaltyAccess: {
+						refundLoyalty: operator.refundLoyalty,
+						impersonated: operator.impersonated,
+					},
+					now,
+				})
+				if (!recorded.ok) {
+					await releaseRefundClaim()
+					return recorded
+				}
+				refundId = recorded.data.refund.id
+				refundedCents = recorded.data.refund.amountCents
 			}
-			const booked = await createProviderRefundIntent({
-				orgId,
-				orderRef: order.id,
-				amount: { amountCents },
-				note: REFUND_NOTE,
-				idempotencyKey: key,
-				origin: 'operator',
-				actorId: operator.userId,
-				now,
-				kick: true,
-				loyaltyAccess: {
-					refundLoyalty: operator.refundLoyalty,
-					impersonated: operator.impersonated,
-				},
-				locationIds: operator.locationIds,
-			})
-			if (!booked.ok) return booked
-			refundId = booked.data.refund.refundId
-			refundedCents = booked.data.refund.amountCents
-			refundIntent = {
-				refundId,
-				status: booked.data.refund.status,
-				replayed: booked.data.replayed,
-			}
-		} else {
-			const recorded = await recordOrderRefund(orgId, order.id, {
-				request: { amountCents, note: REFUND_NOTE },
-				actorId: operator.userId,
-				idempotencyKey: key,
-				loyaltyAccess: {
-					refundLoyalty: operator.refundLoyalty,
-					impersonated: operator.impersonated,
-				},
-				now,
-			})
-			if (!recorded.ok) return recorded
-			refundId = recorded.data.refund.id
-			refundedCents = recorded.data.refund.amountCents
+		} catch (error) {
+			await releaseRefundClaim()
+			throw error
 		}
 		finish = {
 			entryKind: 'refund',
@@ -1193,6 +1321,22 @@ export async function answerOrderProblem(
 				409,
 				'credit_not_allowed',
 				'A test order cannot be given a credit.',
+			)
+		}
+		// A credit is a cash-equivalent code: it takes the same right as a refund
+		// (never granted while impersonating) and never exceeds the order.
+		if (!operator.refundProvider || operator.impersonated) {
+			return orderFailure(
+				403,
+				'credit_forbidden',
+				'Giving a credit needs the right to refund orders.',
+			)
+		}
+		if (amountCents > order.totalCents) {
+			return orderFailure(
+				422,
+				'credit_too_large',
+				'A credit cannot be more than the order total.',
 			)
 		}
 		const expiresAt =
@@ -1238,10 +1382,17 @@ export async function answerOrderProblem(
 							...finish.set,
 						})
 						.where(
-							and(
-								eq(orderProblems.id, problem.id),
-								eq(orderProblems.status, 'open'),
-							),
+							preClaimed
+								? and(
+										eq(orderProblems.id, problem.id),
+										eq(orderProblems.status, 'answered'),
+										eq(orderProblems.resolvedBy, operator.userId),
+										isNull(orderProblems.refundId),
+									)
+								: and(
+										eq(orderProblems.id, problem.id),
+										eq(orderProblems.status, 'open'),
+									),
 						)
 						.returning({ id: orderProblems.id })
 					if (!claimed) {

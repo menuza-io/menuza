@@ -19,6 +19,7 @@ import {
 	getTenantDb,
 	groupCartLines,
 	groupCartPeople,
+	loyaltyRateCounters,
 	groupCarts,
 	provisionTenantDb,
 	restaurantOrders,
@@ -685,6 +686,53 @@ describe('group orders (#170)', () => {
 			})
 			expect(joined.status).toBe(404)
 			expect(await (await db()).select().from(groupCartPeople)).toHaveLength(1)
+		})
+
+		it('the host burns the share link: the old link stops working, the new one joins, people keep their own tokens', async () => {
+			const host = await start()
+			const sam = await join(host, 'Sam')
+			const sam2 = await call(`/${host.groupId}/share/rotate`, {
+				method: 'POST',
+				body: {},
+				token: sam.personToken,
+			})
+			expect(sam2.status).toBe(403)
+			const rotated = await call(`/${host.groupId}/share/rotate`, {
+				method: 'POST',
+				body: {},
+				token: host.personToken,
+			})
+			expect(rotated.status).toBe(200)
+			const { shareToken } = await json<{ shareToken: string }>(rotated)
+			expect(shareToken).not.toBe(host.shareToken)
+			const oldLink = await call(`/${host.groupId}`, { token: host.shareToken })
+			expect(oldLink.status).toBe(404)
+			const newLink = await call(`/${host.groupId}`, { token: shareToken })
+			expect(newLink.status).toBe(200)
+			const stillSam = await call(`/${host.groupId}`, {
+				token: sam.personToken,
+			})
+			expect(stillSam.status).toBe(200)
+		})
+
+		it('a made-up group or a wrong token writes no per-group counter row', async () => {
+			const host = await start()
+			const before = await (await db()).select().from(loyaltyRateCounters)
+			for (const token of [
+				null,
+				'x'.repeat(40),
+				host.shareToken.slice(0, -1),
+			]) {
+				const read = await call(`/${crypto.randomUUID()}`, { token })
+				expect(read.status).toBe(404)
+				const wrong = await call(`/${host.groupId}`, { token })
+				expect(wrong.status).toBe(404)
+			}
+			const after = await (await db()).select().from(loyaltyRateCounters)
+			const groupRows = after.filter((row) => row.bucket.endsWith('.group'))
+			expect(groupRows).toHaveLength(
+				before.filter((row) => row.bucket.endsWith('.group')).length,
+			)
 		})
 
 		it('only the host changes the group, locks it and places the order', async () => {

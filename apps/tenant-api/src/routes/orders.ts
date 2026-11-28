@@ -1584,6 +1584,58 @@ const MAX_PROBLEM_BODY_BYTES = 20_000
 const MAX_PROBLEM_PHOTO_REQUEST_BYTES =
 	ORDER_PROBLEM_PHOTO_MAX_BYTES + 64 * 1024
 
+/**
+ * Reads a request body up to `max` bytes, counting what actually arrives (a
+ * chunked upload names no length). Null means it was over the cap.
+ */
+async function readCappedBody(
+	request: Request,
+	max: number,
+): Promise<Uint8Array | null> {
+	const declared = Number(request.headers.get('content-length') ?? 0)
+	if (declared > max) return null
+	const reader = request.body?.getReader()
+	if (!reader) return new Uint8Array()
+	const chunks: Uint8Array[] = []
+	let total = 0
+	for (;;) {
+		const { done, value } = await reader.read()
+		if (done) break
+		total += value.byteLength
+		if (total > max) {
+			await reader.cancel().catch(() => undefined)
+			return null
+		}
+		chunks.push(value)
+	}
+	const bytes = new Uint8Array(total)
+	let offset = 0
+	for (const chunk of chunks) {
+		bytes.set(chunk, offset)
+		offset += chunk.byteLength
+	}
+	return bytes
+}
+
+/**
+ * The forwardable order link reads a redacted view of the reports and never
+ * files one: a report, its note and its photo need the placing browser's
+ * receipt token.
+ */
+function receiptRequiredResponse() {
+	return new Response(
+		JSON.stringify({
+			error: 'receipt_required',
+			message:
+				'Open this order on the device you ordered from to report a problem.',
+		}),
+		{
+			status: 403,
+			headers: { 'content-type': 'application/json', ...noStoreHeaders() },
+		},
+	)
+}
+
 export type OrderProblemRouteDeps = {
 	storage?: ProblemStorageAdapter
 	heicConverter?: HeicConverterAdapter
@@ -1618,7 +1670,7 @@ publicOrderRoutes.get('/:id/problems', async (c) => {
 		})
 		if (limited) return limited
 		return c.json(
-			await readGuestProblems(orgId, access.order),
+			await readGuestProblems(orgId, access.order, Date.now(), access.via),
 			200,
 			noStoreHeaders(),
 		)
@@ -1636,14 +1688,19 @@ publicOrderRoutes.get('/:id/problems', async (c) => {
 })
 
 publicOrderRoutes.post('/:id/problems', async (c) => {
-	const contentLength = Number(c.req.header('content-length') ?? 0)
-	if (contentLength > MAX_PROBLEM_BODY_BYTES) {
+	const bodyBytes = await readCappedBody(c.req.raw, MAX_PROBLEM_BODY_BYTES)
+	if (bodyBytes === null) {
 		return c.json({ error: 'Payload too large' }, 413, noStoreHeaders())
 	}
-	const raw = (await c.req.json().catch(() => null)) as Record<
-		string,
-		unknown
-	> | null
+	let raw: Record<string, unknown> | null = null
+	try {
+		raw = JSON.parse(new TextDecoder().decode(bodyBytes)) as Record<
+			string,
+			unknown
+		> | null
+	} catch {
+		raw = null
+	}
 	if (!raw || typeof raw !== 'object') {
 		return c.json({ error: 'invalid_report' }, 400, noStoreHeaders())
 	}
@@ -1676,6 +1733,7 @@ publicOrderRoutes.post('/:id/problems', async (c) => {
 			linkToken: readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER)),
 		})
 		if (!access.ok) return orderNotFoundResponse()
+		if (access.via !== 'receipt') return receiptRequiredResponse()
 		const limited = await limitGuestCancel(c, orgId, access.order.id, {
 			order: 'problemOrder',
 			address: 'problemAddress',
@@ -1715,14 +1773,6 @@ publicOrderRoutes.post('/:id/problems', async (c) => {
 })
 
 publicOrderRoutes.post('/:id/problems/:problemId/photo', async (c) => {
-	const contentLength = Number(c.req.header('content-length') ?? 0)
-	if (contentLength > MAX_PROBLEM_PHOTO_REQUEST_BYTES) {
-		return c.json(
-			{ error: 'photo_too_large', message: 'The photo is too big.' },
-			413,
-			noStoreHeaders(),
-		)
-	}
 	// A photo is raw bytes, so the identity rides in the query string here.
 	const identity = problemIdentitySchema.safeParse(c.req.query())
 	if (!identity.success) {
@@ -1737,13 +1787,17 @@ publicOrderRoutes.post('/:id/problems/:problemId/photo', async (c) => {
 			linkToken: readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER)),
 		})
 		if (!access.ok) return orderNotFoundResponse()
+		if (access.via !== 'receipt') return receiptRequiredResponse()
 		const limited = await limitGuestCancel(c, orgId, access.order.id, {
 			order: 'problemOrder',
 			address: 'problemAddress',
 		})
 		if (limited) return limited
-		const bytes = new Uint8Array(await c.req.arrayBuffer())
-		if (bytes.byteLength > ORDER_PROBLEM_PHOTO_MAX_BYTES) {
+		const bytes = await readCappedBody(
+			c.req.raw,
+			MAX_PROBLEM_PHOTO_REQUEST_BYTES,
+		)
+		if (bytes === null || bytes.byteLength > ORDER_PROBLEM_PHOTO_MAX_BYTES) {
 			return c.json(
 				{ error: 'photo_too_large', message: 'The photo is too big.' },
 				413,

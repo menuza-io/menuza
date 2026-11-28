@@ -21,6 +21,8 @@ import {
 	joinGroup,
 	leaveGroup,
 	readGroupView,
+	rotateGroupShare,
+	groupCapabilityHolds,
 	removeGroupLine,
 	setGroupDone,
 	updateGroup,
@@ -70,29 +72,44 @@ function rateLimited(retryAfterSeconds: number) {
 	)
 }
 
+/**
+ * The address budget is counted first and answers 429 before anything about
+ * the group is touched; the per-group budget is counted only for a request
+ * that holds a valid capability of an existing group (an invented group id
+ * writes no counter row). A refused request spends nothing.
+ */
 async function limit(
 	c: Context,
 	orgId: string,
 	groupId: string | null,
 	buckets: { group?: OrderGuestCancelBucket; address: OrderGuestCancelBucket },
+	token: string | null = null,
 ): Promise<Response | null> {
 	const db = await getTenantDb(orgId)
-	if (groupId && buckets.group) {
-		const perGroup = await countOrderGuestCancelAttempt(
-			db,
-			buckets.group,
-			`${orgId}:${groupId}`,
-		)
-		if (!perGroup.ok) return rateLimited(perGroup.retryAfterSeconds)
-	}
 	const address = clientBucket(c)
 	if (address) {
 		const perAddress = await countOrderGuestCancelAttempt(
 			db,
 			buckets.address,
 			`${orgId}:${address}`,
+			Date.now(),
+			{ giveBackRefused: true },
 		)
 		if (!perAddress.ok) return rateLimited(perAddress.retryAfterSeconds)
+	}
+	if (
+		groupId &&
+		buckets.group &&
+		(await groupCapabilityHolds(orgId, groupId, token))
+	) {
+		const perGroup = await countOrderGuestCancelAttempt(
+			db,
+			buckets.group,
+			`${orgId}:${groupId}`,
+			Date.now(),
+			{ giveBackRefused: true },
+		)
+		if (!perGroup.ok) return rateLimited(perGroup.retryAfterSeconds)
 	}
 	return null
 }
@@ -215,10 +232,16 @@ groupOrderRoutes.get('/:groupId', async (c) => {
 	if ('error' in org) return org.error
 	const groupId = c.req.param('groupId')
 	try {
-		const limited = await limit(c, org.orgId, groupId, {
-			group: 'groupReadGroup',
-			address: 'groupReadAddress',
-		})
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{
+				group: 'groupReadGroup',
+				address: 'groupReadAddress',
+			},
+			groupToken(c),
+		)
 		if (limited) return limited
 		return answer(c, await readGroupView(org.orgId, groupId, groupToken(c)))
 	} catch (error) {
@@ -236,10 +259,16 @@ groupOrderRoutes.post('/:groupId/join', async (c) => {
 	const parsed = joinGroupSchema.safeParse(body.rest)
 	if (!parsed.success) return invalid(c)
 	try {
-		const limited = await limit(c, org.orgId, groupId, {
-			group: 'groupWriteGroup',
-			address: 'groupJoinAddress',
-		})
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{
+				group: 'groupWriteGroup',
+				address: 'groupJoinAddress',
+			},
+			groupToken(c),
+		)
 		if (limited) return limited
 		return answer(
 			c,
@@ -264,10 +293,16 @@ groupOrderRoutes.post('/:groupId/lines', async (c) => {
 	const parsed = groupLineSchema.safeParse(body.rest)
 	if (!parsed.success) return invalid(c)
 	try {
-		const limited = await limit(c, org.orgId, groupId, {
-			group: 'groupWriteGroup',
-			address: 'groupWriteAddress',
-		})
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{
+				group: 'groupWriteGroup',
+				address: 'groupWriteAddress',
+			},
+			groupToken(c),
+		)
 		if (limited) return limited
 		return answer(
 			c,
@@ -292,10 +327,16 @@ groupOrderRoutes.delete('/:groupId/lines/:lineId', async (c) => {
 	if ('error' in org) return org.error
 	const groupId = c.req.param('groupId')
 	try {
-		const limited = await limit(c, org.orgId, groupId, {
-			group: 'groupWriteGroup',
-			address: 'groupWriteAddress',
-		})
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{
+				group: 'groupWriteGroup',
+				address: 'groupWriteAddress',
+			},
+			groupToken(c),
+		)
 		if (limited) return limited
 		return answer(
 			c,
@@ -318,10 +359,16 @@ groupOrderRoutes.post('/:groupId/done', async (c) => {
 	const parsed = z.strictObject({ done: z.boolean() }).safeParse(body.rest)
 	if (!parsed.success) return invalid(c)
 	try {
-		const limited = await limit(c, org.orgId, groupId, {
-			group: 'groupWriteGroup',
-			address: 'groupWriteAddress',
-		})
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{
+				group: 'groupWriteGroup',
+				address: 'groupWriteAddress',
+			},
+			groupToken(c),
+		)
 		if (limited) return limited
 		return answer(
 			c,
@@ -345,10 +392,16 @@ groupOrderRoutes.patch('/:groupId', async (c) => {
 	const parsed = updateGroupSchema.safeParse(body.rest)
 	if (!parsed.success) return invalid(c)
 	try {
-		const limited = await limit(c, org.orgId, groupId, {
-			group: 'groupWriteGroup',
-			address: 'groupWriteAddress',
-		})
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{
+				group: 'groupWriteGroup',
+				address: 'groupWriteAddress',
+			},
+			groupToken(c),
+		)
 		if (limited) return limited
 		return answer(
 			c,
@@ -372,10 +425,16 @@ groupOrderRoutes.delete('/:groupId/people/me', async (c) => {
 	if ('error' in org) return org.error
 	const groupId = c.req.param('groupId')
 	try {
-		const limited = await limit(c, org.orgId, groupId, {
-			group: 'groupWriteGroup',
-			address: 'groupWriteAddress',
-		})
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{
+				group: 'groupWriteGroup',
+				address: 'groupWriteAddress',
+			},
+			groupToken(c),
+		)
 		if (limited) return limited
 		return answer(
 			c,
@@ -383,6 +442,31 @@ groupOrderRoutes.delete('/:groupId/people/me', async (c) => {
 		)
 	} catch (error) {
 		return crash(c, 'leave a group order', org.orgId, error)
+	}
+})
+
+// POST /orders/group/:groupId/share/rotate: the host burns the old link.
+groupOrderRoutes.post('/:groupId/share/rotate', async (c) => {
+	const body = await readBody(c)
+	if ('error' in body) return body.error
+	const org = await organizationOf(c, body.identity)
+	if ('error' in org) return org.error
+	const groupId = c.req.param('groupId')
+	try {
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{ group: 'groupWriteGroup', address: 'groupWriteAddress' },
+			groupToken(c),
+		)
+		if (limited) return limited
+		return answer(
+			c,
+			await rotateGroupShare(org.orgId, groupId, { token: groupToken(c) }),
+		)
+	} catch (error) {
+		return crash(c, 'make a new group order link', org.orgId, error)
 	}
 })
 
@@ -396,10 +480,16 @@ groupOrderRoutes.delete('/:groupId', async (c) => {
 	if ('error' in org) return org.error
 	const groupId = c.req.param('groupId')
 	try {
-		const limited = await limit(c, org.orgId, groupId, {
-			group: 'groupWriteGroup',
-			address: 'groupWriteAddress',
-		})
+		const limited = await limit(
+			c,
+			org.orgId,
+			groupId,
+			{
+				group: 'groupWriteGroup',
+				address: 'groupWriteAddress',
+			},
+			groupToken(c),
+		)
 		if (limited) return limited
 		return answer(
 			c,

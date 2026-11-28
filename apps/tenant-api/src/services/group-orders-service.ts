@@ -126,9 +126,21 @@ const contextCache = new Map<
 	{ context: RestaurantOrderContext | null; expiresAt: number }
 >()
 
+const pricedCache = new Map<
+	string,
+	{
+		version: number
+		context: RestaurantOrderContext
+		availability: Map<string, boolean>
+		priced: Map<string, PricedLine>
+		expiresAt: number
+	}
+>()
+
 /** Tests: forget the menu a group was last checked against. */
 export function clearGroupContextCacheForTest(): void {
 	contextCache.clear()
+	pricedCache.clear()
 }
 
 async function groupContext(
@@ -311,19 +323,41 @@ export async function buildGroupView(
 		context?.menu.locations.find((l) => l.id === group.locationId)?.currency ??
 		context?.menu.organization.currency ??
 		null
-	const availability = new Map<string, boolean>()
-	const priced = new Map<string, PricedLine>()
+	let availability = new Map<string, boolean>()
+	let priced = new Map<string, PricedLine>()
 	if (context && you) {
-		for (const line of lines) {
-			const parsed = line.line as GroupLineRequest['line']
-			const result = priceGroupLine(
+		// Pricing up to 100 dishes is the costly part of a poll: reuse it while
+		// the group's version (any change to its dishes) and the menu are the same.
+		const cacheKey = `${orgId}\u0000${group.id}`
+		const hit = pricedCache.get(cacheKey)
+		if (
+			hit &&
+			hit.version === group.version &&
+			hit.context === context &&
+			hit.expiresAt > now
+		) {
+			availability = hit.availability
+			priced = hit.priced
+		} else {
+			for (const line of lines) {
+				const parsed = line.line as GroupLineRequest['line']
+				const result = priceGroupLine(
+					context,
+					group.locationId,
+					parsed,
+					new Date(now),
+				)
+				availability.set(line.id, result.ok)
+				if (result.ok) priced.set(line.id, result)
+			}
+			if (pricedCache.size >= CONTEXT_MAX) pricedCache.clear()
+			pricedCache.set(cacheKey, {
+				version: group.version,
 				context,
-				group.locationId,
-				parsed,
-				new Date(now),
-			)
-			availability.set(line.id, result.ok)
-			if (result.ok) priced.set(line.id, result)
+				availability,
+				priced,
+				expiresAt: now + CONTEXT_TTL_MS,
+			})
 		}
 	}
 	const [order] = group.orderId
@@ -387,6 +421,23 @@ export async function buildGroupView(
 		canAdd: Boolean(you) && edits === 'open',
 		serverNow: now,
 	}
+}
+
+/**
+ * Whether the token is a valid capability of this existing group. The routes
+ * ask before counting the per-group rate budget, so a made-up group id or a
+ * wrong token writes no counter row.
+ */
+export async function groupCapabilityHolds(
+	orgId: string,
+	groupId: string,
+	token: string | null,
+): Promise<boolean> {
+	if (!token || !TOKEN_PATTERN.test(token)) return false
+	const db = await getTenantDb(orgId)
+	const group = await readGroup(db, groupId)
+	if (!group) return false
+	return (await identifyGroupCaller(db, orgId, group, token)) !== null
 }
 
 /** `GET /orders/group/:id` for a caller who already proved a token. */
@@ -975,6 +1026,74 @@ export async function updateGroup(
 	)
 	if (!updated.ok) return updated
 	return readGroupView(orgId, groupId, input.token, now)
+}
+
+/**
+ * The host burns the link: the share version moves on, so every earlier link
+ * stops working (people who already joined keep their own tokens) and the
+ * answer carries the new link's token.
+ */
+export async function rotateGroupShare(
+	orgId: string,
+	groupId: string,
+	input: { token: string | null; now?: number },
+): Promise<GroupResult<{ shareToken: string; view: GroupView }>> {
+	const now = input.now ?? Date.now()
+	const who = await personOf(orgId, groupId, input.token)
+	if (!who.ok) return who
+	const { db, person } = who
+	if (!person.isHost) {
+		return failure(
+			403,
+			'forbidden',
+			'Only the host can make a new link for the group order.',
+		)
+	}
+	const rotated = await runExclusive(orgId, () =>
+		retryOnSqliteBusy(() =>
+			runTenantTransaction(
+				db,
+				async (tx): Promise<GroupResult<{ shareVersion: number }>> => {
+					const [group] = await tx
+						.update(groupCarts)
+						.set({
+							shareTokenVersion: sql`${groupCarts.shareTokenVersion} + 1`,
+							version: sql`${groupCarts.version} + 1`,
+							updatedAt: now,
+						})
+						.where(
+							and(
+								eq(groupCarts.id, groupId),
+								sql`${groupCarts.status} != 'ordered'`,
+							),
+						)
+						.returning({ shareVersion: groupCarts.shareTokenVersion })
+					if (!group) {
+						return failure(
+							409,
+							'group_already_ordered',
+							MESSAGES.group_already_ordered,
+						)
+					}
+					return { ok: true, data: { shareVersion: group.shareVersion } }
+				},
+			),
+		),
+	)
+	if (!rotated.ok) return rotated
+	const view = await readGroupView(orgId, groupId, input.token, now)
+	if (!view.ok) return view
+	return {
+		ok: true,
+		data: {
+			shareToken: deriveGroupShareToken(
+				orgId,
+				groupId,
+				rotated.data.shareVersion,
+			),
+			view: view.data,
+		},
+	}
 }
 
 /** The host ends the group: it is deleted, with every dish and name in it. */

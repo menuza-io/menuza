@@ -161,6 +161,8 @@ const COVERED: Record<string, string> = {
 		'hash of the random per-person group token (#170), deleted with the group',
 	'order_problems.note':
 		"the guest's words about an order problem (#191), nulled with the scrubbed order together with the photo",
+	'print_jobs.payload':
+		'the ticket document a cloud printer was sent (guest first name, delivery address, group "For Sam" labels): deleted with the scrubbed order by source id',
 	'order_problem_replies.body':
 		'the words of the guest and of the restaurant on an order problem (#191), emptied with the scrubbed order (the one update the append-only trigger allows)',
 }

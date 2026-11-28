@@ -1312,7 +1312,12 @@ export async function loadOrderProblemRecords(
 				status: orderProblems.status,
 				resolution: orderProblems.resolution,
 				itemRefs: orderProblems.itemRefs,
+				refundId: orderProblems.refundId,
 				refundCents: orderProblems.refundCents,
+				// What the provider (or the till) really settled: a refund still
+				// pending, or one that failed, is not counted as refunded.
+				settledRefundStatus: restaurantOrderRefunds.status,
+				settledRefundCents: restaurantOrderRefunds.amountCents,
 				creditCents: orderProblems.creditCents,
 				createdAt: orderProblems.createdAt,
 				resolvedAt: orderProblems.resolvedAt,
@@ -1327,6 +1332,10 @@ export async function loadOrderProblemRecords(
 			.innerJoin(
 				restaurantOrders,
 				eq(restaurantOrders.id, orderProblems.orderId),
+			)
+			.leftJoin(
+				restaurantOrderRefunds,
+				eq(restaurantOrderRefunds.id, orderProblems.refundId),
 			)
 			.where(
 				and(
@@ -1400,7 +1409,13 @@ export async function loadOrderProblemRecords(
 				affected: major(
 					row.itemRefs.reduce((sum, item) => sum + item.amountCents, 0),
 				),
-				refunded: major(row.refundCents ?? 0),
+				refunded: major(
+					row.refundId != null
+						? row.settledRefundStatus === 'succeeded'
+							? (row.settledRefundCents ?? 0)
+							: 0
+						: (row.refundCents ?? 0),
+				),
 				credited: major(row.creditCents ?? 0),
 				minutesToAnswer:
 					first != null

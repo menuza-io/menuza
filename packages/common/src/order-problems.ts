@@ -58,6 +58,8 @@ export const ORDER_PROBLEM_CREDIT_DEFAULT_DAYS = 60
 export const ORDER_PROBLEM_CREDIT_MAX_DAYS = 365
 /** A guest may file this many reports on one order (answered ones count). */
 export const ORDER_PROBLEM_MAX_PER_ORDER = 5
+/** Guest entries (the report and what is added to it) one open report takes. */
+export const ORDER_PROBLEM_MAX_GUEST_ENTRIES = 10
 /** The synthetic discount a credit code points at (one fixed amount, one use). */
 export const ORDER_PROBLEM_CREDIT_DISCOUNT_ID = 'order_problem_credit'
 /** The `Idempotency-Key` of a report: a UUID the browser makes per attempt. */
@@ -212,6 +214,8 @@ export const ORDER_PROBLEM_REFUSALS = [
 	'not_reportable',
 	'window_closed',
 	'limit_reached',
+	/** The forwardable order link reads a redacted view and cannot report. */
+	'receipt_required',
 ] as const
 export type OrderProblemRefusal = (typeof ORDER_PROBLEM_REFUSALS)[number]
 
