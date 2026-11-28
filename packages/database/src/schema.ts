@@ -4178,6 +4178,12 @@ export const Organization = sqliteTable(
 		stripeProductId: text(),
 		stripeSubscriptionId: text(),
 		subscriptionStatus: text(),
+		/**
+		 * When the subscription became past due (#237): set by the Stripe
+		 * webhook on the first non-paying status, cleared when it is paid or ends.
+		 * Admin counts the days overdue from it. Null while paying.
+		 */
+		pastDueSince: integer({ mode: 'timestamp_ms' }),
 		size: text(),
 		// Set only after a DNS TXT proof (see verified-domain.server.ts in App),
 		// together with verifiedDomainProvedAt. Readers also require
@@ -4495,6 +4501,11 @@ export const OrganizationLocation = sqliteTable(
 		 * once, never cleared; whether it is live now is evaluated on read).
 		 */
 		liveAt: integer({ mode: 'timestamp_ms' }),
+		/**
+		 * The hours fingerprint (`hoursFingerprint`, #275) the operator dismissed
+		 * the hours warnings for: they stay hidden until the hours change.
+		 */
+		hoursWarningsDismissedFor: text(),
 		/**
 		 * Portions at or below which the till shows how many are left (#473).
 		 * The online menu never shows the number. Default 5.
@@ -9089,6 +9100,184 @@ export const PaymentDispute = sqliteTable(
 			table.organizationId,
 			table.status,
 			table.dueAt,
+		),
+	],
+)
+
+/**
+ * A request to cancel locations or the whole organization, or to move to a
+ * smaller plan (#379). It is a request only: nothing is cancelled, charged or
+ * deleted when it is made, and it takes effect at the end of the billing
+ * period (`effectiveAt`, shown to the owner before they confirm). Menuza
+ * support reads it in Admin and acts on it by hand. No money moves here.
+ */
+export const SubscriptionChangeRequest = sqliteTable(
+	'SubscriptionChangeRequest',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		requestedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		/** 'cancel_locations' | 'cancel_organization' | 'downgrade' */
+		kind: text().notNull(),
+		/** JSON array of location ids for `cancel_locations`. */
+		locationIds: text(),
+		/** The plan asked for, for `downgrade` (a plan name). */
+		targetPlan: text(),
+		/** A reason from the fixed list (`@repo/common/cancel-request`). */
+		reason: text().notNull(),
+		subReason: text(),
+		/** Optional plain-text words from the owner. */
+		note: text(),
+		/** The billing cutoff shown to the owner: the end of the current period. */
+		effectiveAt: integer({ mode: 'timestamp_ms' }),
+		/** Whether a retention offer was shown (and its text, as shown). */
+		retentionOffer: text(),
+		/** 'requested' | 'withdrawn' | 'handled' */
+		status: text().notNull().default('requested'),
+		handledById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		handledAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SubscriptionChangeRequest_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('SubscriptionChangeRequest_status_createdAt_idx').on(
+			table.status,
+			table.createdAt,
+		),
+	],
+)
+
+/**
+ * One failed single sign-on attempt (#347): the organization, the error kind
+ * and the time. Never a user, an address, a token or an assertion. Five in ten
+ * minutes make an outage; rows older than a day are pruned as new ones arrive.
+ */
+export const SsoFailureEvent = sqliteTable(
+	'SsoFailureEvent',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** An `SSOErrorType` value. */
+		errorType: text().notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SsoFailureEvent_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+	],
+)
+
+/**
+ * When admins were last told about single sign-on failing (#347): one outage
+ * sends at most one email per hour. The claim is one compare-and-set UPDATE.
+ */
+export const SsoFailureNotice = sqliteTable('SsoFailureNotice', {
+	organizationId: text()
+		.primaryKey()
+		.references(() => Organization.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+	lastNotifiedAt: integer({ mode: 'timestamp_ms' }).notNull(),
+	/** The error kind the last notice named. */
+	lastErrorType: text().notNull(),
+})
+
+/**
+ * Where an organization is in the setup reminder sequence (#271): a signature
+ * of the launch progress (which steps are done), when it last changed, and the
+ * last automatic reminder day (1, 3 or 7) sent for it. Progress resets the
+ * sequence.
+ */
+export const SetupReminderState = sqliteTable('SetupReminderState', {
+	organizationId: text()
+		.primaryKey()
+		.references(() => Organization.id, {
+			onDelete: 'cascade',
+			onUpdate: 'cascade',
+		}),
+	progressSignature: text().notNull(),
+	progressAt: integer({ mode: 'timestamp_ms' }).notNull(),
+	lastAutoDay: integer().notNull().default(0),
+	updatedAt: integer({ mode: 'timestamp_ms' })
+		.$defaultFn(() => new Date())
+		.$onUpdate(() => new Date())
+		.notNull(),
+})
+
+/**
+ * Every setup reminder sent (#271), automatic or manual: the step it named,
+ * the progress it showed and how many people it went to. No address, no body.
+ */
+export const SetupReminder = sqliteTable(
+	'SetupReminder',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/** 'auto' | 'manual' */
+		kind: text().notNull(),
+		/** For `auto`: 1, 3 or 7 days after the last progress. */
+		day: integer(),
+		stepKey: text().notNull(),
+		doneCount: integer().notNull(),
+		totalCount: integer().notNull(),
+		recipientCount: integer().notNull(),
+		/** Admin who sent a manual one. */
+		sentById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		sentAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('SetupReminder_organizationId_sentAt_idx').on(
+			table.organizationId,
+			table.sentAt,
 		),
 	],
 )

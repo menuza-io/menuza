@@ -218,8 +218,11 @@ function StepRow({
 	canChoosePayAtPickup,
 	compact,
 	testOrdersEnabled,
+	hoursWarnings = 0,
 }: {
 	step: LaunchStepView
+	/** Warnings about the saved opening hours, shown on the hours step (#275). */
+	hoursWarnings?: number
 	orgSlug: string
 	organizationId: string
 	locationId: string
@@ -244,6 +247,21 @@ function StepRow({
 			</div>
 			{!compact && text ? (
 				<p className="text-muted-foreground text-xs">{_(text.why)}</p>
+			) : null}
+			{step.key === 'launch_location_details' && hoursWarnings > 0 ? (
+				<p
+					className="text-xs text-amber-700 dark:text-amber-400"
+					data-testid="launch-hours-warnings"
+				>
+					<Link
+						to={`/${orgSlug}${step.href}`}
+						className="underline underline-offset-2"
+					>
+						<Trans>
+							Your opening hours may have a mistake ({hoursWarnings} to check)
+						</Trans>
+					</Link>
+				</p>
 			) : null}
 			{step.state === 'skipped' && skipReason ? (
 				<p className="text-muted-foreground text-xs">
@@ -394,6 +412,7 @@ export function LaunchChecklistView({
 									canChoosePayAtPickup={canChoosePayAtPickup}
 									compact={compact}
 									testOrdersEnabled={checklist.testOrdersEnabled === true}
+									hoursWarnings={location.hoursWarnings ?? 0}
 								/>
 							))}
 						</ol>

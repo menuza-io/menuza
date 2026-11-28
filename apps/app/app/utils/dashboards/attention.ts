@@ -24,6 +24,7 @@ export const ATTENTION_KINDS = [
 	'site_unpublished',
 	'custom_domain_error',
 	'no_hours',
+	'hours_look_wrong',
 	'menu_health_low',
 	'channel_off',
 	'dishes_unavailable',
@@ -57,6 +58,8 @@ export const ATTENTION_URGENCY: Record<AttentionKind, AttentionUrgency> = {
 	site_unpublished: 'todo',
 	custom_domain_error: 'todo',
 	no_hours: 'todo',
+	// Opening hours that look like a mistake (#275): advice, never urgent.
+	hours_look_wrong: 'todo',
 	menu_health_low: 'todo',
 	channel_off: 'todo',
 	dishes_unavailable: 'todo',

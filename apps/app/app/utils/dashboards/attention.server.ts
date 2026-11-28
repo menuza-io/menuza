@@ -42,6 +42,7 @@ import { addDays, businessDateOf, startOfLocalDay } from '@repo/zoned-time'
 import { isOrderAlertsEnabled } from '#app/utils/alerts/switches.server.ts'
 import { openIntervalsAround } from '#app/utils/alerts/window.ts'
 import { getInventoryNavAccess } from '#app/utils/inventory/access.server.ts'
+import { savedHoursWarnings } from '#app/utils/location/hours-warnings.server.ts'
 import { publicOrderingControls } from '#app/utils/location/ordering-pause.ts'
 import {
 	displayLocationName,
@@ -103,6 +104,9 @@ export type AttentionLocation = {
 	storeHours: string | null
 	onlineHours: string | null
 	specialHours: string | null
+	prepTime?: number | null
+	/** The hours fingerprint the warnings were dismissed for (#275). */
+	hoursWarningsDismissedFor?: string | null
 	fulfillmentOptions: string | null
 	scheduling: string | null
 	orderingPausedAt: Date | null
@@ -446,6 +450,26 @@ export const ATTENTION_DETECTORS: readonly AttentionDetector[] = [
 						href: `/settings/locations/${location.id}`,
 					}),
 				)
+		},
+	},
+	{
+		// Hours that look like a mistake (#275): the same `lintHours` as the editor,
+		// the saved hours only, nothing once the operator dismissed them.
+		kind: 'hours_look_wrong',
+		flag: null,
+		permission: ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+		detect({ locations, now }) {
+			return locations.flatMap((location) => {
+				const { visible } = savedHoursWarnings(location, now)
+				return visible.length > 0
+					? [
+							attentionItem('hours_look_wrong', location, {
+								count: visible.length,
+								href: `/settings/locations/${location.id}`,
+							}),
+						]
+					: []
+			})
 		},
 	},
 	{
@@ -846,6 +870,9 @@ export async function loadAttentionLocations(
 				storeHours: OrganizationLocation.storeHours,
 				onlineHours: OrganizationLocation.onlineHours,
 				specialHours: OrganizationLocation.specialHours,
+				prepTime: OrganizationLocation.prepTime,
+				hoursWarningsDismissedFor:
+					OrganizationLocation.hoursWarningsDismissedFor,
 				fulfillmentOptions: OrganizationLocation.fulfillmentOptions,
 				scheduling: OrganizationLocation.scheduling,
 				orderingPausedAt: OrganizationLocation.orderingPausedAt,

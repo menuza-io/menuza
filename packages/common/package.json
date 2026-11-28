@@ -433,6 +433,11 @@
       "import": "./src/ordering-flags.ts",
       "default": "./src/ordering-flags.ts"
     },
+    "./hours-lint": {
+      "types": "./src/hours-lint.ts",
+      "import": "./src/hours-lint.ts",
+      "default": "./src/hours-lint.ts"
+    },
     "./location-availability": {
       "types": "./src/location-availability.ts",
       "import": "./src/location-availability.ts",
