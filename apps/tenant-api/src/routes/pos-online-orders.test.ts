@@ -377,7 +377,9 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		// The order's steps (#243): which screen did each, and which Station
 		// person (an opaque id, never a name).
 		const steps = await loadOrderSteps(db, id)
-		expect(steps.map((entry) => [entry.step, entry.actorKind, entry.source])).toEqual([
+		expect(
+			steps.map((entry) => [entry.step, entry.actorKind, entry.source]),
+		).toEqual([
 			['ready', 'station', 'station_orders'],
 			['handed_over', 'station', 'station_orders'],
 		])
@@ -920,8 +922,13 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 			expect((await search({ phone: 'x' })).status).toBe(403)
 			const data = await found({ phone: '0111' }, manager)
 			expect(data.results.map((order) => order.id)).toEqual([id])
-			// Timestamps in since/serverNow can contain the same digit runs by chance.
-			expect(JSON.stringify(data.results)).not.toMatch(/555|0111/)
+			// Ids and timestamps can contain the same digit runs by chance (a random
+			// id did, once): only the words of the result are checked.
+			expect(
+				JSON.stringify(data.results, (key, value) =>
+					key === 'id' || typeof value === 'number' ? undefined : value,
+				),
+			).not.toMatch(/555|0111/)
 			// Exactly the four digits the masked phone shows: no fewer (a sweep),
 			// no more (rebuilding the number digit by digit).
 			expect((await search({ phone: '11' }, manager)).status).toBe(400)
@@ -1257,7 +1264,9 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 		const db = await getTenantDb(ORG_A)
 		const id = await insertOrder()
 		// No printer: the tablet prints, as it always did.
-		const plain = (await (await command(id, { action: 'reprint', ticket: 'guest' })).json()) as PosOnlineOrderDetailResponse
+		const plain = (await (
+			await command(id, { action: 'reprint', ticket: 'guest' })
+		).json()) as PosOnlineOrderDetailResponse
 		expect(plain.cloudPrinted).toBeUndefined()
 		expect(plain.order.cloudPrinters).toBeUndefined()
 		seedPrintingFlagForTest(ORG_A, true)
@@ -1270,11 +1279,20 @@ describe('Station Orders app API (/pos/online-orders)', () => {
 				protocol: 'star_cloudprnt',
 				widthMm: 80,
 				copies: 1,
-				routes: { kitchen: 'all', stationIds: [], receipts: true, isDefault: false, deliveryAddress: false, arabicFont: false },
+				routes: {
+					kitchen: 'all',
+					stationIds: [],
+					receipts: true,
+					isDefault: false,
+					deliveryAddress: false,
+					arabicFont: false,
+				},
 			},
 			'operator',
 		)
-		const printed = (await (await command(id, { action: 'reprint', ticket: 'kitchen' })).json()) as PosOnlineOrderDetailResponse
+		const printed = (await (
+			await command(id, { action: 'reprint', ticket: 'kitchen' })
+		).json()) as PosOnlineOrderDetailResponse
 		expect(printed.cloudPrinted).toBe(true)
 		expect(printed.order.cloudPrinters).toBe(true)
 		expect(await db.select().from(printJobs)).toHaveLength(1)
