@@ -15,7 +15,7 @@ import {
 } from '@repo/database'
 import { sendEmail, StaffingAlertEmail } from '@repo/email'
 import { ENV } from 'varlock/env'
-import { resolveDomainAlertRecipients } from '#app/utils/domains/notify.server.ts'
+import { resolveDomainAlertRecipients } from '#app/utils/domains/recipients.server.ts'
 import {
 	SSO_EMAIL,
 	SSO_FAILURE_NOTIFICATION_TYPE,

@@ -93,9 +93,11 @@ import {
 	reservationAlertPath,
 } from '#app/utils/reservations/manager-alerts.ts'
 import {
-	SSO_FAILURE_NOTIFICATION_TYPE,
 	SSO_NOTICE_SUBJECT,
 	SSO_REASON_TEXT,
+} from '#app/utils/sso/sso-alert-copy.ts'
+import {
+	SSO_FAILURE_NOTIFICATION_TYPE,
 	isSsoReasonKind,
 	ssoAlertPath,
 	type SsoReasonKind,
