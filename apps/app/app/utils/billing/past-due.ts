@@ -25,3 +25,8 @@ export function daysOverdue(
 export function billingPath(orgSlug: string): string {
 	return `/${orgSlug}/settings/billing`
 }
+
+/** The self-serve cancel or downgrade request page (#379). */
+export function cancelRequestPath(orgSlug: string): string {
+	return `/${orgSlug}/settings/billing/cancel`
+}

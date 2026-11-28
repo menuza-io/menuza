@@ -1816,7 +1816,7 @@ msgstr "يفتح {dayName}"
 msgid "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 msgstr "{dayName}: عدد المجدولين {people}، والورديات الشاغرة {open}. افتح هذا اليوم."
 
-#: app/components/billing/past-due-card.tsx:117
+#: app/components/billing/past-due-card.tsx:115
 msgid "{days, plural, one {It has been # day.} other {It has been # days.}}"
 msgstr "{days, plural, one {مرّ يوم واحد.} two {مرّ يومان.} few {مرّت # أيام.} many {مرّ # يومًا.} other {مرّ # يوم.}}"
 
@@ -8375,6 +8375,10 @@ msgstr "يمكن لأي شخص لديه هذا الرابط رؤية الوظي�
 msgid "Anything else"
 msgstr "أي عنوان آخر"
 
+#: app/components/billing/cancel-request-form.tsx:221
+msgid "Anything else we should know? (optional)"
+msgstr "هل هناك شيء آخر يجب أن نعرفه؟ (اختياري)"
+
 #: app/components/staff/onboarding/onboarding-labels.ts:29
 msgid "Anything else you need done, like handing over a uniform."
 msgstr "أي شيء آخر تحتاج إلى إنجازه، مثل تسليم الزي."
@@ -9620,6 +9624,7 @@ msgid "back"
 msgstr "استرداد"
 
 #: ../../packages/marketing/src/components/email/email-templates.tsx:217
+#: app/components/billing/cancel-request-form.tsx:300
 #: app/components/hiring/job-editor.tsx:424
 #: app/components/inventory/setup-import-flow.tsx:1009
 #: app/components/kiosk/kiosk-screens.tsx:264
@@ -9654,6 +9659,10 @@ msgstr "العودة إلى المتقدّمين"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:102
 msgid "Back to automations"
 msgstr "العودة إلى الأتمتة"
+
+#: app/components/billing/cancel-request-form.tsx:86
+msgid "Back to billing"
+msgstr "العودة إلى الفوترة"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:144
 msgid "Back to blocks"
@@ -9997,6 +10006,10 @@ msgstr "قبل التحويل، يسأل الوكيل المتصل إن كان �
 #: app/components/hiring/job-editor.tsx:850
 msgid "Before you can publish"
 msgstr "قبل أن تتمكن من النشر"
+
+#: app/components/billing/cancel-request-form.tsx:235
+msgid "Before you go"
+msgstr "قبل أن تغادر"
 
 #: app/components/phone-agent/agent-details.tsx:131
 msgid "Behind the scenes"
@@ -11220,6 +11233,10 @@ msgstr "يمكنه تلقي الرسائل النصية"
 msgid "Can ship"
 msgstr "قابل للشحن"
 
+#: app/components/billing/cancel-request-form.tsx:200
+msgid "Can you tell us more?"
+msgstr "هل يمكنك إخبارنا بالمزيد؟"
+
 #: app/components/menu/option-form.tsx:1130
 msgid "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
 msgstr "لا يمكن التداخل: ستتجاوز الخيارات {MAX_NESTED_MODIFIER_DEPTH} مستويات."
@@ -11504,6 +11521,10 @@ msgstr "إلغاء الشحنة"
 msgid "Cancel editing"
 msgstr "إلغاء التعديل"
 
+#: app/utils/billing/cancel-request-labels.ts:18
+msgid "Cancel everything"
+msgstr "إلغاء كل شيء"
+
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:422
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:1396
 msgid "Cancel import"
@@ -11512,6 +11533,15 @@ msgstr "إلغاء الاستيراد"
 #: app/components/hiring/candidate-parts.tsx:278
 msgid "Cancel interview"
 msgstr "إلغاء المقابلة"
+
+#: app/components/billing/change-request-card.tsx:38
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:154
+msgid "Cancel or downgrade"
+msgstr "الإلغاء أو التخفيض"
+
+#: app/components/billing/cancel-request-form.tsx:304
+msgid "Cancel or downgrade request"
+msgstr "طلب الإلغاء أو التخفيض"
 
 #: app/components/inventory/review-order-screen.tsx:1183
 #: app/components/inventory/review-order-screen.tsx:1335
@@ -11548,6 +11578,10 @@ msgstr "إلغاء الحجز"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:749
 msgid "Cancel schedule"
 msgstr "إلغاء الجدولة"
+
+#: app/utils/billing/cancel-request-labels.ts:14
+msgid "Cancel some locations"
+msgstr "إلغاء بعض المواقع"
 
 #: app/components/marketing/campaign-actions.tsx:258
 msgid "Cancel this broadcast?"
@@ -12711,6 +12745,10 @@ msgstr "راجع الحقول وحاول مرة أخرى."
 msgid "Check the file"
 msgstr "فحص الملف"
 
+#: app/utils/billing/cancel-request-labels.ts:55
+msgid "Check the form: choose what you want to do, a reason, and confirm."
+msgstr "راجع النموذج: اختر ما تريد فعله وسببًا ثم أكّد."
+
 #: app/components/phone-agent/settings-page.tsx:139
 msgid "Check the format of this value."
 msgstr "تحقق من تنسيق هذه القيمة."
@@ -13479,6 +13517,10 @@ msgstr "اختر العناصر"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:414
 msgid "Choose locations"
 msgstr "اختيار المواقع"
+
+#: app/utils/billing/cancel-request-labels.ts:59
+msgid "Choose locations that belong to this organization."
+msgstr "اختر مواقع تابعة لهذه المنظمة."
 
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:513
 msgid "Choose no location to cover every location."
@@ -14304,6 +14346,10 @@ msgstr "الختام"
 #: app/components/locations/ordering-settings-cards.tsx:91
 msgid "Closing buffer (minutes)"
 msgstr "Closing buffer (minutes)"
+
+#: app/utils/billing/cancel-request-labels.ts:44
+msgid "Closing for good"
+msgstr "إغلاق نهائي"
 
 #: app/components/phone-agent/business-details-section.tsx:236
 #: app/components/phone-agent/settings-page.tsx:155
@@ -19665,6 +19711,10 @@ msgstr "لا يعمل في مكان العمل هذا"
 msgid "Doesn't look like food"
 msgstr "لا تبدو كطعام"
 
+#: app/utils/billing/cancel-request-labels.ts:48
+msgid "Doing it in house"
+msgstr "التنفيذ داخليًا"
+
 #: app/components/website/domain/buy-card.tsx:405
 #: app/components/website/domain/connect-card.tsx:604
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:53
@@ -19854,6 +19904,10 @@ msgstr "تنزيل ملف PDF"
 msgid "Download the template, change prices or availability in Excel or any spreadsheet app, and upload it. Blank cells change nothing. A dash (-) in a dine-in, pickup or delivery price removes it. You see every change before it is applied."
 msgstr "نزّل القالب، وغيّر الأسعار أو التوفر في Excel أو أي تطبيق جداول، ثم ارفعه. الخلايا الفارغة لا تغيّر شيئًا. الشرطة (-) في سعر الأكل في المطعم أو الاستلام أو التوصيل تحذفه. ترى كل تغيير قبل تطبيقه."
 
+#: app/components/billing/cancel-request-form.tsx:246
+msgid "Download what you may want to keep. Nothing is deleted when you send this request."
+msgstr "نزّل ما تريد الاحتفاظ به. لا يُحذف أي شيء عند إرسال هذا الطلب."
+
 #: app/components/settings/cards/privacy-card.tsx:46
 msgid "Download your data"
 msgstr "تنزيل بياناتك"
@@ -19861,6 +19915,10 @@ msgstr "تنزيل بياناتك"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:559
 msgid "Download your locations, change the phone, active and tags columns, and upload the file. Every row is checked first: if one row has a problem nothing is changed."
 msgstr "نزّل مواقعك، وغيّر أعمدة الهاتف والنشط والوسوم، ثم ارفع الملف. يُفحص كل صف أولًا: إذا كان في صف مشكلة فلن يتغيّر شيء."
+
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:143
+msgid "Download your menu"
+msgstr "تنزيل قائمتك"
 
 #: app/components/website/domain/managed-domain-card.tsx:222
 msgid "Download zone and stop"
@@ -21297,6 +21355,10 @@ msgstr "نهاية اليوم"
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:775
 msgid "End rule"
 msgstr "إنهاء القاعدة"
+
+#: app/utils/billing/cancel-request-labels.ts:19
+msgid "End the subscription for the whole organization."
+msgstr "إنهاء الاشتراك للمنظمة كلها."
 
 #: app/components/reservations/detail-sheet.tsx:1399
 msgid "End this booking"
@@ -23183,6 +23245,18 @@ msgstr "تصدير قيمة المخزون (CSV)"
 msgid "Export with sensitive data"
 msgstr "تصدير مع البيانات الحساسة"
 
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:144
+msgid "Export your customer list"
+msgstr "تصدير قائمة عملائك"
+
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:145
+msgid "Export your reports"
+msgstr "تصدير تقاريرك"
+
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:146
+msgid "Export your website"
+msgstr "تصدير موقعك"
+
 #: app/components/website/domain/records-panel.tsx:194
 msgid "Export zone file"
 msgstr "تصدير ملف المنطقة"
@@ -23308,7 +23382,7 @@ msgstr "فشل"
 msgid "Failed ({lastStatus})"
 msgstr "فشل ({lastStatus})"
 
-#: app/components/billing/past-due-card.tsx:182
+#: app/components/billing/past-due-card.tsx:183
 msgid "Failed on {when}."
 msgstr "فشلت العملية في {when}."
 
@@ -23592,7 +23666,7 @@ msgstr "فشل في تحديث الطاولة."
 #~ msgid "Failed with {brand} ending {0} on {when}."
 #~ msgstr "فشلت العملية ببطاقة {brand} المنتهية بـ {0} في {when}."
 
-#: app/components/billing/past-due-card.tsx:178
+#: app/components/billing/past-due-card.tsx:179
 msgid "Failed with {brand} ending {last4} on {when}."
 msgstr "فشلت العملية ببطاقة {brand} المنتهية بـ {last4} في {when}."
 
@@ -26046,6 +26120,10 @@ msgstr "حُوّلت إلى خط النشاط التجاري"
 msgid "Hang up"
 msgstr "إنهاء المكالمة"
 
+#: app/utils/billing/cancel-request-labels.ts:51
+msgid "Hard to use"
+msgstr "صعب الاستخدام"
+
 #: app/components/marketing/audience-builder.tsx:102
 msgid "Has a verified phone"
 msgstr "لديه هاتف موثّق"
@@ -26446,7 +26524,7 @@ msgstr "التوظيف: تقدّم شخص إلى وظيفة"
 msgid "Hiring…"
 msgstr "جارٍ التوظيف…"
 
-#: app/components/billing/past-due-card.tsx:168
+#: app/components/billing/past-due-card.tsx:166
 #: app/components/discounts/discount-history.tsx:16
 #: app/components/hiring/candidate-sheet.tsx:371
 #: app/components/reservations/detail-sheet.tsx:1307
@@ -26966,6 +27044,14 @@ msgstr "أوافق على شروط الخدمة وسياسة الخصوصية"
 msgid "I already have a verification code"
 msgstr "لديّ رمز إثبات ملكية بالفعل"
 
+#: app/utils/billing/cancel-request-labels.ts:30
+msgid "I am closing or it is seasonal"
+msgstr "سأغلق أو أن النشاط موسمي"
+
+#: app/utils/billing/cancel-request-labels.ts:31
+msgid "I am switching to something else"
+msgstr "سأنتقل إلى شيء آخر"
+
 #: app/components/my-schedule/shift-change-sheet.tsx:162
 msgid "I cannot work it"
 msgstr "لا أستطيع العمل فيها"
@@ -26986,6 +27072,10 @@ msgstr "أؤكد أنني أملك ترخيصًا يسمح باستخدام هذ
 msgid "I fixed it myself"
 msgstr "أصلحته بنفسي"
 
+#: app/utils/billing/cancel-request-labels.ts:39
+msgid "I found something cheaper"
+msgstr "وجدت ما هو أرخص"
+
 #: app/components/help/help-dialog.tsx:126
 msgid "I have a question"
 msgstr "لديّ سؤال"
@@ -26997,6 +27087,10 @@ msgstr "لقد استلمت الدفع عند التسليم"
 #: app/routes/_app+/$orgSlug_+/website+/import.tsx:304
 msgid "I own this site or have the right to use its content."
 msgstr "أملك هذا الموقع أو لدي الحق في استخدام محتواه."
+
+#: app/components/billing/cancel-request-form.tsx:292
+msgid "I understand, send the request"
+msgstr "فهمت، أرسل الطلب"
 
 #: app/components/website/hero-video-maker.tsx:239
 msgid "I will pick them"
@@ -27642,6 +27736,7 @@ msgstr "تفعيل Stripe فورًا (وهمي)"
 #: app/components/settings/cards/organization/integrations-card.tsx:195
 #: app/components/workspace-breadcrumb.tsx:66
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
+#: app/utils/billing/cancel-request-labels.ts:42
 msgid "Integrations"
 msgstr "التكاملات"
 
@@ -27992,6 +28087,10 @@ msgstr "تاريخ الإصدار"
 #: app/components/media-library/photo-studio-dialog.tsx:751
 msgid "Issues found in this photo"
 msgstr "المشكلات المكتشفة في هذه الصورة"
+
+#: app/utils/billing/cancel-request-labels.ts:28
+msgid "It costs too much"
+msgstr "التكلفة مرتفعة جدًا"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:257
 msgid "It could not be completed or was cancelled, so the full amount went back to the card you paid with. It can take a few days to show."
@@ -28750,6 +28849,10 @@ msgstr "استمر بالانتظار"
 #: app/components/staff/schedule/templates-dialog.tsx:293
 msgid "Keep who works each shift"
 msgstr "الإبقاء على من يعمل في كل وردية"
+
+#: app/utils/billing/cancel-request-labels.ts:23
+msgid "Keep your restaurant and switch to a plan that costs less."
+msgstr "احتفظ بمطعمك وانتقل إلى خطة أقل تكلفة."
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1496
 msgid "Keeps original indexing"
@@ -33305,6 +33408,10 @@ msgstr "انقل هذا النطاق إلى خوادم أسماء Menuza أول�
 msgid "Move to"
 msgstr "نقل إلى"
 
+#: app/utils/billing/cancel-request-labels.ts:22
+msgid "Move to a smaller plan"
+msgstr "الانتقال إلى خطة أصغر"
+
 #: app/components/reservations/experiences/experience-editor.tsx:526
 msgid "Move to draft"
 msgstr "نقل إلى المسودة"
@@ -33385,6 +33492,10 @@ msgstr "ينقل نقاط العملاء"
 #: app/components/inventory/transfers-panel.tsx:161
 msgid "Moving stock"
 msgstr "نقل المخزون"
+
+#: app/utils/billing/cancel-request-labels.ts:47
+msgid "Moving to another platform"
+msgstr "الانتقال إلى منصة أخرى"
 
 #: app/utils/inventory/starter-lists.ts:194
 msgid "Mozzarella"
@@ -33650,6 +33761,10 @@ msgstr "بحاجة إلى رمز جديد؟ اطلب واحداً هنا."
 #: app/components/settings/cards/organization/integrations-card.tsx:257
 msgid "Need an integration but don't see it here?"
 msgstr "هل تحتاج إلى تكامل ولكن لا تراه هنا؟"
+
+#: app/components/billing/change-request-card.tsx:41
+msgid "Need to stop a location, end your subscription or move to a smaller plan? Send a request here. It takes effect at the end of your billing period."
+msgstr "تريد إيقاف موقع أو إنهاء اشتراكك أو الانتقال إلى خطة أصغر؟ أرسل طلبًا هنا. يسري عند نهاية فترة الفوترة."
 
 #: app/components/inventory/order-panels.tsx:347
 msgid "Needed <0>{neededText}</0> (<1>{rawPacksLabel}</1>) → <2>{roundedPacksLabel}</2> packs"
@@ -34399,7 +34514,7 @@ msgstr "الوردية القادمة: {upcomingDay}، <0>{upcomingRange}</0>"
 #~ msgid "Next try {0}."
 #~ msgstr "المحاولة التالية {0}."
 
-#: app/components/billing/past-due-card.tsx:189
+#: app/components/billing/past-due-card.tsx:190
 msgid "Next try {nextTry}."
 msgstr "المحاولة التالية {nextTry}."
 
@@ -35064,7 +35179,7 @@ msgstr "لم تُرسل دعوة: البريد الإلكتروني متوقف"
 msgid "No invitation sent: no email on file"
 msgstr "لم تُرسل دعوة: لا يوجد بريد إلكتروني مسجّل"
 
-#: app/components/billing/past-due-card.tsx:156
+#: app/components/billing/past-due-card.tsx:154
 msgid "No invoice is open any more. Refresh in a moment, the banner goes once the payment is recorded."
 msgstr "لا توجد فاتورة مفتوحة بعد الآن. حدّث الصفحة بعد لحظات؛ سيختفي الشريط عند تسجيل الدفعة."
 
@@ -36678,6 +36793,10 @@ msgstr "لا توجد بيانات كافية"
 msgid "Not enough history yet. Suggestions get better after about two weeks of use, so treat these as a first guess."
 msgstr "لا يوجد سجل كافٍ بعد. تتحسن الاقتراحات بعد نحو أسبوعين من الاستخدام، لذا اعتبرها تخمينًا أوليًا."
 
+#: app/utils/billing/cancel-request-labels.ts:38
+msgid "Not enough sales to justify it"
+msgstr "المبيعات لا تكفي لتبرير ذلك"
+
 #: app/components/staff/labor/labor-overview.tsx:486
 msgid "Not entered"
 msgstr "غير مُدخل"
@@ -37110,6 +37229,14 @@ msgstr "لم يُنشر شيء بعد."
 #: app/components/staff/onboarding/onboarding-tab.tsx:212
 msgid "Nothing has been set up for this person."
 msgstr "لم يتم إعداد أي شيء لهذا الشخص."
+
+#: app/components/billing/change-request-card.tsx:90
+msgid "Nothing has changed. It takes effect at the end of your billing period."
+msgstr "لم يتغير شيء. يسري الطلب عند نهاية فترة الفوترة."
+
+#: app/components/billing/change-request-card.tsx:85
+msgid "Nothing has changed. It takes effect on {date}, the end of your billing period."
+msgstr "لم يتغير شيء. يسري الطلب في {date}، نهاية فترة الفوترة."
 
 #: app/components/settings/cards/alert-settings-card.tsx:625
 msgid "Nothing has fired yet."
@@ -39726,6 +39853,10 @@ msgstr "المطلوب <0>{orderedPacks}</0> × {packName}"
 msgid "Ordering"
 msgstr "الطلبات"
 
+#: app/utils/billing/cancel-request-labels.ts:40
+msgid "Ordering features"
+msgstr "ميزات الطلب"
+
 #: app/components/website/funnel-panel.tsx:126
 msgid "Ordering funnel"
 msgstr "مسار الطلب"
@@ -40848,7 +40979,7 @@ msgstr "تسجيل الدخول بكلمة المرور معطل لأن منظم
 msgid "Past counts"
 msgstr "عمليات الجرد السابقة"
 
-#: app/components/billing/past-due-card.tsx:106
+#: app/components/billing/past-due-card.tsx:104
 msgid "Past due"
 msgstr "متأخر السداد"
 
@@ -41180,7 +41311,7 @@ msgstr "نزاعات الدفع"
 msgid "Payment expired"
 msgstr "انتهت صلاحية الدفع"
 
-#: app/components/billing/past-due-card.tsx:104
+#: app/components/billing/past-due-card.tsx:102
 #: app/components/orders/order-status.tsx:34
 msgid "Payment failed"
 msgstr "فشل الدفع"
@@ -41243,7 +41374,7 @@ msgstr "سياسات الدفع"
 msgid "Payment policy"
 msgstr "سياسة الدفع"
 
-#: app/components/billing/past-due-card.tsx:228
+#: app/components/billing/past-due-card.tsx:229
 #: app/components/orders/order-detail.tsx:443
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:230
 msgid "Payment received"
@@ -45620,6 +45751,10 @@ msgstr "إعادة النقاط"
 msgid "Released"
 msgstr "أُعيدت النقاط"
 
+#: app/utils/billing/cancel-request-labels.ts:50
+msgid "Reliability"
+msgstr "الموثوقية"
+
 #: app/components/phone-agent/settings-page.tsx:411
 #: app/components/reservations/settings/save-bar.tsx:76
 #: app/components/reservations/settings/setup-list-chrome.tsx:65
@@ -46564,6 +46699,7 @@ msgstr "تم الإبلاغ {reported}"
 #: app/components/command-menu.tsx:96
 #: app/components/roles/tenant-role-access-manager.tsx:202
 #: app/components/workspace-breadcrumb.tsx:18
+#: app/utils/billing/cancel-request-labels.ts:41
 msgid "Reports"
 msgstr "التقارير"
 
@@ -46590,6 +46726,10 @@ msgstr "إعادة النشر"
 #: app/components/orders/catering-panel.tsx:467
 msgid "Request"
 msgstr "طلب"
+
+#: app/components/billing/change-request-card.tsx:53
+msgid "Request a change"
+msgstr "طلب تغيير"
 
 #: app/components/staff/schedule/time-off-page.tsx:162
 #~ msgid "Request approved."
@@ -47284,7 +47424,7 @@ msgstr "إعادة المحاولة للحسابات الفاشلة"
 msgid "Retry failed photos"
 msgstr "إعادة محاولة الصور الفاشلة"
 
-#: app/components/billing/past-due-card.tsx:143
+#: app/components/billing/past-due-card.tsx:141
 msgid "Retry payment"
 msgstr "إعادة محاولة الدفع"
 
@@ -49422,6 +49562,10 @@ msgstr "جارٍ البحث…"
 msgid "Seasonal"
 msgstr "موسمي"
 
+#: app/utils/billing/cancel-request-labels.ts:45
+msgid "Seasonal: I will be back"
+msgstr "موسمي: سأعود لاحقًا"
+
 #: app/components/reservations/waitlist/waitlist-queue.tsx:251
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1355
 #: app/utils/reservations/host-actions.ts:39
@@ -50221,6 +50365,10 @@ msgstr "بيانات البائع"
 msgid "Seller details saved."
 msgstr "تم حفظ بيانات البائع."
 
+#: app/utils/billing/cancel-request-labels.ts:46
+msgid "Selling the business"
+msgstr "بيع النشاط"
+
 #: app/components/inventory/prep-screen.tsx:403
 msgid "sells <0>{absPercent}%</0> less today"
 msgstr "يباع أقل بنسبة <0>{absPercent}%</0> اليوم"
@@ -50383,6 +50531,7 @@ msgstr "إرسال الاسترداد"
 msgid "Send reply"
 msgstr "إرسال الرد"
 
+#: app/components/billing/cancel-request-form.tsx:297
 #: app/components/my-schedule/shift-change-sheet.tsx:264
 #: app/components/my-schedule/time-off-sheet.tsx:230
 msgid "Send request"
@@ -50473,6 +50622,10 @@ msgstr "جاري إرسال الرسالة"
 #: app/components/discounts/message-impact.tsx:107
 msgid "sending now"
 msgstr "قيد الإرسال الآن"
+
+#: app/components/billing/cancel-request-form.tsx:278
+msgid "Sending this request cancels nothing today. Menuza support will follow up, and you can withdraw the request any time before then."
+msgstr "إرسال هذا الطلب لا يلغي شيئًا اليوم. سيتابع دعم Menuza الأمر، ويمكنك سحب الطلب في أي وقت قبل ذلك."
 
 #: app/components/print/artwork-labels.ts:16
 msgid "Sending to Canva needs PDF rendering, which is not set up here."
@@ -50719,6 +50872,10 @@ msgstr "ملاحظات الخدمة وإيجاز الوردية"
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:212
 msgid "Service notes saved."
 msgstr "تم حفظ ملاحظات الخدمة."
+
+#: app/utils/billing/cancel-request-labels.ts:32
+msgid "Service or reliability"
+msgstr "الخدمة أو الموثوقية"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:377
 msgid "Service period"
@@ -52502,12 +52659,21 @@ msgid "Someone who can change stock will plan it."
 msgstr "سيخطّطه شخص يمكنه تعديل المخزون."
 
 #: app/components/inventory/supplier-form.tsx:40
+#: app/utils/billing/cancel-request-labels.ts:33
 msgid "Something else"
 msgstr "شيء آخر"
 
 #: app/utils/inventory/inventory-errors.ts:77
 msgid "Something else already has that name. Pick another name."
 msgstr "هناك عنصر آخر يحمل هذا الاسم. اختر اسمًا آخر."
+
+#: app/utils/billing/cancel-request-labels.ts:43
+msgid "Something else is missing"
+msgstr "ينقصني شيء آخر"
+
+#: app/utils/billing/cancel-request-labels.ts:29
+msgid "Something I need is missing"
+msgstr "ينقصني شيء أحتاجه"
 
 #: app/components/website/domain/domain-ui.tsx:32
 msgid "Something in the form is not valid. Check it and try again."
@@ -53545,6 +53711,10 @@ msgstr "إيقاف"
 msgid "Stop and read"
 msgstr "أوقف التسجيل واقرأ"
 
+#: app/utils/billing/cancel-request-labels.ts:15
+msgid "Stop billing for the locations you choose. The rest stays as it is."
+msgstr "إيقاف الفوترة للمواقع التي تختارها. يبقى الباقي كما هو."
+
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:168
 msgid "Stop generation"
 msgstr "إيقاف التوليد"
@@ -54070,6 +54240,7 @@ msgid "support"
 msgstr "دعم"
 
 #: app/routes/_app+/$orgSlug_+/support.tsx:187
+#: app/utils/billing/cancel-request-labels.ts:49
 msgid "Support"
 msgstr "الدعم"
 
@@ -54638,6 +54809,10 @@ msgstr "التقاط لقطة"
 msgid "Take the value from"
 msgstr "خذ القيمة من"
 
+#: app/components/billing/cancel-request-form.tsx:243
+msgid "Take your data with you first"
+msgstr "خذ بياناتك معك أولًا"
+
 #: app/utils/inventory/starter-lists.ts:309
 msgid "Takeaway boxes"
 msgstr "علب الطلبات الخارجية"
@@ -54950,6 +55125,10 @@ msgstr "أخبرنا المزيد عن مطعمك"
 #: app/components/help/help-dialog.tsx:87
 msgid "Tell us what you need. We already have the page you are on, so you do not have to explain where you were."
 msgstr "أخبرنا بما تحتاجه. لدينا الصفحة التي أنت عليها بالفعل، فلا داعي لشرح مكانك."
+
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:157
+msgid "Tell us what you want to change and why. This is a request: it takes effect at the end of your billing period."
+msgstr "أخبرنا بما تريد تغييره ولماذا. هذا طلب: يسري عند نهاية فترة الفوترة."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:110
 msgid "Tell us why and when. You confirm on the next step."
@@ -55307,7 +55486,7 @@ msgstr "شكرًا لك، تم التأكيد"
 msgid "Thank you!"
 msgstr "شكرًا لك!"
 
-#: app/components/billing/past-due-card.tsx:231
+#: app/components/billing/past-due-card.tsx:232
 msgid "Thank you. Your subscription is paid up."
 msgstr "شكرًا لك. اشتراكك مسدَّد."
 
@@ -56215,7 +56394,7 @@ msgstr "تم رفض البطاقة المحفوظة. حدّث بطاقتك ال�
 msgid "The card was declined."
 msgstr "تم رفض البطاقة."
 
-#: app/components/billing/past-due-card.tsx:238
+#: app/components/billing/past-due-card.tsx:239
 msgid "The card was declined. Update your payment method, then try again."
 msgstr "تم رفض البطاقة. حدّث طريقة الدفع ثم حاول مرة أخرى."
 
@@ -57352,7 +57531,7 @@ msgstr "مسار صورة PNG أو JPEG أو WebP بحجم يصل إلى 2 مي�
 msgid "The path on your old site that visitors or search engines request."
 msgstr "المسار في موقعك القديم الذي يطلبه الزوار أو محركات البحث."
 
-#: app/components/billing/past-due-card.tsx:252
+#: app/components/billing/past-due-card.tsx:253
 msgid "The payment did not go through"
 msgstr "لم تتم عملية الدفع"
 
@@ -57524,6 +57703,10 @@ msgstr "تبقى الصورة السابقة للطبق المستبدل في م
 #: app/components/website/domain/domain-ui.tsx:62
 msgid "The price changed. Review it and try again."
 msgstr "تغيّر السعر. راجعه وحاول مرة أخرى."
+
+#: app/utils/billing/cancel-request-labels.ts:37
+msgid "The price is too high for us"
+msgstr "السعر مرتفع جدًا بالنسبة لنا"
 
 #: app/components/menu/menu-review-card.tsx:93
 msgid "The prices differ. Check them before you accept."
@@ -58293,6 +58476,10 @@ msgstr "يوجد إدخالان خاصان بتاريخ {date}"
 msgid "There is already a request waiting on this shift."
 msgstr "يوجد طلب بانتظار القرار على هذه الوردية بالفعل."
 
+#: app/utils/billing/cancel-request-labels.ts:56
+msgid "There is no active subscription to change."
+msgstr "لا يوجد اشتراك فعّال لتغييره."
+
 #: app/components/orders/catering-details.tsx:19
 msgid "There is no balance waiting right now."
 msgstr "لا يوجد رصيد في الانتظار الآن."
@@ -58324,6 +58511,10 @@ msgstr "لا يوجد عمود لصافي المبيعات."
 #: app/components/dashboard/share-dashboard-dialog.tsx:158
 msgid "There is no one else in this organization to share with."
 msgstr "لا يوجد أشخاص آخرون في هذه المؤسسة لمشاركتها معهم."
+
+#: app/utils/billing/cancel-request-labels.ts:60
+msgid "There is no smaller plan to move to."
+msgstr "لا توجد خطة أصغر للانتقال إليها."
 
 #: app/utils/staffing/schedule-errors.ts:18
 msgid "There is nothing new to publish this week."
@@ -60016,7 +60207,7 @@ msgstr "يجتاز هذا المتجر جميع فحوصات القائمة وا
 msgid "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
 msgstr "لا يتضمن هذا الرد عنوان بريد إلكتروني. يمكنك مراجعة تفاصيله، لكن لا يمكن الإجابة عليه بالبريد الإلكتروني."
 
-#: app/components/billing/past-due-card.tsx:244
+#: app/components/billing/past-due-card.tsx:245
 msgid "This subscription is not past due."
 msgstr "هذا الاشتراك غير متأخر السداد."
 
@@ -60051,6 +60242,10 @@ msgstr "تم فصل هذا الجهاز اللوحي"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:545
 msgid "This tag name is not valid."
 msgstr "اسم الوسم هذا غير صالح."
+
+#: app/components/billing/cancel-request-form.tsx:265
+msgid "This takes effect on {cutoff}, the end of your billing period. Until then everything keeps working and you are not charged anything extra."
+msgstr "يسري هذا في {cutoff}، نهاية فترة الفوترة. حتى ذلك الحين يستمر كل شيء بالعمل ولن يُخصم منك أي مبلغ إضافي."
 
 #: app/utils/staffing/schedule-errors.ts:37
 msgid "This takes someone over an hour limit. Say why you are going ahead to continue."
@@ -61527,11 +61722,11 @@ msgstr "جرّب عوامل تصفية مختلفة."
 msgid "Try two wordings of one section on a published page. Visitors are split evenly and keep their version. The winner is the one that gets more orders per visit."
 msgstr "جرّب صياغتين لقسم واحد في صفحة منشورة. يُقسَّم الزوار بالتساوي ويحتفظ كل زائر بنسخته. الفائز هو الذي يحقق طلبات أكثر لكل زيارة."
 
-#: app/components/billing/past-due-card.tsx:215
+#: app/components/billing/past-due-card.tsx:216
 msgid "Trying your payment method"
 msgstr "جارٍ تجربة طريقة الدفع"
 
-#: app/components/billing/past-due-card.tsx:143
+#: app/components/billing/past-due-card.tsx:141
 msgid "Trying…"
 msgstr "جارٍ المحاولة…"
 
@@ -62366,7 +62561,7 @@ msgstr "استراحة غير مدفوعة (بالدقائق)"
 msgid "Unpaid break taken off"
 msgstr "تم خصم الاستراحة غير المدفوعة"
 
-#: app/components/billing/past-due-card.tsx:134
+#: app/components/billing/past-due-card.tsx:132
 msgid "Unpaid invoice"
 msgstr "فاتورة غير مدفوعة"
 
@@ -62684,7 +62879,7 @@ msgstr "تحديث شعار المنظمة"
 msgid "Update organization name, slug, and general preferences."
 msgstr "تحديث اسم المنظمة والمعرّف والتفضيلات العامة."
 
-#: app/components/billing/past-due-card.tsx:200
+#: app/components/billing/past-due-card.tsx:201
 msgid "Update payment method"
 msgstr "تحديث طريقة الدفع"
 
@@ -64051,7 +64246,7 @@ msgstr "عرض ملاحظات الفريق"
 msgid "View team schedule"
 msgstr "عرض جدول الفريق"
 
-#: app/components/billing/past-due-card.tsx:210
+#: app/components/billing/past-due-card.tsx:211
 msgid "View the invoice"
 msgstr "عرض الفاتورة"
 
@@ -64662,7 +64857,7 @@ msgstr "نفحص النطاقات المعلّقة كل 15 دقيقة ونراس
 msgid "We could not approve this print"
 msgstr "لم نتمكن من اعتماد هذه المطبوعة"
 
-#: app/components/billing/past-due-card.tsx:110
+#: app/components/billing/past-due-card.tsx:108
 msgid "We could not charge your payment method for your subscription. Your plan stays on while you fix it."
 msgstr "تعذّر خصم اشتراكك من طريقة الدفع. تبقى خطتك فعّالة أثناء معالجة الأمر."
 
@@ -64801,7 +64996,7 @@ msgstr "تعذر تحميل أسعار الخطط حاليًا. لا يزال ب
 msgid "We could not load the ingredients. Check your connection and try again."
 msgstr "تعذّر تحميل المكوّنات. تحقق من اتصالك وحاول مرة أخرى."
 
-#: app/components/billing/past-due-card.tsx:149
+#: app/components/billing/past-due-card.tsx:147
 msgid "We could not load the invoice right now. You can still update your payment method."
 msgstr "تعذّر تحميل الفاتورة الآن. ما زال بإمكانك تحديث طريقة الدفع."
 
@@ -64857,7 +65052,7 @@ msgstr "تعذّر تسعير هذا الطلب"
 msgid "We could not put it back. Try again in a moment."
 msgstr "تعذّرت إعادته. حاول مجددًا بعد قليل."
 
-#: app/components/billing/past-due-card.tsx:246
+#: app/components/billing/past-due-card.tsx:247
 msgid "We could not reach the payment provider. Try again shortly."
 msgstr "تعذّر الوصول إلى مزوّد الدفع. حاول مرة أخرى بعد قليل."
 
@@ -64880,6 +65075,14 @@ msgstr "تعذّرت قراءة هذا الملف."
 #: app/components/inventory/invoice-inbox-panel.tsx:479
 msgid "We could not read this invoice."
 msgstr "تعذّرت قراءة هذه الفاتورة."
+
+#: app/components/billing/cancel-request-form.tsx:271
+msgid "We could not read your billing date right now, so we cannot send the request. Try again in a moment."
+msgstr "تعذّرت قراءة تاريخ الفوترة الآن، لذلك لا يمكن إرسال الطلب. حاول مرة أخرى بعد قليل."
+
+#: app/utils/billing/cancel-request-labels.ts:57
+msgid "We could not read your billing date right now. Try again in a moment."
+msgstr "تعذّرت قراءة تاريخ الفوترة الآن. حاول مرة أخرى بعد قليل."
 
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:235
 msgid "We could not record your acceptance."
@@ -64920,6 +65123,10 @@ msgstr "تعذّر الإرسال. راجع الرسالة وحاول مرة أ�
 #: app/components/website/domain/domain-ui.tsx:57
 msgid "We could not send the email. Try again."
 msgstr "تعذّر إرسال البريد. حاول مرة أخرى."
+
+#: app/components/billing/cancel-request-form.tsx:116
+msgid "We could not send the request"
+msgstr "تعذّر إرسال الطلب"
 
 #: app/components/website/domain/domain-ui.tsx:44
 msgid "We could not set the domain up. Please try again in a moment."
@@ -65631,6 +65838,10 @@ msgstr "ما الذي سيتغير"
 msgid "What would you like to collect?"
 msgstr "ما الذي ترغب في جمعه؟"
 
+#: app/components/billing/cancel-request-form.tsx:126
+msgid "What would you like to do?"
+msgstr "ماذا تريد أن تفعل؟"
+
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:52
 msgid "What would you like to know?"
 msgstr "ماذا تريد أن تعرف؟"
@@ -66064,6 +66275,10 @@ msgstr "أي العناصر"
 msgid "Which items are discounted first"
 msgstr "أي الأصناف تُخصم أولًا"
 
+#: app/components/billing/cancel-request-form.tsx:151
+msgid "Which locations?"
+msgstr "أي المواقع؟"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1307
 msgid "Which one"
 msgstr "أيّها"
@@ -66301,6 +66516,10 @@ msgstr "لماذا أُلغيت؟"
 msgid "Why is the second count skipped?"
 msgstr "لماذا تم تخطي الجرد الثاني؟"
 
+#: app/components/billing/cancel-request-form.tsx:175
+msgid "Why?"
+msgstr "لماذا؟"
+
 #: app/components/inventory/review-order-screen.tsx:1321
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:619
 msgid "Why? (optional)"
@@ -66375,6 +66594,14 @@ msgstr "مع هذا التحويل ستصبح كمية صفرًا بعد الت�
 #: app/components/pos/zatca-settings.tsx:420
 msgid "With warnings {withWarnings}"
 msgstr "مع تحذيرات {withWarnings}"
+
+#: app/components/billing/cancel-request-form.tsx:82
+msgid "Withdraw it on the billing page if you want to send a new one."
+msgstr "اسحبه من صفحة الفوترة إن أردت إرسال طلب جديد."
+
+#: app/components/billing/change-request-card.tsx:100
+msgid "Withdraw request"
+msgstr "سحب الطلب"
 
 #: app/components/hiring/applicant-labels.ts:57
 msgid "Withdrew their application"
@@ -66815,6 +67042,14 @@ msgstr "لديك نطاق يعمل بالفعل"
 msgid "You already have a lot of requests waiting. Wait for a manager to answer, or cancel one."
 msgstr "لديك طلبات كثيرة بالانتظار. انتظر ردّ المدير أو ألغِ أحدها."
 
+#: app/components/billing/cancel-request-form.tsx:79
+msgid "You already have a request open"
+msgstr "لديك طلب مفتوح بالفعل"
+
+#: app/utils/billing/cancel-request-labels.ts:58
+msgid "You already have a request open. Withdraw it first to send a new one."
+msgstr "لديك طلب مفتوح بالفعل. اسحبه أولًا لإرسال طلب جديد."
+
 #: ../../packages/marketing/src/components/email/email-templates.tsx:51
 msgid "You already have a template with that name."
 msgstr "لديك قالب بهذا الاسم بالفعل."
@@ -67011,7 +67246,7 @@ msgstr "يمكنك تقديم الإثبات مرة واحدة فقط. بعد ا
 msgid "You can test up to 20 dishes at once. End one first."
 msgstr "يمكنك اختبار ما يصل إلى 20 طبقًا في وقت واحد. أنهِ أحدها أولًا."
 
-#: app/components/billing/past-due-card.tsx:242
+#: app/components/billing/past-due-card.tsx:243
 msgid "You can try again in about a minute."
 msgstr "يمكنك المحاولة مرة أخرى بعد نحو دقيقة."
 
@@ -67939,6 +68174,10 @@ msgstr "خطوات الإعداد المتبقية."
 #: app/routes/_app+/$orgSlug_+/support.tsx:308
 msgid "Your reply"
 msgstr "ردك"
+
+#: app/components/billing/change-request-card.tsx:70
+msgid "Your request is with us"
+msgstr "طلبك لدينا"
 
 #: app/components/help/help-dialog.tsx:195
 msgid "Your restaurant and the place you were working in"

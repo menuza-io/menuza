@@ -588,8 +588,8 @@ msgstr "إضافة نقاط قائمة الانتظار"
 msgid "Address, phone and opening hours"
 msgstr "العنوان والهاتف وساعات العمل"
 
-#: app/components/admin-sidebar.tsx:197
-#: app/components/admin-sidebar.tsx:205
+#: app/components/admin-sidebar.tsx:203
+#: app/components/admin-sidebar.tsx:211
 #: app/components/sso-configuration-form.tsx:438
 #: app/components/sso-user-management.tsx:101
 #: app/routes/_admin+/roles+/$roleId.tsx:504
@@ -597,7 +597,7 @@ msgstr "العنوان والهاتف وساعات العمل"
 msgid "Admin"
 msgstr "مدير"
 
-#: app/components/admin-sidebar.tsx:223
+#: app/components/admin-sidebar.tsx:229
 #: app/routes/_admin+/index.tsx:129
 msgid "Admin Dashboard"
 msgstr "لوحة تحكم المدير"
@@ -640,6 +640,7 @@ msgstr "المحاذاة"
 #: app/routes/_admin+/feedback.tsx:100
 #: app/routes/_admin+/feedback.tsx:115
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:30
+#: app/routes/_admin+/subscription-requests.tsx:36
 msgid "All"
 msgstr "الكل"
 
@@ -673,6 +674,10 @@ msgstr "جميع المؤسسات"
 #: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "All recipients"
 msgstr "جميع المستلمين"
+
+#: app/components/admin-change-requests-card.tsx:44
+msgid "All requests"
+msgstr "كل الطلبات"
 
 #: app/routes/_admin+/audit-logs.tsx:296
 #~ msgid "All severities"
@@ -722,6 +727,10 @@ msgstr "المبلغ بالدولار الأمريكي، حتى {left}"
 #: app/routes/_admin+/customer-apps_.$appId.tsx:859
 msgid "An app can be deleted only before it was first published. After that it can be archived: it stops building and disappears from the website."
 msgstr "يمكن حذف التطبيق قبل نشره لأول مرة فقط. بعد ذلك يمكن أرشفته: يتوقف بناؤه ويختفي من الموقع."
+
+#: app/routes/_admin+/subscription-requests.tsx:140
+msgid "An offer was shown."
+msgstr "تم عرض عرض تفضيلي."
 
 #: app/routes/_admin+/customer-apps_.$appId.tsx:150
 msgid "Android package"
@@ -1244,6 +1253,15 @@ msgstr "اسم الحملة"
 #: app/routes/_admin+/waitlist.tsx:487
 msgid "Cancel"
 msgstr "إلغاء"
+
+#: app/components/admin-change-requests-card.tsx:39
+#: app/routes/_admin+/subscription-requests.tsx:41
+msgid "Cancel and downgrade requests"
+msgstr "طلبات الإلغاء والتخفيض"
+
+#: app/components/admin-sidebar.tsx:179
+msgid "Cancel requests"
+msgstr "طلبات الإلغاء"
 
 #: app/components/admin-organizations-table.tsx:110
 msgid "Canceled"
@@ -2406,6 +2424,10 @@ msgstr "كل طلب"
 msgid "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
 msgstr "كل عملية إيداع أو سحب أو تسليم للخزنة مسجّلة في ورديات الكاشير خلال آخر 30 يومًا."
 
+#: app/routes/_admin+/subscription-requests.tsx:43
+msgid "Every request an owner sent from the billing page, with the reason they gave. A request cancels nothing by itself: it takes effect at the end of the billing period, and you act on it here by hand."
+msgstr "كل طلب أرسله مالك من صفحة الفوترة مع السبب الذي ذكره. لا يلغي الطلب شيئًا بذاته: يسري عند نهاية فترة الفوترة، وتتصرف بناءً عليه هنا يدويًا."
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:462
 msgid "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
 msgstr "تنتهي كل رسالة نصية بعبارة \"{SMS_OPT_OUT_PHRASE}\" وتُرسل بين الساعة 9:00 و20:00 بالتوقيت المحلي. نضيف الأمرين عنك."
@@ -2571,6 +2593,10 @@ msgstr "تصفية حسب نوع ذاكرة التخزين المؤقت"
 #~ msgid "Filter by organization"
 #~ msgstr "تصفية حسب المؤسسة"
 
+#: app/routes/_admin+/subscription-requests.tsx:52
+msgid "Filter by status"
+msgstr "التصفية حسب الحالة"
+
 #: app/routes/_admin+/audit-logs.tsx:246
 #: app/routes/_admin+/gdpr-requests.tsx:474
 #: app/routes/_admin+/waitlist.tsx:313
@@ -2648,7 +2674,7 @@ msgstr "منشور"
 msgid "Font file"
 msgstr "ملف الخط"
 
-#: app/components/admin-sidebar.tsx:179
+#: app/components/admin-sidebar.tsx:185
 #: app/routes/_admin+/font-licences.tsx:106
 msgid "Font licences"
 msgstr "تراخيص الخطوط"
@@ -2800,6 +2826,11 @@ msgstr "ضيف انقطع"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:646
 msgid "Guests who turned on offers in the app get this once per run. A push holds no personal data, so merge tags are not available."
 msgstr "الضيوف الذين فعّلوا العروض في التطبيق يتلقون هذا الإشعار مرة واحدة في كل تشغيل. لا يحتوي الإشعار على بيانات شخصية، لذا لا تتوفر وسوم الدمج."
+
+#: app/routes/_admin+/subscription-requests.tsx:34
+#: app/routes/_admin+/subscription-requests.tsx:156
+msgid "Handled"
+msgstr "تمت معالجته"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:405
 msgid "Has an upcoming reservation"
@@ -3477,6 +3508,10 @@ msgstr "الهامش"
 msgid "Margin on the orders below: {total}"
 msgstr "الهامش على الطلبات أدناه: {total}"
 
+#: app/routes/_admin+/subscription-requests.tsx:179
+msgid "Mark handled"
+msgstr "وضع علامة تمت المعالجة"
+
 #: app/components/admin-sidebar.tsx:68
 msgid "Marketing"
 msgstr "التسويق"
@@ -3811,6 +3846,10 @@ msgstr "لا يوجد نشاط حديث"
 msgid "No recent comments"
 msgstr "لا توجد تعليقات حديثة"
 
+#: app/routes/_admin+/subscription-requests.tsx:67
+msgid "No requests."
+msgstr "لا توجد طلبات."
+
 #: app/routes/_admin+/customer-apps_.$appId.tsx:670
 msgid "No reviews to show."
 msgstr "لا توجد مراجعات للعرض."
@@ -4069,6 +4108,8 @@ msgstr "الطلب رقم N فقط"
 
 #: app/routes/_admin+/customer-apps.tsx:375
 #: app/routes/_admin+/feedback.tsx:116
+#: app/routes/_admin+/subscription-requests.tsx:33
+#: app/routes/_admin+/subscription-requests.tsx:154
 msgid "Open"
 msgstr "فتح"
 
@@ -4183,6 +4224,7 @@ msgstr "org - موارد المؤسسة"
 #: app/routes/_admin+/legal-agreements.tsx:135
 #: app/routes/_admin+/phone-numbers.tsx:361
 #: app/routes/_admin+/print-shop.tsx:796
+#: app/routes/_admin+/subscription-requests.tsx:75
 msgid "Organization"
 msgstr "المؤسسة"
 
@@ -4771,6 +4813,10 @@ msgstr "تُقرأ من المتاجر مرة يوميًا. المتجر الذ�
 msgid "Read our Cookie Policy"
 msgstr "اقرأ سياسة ملفات تعريف الارتباط الخاصة بنا"
 
+#: app/routes/_admin+/subscription-requests.tsx:81
+msgid "Reason"
+msgstr "السبب"
+
 #: app/routes/_admin+/font-licences.tsx:84
 msgid "Reason (optional)"
 msgstr "السبب (اختياري)"
@@ -5062,6 +5108,7 @@ msgid "Reports"
 msgstr "التقارير"
 
 #: app/routes/_admin+/request-lookup.tsx:131
+#: app/routes/_admin+/subscription-requests.tsx:78
 msgid "Request"
 msgstr "الطلب"
 
@@ -5148,7 +5195,7 @@ msgstr "لم يحضر صاحب الحجز"
 msgid "Reservations"
 msgstr "الحجوزات"
 
-#: app/components/admin-sidebar.tsx:185
+#: app/components/admin-sidebar.tsx:191
 msgid "Reservations fees"
 msgstr "رسوم الحجوزات"
 
@@ -5783,6 +5830,10 @@ msgstr "الإجراءات الحساسة مسموحة حتى {validUntilTime}"
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
+#: app/routes/_admin+/subscription-requests.tsx:105
+msgid "Sent by {sender}"
+msgstr "أرسله {sender}"
+
 #: app/routes/_admin+/print-shop.tsx:70
 msgid "Sent to the printer"
 msgstr "أُرسل إلى المطبعة"
@@ -6102,6 +6153,7 @@ msgstr "جهاز Station أو شاشة مطبخ"
 #: app/routes/_admin+/phone-numbers.tsx:358
 #: app/routes/_admin+/print-shop.tsx:797
 #: app/routes/_admin+/sign-in-help.tsx:298
+#: app/routes/_admin+/subscription-requests.tsx:87
 #: app/routes/_admin+/waitlist.tsx:365
 msgid "Status"
 msgstr "الحالة"
@@ -6282,7 +6334,7 @@ msgstr "الافتراضي للنظام"
 msgid "System Flags"
 msgstr "مؤشرات النظام"
 
-#: app/components/admin-sidebar.tsx:226
+#: app/components/admin-sidebar.tsx:232
 msgid "System Management"
 msgstr "إدارة النظام"
 
@@ -6332,6 +6384,14 @@ msgstr "بطاقة طاولة مطوية"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:398
 msgid "Tags"
 msgstr "الوسوم"
+
+#: app/routes/_admin+/subscription-requests.tsx:84
+msgid "Takes effect"
+msgstr "يسري في"
+
+#: app/components/admin-change-requests-card.tsx:77
+msgid "Takes effect {effective}"
+msgstr "يسري في {effective}"
 
 #: app/routes/_admin+/marketing+/campaigns.new.tsx:193
 msgid "Target Audience"
@@ -7495,6 +7555,11 @@ msgstr "استعد الضيوف الذين لم يطلبوا منذ فترة"
 #: app/routes/_admin+/print-shop.tsx:57
 msgid "Window sticker"
 msgstr "ملصق نافذة"
+
+#: app/routes/_admin+/subscription-requests.tsx:35
+#: app/routes/_admin+/subscription-requests.tsx:157
+msgid "Withdrawn"
+msgstr "تم سحبه"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:332
 msgid "Without a verified phone"

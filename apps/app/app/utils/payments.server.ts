@@ -1180,3 +1180,22 @@ export async function retryBillingPayment(organization: {
 		return { status: 'unavailable' }
 	}
 }
+
+/**
+ * The end of the current billing period of a subscription (#379): the date a
+ * cancellation or downgrade request would take effect. Null when the provider
+ * cannot say, in which case the request is not offered (the owner must see the
+ * cutoff before confirming).
+ */
+export async function getSubscriptionPeriodEnd(
+	subscriptionId: string,
+): Promise<Date | null> {
+	try {
+		const subscription =
+			await paymentProvider.retrieveSubscription(subscriptionId)
+		return subscription.currentPeriodEnd ?? null
+	} catch (error) {
+		console.error('Failed to read the billing period end:', error)
+		return null
+	}
+}

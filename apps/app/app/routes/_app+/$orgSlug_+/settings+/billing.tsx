@@ -10,6 +10,7 @@ import {
 	useLoaderData,
 } from 'react-router'
 
+import { ChangeRequestCard } from '#app/components/billing/change-request-card.tsx'
 import {
 	PastDueCard,
 	type PastDueView,
@@ -22,6 +23,7 @@ import {
 } from '#app/components/settings/cards/organization/kept-by-direct-card.tsx'
 import { MarketingTextsCard } from '#app/components/settings/cards/organization/marketing-texts-card.tsx'
 
+import { loadOpenChangeRequest } from '#app/utils/billing/cancel-request.server.ts'
 import { daysOverdue, isPastDueStatus } from '#app/utils/billing/past-due.ts'
 import { getLaunchStatus } from '#app/utils/env.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
@@ -149,15 +151,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	// Past due (#237): the open invoice and each failed attempt, read live from
 	// the provider. Shown to the people who can retry (the page's actions need
 	// the same `update:settings:any`).
+	const canManageBilling = await userHasOrganizationPermission(
+		userId,
+		organization.id,
+		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+	)
 	let pastDue: PastDueView | null = null
-	if (
-		isPastDueStatus(organization.subscriptionStatus) &&
-		(await userHasOrganizationPermission(
-			userId,
-			organization.id,
-			ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
-		))
-	) {
+	if (isPastDueStatus(organization.subscriptionStatus) && canManageBilling) {
 		pastDue = {
 			since: organization.pastDueSince?.toISOString() ?? null,
 			daysOverdue: daysOverdue(organization.pastDueSince),
@@ -165,9 +165,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
+	// Cancel or downgrade (#379): a request that takes effect at period end, for
+	// the people who can change the subscription and while there is one to change.
+	const changeRequest =
+		canManageBilling && hasActiveSubscription
+			? { open: await loadOpenChangeRequest(organization.id) }
+			: null
+
 	return {
 		organization,
 		pastDue,
+		changeRequest,
 		plansAndPrices,
 		plansUnavailable,
 		invoices,
@@ -264,6 +272,7 @@ export default function BillingSettings() {
 	const {
 		organization,
 		pastDue,
+		changeRequest,
 		plansAndPrices,
 		plansUnavailable,
 		invoices,
@@ -288,6 +297,15 @@ export default function BillingSettings() {
 					currentPriceId={currentPriceId}
 				/>
 			</AnnotatedSection>
+
+			{changeRequest ? (
+				<AnnotatedSection>
+					<ChangeRequestCard
+						orgSlug={organization.slug}
+						open={changeRequest.open}
+					/>
+				</AnnotatedSection>
+			) : null}
 
 			{keptByDirect ? (
 				<AnnotatedSection>

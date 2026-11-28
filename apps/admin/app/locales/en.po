@@ -588,8 +588,8 @@ msgstr "Add waitlist points"
 msgid "Address, phone and opening hours"
 msgstr "Address, phone and opening hours"
 
-#: app/components/admin-sidebar.tsx:197
-#: app/components/admin-sidebar.tsx:205
+#: app/components/admin-sidebar.tsx:203
+#: app/components/admin-sidebar.tsx:211
 #: app/components/sso-configuration-form.tsx:438
 #: app/components/sso-user-management.tsx:101
 #: app/routes/_admin+/roles+/$roleId.tsx:504
@@ -597,7 +597,7 @@ msgstr "Address, phone and opening hours"
 msgid "Admin"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:223
+#: app/components/admin-sidebar.tsx:229
 #: app/routes/_admin+/index.tsx:129
 msgid "Admin Dashboard"
 msgstr ""
@@ -640,6 +640,7 @@ msgstr "Alignment"
 #: app/routes/_admin+/feedback.tsx:100
 #: app/routes/_admin+/feedback.tsx:115
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:30
+#: app/routes/_admin+/subscription-requests.tsx:36
 msgid "All"
 msgstr ""
 
@@ -673,6 +674,10 @@ msgstr ""
 #: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "All recipients"
 msgstr ""
+
+#: app/components/admin-change-requests-card.tsx:44
+msgid "All requests"
+msgstr "All requests"
 
 #: app/routes/_admin+/audit-logs.tsx:296
 #~ msgid "All severities"
@@ -722,6 +727,10 @@ msgstr "Amount in US dollars, up to {left}"
 #: app/routes/_admin+/customer-apps_.$appId.tsx:859
 msgid "An app can be deleted only before it was first published. After that it can be archived: it stops building and disappears from the website."
 msgstr "An app can be deleted only before it was first published. After that it can be archived: it stops building and disappears from the website."
+
+#: app/routes/_admin+/subscription-requests.tsx:140
+msgid "An offer was shown."
+msgstr "An offer was shown."
 
 #: app/routes/_admin+/customer-apps_.$appId.tsx:150
 msgid "Android package"
@@ -1244,6 +1253,15 @@ msgstr ""
 #: app/routes/_admin+/waitlist.tsx:487
 msgid "Cancel"
 msgstr ""
+
+#: app/components/admin-change-requests-card.tsx:39
+#: app/routes/_admin+/subscription-requests.tsx:41
+msgid "Cancel and downgrade requests"
+msgstr "Cancel and downgrade requests"
+
+#: app/components/admin-sidebar.tsx:179
+msgid "Cancel requests"
+msgstr "Cancel requests"
 
 #: app/components/admin-organizations-table.tsx:110
 msgid "Canceled"
@@ -2406,6 +2424,10 @@ msgstr "Every order"
 msgid "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
 msgstr "Every pay-in, pay-out and safe drop recorded in till shifts over the last 30 days."
 
+#: app/routes/_admin+/subscription-requests.tsx:43
+msgid "Every request an owner sent from the billing page, with the reason they gave. A request cancels nothing by itself: it takes effect at the end of the billing period, and you act on it here by hand."
+msgstr "Every request an owner sent from the billing page, with the reason they gave. A request cancels nothing by itself: it takes effect at the end of the billing period, and you act on it here by hand."
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:462
 msgid "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
 msgstr "Every text ends with \"{SMS_OPT_OUT_PHRASE}\" and goes out between 9:00 and 20:00 local time. We add both for you."
@@ -2571,6 +2593,10 @@ msgstr ""
 #~ msgid "Filter by organization"
 #~ msgstr ""
 
+#: app/routes/_admin+/subscription-requests.tsx:52
+msgid "Filter by status"
+msgstr "Filter by status"
+
 #: app/routes/_admin+/audit-logs.tsx:246
 #: app/routes/_admin+/gdpr-requests.tsx:474
 #: app/routes/_admin+/waitlist.tsx:313
@@ -2648,7 +2674,7 @@ msgstr "Flyer"
 msgid "Font file"
 msgstr "Font file"
 
-#: app/components/admin-sidebar.tsx:179
+#: app/components/admin-sidebar.tsx:185
 #: app/routes/_admin+/font-licences.tsx:106
 msgid "Font licences"
 msgstr "Font licences"
@@ -2800,6 +2826,11 @@ msgstr "Guest Lapsed"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:646
 msgid "Guests who turned on offers in the app get this once per run. A push holds no personal data, so merge tags are not available."
 msgstr "Guests who turned on offers in the app get this once per run. A push holds no personal data, so merge tags are not available."
+
+#: app/routes/_admin+/subscription-requests.tsx:34
+#: app/routes/_admin+/subscription-requests.tsx:156
+msgid "Handled"
+msgstr "Handled"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:405
 msgid "Has an upcoming reservation"
@@ -3477,6 +3508,10 @@ msgstr "Margin"
 msgid "Margin on the orders below: {total}"
 msgstr "Margin on the orders below: {total}"
 
+#: app/routes/_admin+/subscription-requests.tsx:179
+msgid "Mark handled"
+msgstr "Mark handled"
+
 #: app/components/admin-sidebar.tsx:68
 msgid "Marketing"
 msgstr ""
@@ -3811,6 +3846,10 @@ msgstr ""
 msgid "No recent comments"
 msgstr ""
 
+#: app/routes/_admin+/subscription-requests.tsx:67
+msgid "No requests."
+msgstr "No requests."
+
 #: app/routes/_admin+/customer-apps_.$appId.tsx:670
 msgid "No reviews to show."
 msgstr "No reviews to show."
@@ -4069,6 +4108,8 @@ msgstr "Only the Nth order"
 
 #: app/routes/_admin+/customer-apps.tsx:375
 #: app/routes/_admin+/feedback.tsx:116
+#: app/routes/_admin+/subscription-requests.tsx:33
+#: app/routes/_admin+/subscription-requests.tsx:154
 msgid "Open"
 msgstr "Open"
 
@@ -4183,6 +4224,7 @@ msgstr ""
 #: app/routes/_admin+/legal-agreements.tsx:135
 #: app/routes/_admin+/phone-numbers.tsx:361
 #: app/routes/_admin+/print-shop.tsx:796
+#: app/routes/_admin+/subscription-requests.tsx:75
 msgid "Organization"
 msgstr ""
 
@@ -4771,6 +4813,10 @@ msgstr "Read from the stores once a day. A store that cannot be reached keeps it
 msgid "Read our Cookie Policy"
 msgstr ""
 
+#: app/routes/_admin+/subscription-requests.tsx:81
+msgid "Reason"
+msgstr "Reason"
+
 #: app/routes/_admin+/font-licences.tsx:84
 msgid "Reason (optional)"
 msgstr "Reason (optional)"
@@ -5062,6 +5108,7 @@ msgid "Reports"
 msgstr ""
 
 #: app/routes/_admin+/request-lookup.tsx:131
+#: app/routes/_admin+/subscription-requests.tsx:78
 msgid "Request"
 msgstr "Request"
 
@@ -5148,7 +5195,7 @@ msgstr "Reservation No-Show"
 msgid "Reservations"
 msgstr "Reservations"
 
-#: app/components/admin-sidebar.tsx:185
+#: app/components/admin-sidebar.tsx:191
 msgid "Reservations fees"
 msgstr "Reservations fees"
 
@@ -5783,6 +5830,10 @@ msgstr "Sensitive actions allowed until {validUntilTime}"
 msgid "Sent {0}"
 msgstr ""
 
+#: app/routes/_admin+/subscription-requests.tsx:105
+msgid "Sent by {sender}"
+msgstr "Sent by {sender}"
+
 #: app/routes/_admin+/print-shop.tsx:70
 msgid "Sent to the printer"
 msgstr "Sent to the printer"
@@ -6102,6 +6153,7 @@ msgstr "Station terminal or kitchen display"
 #: app/routes/_admin+/phone-numbers.tsx:358
 #: app/routes/_admin+/print-shop.tsx:797
 #: app/routes/_admin+/sign-in-help.tsx:298
+#: app/routes/_admin+/subscription-requests.tsx:87
 #: app/routes/_admin+/waitlist.tsx:365
 msgid "Status"
 msgstr ""
@@ -6282,7 +6334,7 @@ msgstr ""
 msgid "System Flags"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:226
+#: app/components/admin-sidebar.tsx:232
 msgid "System Management"
 msgstr ""
 
@@ -6332,6 +6384,14 @@ msgstr "Table tent"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:398
 msgid "Tags"
 msgstr ""
+
+#: app/routes/_admin+/subscription-requests.tsx:84
+msgid "Takes effect"
+msgstr "Takes effect"
+
+#: app/components/admin-change-requests-card.tsx:77
+msgid "Takes effect {effective}"
+msgstr "Takes effect {effective}"
 
 #: app/routes/_admin+/marketing+/campaigns.new.tsx:193
 msgid "Target Audience"
@@ -7495,6 +7555,11 @@ msgstr "Win back guests who have not ordered in a while"
 #: app/routes/_admin+/print-shop.tsx:57
 msgid "Window sticker"
 msgstr "Window sticker"
+
+#: app/routes/_admin+/subscription-requests.tsx:35
+#: app/routes/_admin+/subscription-requests.tsx:157
+msgid "Withdrawn"
+msgstr "Withdrawn"
 
 #: ../../packages/marketing/src/components/campaign-form.tsx:332
 msgid "Without a verified phone"

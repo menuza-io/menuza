@@ -1818,7 +1818,7 @@ msgstr "{dayName} opens"
 msgid "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 msgstr "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 
-#: app/components/billing/past-due-card.tsx:117
+#: app/components/billing/past-due-card.tsx:115
 msgid "{days, plural, one {It has been # day.} other {It has been # days.}}"
 msgstr "{days, plural, one {It has been # day.} other {It has been # days.}}"
 
@@ -8377,6 +8377,10 @@ msgstr "Anyone with this link can see the job and apply."
 msgid "Anything else"
 msgstr "Anything else"
 
+#: app/components/billing/cancel-request-form.tsx:221
+msgid "Anything else we should know? (optional)"
+msgstr "Anything else we should know? (optional)"
+
 #: app/components/staff/onboarding/onboarding-labels.ts:29
 msgid "Anything else you need done, like handing over a uniform."
 msgstr "Anything else you need done, like handing over a uniform."
@@ -9622,6 +9626,7 @@ msgid "back"
 msgstr "back"
 
 #: ../../packages/marketing/src/components/email/email-templates.tsx:217
+#: app/components/billing/cancel-request-form.tsx:300
 #: app/components/hiring/job-editor.tsx:424
 #: app/components/inventory/setup-import-flow.tsx:1009
 #: app/components/kiosk/kiosk-screens.tsx:264
@@ -9656,6 +9661,10 @@ msgstr "Back to applicants"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:102
 msgid "Back to automations"
 msgstr ""
+
+#: app/components/billing/cancel-request-form.tsx:86
+msgid "Back to billing"
+msgstr "Back to billing"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:144
 msgid "Back to blocks"
@@ -9999,6 +10008,10 @@ msgstr "Before transferring, the agent asks if it may text the caller a link the
 #: app/components/hiring/job-editor.tsx:850
 msgid "Before you can publish"
 msgstr "Before you can publish"
+
+#: app/components/billing/cancel-request-form.tsx:235
+msgid "Before you go"
+msgstr "Before you go"
 
 #: app/components/phone-agent/agent-details.tsx:131
 msgid "Behind the scenes"
@@ -11222,6 +11235,10 @@ msgstr "Can get texts"
 msgid "Can ship"
 msgstr "Can ship"
 
+#: app/components/billing/cancel-request-form.tsx:200
+msgid "Can you tell us more?"
+msgstr "Can you tell us more?"
+
 #: app/components/menu/option-form.tsx:1130
 msgid "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
 msgstr "Can't nest: choices would go more than {MAX_NESTED_MODIFIER_DEPTH} levels deep."
@@ -11506,6 +11523,10 @@ msgstr "Cancel delivery"
 msgid "Cancel editing"
 msgstr ""
 
+#: app/utils/billing/cancel-request-labels.ts:18
+msgid "Cancel everything"
+msgstr "Cancel everything"
+
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:422
 #: app/routes/_app+/$orgSlug_+/menu+/import.$importId.tsx:1396
 msgid "Cancel import"
@@ -11514,6 +11535,15 @@ msgstr "Cancel import"
 #: app/components/hiring/candidate-parts.tsx:278
 msgid "Cancel interview"
 msgstr "Cancel interview"
+
+#: app/components/billing/change-request-card.tsx:38
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:154
+msgid "Cancel or downgrade"
+msgstr "Cancel or downgrade"
+
+#: app/components/billing/cancel-request-form.tsx:304
+msgid "Cancel or downgrade request"
+msgstr "Cancel or downgrade request"
 
 #: app/components/inventory/review-order-screen.tsx:1183
 #: app/components/inventory/review-order-screen.tsx:1335
@@ -11550,6 +11580,10 @@ msgstr "Cancel Reservation"
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:749
 msgid "Cancel schedule"
 msgstr "Cancel schedule"
+
+#: app/utils/billing/cancel-request-labels.ts:14
+msgid "Cancel some locations"
+msgstr "Cancel some locations"
 
 #: app/components/marketing/campaign-actions.tsx:258
 msgid "Cancel this broadcast?"
@@ -12713,6 +12747,10 @@ msgstr "Check the fields and try again."
 msgid "Check the file"
 msgstr "Check the file"
 
+#: app/utils/billing/cancel-request-labels.ts:55
+msgid "Check the form: choose what you want to do, a reason, and confirm."
+msgstr "Check the form: choose what you want to do, a reason, and confirm."
+
 #: app/components/phone-agent/settings-page.tsx:139
 msgid "Check the format of this value."
 msgstr "Check the format of this value."
@@ -13481,6 +13519,10 @@ msgstr "Choose items"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:414
 msgid "Choose locations"
 msgstr "Choose locations"
+
+#: app/utils/billing/cancel-request-labels.ts:59
+msgid "Choose locations that belong to this organization."
+msgstr "Choose locations that belong to this organization."
 
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:513
 msgid "Choose no location to cover every location."
@@ -14306,6 +14348,10 @@ msgstr "Closing"
 #: app/components/locations/ordering-settings-cards.tsx:91
 msgid "Closing buffer (minutes)"
 msgstr "Closing buffer (minutes)"
+
+#: app/utils/billing/cancel-request-labels.ts:44
+msgid "Closing for good"
+msgstr "Closing for good"
 
 #: app/components/phone-agent/business-details-section.tsx:236
 #: app/components/phone-agent/settings-page.tsx:155
@@ -19667,6 +19713,10 @@ msgstr "Does not work at this workplace"
 msgid "Doesn't look like food"
 msgstr "Doesn't look like food"
 
+#: app/utils/billing/cancel-request-labels.ts:48
+msgid "Doing it in house"
+msgstr "Doing it in house"
+
 #: app/components/website/domain/buy-card.tsx:405
 #: app/components/website/domain/connect-card.tsx:604
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:53
@@ -19856,6 +19906,10 @@ msgstr "Download the PDF"
 msgid "Download the template, change prices or availability in Excel or any spreadsheet app, and upload it. Blank cells change nothing. A dash (-) in a dine-in, pickup or delivery price removes it. You see every change before it is applied."
 msgstr "Download the template, change prices or availability in Excel or any spreadsheet app, and upload it. Blank cells change nothing. A dash (-) in a dine-in, pickup or delivery price removes it. You see every change before it is applied."
 
+#: app/components/billing/cancel-request-form.tsx:246
+msgid "Download what you may want to keep. Nothing is deleted when you send this request."
+msgstr "Download what you may want to keep. Nothing is deleted when you send this request."
+
 #: app/components/settings/cards/privacy-card.tsx:46
 msgid "Download your data"
 msgstr ""
@@ -19863,6 +19917,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:559
 msgid "Download your locations, change the phone, active and tags columns, and upload the file. Every row is checked first: if one row has a problem nothing is changed."
 msgstr "Download your locations, change the phone, active and tags columns, and upload the file. Every row is checked first: if one row has a problem nothing is changed."
+
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:143
+msgid "Download your menu"
+msgstr "Download your menu"
 
 #: app/components/website/domain/managed-domain-card.tsx:222
 msgid "Download zone and stop"
@@ -21299,6 +21357,10 @@ msgstr "End of day"
 #: app/routes/_app+/$orgSlug_+/menu+/pricing-rules.tsx:775
 msgid "End rule"
 msgstr "End rule"
+
+#: app/utils/billing/cancel-request-labels.ts:19
+msgid "End the subscription for the whole organization."
+msgstr "End the subscription for the whole organization."
 
 #: app/components/reservations/detail-sheet.tsx:1399
 msgid "End this booking"
@@ -23185,6 +23247,18 @@ msgstr "Export stock value (CSV)"
 msgid "Export with sensitive data"
 msgstr "Export with sensitive data"
 
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:144
+msgid "Export your customer list"
+msgstr "Export your customer list"
+
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:145
+msgid "Export your reports"
+msgstr "Export your reports"
+
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:146
+msgid "Export your website"
+msgstr "Export your website"
+
 #: app/components/website/domain/records-panel.tsx:194
 msgid "Export zone file"
 msgstr "Export zone file"
@@ -23310,7 +23384,7 @@ msgstr ""
 msgid "Failed ({lastStatus})"
 msgstr "Failed ({lastStatus})"
 
-#: app/components/billing/past-due-card.tsx:182
+#: app/components/billing/past-due-card.tsx:183
 msgid "Failed on {when}."
 msgstr "Failed on {when}."
 
@@ -23594,7 +23668,7 @@ msgstr "Failed to update table."
 #~ msgid "Failed with {brand} ending {0} on {when}."
 #~ msgstr "Failed with {brand} ending {0} on {when}."
 
-#: app/components/billing/past-due-card.tsx:178
+#: app/components/billing/past-due-card.tsx:179
 msgid "Failed with {brand} ending {last4} on {when}."
 msgstr "Failed with {brand} ending {last4} on {when}."
 
@@ -26048,6 +26122,10 @@ msgstr "Handed to the business line"
 msgid "Hang up"
 msgstr "Hang up"
 
+#: app/utils/billing/cancel-request-labels.ts:51
+msgid "Hard to use"
+msgstr "Hard to use"
+
 #: app/components/marketing/audience-builder.tsx:102
 msgid "Has a verified phone"
 msgstr "Has a verified phone"
@@ -26448,7 +26526,7 @@ msgstr "Hiring: someone applied for a job"
 msgid "Hiring…"
 msgstr "Hiring…"
 
-#: app/components/billing/past-due-card.tsx:168
+#: app/components/billing/past-due-card.tsx:166
 #: app/components/discounts/discount-history.tsx:16
 #: app/components/hiring/candidate-sheet.tsx:371
 #: app/components/reservations/detail-sheet.tsx:1307
@@ -26968,6 +27046,14 @@ msgstr ""
 msgid "I already have a verification code"
 msgstr "I already have a verification code"
 
+#: app/utils/billing/cancel-request-labels.ts:30
+msgid "I am closing or it is seasonal"
+msgstr "I am closing or it is seasonal"
+
+#: app/utils/billing/cancel-request-labels.ts:31
+msgid "I am switching to something else"
+msgstr "I am switching to something else"
+
 #: app/components/my-schedule/shift-change-sheet.tsx:162
 msgid "I cannot work it"
 msgstr "I cannot work it"
@@ -26988,6 +27074,10 @@ msgstr "I confirm that I hold a licence that allows this font to be used on a we
 msgid "I fixed it myself"
 msgstr "I fixed it myself"
 
+#: app/utils/billing/cancel-request-labels.ts:39
+msgid "I found something cheaper"
+msgstr "I found something cheaper"
+
 #: app/components/help/help-dialog.tsx:126
 msgid "I have a question"
 msgstr "I have a question"
@@ -26999,6 +27089,10 @@ msgstr "I have received payment at handoff"
 #: app/routes/_app+/$orgSlug_+/website+/import.tsx:304
 msgid "I own this site or have the right to use its content."
 msgstr "I own this site or have the right to use its content."
+
+#: app/components/billing/cancel-request-form.tsx:292
+msgid "I understand, send the request"
+msgstr "I understand, send the request"
 
 #: app/components/website/hero-video-maker.tsx:239
 msgid "I will pick them"
@@ -27644,6 +27738,7 @@ msgstr "Instantly enable Stripe (mock)"
 #: app/components/settings/cards/organization/integrations-card.tsx:195
 #: app/components/workspace-breadcrumb.tsx:66
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
+#: app/utils/billing/cancel-request-labels.ts:42
 msgid "Integrations"
 msgstr ""
 
@@ -27994,6 +28089,10 @@ msgstr "Issued"
 #: app/components/media-library/photo-studio-dialog.tsx:751
 msgid "Issues found in this photo"
 msgstr "Issues found in this photo"
+
+#: app/utils/billing/cancel-request-labels.ts:28
+msgid "It costs too much"
+msgstr "It costs too much"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:257
 msgid "It could not be completed or was cancelled, so the full amount went back to the card you paid with. It can take a few days to show."
@@ -28752,6 +28851,10 @@ msgstr "Keep waiting"
 #: app/components/staff/schedule/templates-dialog.tsx:293
 msgid "Keep who works each shift"
 msgstr "Keep who works each shift"
+
+#: app/utils/billing/cancel-request-labels.ts:23
+msgid "Keep your restaurant and switch to a plan that costs less."
+msgstr "Keep your restaurant and switch to a plan that costs less."
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1496
 msgid "Keeps original indexing"
@@ -33307,6 +33410,10 @@ msgstr "Move this domain to Menuza's nameservers first."
 msgid "Move to"
 msgstr "Move to"
 
+#: app/utils/billing/cancel-request-labels.ts:22
+msgid "Move to a smaller plan"
+msgstr "Move to a smaller plan"
+
 #: app/components/reservations/experiences/experience-editor.tsx:526
 msgid "Move to draft"
 msgstr "Move to draft"
@@ -33387,6 +33494,10 @@ msgstr "Moves customer points"
 #: app/components/inventory/transfers-panel.tsx:161
 msgid "Moving stock"
 msgstr "Moving stock"
+
+#: app/utils/billing/cancel-request-labels.ts:47
+msgid "Moving to another platform"
+msgstr "Moving to another platform"
 
 #: app/utils/inventory/starter-lists.ts:194
 msgid "Mozzarella"
@@ -33652,6 +33763,10 @@ msgstr ""
 #: app/components/settings/cards/organization/integrations-card.tsx:257
 msgid "Need an integration but don't see it here?"
 msgstr ""
+
+#: app/components/billing/change-request-card.tsx:41
+msgid "Need to stop a location, end your subscription or move to a smaller plan? Send a request here. It takes effect at the end of your billing period."
+msgstr "Need to stop a location, end your subscription or move to a smaller plan? Send a request here. It takes effect at the end of your billing period."
 
 #: app/components/inventory/order-panels.tsx:347
 msgid "Needed <0>{neededText}</0> (<1>{rawPacksLabel}</1>) → <2>{roundedPacksLabel}</2> packs"
@@ -34401,7 +34516,7 @@ msgstr "Next shift: {upcomingDay}, <0>{upcomingRange}</0>"
 #~ msgid "Next try {0}."
 #~ msgstr "Next try {0}."
 
-#: app/components/billing/past-due-card.tsx:189
+#: app/components/billing/past-due-card.tsx:190
 msgid "Next try {nextTry}."
 msgstr "Next try {nextTry}."
 
@@ -35066,7 +35181,7 @@ msgstr "No invitation sent: email is turned off"
 msgid "No invitation sent: no email on file"
 msgstr "No invitation sent: no email on file"
 
-#: app/components/billing/past-due-card.tsx:156
+#: app/components/billing/past-due-card.tsx:154
 msgid "No invoice is open any more. Refresh in a moment, the banner goes once the payment is recorded."
 msgstr "No invoice is open any more. Refresh in a moment, the banner goes once the payment is recorded."
 
@@ -36680,6 +36795,10 @@ msgstr "Not enough history"
 msgid "Not enough history yet. Suggestions get better after about two weeks of use, so treat these as a first guess."
 msgstr "Not enough history yet. Suggestions get better after about two weeks of use, so treat these as a first guess."
 
+#: app/utils/billing/cancel-request-labels.ts:38
+msgid "Not enough sales to justify it"
+msgstr "Not enough sales to justify it"
+
 #: app/components/staff/labor/labor-overview.tsx:486
 msgid "Not entered"
 msgstr "Not entered"
@@ -37112,6 +37231,14 @@ msgstr "Nothing has been published yet."
 #: app/components/staff/onboarding/onboarding-tab.tsx:212
 msgid "Nothing has been set up for this person."
 msgstr "Nothing has been set up for this person."
+
+#: app/components/billing/change-request-card.tsx:90
+msgid "Nothing has changed. It takes effect at the end of your billing period."
+msgstr "Nothing has changed. It takes effect at the end of your billing period."
+
+#: app/components/billing/change-request-card.tsx:85
+msgid "Nothing has changed. It takes effect on {date}, the end of your billing period."
+msgstr "Nothing has changed. It takes effect on {date}, the end of your billing period."
 
 #: app/components/settings/cards/alert-settings-card.tsx:625
 msgid "Nothing has fired yet."
@@ -39728,6 +39855,10 @@ msgstr "Ordered <0>{orderedPacks}</0> × {packName}"
 msgid "Ordering"
 msgstr "Ordering"
 
+#: app/utils/billing/cancel-request-labels.ts:40
+msgid "Ordering features"
+msgstr "Ordering features"
+
 #: app/components/website/funnel-panel.tsx:126
 msgid "Ordering funnel"
 msgstr "Ordering funnel"
@@ -40850,7 +40981,7 @@ msgstr ""
 msgid "Past counts"
 msgstr "Past counts"
 
-#: app/components/billing/past-due-card.tsx:106
+#: app/components/billing/past-due-card.tsx:104
 msgid "Past due"
 msgstr "Past due"
 
@@ -41182,7 +41313,7 @@ msgstr "Payment disputes"
 msgid "Payment expired"
 msgstr "Payment expired"
 
-#: app/components/billing/past-due-card.tsx:104
+#: app/components/billing/past-due-card.tsx:102
 #: app/components/orders/order-status.tsx:34
 msgid "Payment failed"
 msgstr "Payment failed"
@@ -41245,7 +41376,7 @@ msgstr "Payment policies"
 msgid "Payment policy"
 msgstr "Payment policy"
 
-#: app/components/billing/past-due-card.tsx:228
+#: app/components/billing/past-due-card.tsx:229
 #: app/components/orders/order-detail.tsx:443
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:230
 msgid "Payment received"
@@ -45622,6 +45753,10 @@ msgstr "Release points"
 msgid "Released"
 msgstr "Released"
 
+#: app/utils/billing/cancel-request-labels.ts:50
+msgid "Reliability"
+msgstr "Reliability"
+
 #: app/components/phone-agent/settings-page.tsx:411
 #: app/components/reservations/settings/save-bar.tsx:76
 #: app/components/reservations/settings/setup-list-chrome.tsx:65
@@ -46566,6 +46701,7 @@ msgstr "Reported {reported}"
 #: app/components/command-menu.tsx:96
 #: app/components/roles/tenant-role-access-manager.tsx:202
 #: app/components/workspace-breadcrumb.tsx:18
+#: app/utils/billing/cancel-request-labels.ts:41
 msgid "Reports"
 msgstr ""
 
@@ -46592,6 +46728,10 @@ msgstr "Republish"
 #: app/components/orders/catering-panel.tsx:467
 msgid "Request"
 msgstr "Request"
+
+#: app/components/billing/change-request-card.tsx:53
+msgid "Request a change"
+msgstr "Request a change"
 
 #: app/components/staff/schedule/time-off-page.tsx:162
 #~ msgid "Request approved."
@@ -47286,7 +47426,7 @@ msgstr "Retry failed accounts"
 msgid "Retry failed photos"
 msgstr "Retry failed photos"
 
-#: app/components/billing/past-due-card.tsx:143
+#: app/components/billing/past-due-card.tsx:141
 msgid "Retry payment"
 msgstr "Retry payment"
 
@@ -49424,6 +49564,10 @@ msgstr ""
 msgid "Seasonal"
 msgstr "Seasonal"
 
+#: app/utils/billing/cancel-request-labels.ts:45
+msgid "Seasonal: I will be back"
+msgstr "Seasonal: I will be back"
+
 #: app/components/reservations/waitlist/waitlist-queue.tsx:251
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1355
 #: app/utils/reservations/host-actions.ts:39
@@ -50223,6 +50367,10 @@ msgstr "Seller details"
 msgid "Seller details saved."
 msgstr "Seller details saved."
 
+#: app/utils/billing/cancel-request-labels.ts:46
+msgid "Selling the business"
+msgstr "Selling the business"
+
 #: app/components/inventory/prep-screen.tsx:403
 msgid "sells <0>{absPercent}%</0> less today"
 msgstr "sells <0>{absPercent}%</0> less today"
@@ -50385,6 +50533,7 @@ msgstr "Send refund"
 msgid "Send reply"
 msgstr "Send reply"
 
+#: app/components/billing/cancel-request-form.tsx:297
 #: app/components/my-schedule/shift-change-sheet.tsx:264
 #: app/components/my-schedule/time-off-sheet.tsx:230
 msgid "Send request"
@@ -50475,6 +50624,10 @@ msgstr ""
 #: app/components/discounts/message-impact.tsx:107
 msgid "sending now"
 msgstr "sending now"
+
+#: app/components/billing/cancel-request-form.tsx:278
+msgid "Sending this request cancels nothing today. Menuza support will follow up, and you can withdraw the request any time before then."
+msgstr "Sending this request cancels nothing today. Menuza support will follow up, and you can withdraw the request any time before then."
 
 #: app/components/print/artwork-labels.ts:16
 msgid "Sending to Canva needs PDF rendering, which is not set up here."
@@ -50721,6 +50874,10 @@ msgstr "Service Notes & Shift Briefing"
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:212
 msgid "Service notes saved."
 msgstr "Service notes saved."
+
+#: app/utils/billing/cancel-request-labels.ts:32
+msgid "Service or reliability"
+msgstr "Service or reliability"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:377
 msgid "Service period"
@@ -52504,12 +52661,21 @@ msgid "Someone who can change stock will plan it."
 msgstr "Someone who can change stock will plan it."
 
 #: app/components/inventory/supplier-form.tsx:40
+#: app/utils/billing/cancel-request-labels.ts:33
 msgid "Something else"
 msgstr "Something else"
 
 #: app/utils/inventory/inventory-errors.ts:77
 msgid "Something else already has that name. Pick another name."
 msgstr "Something else already has that name. Pick another name."
+
+#: app/utils/billing/cancel-request-labels.ts:43
+msgid "Something else is missing"
+msgstr "Something else is missing"
+
+#: app/utils/billing/cancel-request-labels.ts:29
+msgid "Something I need is missing"
+msgstr "Something I need is missing"
 
 #: app/components/website/domain/domain-ui.tsx:32
 msgid "Something in the form is not valid. Check it and try again."
@@ -53547,6 +53713,10 @@ msgstr "Stop"
 msgid "Stop and read"
 msgstr "Stop and read"
 
+#: app/utils/billing/cancel-request-labels.ts:15
+msgid "Stop billing for the locations you choose. The rest stays as it is."
+msgstr "Stop billing for the locations you choose. The rest stays as it is."
+
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:168
 msgid "Stop generation"
 msgstr ""
@@ -54072,6 +54242,7 @@ msgid "support"
 msgstr "support"
 
 #: app/routes/_app+/$orgSlug_+/support.tsx:187
+#: app/utils/billing/cancel-request-labels.ts:49
 msgid "Support"
 msgstr "Support"
 
@@ -54640,6 +54811,10 @@ msgstr "Take snapshot"
 msgid "Take the value from"
 msgstr "Take the value from"
 
+#: app/components/billing/cancel-request-form.tsx:243
+msgid "Take your data with you first"
+msgstr "Take your data with you first"
+
 #: app/utils/inventory/starter-lists.ts:309
 msgid "Takeaway boxes"
 msgstr "Takeaway boxes"
@@ -54952,6 +55127,10 @@ msgstr "Tell us more about your restaurant"
 #: app/components/help/help-dialog.tsx:87
 msgid "Tell us what you need. We already have the page you are on, so you do not have to explain where you were."
 msgstr "Tell us what you need. We already have the page you are on, so you do not have to explain where you were."
+
+#: app/routes/_app+/$orgSlug_+/settings+/billing_.cancel.tsx:157
+msgid "Tell us what you want to change and why. This is a request: it takes effect at the end of your billing period."
+msgstr "Tell us what you want to change and why. This is a request: it takes effect at the end of your billing period."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:110
 msgid "Tell us why and when. You confirm on the next step."
@@ -55309,7 +55488,7 @@ msgstr "Thank you, confirmed"
 msgid "Thank you!"
 msgstr "Thank you!"
 
-#: app/components/billing/past-due-card.tsx:231
+#: app/components/billing/past-due-card.tsx:232
 msgid "Thank you. Your subscription is paid up."
 msgstr "Thank you. Your subscription is paid up."
 
@@ -56217,7 +56396,7 @@ msgstr "The card on file was declined. Update your card now so you do not lose t
 msgid "The card was declined."
 msgstr "The card was declined."
 
-#: app/components/billing/past-due-card.tsx:238
+#: app/components/billing/past-due-card.tsx:239
 msgid "The card was declined. Update your payment method, then try again."
 msgstr "The card was declined. Update your payment method, then try again."
 
@@ -57354,7 +57533,7 @@ msgstr "The path of a PNG, JPEG or WebP image up to 2 MB."
 msgid "The path on your old site that visitors or search engines request."
 msgstr "The path on your old site that visitors or search engines request."
 
-#: app/components/billing/past-due-card.tsx:252
+#: app/components/billing/past-due-card.tsx:253
 msgid "The payment did not go through"
 msgstr "The payment did not go through"
 
@@ -57526,6 +57705,10 @@ msgstr "The previous photo of a replaced dish stays in your media library."
 #: app/components/website/domain/domain-ui.tsx:62
 msgid "The price changed. Review it and try again."
 msgstr "The price changed. Review it and try again."
+
+#: app/utils/billing/cancel-request-labels.ts:37
+msgid "The price is too high for us"
+msgstr "The price is too high for us"
 
 #: app/components/menu/menu-review-card.tsx:93
 msgid "The prices differ. Check them before you accept."
@@ -58295,6 +58478,10 @@ msgstr "There are two special entries for {date}"
 msgid "There is already a request waiting on this shift."
 msgstr "There is already a request waiting on this shift."
 
+#: app/utils/billing/cancel-request-labels.ts:56
+msgid "There is no active subscription to change."
+msgstr "There is no active subscription to change."
+
 #: app/components/orders/catering-details.tsx:19
 msgid "There is no balance waiting right now."
 msgstr "There is no balance waiting right now."
@@ -58326,6 +58513,10 @@ msgstr "There is no Net sales column."
 #: app/components/dashboard/share-dashboard-dialog.tsx:158
 msgid "There is no one else in this organization to share with."
 msgstr "There is no one else in this organization to share with."
+
+#: app/utils/billing/cancel-request-labels.ts:60
+msgid "There is no smaller plan to move to."
+msgstr "There is no smaller plan to move to."
 
 #: app/utils/staffing/schedule-errors.ts:18
 msgid "There is nothing new to publish this week."
@@ -60018,7 +60209,7 @@ msgstr "This store passes all menu and location checks."
 msgid "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
 msgstr "This submission doesn’t include an email address. You can review its details, but an email reply isn’t available."
 
-#: app/components/billing/past-due-card.tsx:244
+#: app/components/billing/past-due-card.tsx:245
 msgid "This subscription is not past due."
 msgstr "This subscription is not past due."
 
@@ -60053,6 +60244,10 @@ msgstr "This tablet was disconnected"
 #: app/routes/_app+/$orgSlug_+/settings+/locations.tags.tsx:545
 msgid "This tag name is not valid."
 msgstr "This tag name is not valid."
+
+#: app/components/billing/cancel-request-form.tsx:265
+msgid "This takes effect on {cutoff}, the end of your billing period. Until then everything keeps working and you are not charged anything extra."
+msgstr "This takes effect on {cutoff}, the end of your billing period. Until then everything keeps working and you are not charged anything extra."
 
 #: app/utils/staffing/schedule-errors.ts:37
 msgid "This takes someone over an hour limit. Say why you are going ahead to continue."
@@ -61529,11 +61724,11 @@ msgstr "Try different filters."
 msgid "Try two wordings of one section on a published page. Visitors are split evenly and keep their version. The winner is the one that gets more orders per visit."
 msgstr "Try two wordings of one section on a published page. Visitors are split evenly and keep their version. The winner is the one that gets more orders per visit."
 
-#: app/components/billing/past-due-card.tsx:215
+#: app/components/billing/past-due-card.tsx:216
 msgid "Trying your payment method"
 msgstr "Trying your payment method"
 
-#: app/components/billing/past-due-card.tsx:143
+#: app/components/billing/past-due-card.tsx:141
 msgid "Trying…"
 msgstr "Trying…"
 
@@ -62368,7 +62563,7 @@ msgstr "Unpaid break (minutes)"
 msgid "Unpaid break taken off"
 msgstr "Unpaid break taken off"
 
-#: app/components/billing/past-due-card.tsx:134
+#: app/components/billing/past-due-card.tsx:132
 msgid "Unpaid invoice"
 msgstr "Unpaid invoice"
 
@@ -62686,7 +62881,7 @@ msgstr ""
 msgid "Update organization name, slug, and general preferences."
 msgstr "Update organization name, slug, and general preferences."
 
-#: app/components/billing/past-due-card.tsx:200
+#: app/components/billing/past-due-card.tsx:201
 msgid "Update payment method"
 msgstr "Update payment method"
 
@@ -64053,7 +64248,7 @@ msgstr "View team notes"
 msgid "View team schedule"
 msgstr "View team schedule"
 
-#: app/components/billing/past-due-card.tsx:210
+#: app/components/billing/past-due-card.tsx:211
 msgid "View the invoice"
 msgstr "View the invoice"
 
@@ -64664,7 +64859,7 @@ msgstr "We check pending domains every 15 minutes and email you when one goes li
 msgid "We could not approve this print"
 msgstr "We could not approve this print"
 
-#: app/components/billing/past-due-card.tsx:110
+#: app/components/billing/past-due-card.tsx:108
 msgid "We could not charge your payment method for your subscription. Your plan stays on while you fix it."
 msgstr "We could not charge your payment method for your subscription. Your plan stays on while you fix it."
 
@@ -64803,7 +64998,7 @@ msgstr "We could not load plan pricing right now. You can still manage an existi
 msgid "We could not load the ingredients. Check your connection and try again."
 msgstr "We could not load the ingredients. Check your connection and try again."
 
-#: app/components/billing/past-due-card.tsx:149
+#: app/components/billing/past-due-card.tsx:147
 msgid "We could not load the invoice right now. You can still update your payment method."
 msgstr "We could not load the invoice right now. You can still update your payment method."
 
@@ -64859,7 +65054,7 @@ msgstr "We could not price this order"
 msgid "We could not put it back. Try again in a moment."
 msgstr "We could not put it back. Try again in a moment."
 
-#: app/components/billing/past-due-card.tsx:246
+#: app/components/billing/past-due-card.tsx:247
 msgid "We could not reach the payment provider. Try again shortly."
 msgstr "We could not reach the payment provider. Try again shortly."
 
@@ -64882,6 +65077,14 @@ msgstr "We could not read that file."
 #: app/components/inventory/invoice-inbox-panel.tsx:479
 msgid "We could not read this invoice."
 msgstr "We could not read this invoice."
+
+#: app/components/billing/cancel-request-form.tsx:271
+msgid "We could not read your billing date right now, so we cannot send the request. Try again in a moment."
+msgstr "We could not read your billing date right now, so we cannot send the request. Try again in a moment."
+
+#: app/utils/billing/cancel-request-labels.ts:57
+msgid "We could not read your billing date right now. Try again in a moment."
+msgstr "We could not read your billing date right now. Try again in a moment."
 
 #: app/routes/_app+/$orgSlug_+/settings+/legal.tsx:235
 msgid "We could not record your acceptance."
@@ -64922,6 +65125,10 @@ msgstr "We could not send that. Check the message and try again."
 #: app/components/website/domain/domain-ui.tsx:57
 msgid "We could not send the email. Try again."
 msgstr "We could not send the email. Try again."
+
+#: app/components/billing/cancel-request-form.tsx:116
+msgid "We could not send the request"
+msgstr "We could not send the request"
 
 #: app/components/website/domain/domain-ui.tsx:44
 msgid "We could not set the domain up. Please try again in a moment."
@@ -65633,6 +65840,10 @@ msgstr "What will change"
 msgid "What would you like to collect?"
 msgstr "What would you like to collect?"
 
+#: app/components/billing/cancel-request-form.tsx:126
+msgid "What would you like to do?"
+msgstr "What would you like to do?"
+
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:52
 msgid "What would you like to know?"
 msgstr ""
@@ -66066,6 +66277,10 @@ msgstr "Which items"
 msgid "Which items are discounted first"
 msgstr "Which items are discounted first"
 
+#: app/components/billing/cancel-request-form.tsx:151
+msgid "Which locations?"
+msgstr "Which locations?"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1307
 msgid "Which one"
 msgstr "Which one"
@@ -66303,6 +66518,10 @@ msgstr "Why is it cancelled?"
 msgid "Why is the second count skipped?"
 msgstr "Why is the second count skipped?"
 
+#: app/components/billing/cancel-request-form.tsx:175
+msgid "Why?"
+msgstr "Why?"
+
 #: app/components/inventory/review-order-screen.tsx:1321
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:619
 msgid "Why? (optional)"
@@ -66377,6 +66596,14 @@ msgstr "With this conversion an amount would round to nothing. Check the numbers
 #: app/components/pos/zatca-settings.tsx:420
 msgid "With warnings {withWarnings}"
 msgstr "With warnings {withWarnings}"
+
+#: app/components/billing/cancel-request-form.tsx:82
+msgid "Withdraw it on the billing page if you want to send a new one."
+msgstr "Withdraw it on the billing page if you want to send a new one."
+
+#: app/components/billing/change-request-card.tsx:100
+msgid "Withdraw request"
+msgstr "Withdraw request"
 
 #: app/components/hiring/applicant-labels.ts:57
 msgid "Withdrew their application"
@@ -66817,6 +67044,14 @@ msgstr "You already have a live domain"
 msgid "You already have a lot of requests waiting. Wait for a manager to answer, or cancel one."
 msgstr "You already have a lot of requests waiting. Wait for a manager to answer, or cancel one."
 
+#: app/components/billing/cancel-request-form.tsx:79
+msgid "You already have a request open"
+msgstr "You already have a request open"
+
+#: app/utils/billing/cancel-request-labels.ts:58
+msgid "You already have a request open. Withdraw it first to send a new one."
+msgstr "You already have a request open. Withdraw it first to send a new one."
+
 #: ../../packages/marketing/src/components/email/email-templates.tsx:51
 msgid "You already have a template with that name."
 msgstr "You already have a template with that name."
@@ -67013,7 +67248,7 @@ msgstr "You can submit evidence once. After submission, this page becomes read-o
 msgid "You can test up to 20 dishes at once. End one first."
 msgstr "You can test up to 20 dishes at once. End one first."
 
-#: app/components/billing/past-due-card.tsx:242
+#: app/components/billing/past-due-card.tsx:243
 msgid "You can try again in about a minute."
 msgstr "You can try again in about a minute."
 
@@ -67941,6 +68176,10 @@ msgstr "Your remaining setup steps."
 #: app/routes/_app+/$orgSlug_+/support.tsx:308
 msgid "Your reply"
 msgstr "Your reply"
+
+#: app/components/billing/change-request-card.tsx:70
+msgid "Your request is with us"
+msgstr "Your request is with us"
 
 #: app/components/help/help-dialog.tsx:195
 msgid "Your restaurant and the place you were working in"
