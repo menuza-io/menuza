@@ -45,6 +45,12 @@ export type AlertSubject =
 			dueAtMs: number
 	  }
 	| { kind: 'orders_payment_review'; orderNumber: string }
+	| {
+			kind: 'orders_problem'
+			orderNumber: string
+			problemKind: 'missing_item' | 'wrong_item' | 'late' | 'quality' | 'other'
+			unanswered: boolean
+	  }
 	| { kind: 'ordering_paused_long'; mode: 'paused' | 'busy'; hours: number }
 	| {
 			kind: 'station_offline'
@@ -99,6 +105,18 @@ export const alertSubjectSchema = z.discriminatedUnion('kind', [
 	z.strictObject({
 		kind: z.literal('orders_payment_review'),
 		orderNumber: orderNo,
+	}),
+	z.strictObject({
+		kind: z.literal('orders_problem'),
+		orderNumber: orderNo,
+		problemKind: z.enum([
+			'missing_item',
+			'wrong_item',
+			'late',
+			'quality',
+			'other',
+		]),
+		unanswered: z.boolean(),
 	}),
 	z.strictObject({
 		kind: z.literal('ordering_paused_long'),
@@ -185,6 +203,11 @@ type Words = {
 	large: string
 	test: string
 	openOrders: string
+	openProblems: string
+	problemKinds: Record<
+		'missing_item' | 'wrong_item' | 'late' | 'quality' | 'other',
+		string
+	>
 	seeTablets: string
 	settingsNote: string
 }
@@ -201,6 +224,14 @@ const EN: Words = {
 	large: 'Large order',
 	test: 'TEST',
 	openOrders: 'Open orders',
+	openProblems: 'Open problems',
+	problemKinds: {
+		missing_item: 'Missing item',
+		wrong_item: 'Wrong item',
+		late: 'Late',
+		quality: 'Quality',
+		other: 'Other',
+	},
 	seeTablets: 'See tablets',
 	settingsNote: 'You can change these alerts in your notification settings.',
 }
@@ -217,6 +248,14 @@ const AR: Words = {
 	large: 'طلب كبير',
 	test: 'تجريبي',
 	openOrders: 'افتح الطلبات',
+	openProblems: 'افتح المشكلات',
+	problemKinds: {
+		missing_item: 'صنف ناقص',
+		wrong_item: 'صنف خاطئ',
+		late: 'تأخير',
+		quality: 'الجودة',
+		other: 'أخرى',
+	},
 	seeTablets: 'عرض الأجهزة',
 	settingsNote: 'يمكنك تغيير هذه التنبيهات من إعدادات الإشعارات.',
 }
@@ -239,6 +278,7 @@ export function alertSettingsNote(locale: AlertLocale): string {
 
 /** Where an alert leads, relative to `/<orgSlug>`. */
 export function alertPath(kind: OrderAlertKind): string {
+	if (kind === 'orders_problem') return '/orders/problems'
 	return kind === 'station_offline' ? '/settings/terminals' : '/orders'
 }
 
@@ -385,6 +425,34 @@ export function alertCopy(subject: AlertSubject, context: Context): AlertCopy {
 				headline: title,
 				detail: body,
 				actionLabel: w.openOrders,
+			}
+		}
+		case 'orders_problem': {
+			const what = w.problemKinds[subject.problemKind]
+			const title = subject.unanswered
+				? ar
+					? `بلاغ عن الطلب ${subject.orderNumber} بلا رد`
+					: `A report on order ${subject.orderNumber} is waiting for an answer`
+				: ar
+					? `بلاغ جديد عن الطلب ${subject.orderNumber}`
+					: `New problem report on order ${subject.orderNumber}`
+			const body = join([
+				what,
+				subject.unanswered
+					? ar
+						? 'لم يُرد عليه منذ 24 ساعة'
+						: 'Unanswered for 24 hours'
+					: null,
+				place,
+			])
+			return {
+				title: `${testTag}${title}`,
+				body,
+				eyebrow: ar ? 'الطلبات' : 'Orders',
+				subject: place ? `${title} ${w.at} ${place}` : title,
+				headline: title,
+				detail: body,
+				actionLabel: w.openProblems,
 			}
 		}
 		case 'ordering_paused_long': {

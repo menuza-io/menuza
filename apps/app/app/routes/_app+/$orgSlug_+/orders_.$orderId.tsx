@@ -23,6 +23,8 @@ import {
 	OrderDetail,
 } from '#app/components/orders/order-detail.tsx'
 import { OrderActionsPanels } from '#app/components/orders/order-actions-panels.tsx'
+import { OrderProblemsPanel } from '#app/components/orders/order-problems.tsx'
+import { ORDER_PROBLEMS_FLAG } from '@repo/common/order-problems'
 import { useOrdersClient } from '#app/hooks/use-orders-client.ts'
 import { requireMenuRead } from '#app/utils/menu/access.server.ts'
 import {
@@ -107,6 +109,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					organizationId: organization.id,
 				})) === true,
 			isUsNode: (organization.dataRegion ?? 'us') === 'us',
+			// Guest order problem reports (#191), shown beside the order while on.
+			problemReportsEnabled:
+				(await getFeatureFlag(ORDER_PROBLEMS_FLAG, {
+					organizationId: organization.id,
+				})) === true,
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)
@@ -126,6 +133,7 @@ export default function OrderPage() {
 		payLinksEnabled,
 		orderEditsEnabled,
 		isUsNode,
+		problemReportsEnabled,
 	} = useLoaderData<typeof loader>()
 	const { _ } = useLingui()
 	const request = useOrdersClient(orgSlug)
@@ -375,6 +383,18 @@ export default function OrderPage() {
 				onReload={() => void load()}
 				backHref={backHref}
 			/>
+			{problemReportsEnabled ? (
+				<div className="mt-6">
+					<OrderProblemsPanel
+						orgSlug={orgSlug}
+						orderId={order.id}
+						canWrite={canWrite}
+						canRefund={canRefund}
+						request={request}
+						onChanged={() => void load()}
+					/>
+				</div>
+			) : null}
 			<div className="mt-6">
 				<OrderActionsPanels
 					order={order}

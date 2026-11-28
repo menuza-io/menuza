@@ -87,6 +87,10 @@ msgstr "{count} 分钟"
 msgid "{count} minutes late"
 msgstr "晚到 {count} 分钟"
 
+#: src/lib/ordering-labels.ts:289
+msgid "{count} ordered"
+msgstr "已点 {count} 份"
+
 #: src/lib/loyalty/labels.ts:300
 msgid "{credited} completed, {pending} pending, {points} earned"
 msgstr "已完成 {credited}，待处理 {pending}，已获 {points}"
@@ -310,6 +314,10 @@ msgstr "来自餐厅的备注"
 msgid "A payment for this tab is already on its way. Wait a moment, then check your tab."
 msgstr "此账单已有一笔支付正在进行。请稍候，然后查看您的账单。"
 
+#: src/lib/ordering-labels.ts:312
+msgid "A problem can't be reported on this order here."
+msgstr "无法在此为该订单反馈问题。"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "A team member is settling this tab. Please ask them for help."
 msgstr "工作人员正在为此账单结账，请向工作人员寻求帮助。"
@@ -383,6 +391,10 @@ msgstr "请先添加我们可配送的地址，再提交订单。"
 msgid "Add a note"
 msgstr "添加留言"
 
+#: src/lib/ordering-labels.ts:292
+msgid "Add a photo (optional)"
+msgstr "添加照片（可选）"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Add a tip"
 msgstr "添加小费"
@@ -438,7 +450,7 @@ msgstr "加入收藏"
 msgid "Add to order"
 msgstr "加入订单"
 
-#: src/lib/ordering-labels.ts:282
+#: src/lib/ordering-labels.ts:347
 msgid "Address saved"
 msgstr "地址已保存"
 
@@ -519,6 +531,10 @@ msgstr "现需支付金额"
 msgid "Amount due: {amount}"
 msgstr "应付金额:{amount}"
 
+#: src/lib/ordering-labels.ts:282
+msgid "An item is missing"
+msgstr "缺少一项商品"
+
 #: src/components/ConsentBanner.astro.ts:3
 msgid "Analytics: help us count visits and see what works"
 msgstr "分析：帮助我们统计访问量并了解哪些内容有效"
@@ -535,6 +551,10 @@ msgstr "任何饮食偏好、酱料另放等"
 #: src/lib/gift-cards/labels.ts:38
 msgid "Any location"
 msgstr "任意门店"
+
+#: src/lib/ordering-labels.ts:290
+msgid "Anything else we should know?"
+msgstr "还有其他需要我们了解的吗？"
 
 #: src/lib/loyalty/labels.ts:326
 msgid "App"
@@ -773,6 +793,7 @@ msgid "Call the restaurant"
 msgstr "致电餐厅"
 
 #: src/lib/guest-account-labels.ts:37
+#: src/lib/ordering-labels.ts:296
 #: src/pages/menu/success.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "Cancel"
@@ -1056,6 +1077,10 @@ msgstr "至少选择 1 个选项"
 msgid "Choose at least one dish."
 msgstr "请至少选择一道菜品。"
 
+#: src/lib/ordering-labels.ts:306
+msgid "Choose at least one item."
+msgstr "请至少选择一项商品。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Choose at least one location."
 msgstr "请至少选择一家门店。"
@@ -1266,6 +1291,10 @@ msgstr "优惠码"
 msgid "Coupon code removed. Total {total}."
 msgstr "已移除优惠码。合计 {total}。"
 
+#: src/lib/ordering-labels.ts:322
+msgid "Credit of {amount}: use code {code} on your next order before {date}."
+msgstr "{amount} 的优惠额度：请在 {date} 前下一单时使用优惠码 {code}。"
+
 #: src/lib/loyalty/labels.ts:260
 msgid "Current tier: {tier}"
 msgstr "当前等级：{tier}"
@@ -1327,7 +1356,7 @@ msgstr "已拒绝：{reward}。"
 msgid "Decrease quantity"
 msgstr "减少数量"
 
-#: src/lib/ordering-labels.ts:273
+#: src/lib/ordering-labels.ts:338
 msgid "Default"
 msgstr "默认"
 
@@ -1845,7 +1874,7 @@ msgstr "全名"
 msgid "Full time"
 msgstr "全职"
 
-#: src/lib/ordering-labels.ts:279
+#: src/lib/ordering-labels.ts:344
 msgid "Gate code or delivery note"
 msgstr "门禁码或配送备注"
 
@@ -1985,11 +2014,11 @@ msgstr "隐藏详情"
 msgid "History"
 msgstr "记录"
 
-#: src/lib/ordering-labels.ts:277
+#: src/lib/ordering-labels.ts:342
 msgid "Home"
 msgstr "家"
 
-#: src/lib/ordering-labels.ts:276
+#: src/lib/ordering-labels.ts:341
 msgid "Home, Work…"
 msgstr "家、公司…"
 
@@ -2033,6 +2062,10 @@ msgstr "我正在赶来"
 #: src/lib/reservations/labels.ts:191
 msgid "I am running late"
 msgstr "我会晚到"
+
+#: src/lib/ordering-labels.ts:283
+msgid "I got the wrong item"
+msgstr "我收到了错误的商品"
 
 #: src/lib/reservations/labels.ts:310
 msgid "If a table opens up, we will contact you. You can cancel this request at any time."
@@ -2137,6 +2170,10 @@ msgstr "随时随地加入 {name} 的候位名单。此页面会显示您的排�
 #: src/lib/reservations/labels.ts:221
 msgid "Joining…"
 msgstr "正在加入…"
+
+#: src/lib/ordering-labels.ts:293
+msgid "JPEG, PNG or WebP, up to 5 MB."
+msgstr "JPEG、PNG 或 WebP，最大 5 MB。"
 
 #: src/lib/reservations/labels.ts:280
 msgid "Keep my place"
@@ -2378,12 +2415,16 @@ msgstr "最受欢迎"
 msgid "Msg and data rates may apply. Reply STOP to opt out."
 msgstr "可能产生短信和数据费用。回复 STOP 即可退订。"
 
+#: src/lib/ordering-labels.ts:284
+msgid "My order was late"
+msgstr "我的订单迟到了"
+
 #: src/lib/reservations/labels.ts:219
 #: src/pages/profile.astro.ts:3
 msgid "Name"
 msgstr "姓名"
 
-#: src/lib/ordering-labels.ts:275
+#: src/lib/ordering-labels.ts:340
 msgid "Name this address"
 msgstr "为此地址命名"
 
@@ -2860,6 +2901,10 @@ msgstr "订单类型"
 msgid "Order window"
 msgstr "下单时间窗口"
 
+#: src/lib/ordering-labels.ts:325
+msgid "Order with your credit"
+msgstr "使用优惠额度下单"
+
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Ordering at the table is not available right now."
 msgstr "目前无法在桌边点餐。"
@@ -3150,6 +3195,10 @@ msgstr "电话号码"
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "目前无法更改电话号码。"
+
+#: src/lib/ordering-labels.ts:330
+msgid "Photo attached"
+msgstr "已附照片"
 
 #: src/lib/reservations/labels.ts:480
 msgid "Photo of {name}"
@@ -3492,6 +3541,7 @@ msgstr "退款处理中"
 msgid "Refunded"
 msgstr "已退款"
 
+#: src/lib/ordering-labels.ts:318
 #: src/pages/menu/success.astro.ts:3
 msgid "Refunded {amount}"
 msgstr "已退款 {amount}"
@@ -3520,6 +3570,10 @@ msgstr "取消收藏"
 #: src/lib/guest-account-labels.ts:35
 msgid "Remove this address?"
 msgstr "要移除此地址吗？"
+
+#: src/lib/ordering-labels.ts:276
+msgid "Report a problem"
+msgstr "反馈问题"
 
 #: src/lib/catering/labels.ts:54
 msgid "Request a quote"
@@ -3628,7 +3682,7 @@ msgstr "优惠价"
 msgid "Save"
 msgstr "保存"
 
-#: src/lib/ordering-labels.ts:280
+#: src/lib/ordering-labels.ts:345
 msgid "Save address"
 msgstr "保存地址"
 
@@ -3645,11 +3699,11 @@ msgstr "保存更改"
 msgid "Save my choices"
 msgstr "保存我的选择"
 
-#: src/lib/ordering-labels.ts:274
+#: src/lib/ordering-labels.ts:339
 msgid "Save this address"
 msgstr "保存此地址"
 
-#: src/lib/ordering-labels.ts:272
+#: src/lib/ordering-labels.ts:337
 msgid "Saved addresses"
 msgstr "已保存的地址"
 
@@ -3658,7 +3712,7 @@ msgstr "已保存的地址"
 msgid "Saving..."
 msgstr "保存中..."
 
-#: src/lib/ordering-labels.ts:281
+#: src/lib/ordering-labels.ts:346
 msgid "Saving…"
 msgstr "正在保存…"
 
@@ -3732,6 +3786,10 @@ msgstr "提交申请"
 msgid "Send Code"
 msgstr "发送验证码"
 
+#: src/lib/ordering-labels.ts:294
+msgid "Send report"
+msgstr "提交反馈"
+
 #: src/lib/reservations/labels.ts:139
 msgid "Send request"
 msgstr "发送请求"
@@ -3751,6 +3809,7 @@ msgid "Sending..."
 msgstr "发送中..."
 
 #: src/components/ordering/TableTab.astro.ts:3
+#: src/lib/ordering-labels.ts:295
 #: src/lib/reservations/labels.ts:296
 msgid "Sending…"
 msgstr "正在发送…"
@@ -3835,7 +3894,7 @@ msgstr "出示会员码不会消耗积分。每次使用奖励都需您本人同
 msgid "Sign in"
 msgstr "登录"
 
-#: src/lib/ordering-labels.ts:289
+#: src/lib/ordering-labels.ts:354
 msgid "Sign in again to use your saved addresses."
 msgstr "请重新登录以使用已保存的地址。"
 
@@ -3926,6 +3985,10 @@ msgstr "部分价格已变动。您的购物车显示当前价格。"
 msgid "Someone in my party has an allergy (add details in the notes)"
 msgstr "我的同行者中有人过敏（请在备注中说明）"
 
+#: src/lib/ordering-labels.ts:286
+msgid "Something else"
+msgstr "其他问题"
+
 #: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Something in your order isn't available in that amount today. Please go back to the menu to change your order."
@@ -3948,6 +4011,10 @@ msgstr "出了点问题，请重试。"
 #: src/components/SitePopup.astro.ts:3
 msgid "Something went wrong. Try again."
 msgstr "出了点问题，请重试。"
+
+#: src/lib/ordering-labels.ts:275
+msgid "Something wrong with your order?"
+msgstr "订单有问题？"
 
 #: src/pages/menu.astro.ts:3
 msgid "Special instructions"
@@ -4065,6 +4132,10 @@ msgstr "税费"
 msgid "Tax, tips and delivery fees do not count toward earning."
 msgstr "税费、小费和配送费不计入累积。"
 
+#: src/lib/ordering-labels.ts:278
+msgid "Tell the restaurant what went wrong. They answer here, and by email or text if you gave them your details."
+msgstr "请告诉餐厅出了什么问题。餐厅会在此回复；如果您留了联系方式，也会通过邮件或短信回复。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Tell us a little about yourself. It takes a couple of minutes."
 msgstr "请简单介绍一下自己，只需几分钟。"
@@ -4153,6 +4224,10 @@ msgstr "谢谢。餐厅已收到您的付款。"
 msgid "Thank you. We received your request and will send you a quote by email."
 msgstr "谢谢。我们已收到您的申请,并会通过邮件发送报价。"
 
+#: src/lib/ordering-labels.ts:298
+msgid "Thank you. We sent your report. The restaurant's answer will show here."
+msgstr "谢谢。我们已发送您的反馈，餐厅的回复将显示在此。"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
 msgstr "谢谢。您的申请已提交。如果合适，他们会与您联系。"
@@ -4211,6 +4286,14 @@ msgstr "该人数无法在线预订。"
 msgid "That party size needs a request. Please use the large-party option."
 msgstr "该人数需要提交请求，请使用大团体选项。"
 
+#: src/lib/ordering-labels.ts:305
+msgid "That photo is bigger than 5 MB."
+msgstr "该照片超过 5 MB。"
+
+#: src/lib/ordering-labels.ts:304
+msgid "That photo is not a JPEG, PNG or WebP picture."
+msgstr "该照片不是 JPEG、PNG 或 WebP 图片。"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "That pickup slot just filled up. Please choose a different time."
 msgstr "该取餐时段刚刚约满。请选择其他时间。"
@@ -4265,6 +4348,10 @@ msgstr "配送费已变化。请核对总额后重新下单。"
 #: src/lib/ordering-labels.ts:244
 msgid "The fee goes down as your order grows."
 msgstr "订单越大，费用越低。"
+
+#: src/lib/ordering-labels.ts:285
+msgid "The food was not right"
+msgstr "食物有问题"
 
 #: src/lib/gift-cards/labels.ts:95
 msgid "The gift card amount changed. Review the new total."
@@ -4346,6 +4433,10 @@ msgstr "付款未成功"
 msgid "The program is paused right now."
 msgstr "该计划目前已暂停。"
 
+#: src/lib/ordering-labels.ts:329
+msgid "The restaurant"
+msgstr "餐厅"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The restaurant accepted your order."
 msgstr "餐厅已接受您的订单。"
@@ -4353,6 +4444,10 @@ msgstr "餐厅已接受您的订单。"
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The restaurant asks for this once per tab."
 msgstr "每张账单餐厅只会询问一次。"
+
+#: src/lib/ordering-labels.ts:327
+msgid "The restaurant closed this report."
+msgstr "餐厅已关闭此反馈。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "The restaurant could not take your order"
@@ -4365,6 +4460,14 @@ msgstr "餐厅在该日期休息。"
 #: src/lib/reservations/labels.ts:521
 msgid "The restaurant is not taking requests for that date."
 msgstr "餐厅不接受该日期的请求。"
+
+#: src/lib/ordering-labels.ts:319
+msgid "The restaurant refunded the items."
+msgstr "餐厅已退还这些商品的款项。"
+
+#: src/lib/ordering-labels.ts:326
+msgid "The restaurant replied."
+msgstr "餐厅已回复。"
 
 #: src/lib/reservations/labels.ts:137
 msgid "The restaurant reviews large-party requests and replies to confirm."
@@ -4397,6 +4500,10 @@ msgstr "付款时间已过，餐桌已释放。"
 #: src/lib/reservations/labels.ts:414
 msgid "The time to pay ran out, or the booking was cancelled, and the table was released. You can book again."
 msgstr "付款时间已过或预订已取消，餐桌已释放。您可以重新预订。"
+
+#: src/lib/ordering-labels.ts:310
+msgid "The time to report a problem with this order has passed. Call the restaurant if you need help."
+msgstr "已超过反馈该订单问题的时限。如需帮助，请致电餐厅。"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "The total is now {amount}. Check it, then pay to continue."
@@ -4437,7 +4544,7 @@ msgstr "{name} 今日库存不足。请返回菜单修改订单。"
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "以下商品今日库存不足：{names}。请返回菜单修改订单。"
 
-#: src/lib/ordering-labels.ts:288
+#: src/lib/ordering-labels.ts:353
 msgid "This address is no longer saved."
 msgstr "此地址已不再保存。"
 
@@ -4610,6 +4717,10 @@ msgstr "此链接已失效"
 #: src/pages/menu/checkout.astro.ts:3
 msgid "This location is not available for ordering."
 msgstr "该门店暂不支持下单。"
+
+#: src/lib/ordering-labels.ts:314
+msgid "This order already has the most reports allowed. Call the restaurant if you need help."
+msgstr "该订单的反馈数量已达上限。如需帮助，请致电餐厅。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This order can't be cancelled here."
@@ -4798,6 +4909,7 @@ msgstr "尝试次数过多。请稍后重试。"
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "尝试次数过多，请稍候再试。"
 
+#: src/lib/ordering-labels.ts:308
 #: src/pages/menu/success.astro.ts:3
 msgid "Too many attempts. Try again in a moment."
 msgstr "尝试次数过多,请稍后再试。"
@@ -4892,6 +5004,10 @@ msgstr "每单最高优惠 {amount}"
 #: src/lib/ordering-labels.ts:78
 msgid "Up to {count}"
 msgstr "最多 {count} 项"
+
+#: src/lib/ordering-labels.ts:291
+msgid "Up to 1,000 characters."
+msgstr "最多 1000 个字符。"
 
 #: src/components/blocks/EventsBlock.astro.ts:3
 #: src/pages/events/[slug].astro.ts:3
@@ -5055,6 +5171,7 @@ msgstr "等待付款"
 msgid "Waiting for payment confirmation"
 msgstr "等待支付确认"
 
+#: src/lib/ordering-labels.ts:317
 #: src/pages/profile/orders.astro.ts:3
 msgid "Waiting for the restaurant"
 msgstr "等待餐厅确认"
@@ -5074,6 +5191,10 @@ msgstr "下次想抢先一步？"
 #: src/lib/reservations/labels.ts:236
 msgid "Want to dine today? Join the waitlist and we will tell you when a table is ready."
 msgstr "想今天用餐？加入候位名单，餐位准备好时我们会通知您。"
+
+#: src/lib/ordering-labels.ts:300
+msgid "We added this to your open report."
+msgstr "我们已将此内容添加到您尚未处理的反馈中。"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "We applied a better discount instead of this code."
@@ -5234,7 +5355,7 @@ msgstr "无法恢复您的购物车。"
 msgid "We couldn't save that. Try again."
 msgstr "无法保存，请重试。"
 
-#: src/lib/ordering-labels.ts:286
+#: src/lib/ordering-labels.ts:351
 msgid "We couldn't save this address. Try again."
 msgstr "无法保存此地址，请重试。"
 
@@ -5245,6 +5366,10 @@ msgstr "无法发送，请稍后再试。"
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't send your refund automatically. Please call the restaurant."
 msgstr "我们无法自动发送您的退款。请致电餐厅。"
+
+#: src/lib/ordering-labels.ts:307
+msgid "We couldn't send your report. Please try again."
+msgstr "无法发送您的反馈，请重试。"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "We couldn't start payment. Please try again."
@@ -5270,7 +5395,7 @@ msgstr "此地址可配送"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "我们未能及时收到您的回复。您可以重新加入候位名单。"
 
-#: src/lib/ordering-labels.ts:287
+#: src/lib/ordering-labels.ts:352
 msgid "We don't deliver here right now"
 msgstr "目前不配送到这里"
 
@@ -5413,6 +5538,10 @@ msgstr "欢迎奖励已退回"
 msgid "Welcome! {points} added"
 msgstr "欢迎！已添加 {points}"
 
+#: src/lib/ordering-labels.ts:280
+msgid "What went wrong?"
+msgstr "出了什么问题？"
+
 #: src/pages/events/index.astro.ts:3
 msgid "What's coming up at {name}"
 msgstr "{name}近期活动"
@@ -5459,11 +5588,15 @@ msgstr "你希望配送到的地方。每次下单时都会对照配送范围重
 msgid "Which dietary needs can you meet?"
 msgstr "你们能满足哪些饮食需求?"
 
+#: src/lib/ordering-labels.ts:288
+msgid "Which items?"
+msgstr "哪些商品？"
+
 #: src/lib/ordering-labels.ts:88
 msgid "Whole"
 msgstr "整份"
 
-#: src/lib/ordering-labels.ts:278
+#: src/lib/ordering-labels.ts:343
 msgid "Work"
 msgstr "公司"
 
@@ -5486,6 +5619,10 @@ msgstr "是,取消订单"
 #: src/lib/reservations/labels.ts:279
 msgid "Yes, leave"
 msgstr "是，退出"
+
+#: src/lib/ordering-labels.ts:328
+msgid "You"
+msgstr "您"
 
 #: src/lib/reservations/labels.ts:541
 msgid "You already have the most table alerts allowed for these contact details."
@@ -5523,7 +5660,7 @@ msgstr "您仍可下单自取。"
 msgid "You have {amount}"
 msgstr "您有 {amount}"
 
-#: src/lib/ordering-labels.ts:284
+#: src/lib/ordering-labels.ts:349
 msgid "You have 10 saved addresses. Remove one in your profile to add another."
 msgstr "你已保存 10 个地址。请在个人资料中移除一个后再添加。"
 
@@ -5787,6 +5924,14 @@ msgstr "您的资料"
 #: src/lib/loyalty/labels.ts:294
 msgid "Your referral code"
 msgstr "您的推荐码"
+
+#: src/lib/ordering-labels.ts:302
+msgid "Your report was sent, but the photo could not be added."
+msgstr "您的反馈已发送，但照片未能添加。"
+
+#: src/lib/ordering-labels.ts:316
+msgid "Your reports"
+msgstr "您的反馈"
 
 #: src/lib/reservations/labels.ts:315
 msgid "Your request was cancelled. We will not contact you about it."

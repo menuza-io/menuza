@@ -1,3 +1,8 @@
+import {
+	ORDER_PROBLEM_IDEMPOTENCY_KEY,
+	ORDER_PROBLEM_PHOTO_MAX_BYTES,
+	submitOrderProblemSchema,
+} from '@repo/common/order-problems'
 import { TEST_ORDER_HEADER } from '@repo/common/test-orders'
 import { Hono, type Context } from 'hono'
 import { ENV } from 'varlock/env'
@@ -63,6 +68,13 @@ import {
 	readGuestCancel,
 } from '../services/order-guest-cancel.ts'
 import { orderRefundGlance } from '../services/order-refund-service.ts'
+import {
+	attachProblemPhoto,
+	readGuestProblems,
+	submitGuestProblem,
+	type ProblemStorageAdapter,
+} from '../services/order-problems-service.ts'
+import { type HeicConverterAdapter } from '../lib/image-reencode.ts'
 import {
 	authorizeGuestOrder,
 	linkReceiptOrder,
@@ -1546,6 +1558,211 @@ publicOrderRoutes.post('/:id/cancel', async (c) => {
 		)
 		return c.json(
 			{ error: 'internal_error', message: 'We could not cancel this order.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// Order problem reports (#191): the guest says what was wrong, from the order
+// page, with the capability they already hold (receipt token or order link).
+// Every refusal of the capability is the uniform 404 of an unknown order.
+// ---------------------------------------------------------------------------
+
+const problemIdentitySchema = z.object({
+	slug: z.string().trim().min(1).max(100).optional(),
+	host: z.string().trim().min(1).max(253).optional(),
+})
+
+/** The JSON of a report is small: a note of 1,000 characters and a list of items. */
+const MAX_PROBLEM_BODY_BYTES = 20_000
+/** The photo upload may be this big (the 5 MB cap plus headroom for the wrapper). */
+const MAX_PROBLEM_PHOTO_REQUEST_BYTES =
+	ORDER_PROBLEM_PHOTO_MAX_BYTES + 64 * 1024
+
+export type OrderProblemRouteDeps = {
+	storage?: ProblemStorageAdapter
+	heicConverter?: HeicConverterAdapter
+}
+
+let problemRouteDeps: OrderProblemRouteDeps = {}
+
+/** Tests: swap the photo storage the guest routes write to. */
+export function setOrderProblemRouteDepsForTest(
+	deps: OrderProblemRouteDeps | null,
+) {
+	problemRouteDeps = deps ?? {}
+}
+
+publicOrderRoutes.get('/:id/problems', async (c) => {
+	const identity = problemIdentitySchema.safeParse(c.req.query())
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const orgId = organization.organization.id
+	try {
+		const access = await authorizeGuestOrder(orgId, c.req.param('id'), {
+			receiptToken: getBearerToken(c.req.header('Authorization')),
+			linkToken: readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER)),
+		})
+		if (!access.ok) return orderNotFoundResponse()
+		const limited = await limitGuestCancel(c, orgId, access.order.id, {
+			order: 'problemReadOrder',
+			address: 'problemReadAddress',
+		})
+		if (limited) return limited
+		return c.json(
+			await readGuestProblems(orgId, access.order),
+			200,
+			noStoreHeaders(),
+		)
+	} catch (error) {
+		console.error(
+			`Failed to read order problems for org ${orgId}:`,
+			errorLogFields(error),
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not load this order.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+publicOrderRoutes.post('/:id/problems', async (c) => {
+	const contentLength = Number(c.req.header('content-length') ?? 0)
+	if (contentLength > MAX_PROBLEM_BODY_BYTES) {
+		return c.json({ error: 'Payload too large' }, 413, noStoreHeaders())
+	}
+	const raw = (await c.req.json().catch(() => null)) as Record<
+		string,
+		unknown
+	> | null
+	if (!raw || typeof raw !== 'object') {
+		return c.json({ error: 'invalid_report' }, 400, noStoreHeaders())
+	}
+	const { slug, host, ...reportBody } = raw
+	const identity = problemIdentitySchema.safeParse({ slug, host })
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const orgId = organization.organization.id
+
+	const idempotencyKey = c.req.header('Idempotency-Key')?.trim() ?? ''
+	if (!ORDER_PROBLEM_IDEMPOTENCY_KEY.test(idempotencyKey)) {
+		return c.json(
+			{
+				error: 'idempotency_key_required',
+				message: 'An Idempotency-Key header is required.',
+			},
+			400,
+			noStoreHeaders(),
+		)
+	}
+	const report = submitOrderProblemSchema.safeParse(reportBody)
+	try {
+		// The capability first: a forged one is the uniform 404 whatever the body
+		// says, and spends nobody's budget.
+		const access = await authorizeGuestOrder(orgId, c.req.param('id'), {
+			receiptToken: getBearerToken(c.req.header('Authorization')),
+			linkToken: readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER)),
+		})
+		if (!access.ok) return orderNotFoundResponse()
+		const limited = await limitGuestCancel(c, orgId, access.order.id, {
+			order: 'problemOrder',
+			address: 'problemAddress',
+		})
+		if (limited) return limited
+		if (!report.success) {
+			return c.json(
+				{
+					error: 'invalid_report',
+					message: 'Say what went wrong and which items were affected.',
+				},
+				400,
+				noStoreHeaders(),
+			)
+		}
+		const result = await submitGuestProblem(orgId, access.order, {
+			request: report.data,
+			idempotencyKey,
+		})
+		if (!result.ok) return orderFailureResponse(result.failure)
+		const { replayed, ...data } = result.data
+		return c.json(data, replayed ? 200 : 201, {
+			...noStoreHeaders(),
+			...(replayed ? { 'Idempotent-Replayed': 'true' } : {}),
+		})
+	} catch (error) {
+		console.error(
+			`Failed to file an order problem for org ${orgId}:`,
+			errorLogFields(error),
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not send your report.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+publicOrderRoutes.post('/:id/problems/:problemId/photo', async (c) => {
+	const contentLength = Number(c.req.header('content-length') ?? 0)
+	if (contentLength > MAX_PROBLEM_PHOTO_REQUEST_BYTES) {
+		return c.json(
+			{ error: 'photo_too_large', message: 'The photo is too big.' },
+			413,
+			noStoreHeaders(),
+		)
+	}
+	// A photo is raw bytes, so the identity rides in the query string here.
+	const identity = problemIdentitySchema.safeParse(c.req.query())
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+	const orgId = organization.organization.id
+	try {
+		const access = await authorizeGuestOrder(orgId, c.req.param('id'), {
+			receiptToken: getBearerToken(c.req.header('Authorization')),
+			linkToken: readOrderLinkHeader(c.req.header(ORDER_LINK_HEADER)),
+		})
+		if (!access.ok) return orderNotFoundResponse()
+		const limited = await limitGuestCancel(c, orgId, access.order.id, {
+			order: 'problemOrder',
+			address: 'problemAddress',
+		})
+		if (limited) return limited
+		const bytes = new Uint8Array(await c.req.arrayBuffer())
+		if (bytes.byteLength > ORDER_PROBLEM_PHOTO_MAX_BYTES) {
+			return c.json(
+				{ error: 'photo_too_large', message: 'The photo is too big.' },
+				413,
+				noStoreHeaders(),
+			)
+		}
+		const result = await attachProblemPhoto(
+			orgId,
+			access.order,
+			c.req.param('problemId'),
+			bytes,
+			problemRouteDeps,
+		)
+		if (!result.ok) return orderFailureResponse(result.failure)
+		return c.json(result.data, 201, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to attach an order problem photo for org ${orgId}:`,
+			errorLogFields(error),
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not store the photo.' },
 			500,
 			noStoreHeaders(),
 		)

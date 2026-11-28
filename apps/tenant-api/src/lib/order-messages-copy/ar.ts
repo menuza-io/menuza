@@ -74,6 +74,7 @@ export const AR: OrderMessageCopy = {
 		arriving: 'يصل بين {from} و{to}',
 		arrivingAround: 'يصل نحو {time}',
 		viewOrder: 'عرض طلبك',
+		problemHint: 'هل هناك مشكلة في طلبك؟ أخبر المطعم من صفحة طلبك.',
 		trackInApp: 'تتبع هذا الطلب في التطبيق',
 		storeAppStore: 'نزّله من App Store',
 		storePlayStore: 'احصل عليه من Google Play',

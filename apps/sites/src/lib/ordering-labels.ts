@@ -266,6 +266,71 @@ export function buildTestOrderLabels(i18n: I18n) {
 	}
 }
 
+/**
+ * "Something wrong?" on the order page (#191): the guest's own words. Templates
+ * keep their `{name}` placeholders for the browser to fill.
+ */
+export function buildOrderProblemLabels(i18n: I18n) {
+	return {
+		heading: i18n._(msg`Something wrong with your order?`),
+		open: i18n._(msg`Report a problem`),
+		intro: i18n._(
+			msg`Tell the restaurant what went wrong. They answer here, and by email or text if you gave them your details.`,
+		),
+		kindLegend: i18n._(msg`What went wrong?`),
+		kinds: {
+			missing_item: i18n._(msg`An item is missing`),
+			wrong_item: i18n._(msg`I got the wrong item`),
+			late: i18n._(msg`My order was late`),
+			quality: i18n._(msg`The food was not right`),
+			other: i18n._(msg`Something else`),
+		},
+		itemsLegend: i18n._(msg`Which items?`),
+		itemQuantity: translate(i18n, msg`{count} ordered`, { count: '{count}' }),
+		noteLabel: i18n._(msg`Anything else we should know?`),
+		noteHint: i18n._(msg`Up to 1,000 characters.`),
+		photoLabel: i18n._(msg`Add a photo (optional)`),
+		photoHint: i18n._(msg`JPEG, PNG or WebP, up to 5 MB.`),
+		send: i18n._(msg`Send report`),
+		sending: i18n._(msg`Sending…`),
+		cancel: i18n._(msg`Cancel`),
+		sent: i18n._(
+			msg`Thank you. We sent your report. The restaurant's answer will show here.`,
+		),
+		added: i18n._(msg`We added this to your open report.`),
+		photoFailed: i18n._(
+			msg`Your report was sent, but the photo could not be added.`,
+		),
+		photoInvalid: i18n._(msg`That photo is not a JPEG, PNG or WebP picture.`),
+		photoTooBig: i18n._(msg`That photo is bigger than 5 MB.`),
+		needItems: i18n._(msg`Choose at least one item.`),
+		failed: i18n._(msg`We couldn't send your report. Please try again.`),
+		limited: i18n._(msg`Too many attempts. Try again in a moment.`),
+		windowClosed: i18n._(
+			msg`The time to report a problem with this order has passed. Call the restaurant if you need help.`,
+		),
+		notReportable: i18n._(msg`A problem can't be reported on this order here.`),
+		limitReached: i18n._(
+			msg`This order already has the most reports allowed. Call the restaurant if you need help.`,
+		),
+		yourReports: i18n._(msg`Your reports`),
+		waiting: i18n._(msg`Waiting for the restaurant`),
+		refunded: translate(i18n, msg`Refunded {amount}`, { amount: '{amount}' }),
+		refundedOpen: i18n._(msg`The restaurant refunded the items.`),
+		credit: translate(
+			i18n,
+			msg`Credit of {amount}: use code {code} on your next order before {date}.`,
+			{ amount: '{amount}', code: '{code}', date: '{date}' },
+		),
+		useCredit: i18n._(msg`Order with your credit`),
+		replied: i18n._(msg`The restaurant replied.`),
+		closed: i18n._(msg`The restaurant closed this report.`),
+		you: i18n._(msg`You`),
+		restaurant: i18n._(msg`The restaurant`),
+		photoAttached: i18n._(msg`Photo attached`),
+	}
+}
+
 /** Saved delivery addresses at checkout (#113). */
 export function buildSavedAddressLabels(i18n: I18n) {
 	return {

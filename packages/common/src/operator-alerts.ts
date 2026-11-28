@@ -30,6 +30,7 @@ export const ORDER_ALERT_KINDS = [
 	'orders_payment_review',
 	'ordering_paused_long',
 	'orders_large',
+	'orders_problem',
 	'station_offline',
 ] as const
 export type OrderAlertKind = (typeof ORDER_ALERT_KINDS)[number]
@@ -117,6 +118,9 @@ export const ORDER_ALERT_PUSH_CATEGORY: Record<OrderAlertKind, PushCategory> = {
 	orders_payment_review: 'payment_review',
 	ordering_paused_long: 'ordering_paused',
 	orders_large: 'large_orders',
+	// A guest's report about an order (#191) shares "orders waiting": it is
+	// something a person must answer, not a new sale.
+	orders_problem: 'orders_waiting',
 	station_offline: 'station_offline',
 }
 
@@ -274,6 +278,28 @@ export const largeOrderSoonEventSchema = z.strictObject({
 	dishCount: z.number().int().nonnegative().max(10_000),
 })
 
+/**
+ * A guest reported a problem with an order (#191), or one waited 24 hours for
+ * an answer. The kind of problem is a fixed word; the guest's note, photo and
+ * the items never leave the region.
+ */
+export const orderProblemEventSchema = z.strictObject({
+	kind: z.literal('order_problem'),
+	orgId,
+	eventId,
+	locationId,
+	orderNumber,
+	problemKind: z.enum([
+		'missing_item',
+		'wrong_item',
+		'late',
+		'quality',
+		'other',
+	]),
+	/** True for the reminder after 24 hours without an answer. */
+	unanswered: z.boolean(),
+})
+
 export const stationOfflineEventSchema = z.strictObject({
 	kind: z.literal('station_offline'),
 	orgId,
@@ -297,6 +323,7 @@ export const ordersNotifyEventSchema = z.discriminatedUnion('kind', [
 	ordersDueSoonEventSchema,
 	ordersPaymentReviewEventSchema,
 	largeOrderSoonEventSchema,
+	orderProblemEventSchema,
 	stationOfflineEventSchema,
 ])
 export type OrdersNotifyEvent = z.infer<typeof ordersNotifyEventSchema>

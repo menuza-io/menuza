@@ -84,6 +84,7 @@ import {
 } from '../services/cash-drawer-report-records.ts'
 import {
 	loadCancelledOrderRecords,
+	loadOrderProblemRecords,
 	loadOrderRefundRecords,
 	loadSalesRecords,
 	SALES_REPORT_MAX_ROWS,
@@ -185,6 +186,8 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'cancelled_orders',
 	'cash_drawer_shifts',
 	'cash_drawer_movements',
+	'order_problems',
+	'order_problem_dishes',
 	'item_pairs',
 	'modifier_sales',
 	'sold_out_history',
@@ -650,9 +653,16 @@ analyticsRoutes.post('/query', async (c) => {
 						? await loadOrderRefundRecords(salesCtx, loading)
 						: definition.subject === 'cancelled_orders'
 							? await loadCancelledOrderRecords(salesCtx, subject, loading)
-							: definition.subject === 'cash_drawer_shifts'
-								? await loadCashDrawerShiftRecords(cashCtx, loading)
-								: await loadCashDrawerMovementRecords(cashCtx, loading)
+							: definition.subject === 'order_problems' ||
+								  definition.subject === 'order_problem_dishes'
+								? await loadOrderProblemRecords(
+										salesCtx,
+										definition.subject,
+										loading,
+									)
+								: definition.subject === 'cash_drawer_shifts'
+									? await loadCashDrawerShiftRecords(cashCtx, loading)
+									: await loadCashDrawerMovementRecords(cashCtx, loading)
 		} catch (error) {
 			// A Drizzle error message quotes every bound value: never log it.
 			console.error('Sales report failed', describeStaffError(error))

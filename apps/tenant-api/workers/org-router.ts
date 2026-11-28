@@ -178,6 +178,18 @@ async function orgIdFromOrderIdentity(
 			slug: url.searchParams.get('slug') ?? undefined,
 			host: url.searchParams.get('host') ?? undefined,
 		}
+	} else if (
+		// A photo of an order problem report (#191) is raw image bytes: its
+		// identity rides in the query string, like a GET's.
+		!(request.headers.get('Content-Type') ?? '')
+			.toLowerCase()
+			.includes('json') &&
+		/^\/orders\/[^/]+\/problems\/[^/]+\/photo$/.test(url.pathname)
+	) {
+		identity = {
+			slug: url.searchParams.get('slug') ?? undefined,
+			host: url.searchParams.get('host') ?? undefined,
+		}
 	} else {
 		const body = await request
 			.clone()

@@ -694,6 +694,81 @@ describe('large orders (#300)', () => {
 	})
 })
 
+describe('guest order problem reports (#191)', () => {
+	function problem(
+		organizationId: string,
+		locationId: string,
+		patch: Record<string, unknown> = {},
+	) {
+		return {
+			kind: 'order_problem',
+			orgId: organizationId,
+			eventId: 'problem:abc',
+			locationId,
+			orderNumber: 'W-0042',
+			problemKind: 'missing_item',
+			unanswered: false,
+			...patch,
+		}
+	}
+
+	it('tells managers a guest reported a problem, with the kind and the order number only', async () => {
+		const { organization, user } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id, { push: true })
+		const location = await createLocation(organization.id)
+		await phone(user.id)
+		// In the bell and by email unless the member chose otherwise; a push is
+		// the member's own choice for this kind (it shares "orders waiting").
+		await prefer(user.id, organization.id, 'orders_waiting', { push: true })
+		const response = await call(problem(organization.id, location))
+		expect(await response.json()).toMatchObject({
+			inApp: 1,
+			emailed: 1,
+			pushed: 1,
+		})
+		const bell = await bellFor(user.id)
+		expect(bell.map((row) => row.type)).toEqual(['orders-problem'])
+		expect(push.sent[0]!.title).toBe('New problem report on order W-0042')
+		expect(push.sent[0]!.body).toContain('Missing item')
+		// Told once per event, even when the region sends it again.
+		await call(problem(organization.id, location))
+		expect(await bellFor(user.id)).toHaveLength(1)
+	})
+
+	it('says so when a report waited 24 hours, as its own alert', async () => {
+		const { organization, user } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id, { push: true })
+		const location = await createLocation(organization.id)
+		await phone(user.id)
+		await prefer(user.id, organization.id, 'orders_waiting', { push: true })
+		await call(
+			problem(organization.id, location, {
+				eventId: 'problem:abc:late',
+				unanswered: true,
+			}),
+		)
+		expect(push.sent[0]!.title).toBe(
+			'A report on order W-0042 is waiting for an answer',
+		)
+		expect(push.sent[0]!.body).toContain('Unanswered for 24 hours')
+	})
+
+	it('refuses an event that carries anything a guest wrote', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await turnOn(organization.id)
+		const location = await createLocation(organization.id)
+		const response = await call(
+			problem(organization.id, location, { note: 'the burger was cold' }),
+		)
+		expect(response.status).toBe(400)
+		expect(JSON.stringify(await response.json())).not.toContain('burger')
+		const odd = await call(
+			problem(organization.id, location, { problemKind: 'Sam is rude' }),
+		)
+		expect(odd.status).toBe(400)
+	})
+})
+
 describe('chosen recipients (#241)', () => {
 	async function recipient(
 		organizationId: string,

@@ -21,6 +21,8 @@ import {
 } from '@repo/reports'
 import { isValidTimeZone } from '@repo/reservations'
 import {
+	orderProblemReplies,
+	orderProblems,
 	posOrders,
 	posPayments,
 	qrTabRefunds,
@@ -115,7 +117,8 @@ function locationCondition(
 	column:
 		| typeof restaurantOrders.locationId
 		| typeof posOrders.locationId
-		| typeof qrTabs.locationId,
+		| typeof qrTabs.locationId
+		| typeof orderProblems.locationId,
 	locationIds: readonly string[] | null,
 ): SQL[] {
 	if (locationIds === null) return []
@@ -1282,4 +1285,145 @@ export async function loadCancelledOrderRecords(
 		}
 	}
 	return { records, truncated: web.truncated || pos.truncated }
+}
+
+/**
+ * Guest order problem reports (#191), one record per report
+ * (`order_problems`) or per dish a report named (`order_problem_dishes`).
+ * Counted by when the guest reported, never by the order's date. A record holds
+ * the type, the status, the amounts and the minutes to answer: the guest's note,
+ * photo and the words of the thread are never read, and an erased person's
+ * report keeps its figures because those columns are all that remains of it.
+ */
+export async function loadOrderProblemRecords(
+	ctx: SalesReportContext,
+	subject: 'order_problems' | 'order_problem_dishes',
+	definition: ReportDefinition,
+	maxRows = SALES_REPORT_MAX_ROWS,
+): Promise<LoadedRecords> {
+	if (noLocations(ctx)) return { records: [], truncated: false }
+	const { db, orgId, locationIds } = ctx
+	const window = windowOf(definition, ctx.now)
+	const loaded = keep(
+		await db
+			.select({
+				id: orderProblems.id,
+				kind: orderProblems.kind,
+				status: orderProblems.status,
+				resolution: orderProblems.resolution,
+				itemRefs: orderProblems.itemRefs,
+				refundCents: orderProblems.refundCents,
+				creditCents: orderProblems.creditCents,
+				createdAt: orderProblems.createdAt,
+				resolvedAt: orderProblems.resolvedAt,
+				locationId: orderProblems.locationId,
+				number: restaurantOrders.number,
+				locationName: restaurantOrders.locationName,
+				locationTimezone: restaurantOrders.locationTimezone,
+				pickupTimezone: restaurantOrders.pickupTimezone,
+				currency: restaurantOrders.currency,
+			})
+			.from(orderProblems)
+			.innerJoin(
+				restaurantOrders,
+				eq(restaurantOrders.id, orderProblems.orderId),
+			)
+			.where(
+				and(
+					eq(restaurantOrders.orgId, orgId),
+					...inWindow(sql`${orderProblems.createdAt}`, window, 1),
+					...locationCondition(orderProblems.locationId, locationIds),
+				),
+			)
+			.orderBy(desc(orderProblems.createdAt))
+			.limit(maxRows + 1),
+		maxRows,
+	)
+	const zones = new ZoneBook(
+		await loadLocationZones(db, [
+			...new Set(loaded.rows.map((row) => row.locationId)),
+		]),
+	)
+	for (const row of loaded.rows) {
+		zones.note(row.locationId, row.locationTimezone, row.pickupTimezone)
+	}
+	// The operator's first answer, for "minutes to answer": only its time.
+	const answeredAt = new Map<string, number>()
+	if (subject === 'order_problems') {
+		const ids = loaded.rows
+			.filter((row) => row.resolvedAt != null)
+			.map((row) => row.id)
+		const answers = await queryInChunks(ids, (chunk) =>
+			db
+				.select({
+					problemId: orderProblemReplies.problemId,
+					at: orderProblemReplies.createdAt,
+				})
+				.from(orderProblemReplies)
+				.where(
+					and(
+						inArray(orderProblemReplies.problemId, chunk),
+						eq(orderProblemReplies.authorKind, 'operator'),
+					),
+				),
+		)
+		for (const answer of answers) {
+			const was = answeredAt.get(answer.problemId)
+			if (was === undefined || answer.at < was) {
+				answeredAt.set(answer.problemId, answer.at)
+			}
+		}
+	}
+
+	const records: ReportRecord[] = []
+	for (const row of loaded.rows) {
+		const common = {
+			reportedAt: new Date(row.createdAt),
+			location: localized(row.locationName),
+			locationId: row.locationId,
+			locationTimeZone: zones.of(
+				row.locationId,
+				row.locationTimezone,
+				row.pickupTimezone,
+			),
+			orderNumber: row.number,
+			kind: row.kind,
+			currency: row.currency.toUpperCase(),
+		}
+		if (subject === 'order_problems') {
+			const first = answeredAt.get(row.id) ?? row.resolvedAt
+			records.push({
+				...common,
+				status: row.status,
+				resolution: row.resolution ?? 'none',
+				problems: 1,
+				affected: major(
+					row.itemRefs.reduce((sum, item) => sum + item.amountCents, 0),
+				),
+				refunded: major(row.refundCents ?? 0),
+				credited: major(row.creditCents ?? 0),
+				minutesToAnswer:
+					first != null
+						? Math.max(
+								0,
+								Math.round(((first - row.createdAt) / 60_000) * 10) / 10,
+							)
+						: null,
+			})
+			continue
+		}
+		if (row.itemRefs.length === 0) {
+			records.push({ ...common, dish: 'No dish named', units: 0, amount: 0 })
+			continue
+		}
+		for (const item of row.itemRefs) {
+			records.push({
+				...common,
+				dish: item.name,
+				units: item.quantity,
+				amount: major(item.amountCents),
+			})
+		}
+	}
+	return { records, truncated: loaded.truncated }
 }

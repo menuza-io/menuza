@@ -384,6 +384,74 @@ export async function cancelOrder(
 	return responseJson(response)
 }
 
+/**
+ * The guest's order problem reports (#191), straight to the region with the same
+ * credential as the receipt: may a report be filed, which lines can be named, and
+ * what was said and answered so far. The words and the photo never touch Sites
+ * SSR or App.
+ */
+export async function fetchOrderProblems(
+	orderId: string,
+	credential: OrderCredential,
+): Promise<unknown> {
+	const params = new URLSearchParams(getOrgBinding())
+	const response = await fetch(
+		`${regionalUrl()}/orders/${encodeURIComponent(orderId)}/problems?${params}`,
+		{ headers: credentialHeaders(credential), cache: 'no-store' },
+	)
+	return responseJson(response)
+}
+
+/** `POST /orders/:id/problems`; a retry with the same `idempotencyKey` is the same entry. */
+export async function submitOrderProblem(
+	orderId: string,
+	credential: OrderCredential,
+	report: {
+		kind: string
+		items: Array<{ lineIndex: number; quantity?: number }>
+		note?: string
+	},
+	idempotencyKey: string,
+): Promise<unknown> {
+	const response = await fetch(
+		`${regionalUrl()}/orders/${encodeURIComponent(orderId)}/problems`,
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Idempotency-Key': idempotencyKey,
+				...credentialHeaders(credential),
+			},
+			body: JSON.stringify({ ...getOrgBinding(), ...report }),
+			cache: 'no-store',
+		},
+	)
+	return responseJson(response)
+}
+
+/** The photo of a report: raw bytes, its identity in the query like a read. */
+export async function uploadOrderProblemPhoto(
+	orderId: string,
+	problemId: string,
+	credential: OrderCredential,
+	file: Blob,
+): Promise<unknown> {
+	const params = new URLSearchParams(getOrgBinding())
+	const response = await fetch(
+		`${regionalUrl()}/orders/${encodeURIComponent(orderId)}/problems/${encodeURIComponent(problemId)}/photo?${params}`,
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': file.type || 'application/octet-stream',
+				...credentialHeaders(credential),
+			},
+			body: file,
+			cache: 'no-store',
+		},
+	)
+	return responseJson(response)
+}
+
 /** Opaque payment reference only. Explicit projection prevents PII transit. */
 export async function startOrderPayment(
 	orgId: string,

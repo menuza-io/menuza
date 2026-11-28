@@ -25,6 +25,8 @@ export const SALES_REPORT_SUBJECTS = [
 	'cancelled_orders',
 	'cash_drawer_shifts',
 	'cash_drawer_movements',
+	'order_problems',
+	'order_problem_dishes',
 ] as const
 export type SalesReportSubject = (typeof SALES_REPORT_SUBJECTS)[number]
 
@@ -859,10 +861,216 @@ export const cashDrawerMovementsSubject: ReportSubject = {
 	splitCurrencies: true,
 }
 
+const problemKindOptions = [
+	{ value: 'missing_item', label: 'Missing item' },
+	{ value: 'wrong_item', label: 'Wrong item' },
+	{ value: 'late', label: 'Late' },
+	{ value: 'quality', label: 'Quality' },
+	{ value: 'other', label: 'Other' },
+]
+
+/**
+ * Guest order problem reports (#191), one record per report. The kind, the
+ * status and the amounts only: the guest's note, photo and words never reach a
+ * report. A refund counts when the report was settled by one, a credit when the
+ * restaurant gave one.
+ */
+const orderProblemFields: ReportField[] = [
+	{
+		id: 'reportedAt',
+		label: 'Reported at',
+		type: 'datetime',
+		timeframe: true,
+		groupable: true,
+		showTime: true,
+		description: 'When the guest sent the report.',
+	},
+	locationField,
+	...hiddenFields,
+	{
+		id: 'orderNumber',
+		label: 'Order',
+		type: 'string',
+		filterable: true,
+	},
+	{
+		id: 'kind',
+		label: 'Type of problem',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: problemKindOptions,
+	},
+	{
+		id: 'status',
+		label: 'Status',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'open', label: 'Waiting for an answer' },
+			{ value: 'answered', label: 'Answered' },
+			{ value: 'closed', label: 'Closed' },
+		],
+	},
+	{
+		id: 'resolution',
+		label: 'How it was settled',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: [
+			{ value: 'refund', label: 'Refund' },
+			{ value: 'credit', label: 'Credit' },
+			{ value: 'reply', label: 'Reply only' },
+			{ value: 'closed', label: 'Closed' },
+			{ value: 'none', label: 'Not answered yet' },
+		],
+	},
+	{
+		id: 'problems',
+		label: 'Reports',
+		type: 'number',
+		sumLabel: 'Reports',
+		averageLabel: false,
+		description: 'One for every report.',
+	},
+	{
+		id: 'affected',
+		label: 'Value of the items named',
+		type: 'currency',
+		sumLabel: 'Items named',
+		averageLabel: 'Average value of the items named',
+	},
+	{
+		id: 'refunded',
+		label: 'Refunded',
+		type: 'currency',
+		sumLabel: 'Refunded',
+		averageLabel: 'Average refund',
+		description: 'Money given back to settle the report.',
+	},
+	{
+		id: 'credited',
+		label: 'Credit given',
+		type: 'currency',
+		sumLabel: 'Credit given',
+		averageLabel: 'Average credit',
+		description: 'Credit codes given for the next order.',
+	},
+	{
+		id: 'minutesToAnswer',
+		label: 'Minutes to answer',
+		type: 'duration',
+		sumLabel: false,
+		averageLabel: 'Average minutes to answer',
+		description: 'From the report to the restaurant’s answer.',
+	},
+	currencyField,
+]
+
+export const orderProblemsSubject: ReportSubject = {
+	id: 'order_problems',
+	label: 'Order problems',
+	description:
+		'What guests reported as wrong with an order, by type and location, and how each report was settled, with refund and credit totals.',
+	scope: 'organization',
+	source: 'tenant-api',
+	fields: orderProblemFields,
+	currencyField: 'currency',
+	timeZoneField: 'locationTimeZone',
+	defaultColumns: [
+		'reportedAt',
+		'orderNumber',
+		'kind',
+		'status',
+		'resolution',
+		'refunded',
+		'credited',
+	],
+	maxRangeDays: SALES_REPORT_MAX_RANGE_DAYS,
+	splitCurrencies: true,
+}
+
+/** One record per dish a report named (a report that names none is one record, "No dish named"). */
+const orderProblemDishFields: ReportField[] = [
+	{
+		id: 'reportedAt',
+		label: 'Reported at',
+		type: 'datetime',
+		timeframe: true,
+		groupable: true,
+		showTime: true,
+	},
+	locationField,
+	...hiddenFields,
+	{
+		id: 'orderNumber',
+		label: 'Order',
+		type: 'string',
+		filterable: true,
+	},
+	{
+		id: 'dish',
+		label: 'Dish',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		description: 'The dish as the order named it.',
+	},
+	{
+		id: 'kind',
+		label: 'Type of problem',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		options: problemKindOptions,
+	},
+	{
+		id: 'units',
+		label: 'Units named',
+		type: 'number',
+		sumLabel: 'Units named',
+		averageLabel: false,
+	},
+	{
+		id: 'amount',
+		label: 'Value of the units named',
+		type: 'currency',
+		sumLabel: 'Value named',
+		averageLabel: 'Average value named',
+	},
+	currencyField,
+]
+
+export const orderProblemDishesSubject: ReportSubject = {
+	id: 'order_problem_dishes',
+	label: 'Order problems by dish',
+	description:
+		'The dishes guests named in their order problem reports, with how many units and what they were worth.',
+	scope: 'organization',
+	source: 'tenant-api',
+	fields: orderProblemDishFields,
+	currencyField: 'currency',
+	timeZoneField: 'locationTimeZone',
+	defaultColumns: [
+		'reportedAt',
+		'orderNumber',
+		'dish',
+		'kind',
+		'units',
+		'amount',
+	],
+	maxRangeDays: SALES_REPORT_MAX_RANGE_DAYS,
+	splitCurrencies: true,
+}
+
 export const salesReportSubjects: ReportSubject[] = [
 	salesSubject,
 	orderRefundsSubject,
 	cancelledOrdersSubject,
 	cashDrawerShiftsSubject,
 	cashDrawerMovementsSubject,
+	orderProblemsSubject,
+	orderProblemDishesSubject,
 ]

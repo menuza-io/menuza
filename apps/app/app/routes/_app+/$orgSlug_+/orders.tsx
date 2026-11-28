@@ -3,6 +3,7 @@ import { useLingui } from '@lingui/react'
 import { isImpersonating, userHasOrganizationPermission } from '@repo/auth'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
+import { ORDER_PROBLEMS_FLAG } from '@repo/common/order-problems'
 import { TEST_ORDER_FLAG, TEST_ORDER_BADGE } from '@repo/common/test-orders'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import { Button } from '@repo/ui/button'
@@ -112,11 +113,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		(await getFeatureFlag(TEST_ORDER_FLAG, {
 			organizationId: organization.id,
 		})) === true
+	// Guest order problem reports (#191): the Problems link shows only while on.
+	const problemReportsEnabled =
+		(await getFeatureFlag(ORDER_PROBLEMS_FLAG, {
+			organizationId: organization.id,
+		})) === true
 	return data(
 		{
 			orgSlug,
 			canWrite,
 			testOrdersEnabled,
+			problemReportsEnabled,
 			canRefund,
 			loyaltyEnabled,
 			// Tabs show while QR ordering is on, even with dine-in switched off,
@@ -146,6 +153,7 @@ export default function OrdersInbox() {
 		canViewCustomers,
 		canWrite,
 		testOrdersEnabled,
+		problemReportsEnabled,
 		showTabs,
 		showCatering,
 		loyaltyEnabled,
@@ -238,6 +246,17 @@ export default function OrdersInbox() {
 					)}
 				/>
 				<div className="flex flex-col items-end gap-2">
+					{problemReportsEnabled ? (
+						<Button
+							variant="outline"
+							nativeButton={false}
+							render={<Link to={`/${orgSlug}/orders/problems`} />}
+							data-testid="orders-problems-link"
+						>
+							<Icon name="message-square" className="size-4" />
+							<Trans>Problems</Trans>
+						</Button>
+					) : null}
 					{showCatering ? (
 						<Button
 							variant="outline"

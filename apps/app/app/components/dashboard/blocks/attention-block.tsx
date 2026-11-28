@@ -71,33 +71,56 @@ function useRegionalItems(
 ) {
 	const [items, setItems] = useState<AttentionItem[]>([])
 	const locationKey = locations.map((location) => location.id).join(',')
-	const { paymentReview, callFollowUps, inventoryCounts, offlineTablets } =
-		regional
+	const {
+		paymentReview,
+		orderProblems,
+		callFollowUps,
+		inventoryCounts,
+		offlineTablets,
+	} = regional
 
 	useEffect(() => {
 		const controller = new AbortController()
 		const { signal } = controller
 		const byId = new Map(locations.map((location) => [location.id, location]))
 		const sources: Array<Promise<AttentionItem[]>> = []
-		if (paymentReview) {
+		if (paymentReview || orderProblems) {
 			sources.push(
 				regionalGet(
 					`/${orgSlug}/orders-token`,
 					(base) => `${base}/operator/orders/attention`,
 					signal,
-				).then((raw) =>
-					paymentReviewCountsSchema.parse(raw).locations.flatMap((row) => {
-						const location = byId.get(row.locationId)
-						return location && row.paymentReview > 0
-							? [
-									attentionItem('payment_review', location, {
-										count: row.paymentReview,
-										href: '/orders',
-									}),
-								]
-							: []
-					}),
-				),
+				).then((raw) => {
+					const counts = paymentReviewCountsSchema.parse(raw)
+					const reviews = paymentReview
+						? counts.locations.flatMap((row) => {
+								const location = byId.get(row.locationId)
+								return location && row.paymentReview > 0
+									? [
+											attentionItem('payment_review', location, {
+												count: row.paymentReview,
+												href: '/orders',
+											}),
+										]
+									: []
+							})
+						: []
+					// Reports a guest sent more than 24 hours ago and nobody answered (#191).
+					const problems = orderProblems
+						? counts.problems.flatMap((row) => {
+								const location = byId.get(row.locationId)
+								return location && row.unanswered > 0
+									? [
+											attentionItem('order_problems', location, {
+												count: row.unanswered,
+												href: '/orders/problems',
+											}),
+										]
+									: []
+							})
+						: []
+					return [...reviews, ...problems]
+				}),
 			)
 		}
 		if (callFollowUps) {
@@ -176,6 +199,7 @@ function useRegionalItems(
 	}, [
 		orgSlug,
 		paymentReview,
+		orderProblems,
 		callFollowUps,
 		inventoryCounts,
 		offlineTablets,
@@ -230,6 +254,16 @@ function useItemText() {
 						}),
 					),
 					detail: null,
+				}
+			case 'order_problems':
+				return {
+					title: _(
+						plural(count, {
+							one: `# guest report at ${location} has waited a day for an answer`,
+							other: `# guest reports at ${location} have waited a day for an answer`,
+						}),
+					),
+					detail: _(msg`Answer with a refund, a credit or a reply.`),
 				}
 			case 'ordering_paused': {
 				const since = time(item.since)

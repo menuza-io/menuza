@@ -1077,6 +1077,8 @@ export type OrderGuestMessagesPolicy = {
 	receipt: boolean
 	ready: boolean
 	cancelled: boolean
+	/** The restaurant takes order problem reports (#191); only ever stored as `true`. */
+	problemReports?: boolean
 }
 
 /** One applied discount, as stored on the order (`restaurant_orders.discounts`). */

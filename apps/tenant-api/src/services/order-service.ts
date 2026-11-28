@@ -1386,6 +1386,13 @@ export async function placeOrder(input: {
 					receipt: guestMessages.receipt,
 					ready: guestMessages.ready,
 					cancelled: guestMessages.cancelled,
+					// The restaurant takes order problem reports (#191): the receipt
+					// says where to report one. Only a literal `true` is stored.
+					...(readGuestOrderingFeatures(
+						(context as { guestOrdering?: unknown }).guestOrdering,
+					).problemReports
+						? { problemReports: true }
+						: {}),
 				}
 			: null
 	const smsUpdatesOptIn =

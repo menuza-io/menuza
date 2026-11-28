@@ -6,7 +6,7 @@ import { getLocaleHref } from '@repo/common/site-locales'
 import SitePage from '~/components/SitePage.astro'
 import AppInviteSection from '~/components/AppInviteSection.astro'
 import DropAlertsSignup from '~/components/drops/DropAlertsSignup.astro'
-import { buildTestOrderLabels, translate } from '~/lib/ordering-labels'
+import { buildOrderProblemLabels, buildTestOrderLabels, translate } from '~/lib/ordering-labels'
 import { formatMoney } from '~/lib/ordering/money'
 import { fetchPublishedDrops, fetchPublishedSiteMenu } from '~/lib/org'
 
@@ -159,6 +159,8 @@ const successLabels = {
 	locale: requestedLocale,
 	organizationId: organization.id,
 	currency: menuPayload?.organization?.currency || 'USD',
+	// "Something wrong?" (#191): drawn by the browser from the region's answer.
+	problems: buildOrderProblemLabels(i18n),
 	menuHref,
 	dropBaseHref,
 	dropTitles,
@@ -408,6 +410,10 @@ const valueClass = 'price font-medium text-foreground'
 					</div>
 				</section>
 				<p id="cancel-note" role="status" class="text-center text-sm font-medium text-foreground empty:hidden" dir="auto"></p>
+
+				{/* "Something wrong?" (#191). Hidden until the region says the
+				    restaurant takes reports and this order can have one (or has some). */}
+				<section id="order-problems" hidden class="surface space-y-4 p-5 sm:p-6" aria-live="polite"></section>
 
 				{/* Online payment states */}
 				<div id="payment-pending" class:list={[noticeClass, 'tone-warning hidden']} role="status">
@@ -680,6 +686,7 @@ const valueClass = 'price font-medium text-foreground'
 			PAYMENT_POLL_INTERVAL_MS,
 		} from '~/lib/ordering/payment-poll'
 		import { startCountdown } from '~/lib/ordering/countdown'
+		import { mountOrderProblems } from '~/lib/ordering/order-problems-ui'
 		import {
 			cancelHiddenKey,
 			cancelRefusalKey,
@@ -1708,6 +1715,31 @@ const valueClass = 'price font-medium text-foreground'
 			renderReceipt(order)
 			syncPaymentView(order)
 			applyStatusHeading()
+			// A status change (completed, cancelled) can open or close the window.
+			void problems?.refresh()
+		}
+
+		// "Something wrong?" (#191): the region's own answers, drawn by the browser.
+		let problems: { refresh: () => Promise<void> } | null = null
+		async function startProblems(order: ReceiptOrder) {
+			const root = document.getElementById('order-problems')
+			if (!root || !orderId || problems) return
+			const money = createMoneyFormatter(order.currency || labels.currency || 'USD', labels.locale)
+			problems = await mountOrderProblems({
+				root,
+				orderId,
+				credential: currentCredential,
+				labels: labels.problems,
+				locale: labels.locale || 'en',
+				currency: order.currency || labels.currency || 'USD',
+				formatMoney: money,
+				creditHref: (code: string) =>
+					`${labels.menuHref}${String(labels.menuHref).includes('?') ? '&' : '?'}coupon=${encodeURIComponent(code)}`,
+			})
+			// The restaurant answers while the page is open: look again every 30 seconds.
+			window.setInterval(() => {
+				if (document.visibilityState === 'visible') void problems?.refresh()
+			}, 30_000)
 		}
 
 		function startLiveStatus(initial: ReceiptOrder) {
@@ -1909,6 +1941,7 @@ const valueClass = 'price font-medium text-foreground'
 			wireResend()
 			wireCancel()
 			startLiveStatus(order)
+			void startProblems(order)
 		}
 
 		document.getElementById('success-retry')?.addEventListener('click', () => {

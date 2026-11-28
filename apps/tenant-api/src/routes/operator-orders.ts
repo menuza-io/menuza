@@ -65,6 +65,14 @@ import {
 	recordTestPrintAnswer,
 } from '../services/test-orders-service.ts'
 import { sendOrderPayLinkRequestSchema } from '@repo/common/order-pay-links'
+import { answerOrderProblemSchema } from '@repo/common/order-problems'
+import {
+	answerOrderProblem,
+	getOperatorProblem,
+	listOperatorProblems,
+	problemAttentionByLocation,
+	type ProblemStorageAdapter,
+} from '../services/order-problems-service.ts'
 import { createOperatorOrderPayLink } from '../services/order-pay-links.ts'
 import {
 	listOrderRevisions,
@@ -1002,10 +1010,13 @@ operatorOrderRoutes.get('/attention', async (c) => {
 	if (denied) return denied.error
 	const { locationIds } = auth.auth
 	if (locationIds !== null && locationIds.length === 0) {
-		return c.json({ locations: [] }, 200, noStoreHeaders())
+		return c.json({ locations: [], problems: [] }, 200, noStoreHeaders())
 	}
 	try {
 		const db = await getTenantDb(auth.auth.orgId)
+		// Open and unanswered guest problem reports (#191): counts per location,
+		// the same ids-and-numbers-only shape as the payment review figure.
+		const problems = await problemAttentionByLocation(db, locationIds)
 		const conditions = [
 			eq(restaurantOrders.orgId, auth.auth.orgId),
 			eq(restaurantOrders.status, 'payment_review'),
@@ -1028,6 +1039,7 @@ operatorOrderRoutes.get('/attention', async (c) => {
 						locationId: row.locationId,
 						paymentReview: Number(row.paymentReview),
 					})),
+				problems,
 			},
 			200,
 			noStoreHeaders(),
@@ -1036,6 +1048,151 @@ operatorOrderRoutes.get('/attention', async (c) => {
 		console.error(
 			`Failed to count attention orders for org ${auth.auth.orgId}:`,
 			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// Guest order problem reports (#191): the inbox, one report with its photo link
+// and the one-tap answer. Reading needs `orders:read`, answering `orders:write`;
+// a refund keeps its own grant (`refundProvider` for online money). A report at
+// a location the token does not reach is the uniform 404.
+// ---------------------------------------------------------------------------
+
+let operatorProblemStorage: ProblemStorageAdapter | undefined
+
+/** Tests: swap the storage the photo links are signed with. */
+export function setOperatorProblemStorageForTest(
+	storage: ProblemStorageAdapter | null,
+) {
+	operatorProblemStorage = storage ?? undefined
+}
+
+const problemListQuerySchema = z.object({
+	status: z.enum(['open', 'answered', 'closed', 'all']).optional(),
+	orderId: z.string().min(1).max(128).optional(),
+	limit: z.coerce.number().int().min(1).max(100).optional(),
+})
+
+operatorOrderRoutes.get('/problems', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:read')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const query = problemListQuerySchema.safeParse(c.req.query())
+	if (!query.success) {
+		return c.json({ error: 'invalid_request' }, 400, noStoreHeaders())
+	}
+	try {
+		return c.json(
+			await listOperatorProblems(
+				auth.auth.orgId,
+				{ locationIds: auth.auth.locationIds },
+				query.data,
+				{ storage: operatorProblemStorage },
+			),
+			200,
+			noStoreHeaders(),
+		)
+	} catch (error) {
+		console.error(
+			`Failed to list order problems for org ${auth.auth.orgId}:`,
+			errorLogFields(error),
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+operatorOrderRoutes.get('/problems/:problemId', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:read')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	try {
+		const result = await getOperatorProblem(
+			auth.auth.orgId,
+			{ locationIds: auth.auth.locationIds },
+			c.req.param('problemId'),
+			{ storage: operatorProblemStorage },
+		)
+		if (!result.ok) {
+			return c.json(
+				{ error: result.failure.code, message: result.failure.message },
+				result.failure.status as 404,
+				noStoreHeaders(),
+			)
+		}
+		return c.json({ problem: result.data }, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to read an order problem for org ${auth.auth.orgId}:`,
+			errorLogFields(error),
+		)
+		return c.json(
+			{ error: 'Tenant Database unavailable' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+operatorOrderRoutes.post('/problems/:problemId/answer', async (c) => {
+	const auth = await authenticateOrdersOperator(c, 'orders:write')
+	if ('error' in auth) return auth.error
+	const denied = await assertOperatorOrg(auth.auth.orgId)
+	if (denied) return denied.error
+	const parsed = answerOrderProblemSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) {
+		return c.json(
+			{
+				error: 'invalid_answer',
+				message: 'Choose how to answer: refund, credit, reply or close.',
+			},
+			400,
+			noStoreHeaders(),
+		)
+	}
+	try {
+		const result = await answerOrderProblem(
+			auth.auth.orgId,
+			{
+				userId: auth.auth.userId,
+				locationIds: auth.auth.locationIds,
+				refundProvider: auth.auth.refundProvider,
+				refundLoyalty: auth.auth.refundLoyalty,
+				impersonated: auth.auth.impersonated,
+			},
+			c.req.param('problemId'),
+			parsed.data,
+			{ storage: operatorProblemStorage },
+		)
+		if (!result.ok) {
+			return c.json(
+				{
+					error: result.failure.code,
+					message: result.failure.message,
+					...result.failure.details,
+				},
+				result.failure.status as 403 | 404 | 409 | 422,
+				noStoreHeaders(),
+			)
+		}
+		return c.json(result.data, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to answer an order problem for org ${auth.auth.orgId}:`,
+			errorLogFields(error),
 		)
 		return c.json(
 			{ error: 'Tenant Database unavailable' },

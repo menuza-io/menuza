@@ -281,6 +281,50 @@ describe('resolveOrgId for consent, subscription and public form routes', () => 
 		expect(await resolveOrgId(resend('https://evil.example'), env)).toBeNull()
 	})
 
+	it('routes order problem reports (#191): the JSON by body identity, the raw photo by query, both by Origin', async () => {
+		resolveOrganizationForBrowserAuth.mockImplementation(
+			async (origin, identity) =>
+				origin === 'https://acme.example' && identity.slug === 'acme'
+					? { id: ORG }
+					: null,
+		)
+		const read = new Request(`${base}/orders/ord_1/problems?slug=acme`, {
+			headers: {
+				Origin: 'https://acme.example',
+				'X-Order-Link': 'a'.repeat(64),
+			},
+		})
+		expect(await resolveOrgId(read, env)).toBe(ORG)
+		const body = JSON.stringify({ slug: 'acme', kind: 'late', items: [] })
+		const report = (origin: string) =>
+			new Request(`${base}/orders/ord_1/problems`, {
+				method: 'POST',
+				headers: {
+					Origin: origin,
+					'Content-Type': 'application/json',
+					'Content-Length': String(body.length),
+				},
+				body,
+			})
+		expect(await resolveOrgId(report('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(report('https://evil.example'), env)).toBeNull()
+		const photo = (origin: string, query = '?slug=acme') =>
+			new Request(`${base}/orders/ord_1/problems/p1/photo${query}`, {
+				method: 'POST',
+				headers: { Origin: origin, 'Content-Type': 'image/jpeg' },
+				body: new Uint8Array([0xff, 0xd8, 0xff]),
+			})
+		expect(await resolveOrgId(photo('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(photo('https://evil.example'), env)).toBeNull()
+		// A photo of another path never takes the query identity.
+		const other = new Request(`${base}/orders/ord_1/resend-link?slug=acme`, {
+			method: 'POST',
+			headers: { Origin: 'https://acme.example', 'Content-Type': 'image/jpeg' },
+			body: new Uint8Array([1]),
+		})
+		expect(await resolveOrgId(other, env)).toBeNull()
+	})
+
 	it('refuses an oversized post even when the query names the organization', async () => {
 		resolveOrganizationForBrowserAuth.mockResolvedValue({ id: ORG })
 		const request = new Request(`${base}/forms/f1/submissions?slug=acme`, {

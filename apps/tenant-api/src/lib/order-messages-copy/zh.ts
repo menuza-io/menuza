@@ -74,6 +74,7 @@ export const ZH: OrderMessageCopy = {
 		arriving: '{from} 至 {to} 送达',
 		arrivingAround: '约 {time} 送达',
 		viewOrder: '查看您的订单',
+		problemHint: '订单有问题？请在订单页面告诉餐厅。',
 		trackInApp: '在应用中跟踪此订单',
 		storeAppStore: '在 App Store 下载',
 		storePlayStore: '在 Google Play 获取',

@@ -46,6 +46,7 @@ export type OrderEmailOrder = Pick<
 	| 'packagingFeeCents'
 	| 'packagingFeeLabel'
 	| 'pickupInstructions'
+	| 'guestMessages'
 	| 'utensilsRequested'
 	| 'totalCents'
 	| 'discountCents'
@@ -388,8 +389,17 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 				.join('')}</table>`
 		: ''
 
+	// "Something wrong?" (#191): only on the receipt, only when the restaurant took
+	// reports at placement, and only with a link to the order page to report on.
+	const problemHint =
+		input.kind === 'receipt' &&
+		linkUrl &&
+		(order.guestMessages as { problemReports?: boolean } | null)
+			?.problemReports === true
+			? labels.problemHint
+			: null
 	const ctaHtml = linkUrl
-		? `<div style="margin-top:24px;text-align:${align}"><a href="${escapeHtml(linkUrl)}" style="display:inline-block;padding:12px 22px;background:${primary};color:${primaryForeground};text-decoration:none;border-radius:${radius}px;font-size:15px;font-weight:600">${escapeHtml(labels.viewOrder)}</a></div>`
+		? `<div style="margin-top:24px;text-align:${align}"><a href="${escapeHtml(linkUrl)}" style="display:inline-block;padding:12px 22px;background:${primary};color:${primaryForeground};text-decoration:none;border-radius:${radius}px;font-size:15px;font-weight:600">${escapeHtml(labels.viewOrder)}</a></div>${problemHint ? `<p style="margin:12px 0 0;color:${muted};font-size:13px;text-align:${align}">${escapeHtml(problemHint)}</p>` : ''}`
 		: ''
 	const inviteLinks =
 		input.kind === 'receipt'
@@ -489,6 +499,7 @@ ${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}${codesHtml}
 		for (const [label, value] of totals) textLines.push(`${label}: ${value}`)
 	}
 	if (linkUrl) textLines.push('', `${labels.viewOrder}: ${linkUrl}`)
+	if (problemHint) textLines.push(problemHint)
 	if (inviteLinks.length > 0) {
 		textLines.push('', `${labels.trackInApp}:`)
 		for (const link of inviteLinks) textLines.push(`${link.label}: ${link.url}`)

@@ -1,3 +1,4 @@
+import { runOrderProblemsTickForOrg } from './order-problems-service.ts'
 import { printDueScheduledOrders } from './print-hooks.ts'
 import { processPushReceipts } from './push-service.ts'
 import { and, asc, eq, lte, min } from 'drizzle-orm'
@@ -257,6 +258,15 @@ export async function runOrdersTickForOrg(
 			return null
 		},
 	)
+	// Guest order problem reports (#191): new-report alerts the App could not
+	// take earlier, and the reminder after 24 hours without an answer. Ids and
+	// a fixed kind word only.
+	const problems = await runOrderProblemsTickForOrg(orgId, db, now).catch(
+		(error: unknown) => {
+			console.error('Order problems tick failed', orgId, errorLogFields(error))
+			return null
+		},
+	)
 	const due = [
 		messages.nextDueAt,
 		acceptance.nextDeadlineAt,
@@ -264,6 +274,7 @@ export async function runOrdersTickForOrg(
 		prints.nextDueAt,
 		catering?.nextDueAt ?? null,
 		testOrders?.nextDueAt ?? null,
+		problems?.nextDueAt ?? null,
 	].filter((at): at is number => at !== null)
 	const nextDueAt = due.length > 0 ? Math.min(...due) : null
 	return {

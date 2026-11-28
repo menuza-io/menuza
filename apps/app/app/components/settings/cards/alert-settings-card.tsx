@@ -55,6 +55,7 @@ const KIND_LABELS = {
 	orders_payment_review: msg`Payment needs review`,
 	ordering_paused_long: msg`Ordering paused too long`,
 	orders_large: msg`Large order`,
+	orders_problem: msg`Order problem report`,
 	station_offline: msg`Kitchen tablet offline`,
 } as const
 

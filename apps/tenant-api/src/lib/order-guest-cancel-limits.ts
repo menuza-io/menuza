@@ -35,6 +35,12 @@ export const ORDER_GUEST_CANCEL_LIMITS = {
 	checkOrder: { max: 60, windowMs: 10 * 60_000 },
 	/** Those reads from one address. */
 	checkAddress: { max: 300, windowMs: 10 * 60_000 },
+	// Guest order problem reports (#191): sending one (and its photo), and the
+	// page's read of the reports, per order and per address.
+	problemOrder: { max: 8, windowMs: 10 * 60_000 },
+	problemAddress: { max: 30, windowMs: 10 * 60_000 },
+	problemReadOrder: { max: 60, windowMs: 10 * 60_000 },
+	problemReadAddress: { max: 300, windowMs: 10 * 60_000 },
 } as const
 
 export type OrderGuestCancelBucket = keyof typeof ORDER_GUEST_CANCEL_LIMITS
@@ -44,6 +50,10 @@ const BUCKET_NAMES: Record<OrderGuestCancelBucket, string> = {
 	cancelAddress: 'order_guest_cancel.ip',
 	checkOrder: 'order_guest_cancel_check.order',
 	checkAddress: 'order_guest_cancel_check.ip',
+	problemOrder: 'order_problem.order',
+	problemAddress: 'order_problem.ip',
+	problemReadOrder: 'order_problem_read.order',
+	problemReadAddress: 'order_problem_read.ip',
 }
 
 const SLOT_MS = 60_000
