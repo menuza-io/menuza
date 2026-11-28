@@ -625,6 +625,21 @@ export async function resolveOrgId(
 		return orgIdFromOperatorJwt(request, env)
 	}
 
+	// Delivery address search, store picker and quotes (#161, #113): the
+	// browser's Origin names the organization (plus slug or host hints), never a
+	// client orgId. A quote of a saved address reads the guest's own row, so a
+	// customer token is a valid signal too (the handler re-checks it against the
+	// origin-bound organization).
+	if (
+		pathname === '/delivery/places' ||
+		pathname === '/delivery/quote' ||
+		pathname === '/delivery/locations'
+	) {
+		const fromJwt = await orgIdFromCustomerJwt(request, env)
+		if (fromJwt) return fromJwt
+		return orgIdFromOrderIdentity(request, url)
+	}
+
 	if (pathname === '/orders' || pathname.startsWith('/orders/')) {
 		// Browser order placement: never route on a client-supplied orgId. A
 		// customer access token is a valid signal (the handler re-checks it

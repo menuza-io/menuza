@@ -63,6 +63,8 @@ import { provisionRoutes } from './routes/provision.ts'
 import { publicOrderRoutes } from './routes/orders.ts'
 import { publicDeliveryRoutes } from './routes/delivery.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
+import { customerAddressRoutes } from './routes/customer-addresses.ts'
+import { customerFavoriteRoutes } from './routes/customer-favorites.ts'
 import { customerOrderRoutes } from './routes/customer-orders.ts'
 import { pushRoutes } from './routes/push.ts'
 import {
@@ -397,7 +399,10 @@ export function createTenantApiApp() {
 	)
 	app.use(
 		'/webhooks/invoice-mail',
-		rateLimit('invoice-mail-webhook', { windowMs: 60 * 1000, maxRequests: 120 }),
+		rateLimit('invoice-mail-webhook', {
+			windowMs: 60 * 1000,
+			maxRequests: 120,
+		}),
 	)
 	app.use(
 		'/webhooks/sms-status/*',
@@ -487,6 +492,8 @@ export function createTenantApiApp() {
 	app.route('/subscriptions', subscriptionRoutes)
 	app.route('/shop', shopRoutes)
 	app.route('/customer/orders', customerOrderRoutes)
+	app.route('/customer/addresses', customerAddressRoutes)
+	app.route('/customer/favorites', customerFavoriteRoutes)
 	app.route('/push', pushRoutes)
 	app.route('/forms', publicFormRoutes)
 	app.route('/orders', publicOrderRoutes)

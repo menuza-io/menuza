@@ -26,6 +26,10 @@ describe('the guest’s own order, push, and photo routes pick the organization 
 			'/customer/orders',
 			'/customer/orders/abc',
 			'/customer/orders/abc/reorder',
+			'/customer/addresses',
+			'/customer/addresses/abc',
+			'/customer/favorites',
+			'/customer/favorites/item_1',
 			'/push/devices',
 			'/push/preferences',
 			'/photos',
@@ -69,5 +73,32 @@ describe('the guest’s own order, push, and photo routes pick the organization 
 			},
 		)
 		expect(await resolveOrgId(none, env)).toBeNull()
+	})
+})
+
+describe('delivery quotes route to the organization (#113)', () => {
+	it('routes a saved-address quote by the customer token', async () => {
+		const bearer = await customerToken()
+		const request = new Request('https://tenant.example.test/delivery/quote', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${bearer}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ locationId: 'loc-1', addressId: 'a1' }),
+		})
+		expect(await resolveOrgId(request, env)).toBe(ORG)
+	})
+
+	it('routes nowhere for a forged token with no origin identity, and never on a body orgId', async () => {
+		const forged = new Request('https://tenant.example.test/delivery/quote', {
+			method: 'POST',
+			headers: {
+				Authorization: 'Bearer not-a-token',
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ orgId: ORG, locationId: 'loc-1' }),
+		})
+		expect(await resolveOrgId(forged, env)).toBeNull()
 	})
 })

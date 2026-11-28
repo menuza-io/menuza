@@ -1,6 +1,13 @@
 import {
 	cateringQuotes,
+	customerAddresses,
 	customerCarts,
+	customerFavorites,
+	groupCartLines,
+	groupCartPeople,
+	groupCarts,
+	orderProblemReplies,
+	orderProblems,
 	customerPushDevices,
 	customerPushPreferences,
 	pushMessages,
@@ -1104,6 +1111,51 @@ export async function erasePerson(
 				)
 				const restaurantOrdersScrubbed = restaurantOrderIds.size
 
+				// Guest order problem reports (#191) of the scrubbed orders: the guest's
+				// note, photo and the words of every entry go; the kind, the status, the
+				// amounts and the dates stay for the reports. The thread is append-only:
+				// a body may only be emptied (the one update its trigger allows).
+				const problemPhotoKeys: string[] = []
+				const problemRows = await queryInChunks(
+					[...restaurantOrderIds],
+					(chunk) =>
+						tx
+							.select({
+								id: orderProblems.id,
+								photoKey: orderProblems.photoKey,
+							})
+							.from(orderProblems)
+							.where(inArray(orderProblems.orderId, chunk)),
+				)
+				for (const row of problemRows) {
+					if (row.photoKey) problemPhotoKeys.push(row.photoKey)
+				}
+				await forEachInChunks(
+					problemRows.map((row) => row.id),
+					async (chunk) => {
+						await tx
+							.update(orderProblems)
+							.set({ note: null, photoKey: null, photoContentType: null })
+							.where(inArray(orderProblems.id, chunk))
+						await tx
+							.update(orderProblemReplies)
+							.set({ body: null })
+							.where(
+								and(
+									inArray(orderProblemReplies.problemId, chunk),
+									isNotNull(orderProblemReplies.body),
+								),
+							)
+					},
+				)
+				// A group order's "For Sam" labels are first names of other people: the
+				// receipt and ticket keep the dishes, not the names.
+				await forEachInChunks([...restaurantOrderIds], (chunk) =>
+					tx.run(
+						sql`UPDATE restaurant_orders SET lines = (SELECT json_group_array(json(json_remove(value, '$.forName'))) FROM json_each(restaurant_orders.lines)) WHERE group_id IS NOT NULL AND id IN (${sqlList(chunk)})`,
+					),
+				)
+
 				// Catering quotes hold contact, delivery and event notes in the region:
 				// scrub by customer id, paid order, normalised phone or email, keeping
 				// totals for the books and bumping `version` to burn the guest link.
@@ -1298,7 +1350,7 @@ export async function erasePerson(
 						.returning({ id: guestPhotoSubmissions.id })
 					guestPhotosUnlinked += updated.length
 				})
-				photoKeysToDelete = collectedPhotoKeys
+				photoKeysToDelete = [...collectedPhotoKeys, ...problemPhotoKeys]
 
 				// ---- Customer rows and everything keyed by them ----------------------
 				// Deleted explicitly, not only by FK cascade, so a missing foreign-key
@@ -1341,6 +1393,33 @@ export async function erasePerson(
 					await tx
 						.delete(customerPaymentMethods)
 						.where(inArray(customerPaymentMethods.customerId, chunk))
+					// Saved delivery addresses (#113), favorite dishes (#158) and the
+					// group orders this person hosts (#170) with their people and
+					// lines (first names of friends, who have no account of their own).
+					await tx
+						.delete(customerAddresses)
+						.where(inArray(customerAddresses.customerId, chunk))
+					await tx
+						.delete(customerFavorites)
+						.where(inArray(customerFavorites.customerId, chunk))
+					const hostedGroups = await tx
+						.select({ id: groupCarts.id })
+						.from(groupCarts)
+						.where(inArray(groupCarts.hostCustomerId, chunk))
+					await forEachInChunks(
+						hostedGroups.map((group) => group.id),
+						async (groupChunk) => {
+							await tx
+								.delete(groupCartLines)
+								.where(inArray(groupCartLines.groupId, groupChunk))
+							await tx
+								.delete(groupCartPeople)
+								.where(inArray(groupCartPeople.groupId, groupChunk))
+							await tx
+								.delete(groupCarts)
+								.where(inArray(groupCarts.id, groupChunk))
+						},
+					)
 					await tx
 						.update(shopOrders)
 						.set({ customerId: null })

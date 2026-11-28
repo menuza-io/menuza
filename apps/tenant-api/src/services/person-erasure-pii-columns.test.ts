@@ -145,6 +145,24 @@ const COVERED: Record<string, string> = {
 	'gift_card_purchase_attempts.email_hash':
 		"keyed HMAC of the buyer email for purchase limits; deleted by the HMAC of the erased emails and with the rows of the person's cards",
 	'gift_card_show_tokens.token_hash': 'till QR tokens deleted by customer id',
+	'customer_addresses.postal_code':
+		'saved delivery address (#113), deleted by customer id',
+	'customer_addresses.notes':
+		'gate code or delivery note on a saved address (#113), deleted by customer id',
+	'customer_addresses.lat':
+		'saved delivery point (#113), deleted by customer id',
+	'customer_addresses.lng':
+		'saved delivery point (#113), deleted by customer id',
+	'group_carts.host_first_name':
+		'first name of the host of a group order (#170): the group is deleted with its host by customer id, when the host ends it, and after 7 idle days',
+	'group_cart_people.first_name':
+		'first name a friend typed to join a group order (#170); the friend has no account, so the row is deleted with the group (host erasure, ending it, 7 idle days); a checked-out order keeps no name, the "For Sam" label is removed from its lines when the order is scrubbed',
+	'group_cart_people.token_hash':
+		'hash of the random per-person group token (#170), deleted with the group',
+	'order_problems.note':
+		"the guest's words about an order problem (#191), nulled with the scrubbed order together with the photo",
+	'order_problem_replies.body':
+		'the words of the guest and of the restaurant on an order problem (#191), emptied with the scrubbed order (the one update the append-only trigger allows)',
 }
 
 /** Whole domains that are not a customer's data, with the reason. */
@@ -366,6 +384,9 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 			// The left-behind cart and what order, birthday and cart journeys
 			// started: deleted by customer id (#99 #151 #150).
 			'customer_carts',
+			// Saved addresses (#113) and favorite dishes (#158): deleted by customer id.
+			'customer_addresses',
+			'customer_favorites',
 			'order_journey_emissions',
 			'discount_redemptions',
 			'discount_issued_codes',

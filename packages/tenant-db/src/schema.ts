@@ -46,6 +46,14 @@ import {
 	ORDER_STEP_VALUES,
 } from '@repo/common/order-steps'
 import { SITE_CONTENT_LOCALES } from '@repo/common/site-locales'
+import {
+	ORDER_PROBLEM_AUTHOR_KINDS,
+	ORDER_PROBLEM_ENTRY_KINDS,
+	ORDER_PROBLEM_KINDS,
+	ORDER_PROBLEM_RESOLUTIONS,
+	ORDER_PROBLEM_STATUSES,
+} from '@repo/common/order-problems'
+import { GROUP_STATUSES } from '@repo/common/group-orders'
 
 // ==========================================
 // 1. CUSTOMERS TABLE
@@ -1368,6 +1376,17 @@ export const restaurantOrders = sqliteTable(
 		timeChangeCount: integer('time_change_count').notNull().default(0),
 		taxExemptRef: text('tax_exempt_ref'),
 		taxExemptOrg: text('tax_exempt_org'),
+		// A free test order placed with a one-time code before going live (#119,
+		// migration 0077). Never charged, never counted in sales or reports, never
+		// earns or spends loyalty, never records a discount use or stock use, never
+		// carries attribution or marketing consent. The kitchen screens badge it;
+		// the regional tick completes it after two hours. `test_print_answer` is
+		// the "Did the ticket print?" answer and when it was given (epoch ms).
+		isTest: integer('is_test', { mode: 'boolean' }).notNull().default(false),
+		testPrintAnswer: text('test_print_answer'),
+		testPrintAnsweredAt: integer('test_print_answered_at'),
+		// The group order (#170) this order was checked out from, when it was.
+		groupId: text('group_id'),
 		createdAt: integer('created_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),
@@ -1414,6 +1433,13 @@ export const restaurantOrders = sqliteTable(
 			table.status,
 		),
 		index('idx_restaurant_orders_customer').on(table.customerId),
+		// The regional tick's sweep of open test orders (#119).
+		index('idx_restaurant_orders_test_open')
+			.on(table.createdAt)
+			.where(sql`${table.isTest} = 1`),
+		index('idx_restaurant_orders_group')
+			.on(table.groupId)
+			.where(sql`${table.groupId} is not null`),
 		index('idx_restaurant_orders_location_created').on(
 			table.locationId,
 			table.createdAt,
@@ -8603,6 +8629,8 @@ export const DISCOUNT_ISSUED_SOURCE_TYPE_VALUES = [
 	'campaign',
 	'journey',
 	'loyalty_referral',
+	// A credit given to settle a guest's order problem (#191, migration 0077).
+	'order_problem',
 ] as const
 
 // Single-use coupon codes minted for one recipient of a marketing message (a
@@ -11751,9 +11779,7 @@ export const invStockLots = sqliteTable(
 		}).notNull(),
 		// A delivery line or batch id; `<confirm id>:<date>` for a confirmation.
 		sourceId: text('source_id').notNull(),
-		baseline: integer('baseline', { mode: 'boolean' })
-			.notNull()
-			.default(false),
+		baseline: integer('baseline', { mode: 'boolean' }).notNull().default(false),
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
@@ -11916,7 +11942,10 @@ export const invInvoiceInboxFiles = sqliteTable(
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
-		index('idx_inv_invoice_inbox_files_inbox').on(table.inboxId, table.position),
+		index('idx_inv_invoice_inbox_files_inbox').on(
+			table.inboxId,
+			table.position,
+		),
 	],
 )
 
@@ -11935,7 +11964,9 @@ export const invInvoiceSenders = sqliteTable(
 		allowedById: text('allowed_by_id'),
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
-	(table) => [uniqueIndex('uniq_inv_invoice_senders_address').on(table.address)],
+	(table) => [
+		uniqueIndex('uniq_inv_invoice_senders_address').on(table.address),
+	],
 )
 
 // A ready-made back-of-house routine, on or off at one location (#529).
@@ -12003,7 +12034,10 @@ export const invRoutineRuns = sqliteTable(
 			'chk_inv_routine_runs_status',
 			oneOf(table.status, INV_ROUTINE_RUN_STATUS_VALUES),
 		),
-		check('chk_inv_routine_runs_summary', sql`json_valid(${table.summaryJson})`),
+		check(
+			'chk_inv_routine_runs_summary',
+			sql`json_valid(${table.summaryJson})`,
+		),
 	],
 )
 
@@ -12812,3 +12846,290 @@ export const deliveryDriverNotices = sqliteTable(
 
 export type DeliveryRun = typeof deliveryRuns.$inferSelect
 export type DeliveryRunStop = typeof deliveryRunStops.$inferSelect
+
+// ==========================================
+// GUEST ORDERING (migration 0077_guest_ordering)
+// Saved addresses (#113), favorite dishes (#158), test order codes (#119),
+// order problem reports (#191) and group orders (#170). Every row is guest data
+// in the region; person erasure removes it (person-erasure-service.ts).
+// ==========================================
+
+// A delivery address saved on the guest account (#113). The point comes from a
+// successful geocode (a signed delivery quote), never from free text, and is
+// always re-quoted at checkout. Up to 10 per customer, one default.
+export const customerAddresses = sqliteTable(
+	'customer_addresses',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		label: text('label').notNull(),
+		formatted: text('formatted').notNull(),
+		line1: text('line1').notNull(),
+		unit: text('unit'),
+		city: text('city').notNull(),
+		state: text('state'),
+		postalCode: text('postal_code'),
+		country: text('country'),
+		// Gate code, buzzer: the guest's words, at most 280 characters.
+		notes: text('notes'),
+		lat: real('lat').notNull(),
+		lng: real('lng').notNull(),
+		isDefault: integer('is_default', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_customer_addresses_customer').on(table.customerId),
+		// One default per customer.
+		uniqueIndex('customer_addresses_one_default')
+			.on(table.customerId)
+			.where(sql`${table.isDefault} = 1`),
+		check(
+			'chk_customer_addresses_notes',
+			sql`${table.notes} is null or length(${table.notes}) <= 280`,
+		),
+	],
+)
+export type CustomerAddress = typeof customerAddresses.$inferSelect
+
+// A favorite dish (#158): the dish id only; names and prices come from the menu.
+export const customerFavorites = sqliteTable(
+	'customer_favorites',
+	{
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		itemId: text('item_id').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		primaryKey({ columns: [table.customerId, table.itemId] }),
+		index('idx_customer_favorites_customer').on(
+			table.customerId,
+			table.createdAt,
+		),
+	],
+)
+export type CustomerFavorite = typeof customerFavorites.$inferSelect
+
+// Test order codes (#119). The code itself is an HMAC and is never stored; this
+// table holds its nonce: written when the code is minted (so the daily limit
+// per location can be counted) and stamped when it is spent (one order per
+// code). Pruned after a day by the regional tick.
+export const testOrderNonces = sqliteTable(
+	'test_order_nonces',
+	{
+		nonce: text('nonce').primaryKey(),
+		locationId: text('location_id').notNull(),
+		mintedAt: integer('minted_at').notNull().default(nowMs),
+		usedAt: integer('used_at'),
+	},
+	(table) => [
+		index('idx_test_order_nonces_location').on(
+			table.locationId,
+			table.mintedAt,
+		),
+	],
+)
+
+export type OrderProblemItemSnapshot = {
+	lineIndex: number
+	itemId: string
+	name: string
+	quantity: number
+	amountCents: number
+}
+
+// A guest's report that something was wrong with an order (#191). One open
+// report per order: a second submission adds to it. The thread
+// (`order_problem_replies`) is append-only.
+export const orderProblems = sqliteTable(
+	'order_problems',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => restaurantOrders.id),
+		// Denormalised for the inbox and reports (ids, not guest data).
+		locationId: text('location_id').notNull(),
+		kind: text('kind', { enum: [...ORDER_PROBLEM_KINDS] }).notNull(),
+		itemRefs: text('item_refs', { mode: 'json' })
+			.$type<OrderProblemItemSnapshot[]>()
+			.notNull()
+			.default([]),
+		note: text('note'),
+		photoKey: text('photo_key'),
+		photoContentType: text('photo_content_type'),
+		status: text('status', { enum: [...ORDER_PROBLEM_STATUSES] })
+			.notNull()
+			.default('open'),
+		resolution: text('resolution', { enum: [...ORDER_PROBLEM_RESOLUTIONS] }),
+		resolvedBy: text('resolved_by'),
+		resolvedAt: integer('resolved_at'),
+		// What the answer gave: a provider or recorded refund row, or a credit code.
+		refundId: text('refund_id'),
+		refundCents: integer('refund_cents'),
+		creditCodeId: text('credit_code_id'),
+		creditCents: integer('credit_cents'),
+		creditExpiresAt: integer('credit_expires_at'),
+		// Manager alerts: the new-report event went out, the 24-hour one went out.
+		notifiedAt: integer('notified_at'),
+		unansweredNotifiedAt: integer('unanswered_notified_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		// One open report per order.
+		uniqueIndex('order_problems_one_open')
+			.on(table.orderId)
+			.where(sql`${table.status} = 'open'`),
+		index('idx_order_problems_order').on(table.orderId),
+		index('idx_order_problems_status').on(table.status, table.createdAt),
+		index('idx_order_problems_location').on(table.locationId, table.createdAt),
+		check('chk_order_problems_kind', oneOf(table.kind, ORDER_PROBLEM_KINDS)),
+		check(
+			'chk_order_problems_status',
+			oneOf(table.status, ORDER_PROBLEM_STATUSES),
+		),
+		check(
+			'chk_order_problems_resolution',
+			sql`${table.resolution} is null or ${table.resolution} in ('refund', 'credit', 'reply', 'closed')`,
+		),
+	],
+)
+export type OrderProblem = typeof orderProblems.$inferSelect
+
+// The thread of a report: what the guest said, what the restaurant answered,
+// and what the answer did. Append-only (triggers keep every column but a
+// `body` the erasure empties).
+export const orderProblemReplies = sqliteTable(
+	'order_problem_replies',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		problemId: text('problem_id')
+			.notNull()
+			.references(() => orderProblems.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: [...ORDER_PROBLEM_ENTRY_KINDS] }).notNull(),
+		authorKind: text('author_kind', {
+			enum: [...ORDER_PROBLEM_AUTHOR_KINDS],
+		}).notNull(),
+		// The operator's user id, never a name; null for the guest and the system.
+		authorId: text('author_id'),
+		body: text('body'),
+		// The guest's retry key (a UUID): a repeated submission is the same entry.
+		idempotencyKey: text('idempotency_key'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_order_problem_replies_problem').on(
+			table.problemId,
+			table.createdAt,
+		),
+		uniqueIndex('order_problem_replies_idempotency')
+			.on(table.idempotencyKey)
+			.where(sql`${table.idempotencyKey} is not null`),
+		check(
+			'chk_order_problem_replies_kind',
+			oneOf(table.kind, ORDER_PROBLEM_ENTRY_KINDS),
+		),
+	],
+)
+export type OrderProblemReply = typeof orderProblemReplies.$inferSelect
+
+// A group order (#170). The host is a signed-in customer; friends join with a
+// first name and a link. `version` is bumped on every change so checkout can
+// refuse a total the host did not see (409 `group_changed`).
+export const groupCarts = sqliteTable(
+	'group_carts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		hostCustomerId: text('host_customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		hostFirstName: text('host_first_name').notNull(),
+		status: text('status', { enum: [...GROUP_STATUSES] })
+			.notNull()
+			.default('open'),
+		deadlineAt: integer('deadline_at'),
+		perPersonLimitMinor: integer('per_person_limit_minor'),
+		totalLimitMinor: integer('total_limit_minor'),
+		shareTokenVersion: integer('share_token_version').notNull().default(1),
+		version: integer('version').notNull().default(1),
+		orderId: text('order_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_group_carts_host').on(table.hostCustomerId),
+		index('idx_group_carts_updated').on(table.updatedAt),
+		check('chk_group_carts_status', oneOf(table.status, GROUP_STATUSES)),
+	],
+)
+export type GroupCart = typeof groupCarts.$inferSelect
+
+export const groupCartPeople = sqliteTable(
+	'group_cart_people',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		groupId: text('group_id')
+			.notNull()
+			.references(() => groupCarts.id, { onDelete: 'cascade' }),
+		firstName: text('first_name').notNull(),
+		isHost: integer('is_host', { mode: 'boolean' }).notNull().default(false),
+		doneAt: integer('done_at'),
+		// The person's own token, 256 random bits; only its hash is stored.
+		tokenHash: text('token_hash').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_group_cart_people_group').on(table.groupId),
+		uniqueIndex('group_cart_people_token_unique').on(table.tokenHash),
+		// One host per group.
+		uniqueIndex('group_cart_people_one_host')
+			.on(table.groupId)
+			.where(sql`${table.isHost} = 1`),
+	],
+)
+export type GroupCartPerson = typeof groupCartPeople.$inferSelect
+
+export const groupCartLines = sqliteTable(
+	'group_cart_lines',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		groupId: text('group_id')
+			.notNull()
+			.references(() => groupCarts.id, { onDelete: 'cascade' }),
+		personId: text('person_id')
+			.notNull()
+			.references(() => groupCartPeople.id, { onDelete: 'cascade' }),
+		// The cart line exactly as `POST /orders` takes it (dish, variant, options).
+		line: text('line', { mode: 'json' }).notNull(),
+		itemName: text('item_name').notNull(),
+		// The line's price when it was added, for the limits; checkout re-prices.
+		amountMinor: integer('amount_minor').notNull().default(0),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_group_cart_lines_group').on(table.groupId),
+		index('idx_group_cart_lines_person').on(table.personId),
+	],
+)
+export type GroupCartLine = typeof groupCartLines.$inferSelect

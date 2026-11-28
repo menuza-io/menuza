@@ -34,7 +34,9 @@ import { getGeocoder } from '../lib/geocoder.ts'
 import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { getNodeRegion } from '../lib/region.ts'
 import { getRouter } from '../lib/router.ts'
+import { findSavedAddress } from '../services/customer-addresses-service.ts'
 import { fetchOrderContext } from '../services/order-service.ts'
+import { authenticateCustomer } from './auth.ts'
 import { resolveOrderingOrganization } from './orders.ts'
 
 /**
@@ -626,16 +628,25 @@ const quoteBodySchema = z
 		locationId: z.string().trim().min(1).max(100),
 		placeId: z.string().trim().min(1).max(512).optional(),
 		address: z.string().trim().min(3).max(300).optional(),
+		/**
+		 * A saved address of the signed-in guest (#113): quoted again against the
+		 * zones and fees as they are now, from the point a successful geocode saved.
+		 * Needs the customer token; another guest's id answers 404.
+		 */
+		addressId: z.string().trim().min(1).max(128).optional(),
 		unit: z.string().trim().max(50).optional(),
 		sessionToken: z.string().trim().min(1).max(100).optional(),
 		locale: z.string().max(20).optional(),
 		/** The items subtotal in major units, so the fee shown fits the cart. */
 		subtotal: z.number().min(0).max(1_000_000).optional(),
 	})
-	.refine((value) => Boolean(value.placeId || value.address), {
-		message: 'Choose an address',
-		path: ['address'],
-	})
+	.refine(
+		(value) => Boolean(value.placeId || value.address || value.addressId),
+		{
+			message: 'Choose an address',
+			path: ['address'],
+		},
+	)
 
 function unavailable(c: Context, reason: UnavailableReason) {
 	return c.json({ status: 'unavailable', reason }, 200, noStore())
@@ -671,6 +682,71 @@ publicDeliveryRoutes.post('/quote', async (c) => {
 
 	const offered = deliveryOffered(location)
 	if (offered) return unavailable(c, offered)
+
+	// A saved address (#113): the guest's own row, re-quoted from the stored
+	// point. No geocoder is called; the zones, minimum and fee are the current
+	// ones, so an address outside every zone today answers `out_of_range`.
+	if (body.addressId) {
+		let auth: Awaited<ReturnType<typeof authenticateCustomer>>
+		try {
+			auth = await authenticateCustomer(c)
+		} catch (response) {
+			if (response instanceof Response) return response
+			throw response
+		}
+		// The token's organization must be the one this origin names.
+		if (auth.orgId !== orgId) {
+			return c.json(
+				{ error: 'address_not_found', message: 'Address not found.' },
+				404,
+				noStore(),
+			)
+		}
+		const saved = await findSavedAddress(
+			auth.db,
+			auth.customerId,
+			body.addressId,
+		)
+		if (!saved) {
+			return c.json(
+				{ error: 'address_not_found', message: 'Address not found.' },
+				404,
+				noStore(),
+			)
+		}
+		const outcome = await evaluateDelivery(
+			orgId,
+			location,
+			{
+				formatted: saved.formatted,
+				line1: saved.line1,
+				city: saved.city,
+				state: saved.state ?? '',
+				postalCode: saved.postalCode ?? '',
+				country: saved.country ?? '',
+				lat: saved.lat,
+				lng: saved.lng,
+				placeId: '',
+			},
+			{
+				unit: body.unit || saved.unit || null,
+				subtotal: body.subtotal ?? null,
+				sign: true,
+			},
+		)
+		return c.json(
+			{
+				...outcome,
+				savedAddress: {
+					id: saved.id,
+					label: saved.label,
+					notes: saved.notes,
+				},
+			},
+			200,
+			noStore(),
+		)
+	}
 
 	const geocoded = await geocodeRequest(
 		orgId,
