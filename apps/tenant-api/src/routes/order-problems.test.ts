@@ -20,7 +20,7 @@ import {
 	restaurantOrderRefunds,
 	restaurantOrders,
 } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -1095,6 +1095,9 @@ describe('guest order problem reports (#191)', () => {
 			const { problemId } = await open()
 			await answer(problemId, { action: 'credit', amountCents: 500 })
 			const [issued] = await (await db()).select().from(discountIssuedCodes)
+			// The table's update guard keeps an issued code's expiry fixed; this
+			// test database is private to the test, so lift it to age the code.
+			await (await db()).run(sql`DROP TRIGGER discount_issued_codes_fixed`)
 			await (
 				await db()
 			)
