@@ -116,8 +116,8 @@ export function nextSpecialHourDate(
 /**
  * The entries as plain dated entries over `fromDate..toDate` (inclusive): each
  * repeating entry becomes one entry per occurrence inside the range
- * (`repeatsYearly` removed), one-off entries stay, and an exact-year entry
- * replaces a repeating one on the same date. Sorted by date. For channels that
+ * (`repeatsYearly` removed), one-off entries stay (however far ahead), and an
+ * exact-year entry replaces a repeating one on the same date. Sorted by date. For channels that
  * need a dated list (listing sync, delivery apps, the phone agent's prompt).
  */
 export function expandSpecialHours<T extends RepeatableSpecialHour>(
@@ -130,7 +130,12 @@ export function expandSpecialHours<T extends RepeatableSpecialHour>(
 	const candidates = new Set<string>()
 	for (const entry of entries) {
 		if (!DATE_RE.test(entry.date)) continue
-		if (entry.date >= fromDate && entry.date <= toDate) {
+		// A one-off entry is always listed once it is not in the past, however far
+		// ahead; only the repeats are cut off at the end of the range.
+		if (
+			entry.date >= fromDate &&
+			(entry.date <= toDate || !entry.repeatsYearly)
+		) {
 			candidates.add(entry.date)
 		}
 		if (entry.repeatsYearly) {

@@ -133,6 +133,26 @@ describe('expandSpecialHours', () => {
 	})
 })
 
+describe('expandSpecialHours keeps one-offs far ahead', () => {
+	it('lists a one-off beyond the range, but cuts a repeating entry off at the range end', () => {
+		const farOneOff = {
+			id: 'far',
+			date: '2099-12-25',
+			isOpen: false,
+			slots: [],
+		}
+		const expanded = expandSpecialHours(
+			[farOneOff, christmas],
+			'2026-12-01',
+			'2027-06-01',
+		)
+		expect(expanded.map((entry) => entry.date)).toEqual([
+			'2026-12-25',
+			'2099-12-25',
+		])
+	})
+})
+
 describe('isCalendarDate', () => {
 	it('rejects impossible dates', () => {
 		expect(isCalendarDate('2027-02-29')).toBe(false)
