@@ -52,6 +52,8 @@ export type OrderCopyLabels = {
 	viewOrder: string
 	/** Receipt only, when the restaurant takes problem reports (#191). */
 	problemHint: string
+	/** A group order (#170): the heading over one person's dishes, `{name}`. */
+	forPerson: string
 	/** Receipt only, with the branded app's live stores (#196). */
 	trackInApp: string
 	storeAppStore: string

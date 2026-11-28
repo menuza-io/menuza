@@ -293,6 +293,8 @@ const lineSchema = z.strictObject({
 	),
 	kitchenName: menuText.optional(),
 	highlight: z.enum(['none', 'allergy', 'attention', 'long_prep']).optional(),
+	/** A group order (#170): whose dish this is ("For Sam"). */
+	forName: z.string().max(60).optional(),
 	courseId: z.string().max(40).optional(),
 	courseName: menuText.optional(),
 	coursePosition: z.number().int().optional(),

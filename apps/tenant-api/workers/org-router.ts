@@ -178,18 +178,6 @@ async function orgIdFromOrderIdentity(
 			slug: url.searchParams.get('slug') ?? undefined,
 			host: url.searchParams.get('host') ?? undefined,
 		}
-	} else if (
-		// A photo of an order problem report (#191) is raw image bytes: its
-		// identity rides in the query string, like a GET's.
-		!(request.headers.get('Content-Type') ?? '')
-			.toLowerCase()
-			.includes('json') &&
-		/^\/orders\/[^/]+\/problems\/[^/]+\/photo$/.test(url.pathname)
-	) {
-		identity = {
-			slug: url.searchParams.get('slug') ?? undefined,
-			host: url.searchParams.get('host') ?? undefined,
-		}
 	} else {
 		const body = await request
 			.clone()
@@ -197,7 +185,14 @@ async function orgIdFromOrderIdentity(
 			.catch(() => ({}))
 		const parsed = orderIdentitySchema.safeParse(body)
 		if (!parsed.success) return null
-		identity = parsed.data
+		// A request without a JSON body (a DELETE of a group order dish #170, the
+		// raw photo of an order problem #191) names its organization in the query
+		// like a read. A body's own identity always wins; the Origin must still
+		// belong to the organization it names.
+		identity = {
+			slug: parsed.data.slug ?? url.searchParams.get('slug') ?? undefined,
+			host: parsed.data.host ?? url.searchParams.get('host') ?? undefined,
+		}
 	}
 	const organization = await resolveOrganizationForBrowserAuth(
 		request.headers.get('Origin') ?? undefined,

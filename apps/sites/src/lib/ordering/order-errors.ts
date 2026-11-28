@@ -81,6 +81,10 @@ export type OrderErrorLabels = {
 	alcoholNotAllowed: string
 	/** age_confirmation_required (#167): the "I am 21 or older" box was not ticked */
 	ageConfirmationRequired: string
+	/** group_changed, group_items_unavailable (#170): the group order moved while the host checked out */
+	groupChanged: string
+	/** group_not_found, group_already_ordered, group_disabled, group_empty, group_unsupported, forbidden (#170) */
+	groupUnavailable: string
 	/** anything else */
 	generic: string
 }
@@ -143,6 +147,14 @@ const CODE_TO_LABEL: Record<string, OrderErrorLabelKey> = {
 	discounts_on_tab: 'discountsUnavailable',
 	alcohol_not_allowed: 'alcoholNotAllowed',
 	age_confirmation_required: 'ageConfirmationRequired',
+	group_changed: 'groupChanged',
+	group_items_unavailable: 'groupChanged',
+	group_not_found: 'groupUnavailable',
+	group_already_ordered: 'groupUnavailable',
+	group_disabled: 'groupUnavailable',
+	group_empty: 'groupUnavailable',
+	group_unsupported: 'groupUnavailable',
+	forbidden: 'groupUnavailable',
 }
 
 export function orderErrorLabelKey(

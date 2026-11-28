@@ -180,6 +180,39 @@ describe('flat kitchen presentation retains operational actions', () => {
 		act(() => no.click())
 		expect(testPrint).toHaveBeenLastCalledWith('ticket', 'no')
 	})
+	it('shows a group order’s dishes under "For Sam", once per person (#170)', () => {
+		const dish = (id: string, forName: string, name: string) => ({
+			...ticket.lines[0]!,
+			id,
+			name,
+			forName,
+		})
+		const feed: KdsFeed = {
+			config: DEFAULT_KDS_CONFIG,
+			configVersion: 1,
+			tickets: [
+				{
+					...ticket,
+					lines: [
+						dish('a', 'Hana', 'Burger'),
+						dish('b', 'Sam', 'Fries'),
+						dish('c', 'Sam', 'Salad'),
+						dish('d', 'Lee', 'Soup'),
+					],
+				},
+			],
+			serverNow: NOW,
+			truncated: false,
+		}
+		draw({ feed })
+		const heads = [...host.querySelectorAll('[data-kitchen-for]')].map(
+			(node) => node.textContent,
+		)
+		expect(heads).toEqual(['For Hana', 'For Sam', 'For Lee'])
+		// A normal ticket has none.
+		draw({ feed: { ...feed, tickets: [ticket] } })
+		expect(host.querySelector('[data-kitchen-for]')).toBeNull()
+	})
 	it('says the ticket printed, or points to printer setup, once answered (#119)', () => {
 		const ticketWith = (answer: 'yes' | 'no') =>
 			({

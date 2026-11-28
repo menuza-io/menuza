@@ -196,6 +196,8 @@ export const kdsLineSchema = z.object({
 	/** Localized kitchen name. The screen resolves it; `name` stays the guest name. */
 	kitchenName: z.string().max(500).optional(),
 	highlight: kitchenHighlightSchema.optional(),
+	/** A group order (#170): whose dish this is ("For Sam"). Omitted otherwise. */
+	forName: z.string().max(60).optional(),
 	/** Set on dine-in courses. A held line is on the ticket and is not late. */
 	courseId: z.string().max(40).optional(),
 	courseName: z.string().max(60).optional(),

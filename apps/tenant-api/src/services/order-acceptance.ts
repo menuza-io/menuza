@@ -1,3 +1,4 @@
+import { runGroupOrdersTick } from './group-orders-service.ts'
 import { runOrderProblemsTickForOrg } from './order-problems-service.ts'
 import { printDueScheduledOrders } from './print-hooks.ts'
 import { processPushReceipts } from './push-service.ts'
@@ -267,6 +268,13 @@ export async function runOrdersTickForOrg(
 			return null
 		},
 	)
+	// Group orders (#170): a group with no activity for seven days is deleted.
+	const groups = await runGroupOrdersTick(orgId, db, now).catch(
+		(error: unknown) => {
+			console.error('Group orders tick failed', orgId, errorLogFields(error))
+			return null
+		},
+	)
 	const due = [
 		messages.nextDueAt,
 		acceptance.nextDeadlineAt,
@@ -275,6 +283,7 @@ export async function runOrdersTickForOrg(
 		catering?.nextDueAt ?? null,
 		testOrders?.nextDueAt ?? null,
 		problems?.nextDueAt ?? null,
+		groups?.nextDueAt ?? null,
 	].filter((at): at is number => at !== null)
 	const nextDueAt = due.length > 0 ? Math.min(...due) : null
 	return {

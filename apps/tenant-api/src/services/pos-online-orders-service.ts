@@ -538,6 +538,7 @@ export async function onlineOrderDetail(
 			...(kitchenMark(line.kitchenHighlight)
 				? { highlight: kitchenMark(line.kitchenHighlight) }
 				: {}),
+			...(line.forName ? { forName: clip(line.forName, 60) } : {}),
 			variantNames: (line.variantNames ?? []).map((name) =>
 				clip(name, MENU_TEXT_MAX),
 			),

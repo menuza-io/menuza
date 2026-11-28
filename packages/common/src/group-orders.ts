@@ -18,6 +18,11 @@ export const GROUP_MIN_DEADLINE_MS = 15 * 60 * 1000
 export const GROUP_MAX_DEADLINE_MS = 7 * 24 * 60 * 60 * 1000
 export const GROUP_MAX_PEOPLE = 25
 export const GROUP_MAX_LINES = 100
+/** A host may have this many groups open at once. */
+export const GROUP_MAX_OPEN_PER_HOST = 5
+/** The prefixes tell a share token from a person's own token before any lookup. */
+export const GROUP_SHARE_TOKEN_PREFIX = 'gs1.'
+export const GROUP_PERSON_TOKEN_PREFIX = 'gp1.'
 /** A group with no activity for this long is deleted. */
 export const GROUP_INACTIVE_PURGE_MS = 7 * 24 * 60 * 60 * 1000
 export const GROUP_FIRST_NAME_MAX = 40
@@ -39,6 +44,10 @@ export const GROUP_ERROR_CODES = [
 	'group_empty',
 	'group_disabled',
 	'forbidden',
+	'group_host_limit',
+	'group_deadline_too_soon',
+	'group_deadline_too_far',
+	'invalid_line',
 ] as const
 export type GroupErrorCode = (typeof GROUP_ERROR_CODES)[number]
 
@@ -85,50 +94,90 @@ export const updateGroupSchema = z
 	})
 export type UpdateGroupRequest = z.infer<typeof updateGroupSchema>
 
-export type GroupPersonView = {
-	id: string
-	firstName: string
-	isHost: boolean
-	isYou: boolean
-	done: boolean
-	lineCount: number
-	subtotalMinor: number
-}
+const groupPersonViewSchema = z.object({
+	id: z.string(),
+	firstName: z.string(),
+	isHost: z.boolean(),
+	isYou: z.boolean(),
+	done: z.boolean(),
+	lineCount: z.number().int(),
+	subtotalMinor: z.number().int(),
+})
+export type GroupPersonView = z.infer<typeof groupPersonViewSchema>
 
-export type GroupLineView = {
-	id: string
-	personId: string
-	line: z.infer<typeof restaurantOrderLineSchema>
-	itemName: string
-	amountMinor: number
+const groupLineViewSchema = z.object({
+	id: z.string(),
+	personId: z.string(),
+	line: z.object({
+		itemId: z.string(),
+		variantId: z.string().optional(),
+		quantity: z.number().int(),
+		instructions: z.string().optional(),
+		options: z.array(z.unknown()).default([]),
+	}),
+	/** As the menu names it (a language map or text): the page localizes it. */
+	itemName: z.string(),
+	/** The variant the dish was priced with, as the menu names it ("Large"). */
+	variantNames: z.array(z.string()).default([]),
+	/** The modifiers chosen, with their names and what each adds (major units). */
+	options: z
+		.array(
+			z.object({
+				groupId: z.string(),
+				groupName: z.string(),
+				optionId: z.string(),
+				optionName: z.string(),
+				half: z.enum(['whole', 'left', 'right']).nullable(),
+				quantity: z.number().int(),
+				priceDelta: z.number(),
+			}),
+		)
+		.default([]),
+	amountMinor: z.number().int(),
 	/** Sold out or off the menu now: listed, and removed before paying. */
-	available: boolean
+	available: z.boolean(),
 	/** The viewer may remove it (their own, or any as the host). */
-	canRemove: boolean
-}
+	canRemove: z.boolean(),
+})
+export type GroupLineView = z.infer<typeof groupLineViewSchema>
 
 /** What a poll returns. Never a phone, an email or another person's token. */
-export type GroupView = {
-	id: string
-	status: GroupStatus
-	locationId: string
-	hostFirstName: string
-	deadlineAt: number | null
-	perPersonLimitMinor: number | null
-	totalLimitMinor: number | null
-	totalMinor: number
-	currency: string | null
+export const groupViewSchema = z.object({
+	id: z.string(),
+	status: z.enum(GROUP_STATUSES),
+	locationId: z.string(),
+	hostFirstName: z.string(),
+	deadlineAt: z.number().nullable(),
+	perPersonLimitMinor: z.number().nullable(),
+	totalLimitMinor: z.number().nullable(),
+	totalMinor: z.number().int(),
+	currency: z.string().nullable(),
 	/** Bumped on every change; checkout names it (409 `group_changed`). */
-	version: number
-	people: GroupPersonView[]
-	lines: GroupLineView[]
-	you: { personId: string; isHost: boolean } | null
+	version: z.number().int(),
+	people: z.array(groupPersonViewSchema),
+	/** Empty for someone who only holds the share link and has not joined. */
+	lines: z.array(groupLineViewSchema),
+	you: z.object({ personId: z.string(), isHost: z.boolean() }).nullable(),
 	/** Set once the host checked out: the link then shows the order status. */
-	order: { id: string; number: string; status: string } | null
+	order: z
+		.object({ id: z.string(), number: z.string(), status: z.string() })
+		.nullable(),
 	/** The viewer may still add dishes. */
-	canAdd: boolean
-	serverNow: number
-}
+	canAdd: z.boolean(),
+	serverNow: z.number(),
+})
+export type GroupView = z.infer<typeof groupViewSchema>
+
+/** What creating or joining answers: the view and the person's own token, once. */
+export const groupJoinedSchema = z.object({
+	groupId: z.string(),
+	/** The person's token: kept in the browser, sent as `X-Group-Token`. */
+	personToken: z.string(),
+	/** The link's token (host only): the part after `#` of the share link. */
+	shareToken: z.string().optional(),
+	view: groupViewSchema,
+})
+export type GroupJoined = z.infer<typeof groupJoinedSchema>
 
 /** The HMAC message of a group's share token. Bumping the version burns links. */
 export function groupShareTokenMessage(

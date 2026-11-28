@@ -331,6 +331,116 @@ export function buildOrderProblemLabels(i18n: I18n) {
 	}
 }
 
+/**
+ * The group order page (#170): hosts and friends. Templates keep their `{name}`
+ * placeholders for the browser to fill.
+ */
+export function buildGroupOrderLabels(i18n: I18n) {
+	return {
+		title: i18n._(msg`Group order`),
+		startHeading: i18n._(msg`Start a group order`),
+		startIntro: i18n._(
+			msg`Share a link. Everyone adds their own dishes, and you pay once.`,
+		),
+		location: i18n._(msg`Location`),
+		deadline: i18n._(msg`Order by (optional)`),
+		deadlineHint: i18n._(
+			msg`Between 15 minutes and 7 days from now. After it, nobody can add dishes.`,
+		),
+		perPersonLimit: i18n._(msg`Spend limit per person (optional)`),
+		totalLimit: i18n._(msg`Spend limit for the group (optional)`),
+		start: i18n._(msg`Start the group order`),
+		starting: i18n._(msg`Starting…`),
+		signInToStart: i18n._(msg`Sign in to start a group order.`),
+		signIn: i18n._(msg`Sign in`),
+		joinHeading: translate(i18n, msg`Join {host}'s group order`, {
+			host: '{host}',
+		}),
+		joinIntro: i18n._(
+			msg`Add your own dishes. You only need a first name, no account.`,
+		),
+		firstName: i18n._(msg`Your first name`),
+		join: i18n._(msg`Join`),
+		joining: i18n._(msg`Joining…`),
+		hostLabel: i18n._(msg`Host`),
+		youLabel: i18n._(msg`You`),
+		people: i18n._(msg`Who is in`),
+		done: i18n._(msg`Done`),
+		imDone: i18n._(msg`I'm done`),
+		notDone: i18n._(msg`Not done yet`),
+		noDishes: i18n._(msg`No dishes yet`),
+		subtotal: translate(i18n, msg`{amount} so far`, { amount: '{amount}' }),
+		total: i18n._(msg`Group total`),
+		deadlineLine: translate(i18n, msg`Order by {time}`, { time: '{time}' }),
+		limitPerPerson: translate(i18n, msg`Up to {amount} each`, {
+			amount: '{amount}',
+		}),
+		limitTotal: translate(i18n, msg`Up to {amount} in all`, {
+			amount: '{amount}',
+		}),
+		chooseDishes: i18n._(msg`Choose dishes from the menu`),
+		addCart: i18n._(msg`Add my cart to the group`),
+		addingCart: i18n._(msg`Adding…`),
+		cartEmpty: i18n._(
+			msg`Your cart is empty. Choose dishes from the menu, then come back and add them.`,
+		),
+		added: i18n._(msg`Added to the group order.`),
+		remove: i18n._(msg`Remove`),
+		shareHeading: i18n._(msg`Share this link`),
+		copy: i18n._(msg`Copy link`),
+		copied: i18n._(msg`Link copied`),
+		lock: i18n._(msg`Lock the order`),
+		unlock: i18n._(msg`Unlock`),
+		locked: i18n._(msg`The host locked this order. Nobody can add dishes.`),
+		pastDeadline: i18n._(msg`The deadline has passed. Nobody can add dishes.`),
+		ordered: i18n._(msg`The host placed this order.`),
+		orderStatus: translate(i18n, msg`Order {number}: {status}`, {
+			number: '{number}',
+			status: '{status}',
+		}),
+		viewOrder: i18n._(msg`View the order`),
+		unavailable: i18n._(msg`No longer available`),
+		unavailableHint: i18n._(
+			msg`Some dishes are no longer available. Remove them before you check out.`,
+		),
+		removeUnavailable: i18n._(msg`Remove unavailable dishes`),
+		checkout: i18n._(msg`Check out and pay`),
+		checkoutHint: i18n._(
+			msg`Choose pickup or delivery and the time at checkout. You pay for everything.`,
+		),
+		emptyGroup: i18n._(msg`Add at least one dish before you check out.`),
+		leave: i18n._(msg`Leave the group order`),
+		end: i18n._(msg`End the group order`),
+		endConfirm: i18n._(
+			msg`End this group order for everyone? Every dish and name in it is deleted.`,
+		),
+		leaveConfirm: i18n._(msg`Leave this group order? Your dishes are removed.`),
+		gone: i18n._(
+			msg`This group order is no longer available. It may have ended, or the link is old.`,
+		),
+		goneAction: i18n._(msg`Back to the menu`),
+		disabled: i18n._(msg`This restaurant does not take group orders.`),
+		limitReached: i18n._(
+			msg`That is over the spend limit for this group order.`,
+		),
+		full: i18n._(msg`This group order is full.`),
+		linesFull: i18n._(msg`This group order has the most dishes allowed.`),
+		hostLimit: i18n._(msg`You already have the most group orders open.`),
+		deadlineTooSoon: i18n._(msg`Choose a time at least 15 minutes from now.`),
+		deadlineTooFar: i18n._(msg`Choose a time within 7 days.`),
+		invalidLine: i18n._(msg`That dish cannot be added to a group order.`),
+		changed: i18n._(
+			msg`The group order changed. Review it and check out again.`,
+		),
+		failed: i18n._(msg`Something went wrong. Please try again.`),
+		limited: i18n._(msg`Too many requests. Try again in a moment.`),
+		retry: i18n._(msg`Try again`),
+		forbidden: i18n._(msg`Only the host can do that.`),
+		yourGroup: i18n._(msg`Your group order`),
+		openGroup: i18n._(msg`Open your group order`),
+	}
+}
+
 /** Saved delivery addresses at checkout (#113). */
 export function buildSavedAddressLabels(i18n: I18n) {
 	return {
@@ -358,3 +468,5 @@ export function buildSavedAddressLabels(i18n: I18n) {
 export type SavedAddressLabels = ReturnType<typeof buildSavedAddressLabels>
 
 export type OrderDetailsLabels = ReturnType<typeof buildOrderDetailsLabels>
+
+export type GroupOrderLabels = ReturnType<typeof buildGroupOrderLabels>

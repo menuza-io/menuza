@@ -2544,6 +2544,12 @@ export function PrintedTicket({
 					) : null}
 					{group.lines.map((line, index) => (
 						<div key={index} className={cn('mb-1', f('items').cls)}>
+							{line.forName &&
+							line.forName !== group.lines[index - 1]?.forName ? (
+								<div className="font-semibold" data-order-for>
+									<Trans>For {line.forName}</Trans>
+								</div>
+							) : null}
 							<div className="flex justify-between gap-2">
 								<span>
 									{line.quantity}×{' '}

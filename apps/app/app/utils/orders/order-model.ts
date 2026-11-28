@@ -161,6 +161,8 @@ export const orderSchema = z.object({
 			instructions: z.string().nullable(),
 			/** The size or other variant chosen ("Large"), when the item has one. */
 			variantNames: z.array(z.string()).optional(),
+			/** A group order (#170): whose dish this is ("For Sam"). */
+			forName: z.string().optional().catch(undefined),
 			options: z.array(
 				z.object({
 					groupId: z.string().optional().catch(undefined),

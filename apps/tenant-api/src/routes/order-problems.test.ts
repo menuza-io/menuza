@@ -29,6 +29,7 @@ import { type ReportDefinition } from '@repo/reports'
 import { loadOrderProblemRecords } from '../services/sales-report-records.ts'
 import { makeDiscount } from '../../../../packages/discounts/src/test-fixtures.ts'
 import { TEST_ORDER_HEADER } from '@repo/common/test-orders'
+import { deriveReceiptToken } from '../services/order-service.ts'
 import { renderOrderEmail } from '../lib/order-messages-email.ts'
 import { setTenantEmailDevCapture } from '../lib/tenant-email.ts'
 import { deriveOrderLinkToken } from '../lib/order-link.ts'
@@ -607,6 +608,22 @@ describe('guest order problem reports (#191)', () => {
 				receiptToken: theirs.receiptToken,
 			})
 			expect(read.status).toBe(404)
+		})
+
+		it('refuses a capability made for another organization', async () => {
+			const order = await place()
+			const foreignReceipt = deriveReceiptToken('org_somewhere_else', order.id)
+			expect(
+				(await report(order.id, { receiptToken: foreignReceipt })).status,
+			).toBe(404)
+			expect(
+				(
+					await report(order.id, {
+						link: deriveOrderLinkToken('org_somewhere_else', order.id),
+					})
+				).status,
+			).toBe(404)
+			expect(await (await db()).select().from(orderProblems)).toHaveLength(0)
 		})
 
 		it('is refused 48 hours after the order was completed, but not before', async () => {

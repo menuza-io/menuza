@@ -153,6 +153,7 @@ const WORDS = {
 		drawerTest: 'Drawer test',
 		deliverTo: 'Deliver to',
 		taken: 'Taken off',
+		forPerson: 'For',
 		labelMade: 'Made',
 		labelOpened: 'Opened',
 		labelUseBy: 'Use by',
@@ -205,6 +206,7 @@ const WORDS = {
 		drawerTest: 'اختبار الدرج',
 		deliverTo: 'التوصيل إلى',
 		taken: 'تمت إزالته',
+		forPerson: 'لـ',
 		labelMade: 'تاريخ التحضير',
 		labelOpened: 'تاريخ الفتح',
 		labelUseBy: 'يستخدم قبل',
@@ -311,6 +313,8 @@ export type KitchenLineInput = {
 	note?: string | null
 	courseName?: string | null
 	held?: boolean
+	/** A group order (#170): whose dish this is, the first name they gave. */
+	forName?: string | null
 }
 
 export type KitchenTicketInput = {
@@ -449,7 +453,15 @@ export function buildKitchenTicket(input: {
 	}
 	doc.rule()
 	let course: string | null | undefined
+	let person: string | null | undefined
 	for (const line of ticket.lines) {
+		// A group order (#170): the dishes of each person under "For Sam".
+		if (line.forName && line.forName !== person) {
+			person = line.forName
+			doc.text(`${words.forPerson} ${clean(scrubPhones(line.forName), 40)}`, {
+				bold: true,
+			})
+		}
 		if (f('courses').show && line.courseName && line.courseName !== course) {
 			course = line.courseName
 			doc.text(`${line.courseName}${line.held ? ' (held)' : ''}`, {

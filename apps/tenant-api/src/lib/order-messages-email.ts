@@ -363,8 +363,16 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 		)
 		.join('')
 
+	const forPerson = (name: string) => fillCopy(labels.forPerson, { name })
+	let rowPerson: string | undefined
 	const itemRows = lines
 		.map((line) => {
+			// A group order (#170): each person's dishes under "For Sam".
+			const personRow =
+				line.forName && line.forName !== rowPerson
+					? `<tr><td colspan="3" style="padding:10px 0 0;color:${muted};font-size:12px;font-weight:700;text-align:${align}" dir="auto">${escapeHtml(forPerson(line.forName))}</td></tr>`
+					: ''
+			rowPerson = line.forName
 			const name = getLocalizedMenuValue(line.itemName, locale, defaultLocale)
 			const choices = lineChoices(line, locale, defaultLocale)
 			const choicesHtml = choices
@@ -374,7 +382,7 @@ export function renderOrderEmail(input: OrderEmailInput): RenderedOrderEmail {
 			const noteHtml = note
 				? `<div style="font-size:12px;color:${muted};font-style:italic;margin-top:2px" dir="auto">“${escapeHtml(note)}”</div>`
 				: ''
-			return `<tr><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${align};vertical-align:top;width:32px">${escapeHtml(String(line.quantity))}×</td><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${align};vertical-align:top"><div dir="auto">${escapeHtml(name)}</div>${choicesHtml}${noteHtml}</td><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${end};vertical-align:top;white-space:nowrap">${escapeHtml(money(line.totalCents))}</td></tr>`
+			return `${personRow}<tr><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${align};vertical-align:top;width:32px">${escapeHtml(String(line.quantity))}×</td><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${align};vertical-align:top"><div dir="auto">${escapeHtml(name)}</div>${choicesHtml}${noteHtml}</td><td style="padding:8px 0;color:${foreground};font-size:14px;text-align:${end};vertical-align:top;white-space:nowrap">${escapeHtml(money(line.totalCents))}</td></tr>`
 		})
 		.join('')
 	const itemsHtml = itemRows
@@ -488,7 +496,12 @@ ${itemsHtml}${totalsHtml}${ctaHtml}${inviteHtml}${codesHtml}
 	for (const [label, value] of rows) textLines.push(`${label}: ${value}`)
 	if (lines.length > 0) {
 		textLines.push('', `${labels.items}:`)
+		let textPerson: string | undefined
 		for (const line of lines) {
+			if (line.forName && line.forName !== textPerson) {
+				textLines.push(forPerson(line.forName))
+			}
+			textPerson = line.forName
 			const name = getLocalizedMenuValue(line.itemName, locale, defaultLocale)
 			const choices = lineChoices(line, locale, defaultLocale)
 			textLines.push(

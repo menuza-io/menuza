@@ -27,6 +27,7 @@ import { buildFavoritesLabels } from '~/lib/guest-account-labels'
 import { resolveMediaUrl, siteContainer } from '~/lib/media'
 import { formatOrderingResume, summarizeHours } from '~/lib/menu-hours'
 import {
+	buildGroupOrderLabels,
 	buildOrderDetailsLabels,
 	buildOrderingLabels,
 	translate,
@@ -205,6 +206,11 @@ const carouselLabels = {
 // Favorite dishes (#158): the heart, and the row the browser fills once it
 // knows which dishes this guest favorited (they live in the region).
 const favoritesLabels = buildFavoritesLabels(i18n)
+// Group orders (#170): "Start a group order", or "Open your group order" for a
+// browser that is already in one. Offered only while `ordering.group` is on.
+const groupEnabled = menuPayload?.features?.group === true
+const groupLabels = buildGroupOrderLabels(i18n)
+const groupHref = getLocaleHref('/menu/group', requestedLocale, requestedLocale, defaultLocale)
 const viewOrderLabel = i18n._(msg`View order`)
 const yourOrderLabel = i18n._(msg`Your order`)
 const subtotalLabel = i18n._(msg`Subtotal`)
@@ -820,6 +826,17 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 		<PopularRow variant="favorites" heading={favoritesLabels.row} labels={carouselLabels} cards={[]} />
 		<script id="favorites-labels" type="application/json" is:inline set:html={JSON.stringify(favoritesLabels).replace(/</g, '\\u003c')} />
 		<PopularRow heading={mostOrderedLabel} labels={carouselLabels} cards={popularCards} />
+		{groupEnabled ? (
+			<div class:list={[siteContainer, 'pt-6']} data-group-entry>
+				<a
+					id="group-entry-link"
+					href={groupHref}
+					class="btn-secondary w-full sm:w-auto"
+					data-start-label={groupLabels.startHeading}
+					data-open-label={groupLabels.openGroup}
+				>{groupLabels.startHeading}</a>
+			</div>
+		) : null}
 
 		<div class:list={[siteContainer, 'pt-8 sm:pt-10']}>
 			<div
@@ -1063,6 +1080,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			menuPricingPayload,
 		} from '~/lib/ordering/cart-discounts'
 		import { createCartStore } from '~/lib/ordering/cart-store'
+		import { loadGroupSession } from '~/lib/ordering/group-client'
 		import { mountCartUi } from '~/lib/ordering/cart-ui'
 		import {
 			createDiscountQuotes,
@@ -1844,6 +1862,12 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 
 		// A free test order (#119): keep the code out of the address bar, say so.
 		mountTestOrderBanner(orgId)
+
+		// Group orders (#170): a browser already in a group is sent back to it.
+		const groupEntry = document.getElementById('group-entry-link')
+		if (groupEntry && loadGroupSession(orgId)) {
+			groupEntry.textContent = groupEntry.dataset.openLabel ?? groupEntry.textContent
+		}
 
 		// Favorite dishes (#158): hearts, the modal's heart and "Your favorites".
 		const favoritesLabelsEl = document.getElementById('favorites-labels')

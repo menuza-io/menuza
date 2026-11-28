@@ -1,4 +1,5 @@
 import { getFeatureFlag } from '@repo/common/feature-flags'
+import { buildLink } from '@repo/common/links'
 import {
 	TEST_ORDER_FLAG,
 	mintTestOrderCodeRequestSchema,
@@ -76,10 +77,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			{ status: response.ok ? 502 : response.status, headers: NO_STORE },
 		)
 	}
-	const origin = orgSiteUrl(organization).replace(/\/$/, '')
+	// The registry's menu link; the one-time code rides in the fragment only.
+	const menu = buildLink(
+		'menu_home',
+		{ location: locationId },
+		{ origin: orgSiteUrl(organization) },
+	)
+	if (!menu) {
+		return data({ error: 'unavailable' }, { status: 503, headers: NO_STORE })
+	}
 	return data(
 		{
-			url: `${origin}/menu?location=${encodeURIComponent(locationId)}#test=${encodeURIComponent(body.code)}`,
+			url: `${menu}#test=${encodeURIComponent(body.code)}`,
 			expiresAt: typeof body.expiresAt === 'number' ? body.expiresAt : null,
 		},
 		{ headers: NO_STORE },

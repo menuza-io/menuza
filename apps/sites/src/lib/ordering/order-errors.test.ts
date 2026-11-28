@@ -49,6 +49,8 @@ const labels: OrderErrorLabels = {
 	discountsUnavailable: 'discountsUnavailable',
 	alcoholNotAllowed: 'alcoholNotAllowed:{names}',
 	ageConfirmationRequired: 'ageConfirmationRequired',
+	groupChanged: 'groupChanged',
+	groupUnavailable: 'groupUnavailable',
 	generic: 'generic',
 }
 
@@ -297,6 +299,22 @@ describe('alcohol refusals (#167)', () => {
 		expect(orderErrorLabelKey('age_confirmation_required')).toBe(
 			'ageConfirmationRequired',
 		)
+	})
+
+	it('tells the host a group order moved, or can no longer be placed (#170)', () => {
+		for (const code of ['group_changed', 'group_items_unavailable']) {
+			expect(orderErrorLabelKey(code)).toBe('groupChanged')
+		}
+		for (const code of [
+			'group_not_found',
+			'group_already_ordered',
+			'group_disabled',
+			'group_empty',
+			'group_unsupported',
+			'forbidden',
+		]) {
+			expect(orderErrorLabelKey(code)).toBe('groupUnavailable')
+		}
 	})
 
 	it('reads a malformed body as no names', () => {

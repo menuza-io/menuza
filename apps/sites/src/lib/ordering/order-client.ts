@@ -1,4 +1,4 @@
-import { TEST_ORDER_HEADER } from '@repo/common/test-orders'
+import { GROUP_TOKEN_HEADER } from '@repo/common/group-orders'
 import { type OrderMarketingConsentResult } from '@repo/common/marketing-consent'
 import {
 	createdOrderSchema,
@@ -8,6 +8,7 @@ import {
 	type OrderCapability,
 } from '@repo/common/order-receipt'
 import { type PublicOrderingOptions } from '@repo/common/restaurant-orders'
+import { TEST_ORDER_HEADER } from '@repo/common/test-orders'
 import { type OrderCredential, credentialHeaders } from './order-link.ts'
 import { type CartItem } from './types.ts'
 import {
@@ -210,7 +211,7 @@ export async function fetchOrderingOptions(input: {
  */
 export async function submitRegionalOrder(
 	body: Record<string, unknown>,
-	options: { testOrderCode?: string | null } = {},
+	options: { testOrderCode?: string | null; groupToken?: string | null } = {},
 ): Promise<CreatedOrder & { marketingConsent?: OrderMarketingConsentResult }> {
 	return withMarketingConsent(await placeRegionalOrder(body, options))
 }
@@ -230,7 +231,7 @@ function withMarketingConsent({ created, raw }: PlacedOrderAnswer) {
 
 async function placeRegionalOrder(
 	body: Record<string, unknown>,
-	options: { testOrderCode?: string | null } = {},
+	options: { testOrderCode?: string | null; groupToken?: string | null } = {},
 ): Promise<PlacedOrderAnswer> {
 	const url = `${regionalUrl()}/orders`
 	const init: RequestInit = {
@@ -240,6 +241,10 @@ async function placeRegionalOrder(
 			// A free test order (#119): the one-time code from the operator's link.
 			...(options.testOrderCode
 				? { [TEST_ORDER_HEADER]: options.testOrderCode }
+				: {}),
+			// The host's own group token with `groupId` in the body (#170).
+			...(options.groupToken
+				? { [GROUP_TOKEN_HEADER]: options.groupToken }
 				: {}),
 		},
 		body: JSON.stringify({ ...body, ...getOrgBinding() }),

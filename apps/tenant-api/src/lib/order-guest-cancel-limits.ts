@@ -41,6 +41,13 @@ export const ORDER_GUEST_CANCEL_LIMITS = {
 	problemAddress: { max: 30, windowMs: 10 * 60_000 },
 	problemReadOrder: { max: 60, windowMs: 10 * 60_000 },
 	problemReadAddress: { max: 300, windowMs: 10 * 60_000 },
+	// Group orders (#170): the page polls every 5 seconds, so reads are generous;
+	// writes and joins are bounded per group and per address.
+	groupReadGroup: { max: 4000, windowMs: 10 * 60_000 },
+	groupReadAddress: { max: 400, windowMs: 10 * 60_000 },
+	groupWriteGroup: { max: 600, windowMs: 10 * 60_000 },
+	groupWriteAddress: { max: 80, windowMs: 10 * 60_000 },
+	groupJoinAddress: { max: 20, windowMs: 10 * 60_000 },
 } as const
 
 export type OrderGuestCancelBucket = keyof typeof ORDER_GUEST_CANCEL_LIMITS
@@ -54,6 +61,11 @@ const BUCKET_NAMES: Record<OrderGuestCancelBucket, string> = {
 	problemAddress: 'order_problem.ip',
 	problemReadOrder: 'order_problem_read.order',
 	problemReadAddress: 'order_problem_read.ip',
+	groupReadGroup: 'order_group_read.group',
+	groupReadAddress: 'order_group_read.ip',
+	groupWriteGroup: 'order_group_write.group',
+	groupWriteAddress: 'order_group_write.ip',
+	groupJoinAddress: 'order_group_join.ip',
 }
 
 const SLOT_MS = 60_000

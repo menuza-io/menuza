@@ -112,6 +112,12 @@ import {
 import { kickOrderRefundExecute } from '../lib/order-refund-kick.ts'
 import { deriveTabToken } from '../lib/qr-tokens.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import {
+	claimGroupForOrder,
+	GroupClaimLostError,
+	prepareGroupCheckout,
+	type GroupCheckout,
+} from './group-orders-service.ts'
 import { verifyTestOrderCode } from '../lib/test-order-code.ts'
 import { createOrgLock } from '../lib/concurrency.ts'
 import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
@@ -1027,9 +1033,15 @@ export async function placeOrder(input: {
 	 * a good one makes this a free test order.
 	 */
 	testOrderCode?: string | null
+	/**
+	 * The host's own group token (`X-Group-Token`, #170): with `request.groupId` it
+	 * makes this the group's checkout.
+	 */
+	groupToken?: string | null
 	now?: Date
 }): Promise<PlaceOrderResult> {
-	const { organization, request, customerId } = input
+	const { organization, customerId } = input
+	let request = input.request
 	const now = input.now ?? new Date()
 	const orgId = organization.id
 	const isDineIn = request.fulfillment === 'dine_in'
@@ -1064,6 +1076,33 @@ export async function placeOrder(input: {
 			'ordering_unavailable',
 			'Ordering is temporarily unavailable. Please try again shortly.',
 		)
+	}
+
+	// A group order (#170): the host checks out the group's own dishes. The lines
+	// are replaced here, before the request is hashed, so a retried checkout
+	// rebuilds the same request and the order's own replay answers it.
+	let groupCheckout: GroupCheckout | null = null
+	if (request.groupId) {
+		if (isDineIn || request.catering || input.testOrderCode) {
+			return orderFailure(
+				422,
+				'group_unsupported',
+				'A group order cannot be a table round, a catering order or a test.',
+			)
+		}
+		const prepared = await prepareGroupCheckout(orgId, {
+			groupId: request.groupId,
+			groupVersion: request.groupVersion,
+			token: input.groupToken ?? null,
+			customerId,
+			locationId: request.locationId,
+			bodyLineCount: request.lines.length,
+			context,
+			now,
+		})
+		if (!prepared.ok) return prepared
+		groupCheckout = prepared.data
+		request = { ...request, lines: groupCheckout.lines }
 	}
 
 	// A free test order (#119): a tampered, expired, reused or other-location code
@@ -2015,7 +2054,15 @@ export async function placeOrder(input: {
 									discountCents: discounted.discountCents,
 									deliveryDiscountCents: discounted.deliveryDiscountCents,
 									discounts: orderDiscountSnapshots(prepared),
-									lines: result.lines,
+									lines: groupCheckout
+										? result.lines.map((line, index) => ({
+												...line,
+												...(groupCheckout.labels[index]
+													? { forName: groupCheckout.labels[index] }
+													: {}),
+											}))
+										: result.lines,
+									groupId: groupCheckout?.group.id ?? null,
 									attribution: placedAttribution.attribution,
 									attributionSource: placedAttribution.source,
 									idempotencyKey: request.idempotencyKey,
@@ -2049,6 +2096,17 @@ export async function placeOrder(input: {
 							'order_number_conflict',
 							'We could not place this order. Please try again.',
 						)
+					}
+
+					// The group is claimed in this same transaction: losing the race to
+					// another checkout (or to an edit) throws and rolls everything back.
+					if (groupCheckout && request.groupId) {
+						await claimGroupForOrder(tx, {
+							groupId: request.groupId,
+							version: groupCheckout.group.version,
+							orderId: inserted.id,
+							now: now.getTime(),
+						})
 					}
 
 					if (!isTest) {
@@ -2297,6 +2355,21 @@ export async function placeOrder(input: {
 				'This gift card cannot be used for the order.',
 				{ details: error.details },
 			)
+		}
+		// Another checkout, or an edit, got to the group first (#170): nothing was
+		// placed, and the host is told to look again.
+		if (error instanceof GroupClaimLostError) {
+			return groupCheckout?.alreadyOrdered
+				? orderFailure(
+						409,
+						'group_already_ordered',
+						'This group order was already placed.',
+					)
+				: orderFailure(
+						409,
+						'group_changed',
+						'The group order changed. Review it and check out again.',
+					)
 		}
 		throw error
 	}

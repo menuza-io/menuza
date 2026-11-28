@@ -76,6 +76,7 @@ export const EN: OrderMessageCopy = {
 		viewOrder: 'View your order',
 		problemHint:
 			'Something wrong with your order? Tell the restaurant on your order page.',
+		forPerson: 'For {name}',
 		trackInApp: 'Track this order in the app',
 		storeAppStore: 'Download on the App Store',
 		storePlayStore: 'Get it on Google Play',

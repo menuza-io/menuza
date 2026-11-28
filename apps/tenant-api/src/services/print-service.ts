@@ -770,6 +770,7 @@ function kitchenInput(input: {
 					line.highlight && line.highlight !== 'none' ? line.highlight : null,
 				note: line.instructions || null,
 				courseName: line.courseName ?? null,
+				forName: line.forName ?? null,
 				held: line.held,
 				options: line.options.map((option) => ({
 					name: kitchenLineName(

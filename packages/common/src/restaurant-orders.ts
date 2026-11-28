@@ -510,6 +510,15 @@ const restaurantOrderObjectSchema = z.strictObject({
 	 */
 	catering: cateringOrderInputSchema.optional(),
 	lines: z.array(restaurantOrderLineSchema).min(1).max(RESTAURANT_MAX_LINES),
+	/**
+	 * A group order (#170): the host checks out the group's dishes once. The
+	 * region prices the group's own lines (`lines` is only what the host saw, and
+	 * must match in count) and refuses a version it did not see (409
+	 * `group_changed`). Sent only when set (the body is strict), so deploy
+	 * tenant-api, then Sites.
+	 */
+	groupId: z.string().trim().min(1).max(100).optional(),
+	groupVersion: z.number().int().min(1).max(1_000_000).optional(),
 	turnstileToken: z.string().min(1).max(2048).optional(),
 	/** Opaque client device identifier used for referral abuse prevention. */
 	referralDeviceId: z.string().trim().min(1).max(128).optional(),
@@ -1863,6 +1872,12 @@ export type PricedOrderLine = {
 	totalCents: number
 	taxableCents: number
 	instructions: string | null
+	/**
+	 * A group order (#170): the first name of the person who added this dish, for
+	 * "For Sam" on the receipt and the kitchen ticket. Guest data: erased with the
+	 * person's order.
+	 */
+	forName?: string
 	options: PricedOptionLine[]
 	/**
 	 * One unit of the chosen variant without modifiers, and every menu category

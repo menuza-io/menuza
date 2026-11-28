@@ -207,6 +207,7 @@ const successLabels = {
 	refunded: translate(i18n, msg`Refunded {amount}`, { amount: '{amount}' }),
 	readyDesc: i18n._(msg`Your order is ready.`),
 	completedDesc: i18n._(msg`This order is complete.`),
+	forPerson: translate(i18n, msg`For {name}`, { name: '{name}' }),
 	cancelButton: i18n._(msg`Cancel order`),
 	cancelCountdown: translate(i18n, msg`You can cancel this order for another {time}.`, { time: '{time}' }),
 	cancelConfirmTitle: i18n._(msg`Cancel this order?`),
@@ -734,6 +735,7 @@ const valueClass = 'price font-medium text-foreground'
 			instructions: string | null
 			/** The size or other variant chosen ("Large"). */
 			variantNames?: string[]
+			forName?: string
 			options: Array<{
 				groupId: string
 				groupName: string
@@ -1046,7 +1048,20 @@ const valueClass = 'price font-medium text-foreground'
 			}
 
 			if (itemsListEl) {
-				const rows = (order.lines ?? []).map((line) => {
+				// A group order (#170): each person's dishes under "For Sam", once.
+				let lastPerson: string | undefined
+				const rows = (order.lines ?? []).flatMap((line) => {
+					const out: HTMLElement[] = []
+					if (line.forName && line.forName !== lastPerson) {
+						const head = createEl(
+							'li',
+							'pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground',
+							fillTemplate(labels.forPerson || 'For {name}', { name: line.forName }),
+						)
+						head.setAttribute('dir', 'auto')
+						out.push(head)
+					}
+					lastPerson = line.forName
 					const row = createEl('li', 'flex gap-3 py-3')
 					row.appendChild(
 						createEl(
@@ -1085,7 +1100,8 @@ const valueClass = 'price font-medium text-foreground'
 					row.appendChild(
 						createEl('span', 'price shrink-0 text-sm text-foreground', formatCents(line.totalCents)),
 					)
-					return row
+					out.push(row)
+					return out
 				})
 				itemsListEl.replaceChildren(...rows)
 			}

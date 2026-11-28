@@ -202,7 +202,12 @@ export function linkReceiptOrder(
 		table: full.table,
 		tabId: full.tabId,
 		source: full.source,
-		lines: full.lines.map((line) => ({ ...line, instructions: null })),
+		// No line notes and no "For Sam" (#170): the forwardable link tells what was
+		// ordered, not who of the group asked for it.
+		lines: full.lines.map(({ forName: _forName, ...line }) => ({
+			...line,
+			instructions: null,
+		})),
 		delivery: full.delivery
 			? { feeCents: full.delivery.feeCents, zoneId: full.delivery.zoneId }
 			: null,

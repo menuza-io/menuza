@@ -475,6 +475,12 @@ const checkoutLabels = {
 		ageConfirmationRequired: i18n._(
 			msg`Please confirm that you are 21 or older and will show ID.`,
 		),
+		groupChanged: i18n._(
+			msg`The group order changed. Go back to the group order, review it and check out again.`,
+		),
+		groupUnavailable: i18n._(
+			msg`This group order can't be placed any more. Go back to the group order to see where it stands.`,
+		),
 		generic: i18n._(msg`We could not place your order. Please try again.`),
 	},
 }
@@ -1133,6 +1139,11 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 		import { DEFAULT_SERVICE_FEE_LABEL } from '@repo/common/service-fee'
 		import { createCartStore } from '~/lib/ordering/cart-store'
 		import {
+			clearGroupCheckout,
+			groupCartKey,
+			readGroupCheckout,
+		} from '~/lib/ordering/group-checkout'
+		import {
 			EMPTY_PRICE_BOOK,
 			priceModeOf,
 			repriceCartForMode,
@@ -1278,9 +1289,13 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 		const orgId = meta.organizationId || 'default'
 		const drop = (meta.drop ?? null) as DropMeta | null
 		const isDrop = Boolean(drop)
+		// The host's group order (#170): the group's own cart, left by the group page.
+		const groupCheckout = isDrop ? null : readGroupCheckout(sessionStorage, orgId)
 		const storageKey = isDrop
 			? `menuza_drop_cart_${orgId}_${drop!.id}`
-			: `menuza_cart_${orgId}`
+			: groupCheckout
+				? groupCartKey(orgId)
+				: `menuza_cart_${orgId}`
 		const odLabels = (meta.orderDetailsLabels ?? {}) as OrderDetailsLabels
 		// A free test order (#119): the banner, and a flag the placement reads.
 		const testOrderLabels = (meta.testOrderLabels ?? {}) as { invalid: string }
@@ -3244,15 +3259,27 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 				const idempotencyKey = await checkoutAttemptKey(orgId, corePayload)
 				const marketingConsent = testOrder ? null : checkoutMarketingConsent()
 				const created = await submitRegionalOrder(
-					checkoutOrderRequest(
-						corePayload,
-						idempotencyKey,
-						marketingConsent,
-						testOrder ? null : currentAttribution(),
-						// What this browser showed for a dish in a photo test (#192).
-						testOrder ? [] : photoTestsForCart(cart),
-					),
-					{ testOrderCode: testOrder?.code ?? null },
+					{
+						...checkoutOrderRequest(
+							corePayload,
+							idempotencyKey,
+							marketingConsent,
+							testOrder ? null : currentAttribution(),
+							// What this browser showed for a dish in a photo test (#192).
+							testOrder ? [] : photoTestsForCart(cart),
+						),
+						// A group order (#170): the region prices the group's own dishes.
+						...(groupCheckout
+							? {
+									groupId: groupCheckout.groupId,
+									groupVersion: groupCheckout.version,
+								}
+							: {}),
+					},
+					{
+						testOrderCode: testOrder?.code ?? null,
+						groupToken: groupCheckout?.token ?? null,
+					},
 				)
 				// The code is spent with the order.
 				if (testOrder) clearTestCode(sessionStorage, orgId)
@@ -3262,6 +3289,8 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 					localStorage.removeItem(storageKey)
 					if (isDrop && drop) clearPickupSelection(drop.id)
 					clearCheckoutAttempt(orgId)
+					// The group order is placed: its link now shows the order.
+					if (groupCheckout) clearGroupCheckout(sessionStorage, orgId)
 				} catch {}
 				// The order is placed: the next one in this tab must not send the code again.
 				saveStoredCode(sessionStorage, orgId, null)

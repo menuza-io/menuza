@@ -71,6 +71,8 @@ const sourceLineSchema = z.object({
 	name: z.string().optional(),
 	itemName: z.string().optional(),
 	kitchenName: z.string().optional(),
+	/** A group order (#170): the first name of the person who added this dish. */
+	forName: z.string().optional(),
 	kitchenHighlight: highlightSchema,
 	kitchenStationId: z.string().nullable().optional(),
 	variantLabel: z.string().nullable().optional(),
@@ -330,6 +332,7 @@ function project(
 				itemId: line.itemId,
 				name: guestName,
 				...(line.kitchenName ? { kitchenName: line.kitchenName } : {}),
+				...(line.forName ? { forName: line.forName.slice(0, 60) } : {}),
 				...(highlight ? { highlight } : {}),
 				variant: line.variantLabel ?? null,
 				variantId: line.variantId ?? null,

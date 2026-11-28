@@ -814,6 +814,15 @@ function Ticket({
 			.map((group) => group.lines[0]?.id)
 			.filter((id): id is string => Boolean(id)),
 	)
+	// A group order (#170): the dishes of each person under "For Sam".
+	const personHeads = new Map<string, string>()
+	let lastPerson: string | undefined
+	for (const line of orderedLines) {
+		if (line.forName && line.forName !== lastPerson) {
+			personHeads.set(line.id, line.forName)
+		}
+		lastPerson = line.forName
+	}
 	const stage = stationStage(ticket, stationId)
 	const allReady = kdsTicketStage(ticket.lines) === 'ready'
 	const elapsed = Math.max(
@@ -1077,6 +1086,14 @@ function Ticket({
 									</span>
 								</ItemMedia>
 								<ItemContent className="min-w-0">
+									{personHeads.has(line.id) ? (
+										<p
+											className="text-xs font-semibold tracking-wide uppercase"
+											data-kitchen-for
+										>
+											<Trans>For {personHeads.get(line.id)}</Trans>
+										</p>
+									) : null}
 									{courseHeads.has(line.id) ? (
 										<p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
 											{line.courseName}

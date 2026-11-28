@@ -362,7 +362,7 @@ msgstr "{covers, plural, one {# cover} other {# covers}}"
 msgid "{day} at {time}"
 msgstr "{day} at {time}"
 
-#: src/apps/kitchen/Kitchen.tsx:991
+#: src/apps/kitchen/Kitchen.tsx:1000
 msgid "{elapsed} min"
 msgstr "{elapsed} min"
 
@@ -1309,7 +1309,7 @@ msgstr "Add to the waitlist"
 #~ msgid "Added"
 #~ msgstr "Added"
 
-#: src/apps/kitchen/Kitchen.tsx:1102
+#: src/apps/kitchen/Kitchen.tsx:1119
 msgid "Added {addedTime}"
 msgstr "Added {addedTime}"
 
@@ -1376,7 +1376,7 @@ msgstr "All types"
 msgid "Allergies, no onions, sauce on the side…"
 msgstr "Allergies, no onions, sauce on the side…"
 
-#: src/apps/kitchen/Kitchen.tsx:1282
+#: src/apps/kitchen/Kitchen.tsx:1299
 #: src/apps/orders/Orders.tsx:2349
 msgid "Allergy"
 msgstr "Allergy"
@@ -1389,7 +1389,7 @@ msgstr "Allergy noted"
 #~ msgid "Allergy noted. A manager can see the details."
 #~ msgstr "Allergy noted. A manager can see the details."
 
-#: src/apps/kitchen/Kitchen.tsx:923
+#: src/apps/kitchen/Kitchen.tsx:932
 #: src/apps/orders/Orders.tsx:2473
 msgid "Allergy stated by guest"
 msgstr "Allergy stated by guest"
@@ -1553,12 +1553,12 @@ msgstr "Arrived"
 #~ msgstr "Arriving"
 
 #. placeholder {0}: time.formatRange(promised.at, promised.until)
-#: src/apps/kitchen/Kitchen.tsx:860
+#: src/apps/kitchen/Kitchen.tsx:869
 msgid "Arriving {0}"
 msgstr "Arriving {0}"
 
 #. placeholder {0}: time.format(promised.at)
-#: src/apps/kitchen/Kitchen.tsx:862
+#: src/apps/kitchen/Kitchen.tsx:871
 msgid "Arriving around {0}"
 msgstr "Arriving around {0}"
 
@@ -1622,7 +1622,7 @@ msgstr "Assigned to you"
 msgid "At the stand"
 msgstr "At the stand"
 
-#: src/apps/kitchen/Kitchen.tsx:1285
+#: src/apps/kitchen/Kitchen.tsx:1302
 #: src/apps/orders/Orders.tsx:2352
 msgid "Attention"
 msgstr "Attention"
@@ -1974,7 +1974,7 @@ msgstr "CANCELLED"
 msgid "Cancelled · items taken off"
 msgstr "Cancelled · items taken off"
 
-#: src/apps/kitchen/Kitchen.tsx:1040
+#: src/apps/kitchen/Kitchen.tsx:1049
 msgid "Cancelled · stop preparing"
 msgstr "Cancelled · stop preparing"
 
@@ -2211,7 +2211,7 @@ msgstr "Check #{0}"
 msgid "Check balance"
 msgstr "Check balance"
 
-#: src/apps/kitchen/Kitchen.tsx:929
+#: src/apps/kitchen/Kitchen.tsx:938
 #: src/apps/orders/Orders.tsx:2482
 #: src/screens/PrintedKitchenTicket.tsx:96
 #: src/screens/Receipt.tsx:225
@@ -2720,7 +2720,7 @@ msgid "counted."
 msgstr "counted."
 
 #: src/apps/kitchen/Kitchen.tsx:414
-#: src/apps/kitchen/Kitchen.tsx:845
+#: src/apps/kitchen/Kitchen.tsx:854
 #: src/apps/kitchen/KitchenSettings.tsx:387
 msgid "Counter"
 msgstr "Counter"
@@ -2854,7 +2854,7 @@ msgstr "Deliveries are not switched on for this restaurant."
 msgid "Deliveries board"
 msgstr "Deliveries board"
 
-#: src/apps/kitchen/Kitchen.tsx:851
+#: src/apps/kitchen/Kitchen.tsx:860
 #: src/apps/kitchen/KitchenSettings.tsx:383
 #: src/apps/orders/Orders.tsx:319
 #: src/apps/orders/Orders.tsx:639
@@ -2965,7 +2965,7 @@ msgstr "Did not respond"
 msgid "Did the delivery from {supplierName} arrive?"
 msgstr "Did the delivery from {supplierName} arrive?"
 
-#: src/apps/kitchen/Kitchen.tsx:954
+#: src/apps/kitchen/Kitchen.tsx:963
 #: src/apps/orders/Orders.tsx:1383
 msgid "Did the ticket print?"
 msgstr "Did the ticket print?"
@@ -2982,7 +2982,7 @@ msgstr "Dietary note on file. A manager can see the details."
 msgid "Dietary: {dietLine}"
 msgstr "Dietary: {dietLine}"
 
-#: src/apps/kitchen/Kitchen.tsx:849
+#: src/apps/kitchen/Kitchen.tsx:858
 #: src/apps/kitchen/KitchenSettings.tsx:381
 #: src/apps/orders/Orders.tsx:320
 #: src/apps/orders/Orders.tsx:643
@@ -3083,7 +3083,7 @@ msgstr "Disputed"
 msgid "Done"
 msgstr "Done"
 
-#: src/apps/kitchen/Kitchen.tsx:1215
+#: src/apps/kitchen/Kitchen.tsx:1232
 msgid "Done · clear ticket"
 msgstr "Done · clear ticket"
 
@@ -3095,7 +3095,7 @@ msgstr "Done counting?"
 msgid "Drinks"
 msgstr "Drinks"
 
-#: src/apps/kitchen/Kitchen.tsx:853
+#: src/apps/kitchen/Kitchen.tsx:862
 #: src/apps/kitchen/KitchenSettings.tsx:384
 #: src/screens/Cart.tsx:282
 #: src/screens/OrdersSheet.tsx:95
@@ -3123,7 +3123,7 @@ msgstr "Dry goods"
 
 #. placeholder {0}: time.format(order.dueAt)
 #. placeholder {0}: time.format(ticket.dueAt)
-#: src/apps/kitchen/Kitchen.tsx:1005
+#: src/apps/kitchen/Kitchen.tsx:1014
 #: src/apps/orders/Orders.tsx:679
 msgid "Due {0}"
 msgstr "Due {0}"
@@ -3463,6 +3463,13 @@ msgstr "Flat white"
 msgid "Floor"
 msgstr "Floor"
 
+#. placeholder {0}: line.forName
+#. placeholder {0}: personHeads.get(line.id)
+#: src/apps/kitchen/Kitchen.tsx:1094
+#: src/apps/orders/Orders.tsx:2549
+msgid "For {0}"
+msgstr "For {0}"
+
 #: src/apps/orders/Orders.tsx:2330
 msgid "For example: cold fries"
 msgstr "For example: cold fries"
@@ -3718,7 +3725,7 @@ msgstr "Handed over"
 msgid "Has notes"
 msgstr "Has notes"
 
-#: src/apps/kitchen/Kitchen.tsx:1083
+#: src/apps/kitchen/Kitchen.tsx:1100
 #: src/apps/orders/Orders.tsx:2542
 #: src/apps/reservations/BookingSheet.tsx:151
 msgid "Held"
@@ -3920,7 +3927,7 @@ msgstr "It was too late to undo this waste."
 msgid "Item name"
 msgstr "Item name"
 
-#: src/apps/kitchen/Kitchen.tsx:1185
+#: src/apps/kitchen/Kitchen.tsx:1202
 msgid "Item ready"
 msgstr "Item ready"
 
@@ -4099,7 +4106,7 @@ msgid "Labels"
 msgstr "Labels"
 
 #. placeholder {0}: ticket.driveThroughNote
-#: src/apps/kitchen/Kitchen.tsx:906
+#: src/apps/kitchen/Kitchen.tsx:915
 msgid "Lane {0}"
 msgstr "Lane {0}"
 
@@ -4120,7 +4127,7 @@ msgstr "Language"
 msgid "Large"
 msgstr "Large"
 
-#: src/apps/kitchen/Kitchen.tsx:1024
+#: src/apps/kitchen/Kitchen.tsx:1033
 #: src/apps/orders/Orders.tsx:1508
 #: src/apps/orders/Orders.tsx:2514
 msgid "Large order"
@@ -4128,7 +4135,7 @@ msgstr "Large order"
 
 #. placeholder {0}: detail.largeOrderExtraMinutes
 #. placeholder {0}: ticket.largeOrderExtraMinutes
-#: src/apps/kitchen/Kitchen.tsx:1018
+#: src/apps/kitchen/Kitchen.tsx:1027
 #: src/apps/orders/Orders.tsx:1504
 #: src/apps/orders/Orders.tsx:2512
 msgid "Large order +{0} min"
@@ -4178,7 +4185,7 @@ msgstr "Last refresh failed: {error}."
 msgid "Last shift closed remotely by {0}"
 msgstr "Last shift closed remotely by {0}"
 
-#: src/apps/kitchen/Kitchen.tsx:1000
+#: src/apps/kitchen/Kitchen.tsx:1009
 #: src/apps/orders/Orders.tsx:625
 #: src/apps/reservations/BookPanel.tsx:234
 #: src/apps/stock/Stock.tsx:422
@@ -4205,7 +4212,7 @@ msgstr "Leave full screen"
 msgid "left"
 msgstr "left"
 
-#: src/apps/kitchen/Kitchen.tsx:1132
+#: src/apps/kitchen/Kitchen.tsx:1149
 msgid "Left half"
 msgstr "Left half"
 
@@ -4320,7 +4327,7 @@ msgstr "Logged as waste."
 msgid "Logging as {staffName}"
 msgstr "Logging as {staffName}"
 
-#: src/apps/kitchen/Kitchen.tsx:1284
+#: src/apps/kitchen/Kitchen.tsx:1301
 #: src/apps/orders/Orders.tsx:2351
 msgid "Long prep"
 msgstr "Long prep"
@@ -4381,7 +4388,7 @@ msgstr "Mark as no-show"
 msgid "Mark delivered"
 msgstr "Mark delivered"
 
-#: src/apps/kitchen/Kitchen.tsx:839
+#: src/apps/kitchen/Kitchen.tsx:848
 #: src/apps/orders/Orders.tsx:1178
 #: src/apps/reservations/WaitlistSheet.tsx:136
 msgid "Mark ready"
@@ -4683,7 +4690,7 @@ msgstr "Next day"
 msgid "Next shift"
 msgstr "Next shift"
 
-#: src/apps/kitchen/Kitchen.tsx:972
+#: src/apps/kitchen/Kitchen.tsx:981
 #: src/apps/orders/Orders.tsx:1401
 msgid "No"
 msgstr "No"
@@ -4947,7 +4954,7 @@ msgstr "No times left for {size} on this day."
 msgid "No tip"
 msgstr "No tip"
 
-#: src/apps/kitchen/Kitchen.tsx:1033
+#: src/apps/kitchen/Kitchen.tsx:1042
 #: src/apps/orders/Orders.tsx:1499
 #: src/apps/orders/Orders.tsx:2503
 msgid "No utensils"
@@ -5227,7 +5234,7 @@ msgid "On the road"
 msgstr "On the road"
 
 #: src/apps/orders/Orders.tsx:648
-#: src/apps/orders/Orders.tsx:2610
+#: src/apps/orders/Orders.tsx:2615
 msgid "On the tab"
 msgstr "On the tab"
 
@@ -5284,7 +5291,7 @@ msgid "Online ordering here"
 msgstr "Online ordering here"
 
 #: src/apps/kitchen/Kitchen.tsx:416
-#: src/apps/kitchen/Kitchen.tsx:842
+#: src/apps/kitchen/Kitchen.tsx:851
 #: src/apps/kitchen/KitchenSettings.tsx:389
 #: src/apps/orders/Orders.tsx:273
 #: src/apps/orders/Orders.tsx:279
@@ -5618,10 +5625,10 @@ msgstr "Packing"
 msgid "Packs that came"
 msgstr "Packs that came"
 
-#: src/apps/kitchen/Kitchen.tsx:899
+#: src/apps/kitchen/Kitchen.tsx:908
 #: src/apps/orders/Orders.tsx:650
 #: src/apps/orders/Orders.tsx:2522
-#: src/apps/orders/Orders.tsx:2608
+#: src/apps/orders/Orders.tsx:2613
 #: src/screens/Checkout.tsx:442
 #: src/screens/Checkout.tsx:630
 #: src/screens/OrdersSheet.tsx:739
@@ -5803,7 +5810,7 @@ msgid "Pay {balanceDue}"
 msgstr "Pay {balanceDue}"
 
 #: src/apps/orders/Orders.tsx:653
-#: src/apps/orders/Orders.tsx:2611
+#: src/apps/orders/Orders.tsx:2616
 msgid "Pay at handoff"
 msgstr "Pay at handoff"
 
@@ -5870,7 +5877,7 @@ msgid "Percent"
 msgstr "Percent"
 
 #: src/apps/kitchen/Kitchen.tsx:415
-#: src/apps/kitchen/Kitchen.tsx:844
+#: src/apps/kitchen/Kitchen.tsx:853
 #: src/apps/kitchen/KitchenSettings.tsx:388
 #: src/apps/orders/Orders.tsx:1445
 #: src/apps/orders/Orders.tsx:1855
@@ -6047,8 +6054,8 @@ msgstr "Prep unavailable"
 msgid "Preparation workflow"
 msgstr "Preparation workflow"
 
-#: src/apps/kitchen/Kitchen.tsx:838
-#: src/apps/kitchen/Kitchen.tsx:1180
+#: src/apps/kitchen/Kitchen.tsx:847
+#: src/apps/kitchen/Kitchen.tsx:1197
 msgid "Prepare again"
 msgstr "Prepare again"
 
@@ -6139,8 +6146,8 @@ msgstr "Punches not recorded"
 msgid "Punches saved on this terminal have not gone out yet, so this may be out of date. If you already punched here, ask a manager before punching again."
 msgstr "Punches saved on this terminal have not gone out yet, so this may be out of date. If you already punched here, ask a manager before punching again."
 
-#: src/apps/kitchen/Kitchen.tsx:1235
-#: src/apps/kitchen/Kitchen.tsx:1240
+#: src/apps/kitchen/Kitchen.tsx:1252
+#: src/apps/kitchen/Kitchen.tsx:1257
 msgid "Push time back"
 msgstr "Push time back"
 
@@ -6221,7 +6228,7 @@ msgid "Ready {readyCount}"
 msgstr "Ready {readyCount}"
 
 #. placeholder {0}: time.format(promised.at)
-#: src/apps/kitchen/Kitchen.tsx:863
+#: src/apps/kitchen/Kitchen.tsx:872
 msgid "Ready around {0}"
 msgstr "Ready around {0}"
 
@@ -6229,7 +6236,7 @@ msgstr "Ready around {0}"
 msgid "Ready for a driver"
 msgstr "Ready for a driver"
 
-#: src/apps/kitchen/Kitchen.tsx:1219
+#: src/apps/kitchen/Kitchen.tsx:1236
 msgid "Ready for the pass"
 msgstr "Ready for the pass"
 
@@ -6258,7 +6265,7 @@ msgstr "Reason for removal"
 msgid "Reassign"
 msgstr "Reassign"
 
-#: src/apps/kitchen/Kitchen.tsx:1204
+#: src/apps/kitchen/Kitchen.tsx:1221
 msgid "Recall ticket"
 msgstr "Recall ticket"
 
@@ -6540,7 +6547,7 @@ msgstr "Reservations are off on this terminal"
 msgid "Reservations need a connection"
 msgstr "Reservations need a connection"
 
-#: src/apps/kitchen/Kitchen.tsx:1268
+#: src/apps/kitchen/Kitchen.tsx:1285
 msgid "Reset preparation"
 msgstr "Reset preparation"
 
@@ -6598,7 +6605,7 @@ msgstr "Rewards"
 msgid "Rewards are not switched on for this restaurant."
 msgstr "Rewards are not switched on for this restaurant."
 
-#: src/apps/kitchen/Kitchen.tsx:1134
+#: src/apps/kitchen/Kitchen.tsx:1151
 msgid "Right half"
 msgstr "Right half"
 
@@ -7049,7 +7056,7 @@ msgstr "Sent {time}"
 msgid "Served"
 msgstr "Served"
 
-#: src/apps/kitchen/Kitchen.tsx:1097
+#: src/apps/kitchen/Kitchen.tsx:1114
 #: src/screens/KitchenRounds.tsx:89
 msgid "Served {servedTime}"
 msgstr "Served {servedTime}"
@@ -7458,11 +7465,11 @@ msgstr "Start before pickup (min)"
 msgid "Start break"
 msgstr "Start break"
 
-#: src/apps/kitchen/Kitchen.tsx:1183
+#: src/apps/kitchen/Kitchen.tsx:1200
 msgid "Start item"
 msgstr "Start item"
 
-#: src/apps/kitchen/Kitchen.tsx:836
+#: src/apps/kitchen/Kitchen.tsx:845
 msgid "Start preparing"
 msgstr "Start preparing"
 
@@ -7599,7 +7606,7 @@ msgstr "Table"
 #. placeholder {0}: detail.tableLabel
 #. placeholder {0}: order.tableLabel
 #. placeholder {0}: r.tableLabels.join(' + ')
-#: src/apps/kitchen/Kitchen.tsx:911
+#: src/apps/kitchen/Kitchen.tsx:920
 #: src/apps/orders/Orders.tsx:642
 #: src/apps/orders/Orders.tsx:2458
 #: src/apps/reservations/PartySheet.tsx:501
@@ -7834,7 +7841,7 @@ msgstr "Take them off"
 msgid "Take these deliveries"
 msgstr "Take these deliveries"
 
-#: src/apps/kitchen/Kitchen.tsx:854
+#: src/apps/kitchen/Kitchen.tsx:863
 #: src/apps/kitchen/KitchenSettings.tsx:382
 #: src/screens/Cart.tsx:277
 #: src/screens/OrdersSheet.tsx:97
@@ -7998,7 +8005,7 @@ msgstr "Terminals are paused right now. Try again soon."
 msgid "Terminals are switched off for this restaurant right now."
 msgstr "Terminals are switched off for this restaurant right now."
 
-#: src/apps/kitchen/Kitchen.tsx:937
+#: src/apps/kitchen/Kitchen.tsx:946
 #: src/apps/orders/Orders.tsx:631
 #: src/apps/orders/Orders.tsx:1364
 msgid "TEST"
@@ -8661,12 +8668,12 @@ msgstr "The tab is kept, marked cancelled, with who cancelled it and why."
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "The tab was taken over but could not be saved on this device."
 
-#: src/apps/kitchen/Kitchen.tsx:945
+#: src/apps/kitchen/Kitchen.tsx:954
 #: src/apps/orders/Orders.tsx:1374
 msgid "The ticket did not print. Check that the printer is on, has paper and is set up in Settings → Terminals in the App."
 msgstr "The ticket did not print. Check that the printer is on, has paper and is set up in Settings → Terminals in the App."
 
-#: src/apps/kitchen/Kitchen.tsx:941
+#: src/apps/kitchen/Kitchen.tsx:950
 #: src/apps/orders/Orders.tsx:1370
 msgid "The ticket printed."
 msgstr "The ticket printed."
@@ -9240,7 +9247,7 @@ msgstr "This was too large to send."
 msgid "This waste was already undone."
 msgstr "This waste was already undone."
 
-#: src/apps/kitchen/Kitchen.tsx:874
+#: src/apps/kitchen/Kitchen.tsx:883
 msgid "Ticket {number}"
 msgstr "Ticket {number}"
 
@@ -9438,7 +9445,7 @@ msgid "Topped up. New balance {0}."
 msgstr "Topped up. New balance {0}."
 
 #: src/apps/orders/Orders.tsx:1633
-#: src/apps/orders/Orders.tsx:2601
+#: src/apps/orders/Orders.tsx:2606
 #: src/screens/Checkout.tsx:625
 #: src/screens/GuestDisplay.tsx:229
 #: src/screens/OrdersSheet.tsx:729
@@ -9575,7 +9582,7 @@ msgstr "Unit for {name}"
 msgid "Unit for {name}, another unit"
 msgstr "Unit for {name}, another unit"
 
-#: src/apps/kitchen/Kitchen.tsx:899
+#: src/apps/kitchen/Kitchen.tsx:908
 #: src/apps/orders/Orders.tsx:2523
 msgid "Unpaid"
 msgstr "Unpaid"
@@ -9663,13 +9670,13 @@ msgstr "Use by (optional)"
 msgid "Use these details"
 msgstr "Use these details"
 
-#: src/apps/kitchen/Kitchen.tsx:1029
+#: src/apps/kitchen/Kitchen.tsx:1038
 #: src/apps/orders/Orders.tsx:1495
 #: src/apps/orders/Orders.tsx:2503
 msgid "Utensils: yes"
 msgstr "Utensils: yes"
 
-#: src/apps/kitchen/Kitchen.tsx:1111
+#: src/apps/kitchen/Kitchen.tsx:1128
 msgid "Variant unavailable · check the order"
 msgstr "Variant unavailable · check the order"
 
@@ -9724,7 +9731,7 @@ msgid "VIP: {text}"
 msgstr "VIP: {text}"
 
 #: src/apps/deliveries/Deliveries.tsx:422
-#: src/apps/kitchen/Kitchen.tsx:1000
+#: src/apps/kitchen/Kitchen.tsx:1009
 msgid "Waiting"
 msgstr "Waiting"
 
@@ -9944,7 +9951,7 @@ msgstr "Worked so far"
 msgid "Wrong address"
 msgstr "Wrong address"
 
-#: src/apps/kitchen/Kitchen.tsx:963
+#: src/apps/kitchen/Kitchen.tsx:972
 #: src/apps/orders/Orders.tsx:1392
 msgid "Yes"
 msgstr "Yes"

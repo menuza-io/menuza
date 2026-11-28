@@ -1,0 +1,76 @@
+---
+import { getLocaleHref } from '@repo/common/site-locales'
+import SitePage from '~/components/SitePage.astro'
+import { buildGroupOrderLabels } from '~/lib/ordering-labels'
+import { formatMoney } from '~/lib/ordering/money'
+import { fetchPublishedSiteMenu } from '~/lib/org'
+
+/**
+ * The group order page (#170): the host starts a group and shares the link,
+ * friends open it and add their own dishes, the host checks out once. The group
+ * itself (first names, dishes) lives in the region and is read by the browser
+ * directly: nothing about it is rendered here.
+ */
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const requestedLocale = Astro.locals.requestedLocale
+const defaultLocale = Astro.locals.defaultLocale
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const labels = buildGroupOrderLabels(i18n)
+const menu = await fetchPublishedSiteMenu({
+	slug: Astro.locals.orgSlug,
+	host: Astro.locals.customHost,
+	lng: requestedLocale,
+	channel: 'web',
+})
+const locations = (menu?.locations ?? []).map((location) => ({
+	id: location.id,
+	name: location.name,
+}))
+const defaultLocationId =
+	menu?.locations.find((candidate) => candidate.isDefault)?.id ??
+	locations[0]?.id ??
+	''
+const currency = menu?.organization?.currency || 'USD'
+const href = (path: string) =>
+	getLocaleHref(path, requestedLocale, requestedLocale, defaultLocale)
+const meta = {
+	organizationId: organization.id,
+	locale: requestedLocale,
+	defaultLocale,
+	currency,
+	locations,
+	defaultLocationId,
+	menuHref: href('/menu'),
+	checkoutHref: href('/menu/checkout'),
+	successHref: href('/menu/success'),
+	pagePath: href('/menu/group'),
+	signInHref: href('/login'),
+}
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'menu-group', title: labels.title, slug: 'menu/group', isHomePage: false, sections: [] }}
+	title={`${labels.title} - ${organization.name}`}
+>
+	<div class="mx-auto w-full max-w-2xl space-y-6 px-5 py-10 sm:px-8">
+		<h1 class="text-2xl font-bold tracking-tight text-foreground">{labels.title}</h1>
+		<div
+			id="group-root"
+			class="space-y-4"
+			data-labels={JSON.stringify(labels)}
+			data-meta={JSON.stringify(meta)}
+		>
+			<p class="sr-only" role="status">{labels.retry}</p>
+		</div>
+	</div>
+
+	<script>
+		import '../../scripts/group-page.ts'
+	</script>
+</SitePage>

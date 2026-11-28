@@ -316,13 +316,51 @@ describe('resolveOrgId for consent, subscription and public form routes', () => 
 			})
 		expect(await resolveOrgId(photo('https://acme.example'), env)).toBe(ORG)
 		expect(await resolveOrgId(photo('https://evil.example'), env)).toBeNull()
-		// A photo of another path never takes the query identity.
-		const other = new Request(`${base}/orders/ord_1/resend-link?slug=acme`, {
-			method: 'POST',
-			headers: { Origin: 'https://acme.example', 'Content-Type': 'image/jpeg' },
-			body: new Uint8Array([1]),
+	})
+
+	it('routes group orders (#170): JSON bodies and bodiless DELETEs by Origin and slug, never by a client org id', async () => {
+		resolveOrganizationForBrowserAuth.mockImplementation(
+			async (origin, identity) =>
+				origin === 'https://acme.example' && identity.slug === 'acme'
+					? { id: ORG }
+					: null,
+		)
+		const token = { 'X-Group-Token': `gs1.${'a'.repeat(64)}` }
+		const read = new Request(`${base}/orders/group/g1?slug=acme`, {
+			headers: { Origin: 'https://acme.example', ...token },
 		})
-		expect(await resolveOrgId(other, env)).toBeNull()
+		expect(await resolveOrgId(read, env)).toBe(ORG)
+		const body = JSON.stringify({
+			slug: 'acme',
+			firstName: 'Sam',
+			orgId: OTHER,
+		})
+		const join = (origin: string) =>
+			new Request(`${base}/orders/group/g1/join`, {
+				method: 'POST',
+				headers: {
+					Origin: origin,
+					'Content-Type': 'application/json',
+					'Content-Length': String(body.length),
+					...token,
+				},
+				body,
+			})
+		expect(await resolveOrgId(join('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(join('https://evil.example'), env)).toBeNull()
+		const remove = (origin: string, query = '?slug=acme') =>
+			new Request(`${base}/orders/group/g1/lines/l1${query}`, {
+				method: 'DELETE',
+				headers: { Origin: origin, ...token },
+			})
+		expect(await resolveOrgId(remove('https://acme.example'), env)).toBe(ORG)
+		expect(await resolveOrgId(remove('https://evil.example'), env)).toBeNull()
+		expect(
+			await resolveOrgId(
+				remove('https://acme.example', `?orgId=${OTHER}`),
+				env,
+			),
+		).toBeNull()
 	})
 
 	it('refuses an oversized post even when the query names the organization', async () => {

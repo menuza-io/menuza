@@ -3,6 +3,7 @@ import {
 	ORDER_PROBLEM_PHOTO_MAX_BYTES,
 	submitOrderProblemSchema,
 } from '@repo/common/order-problems'
+import { GROUP_TOKEN_HEADER } from '@repo/common/group-orders'
 import { TEST_ORDER_HEADER } from '@repo/common/test-orders'
 import { Hono, type Context } from 'hono'
 import { ENV } from 'varlock/env'
@@ -119,7 +120,7 @@ export const publicOrderRoutes = new Hono()
 
 const MAX_ORDER_BODY_BYTES = 200_000
 
-function orderFailureResponse(failure: OrderServiceFailure) {
+export function orderFailureResponse(failure: OrderServiceFailure) {
 	return Response.json(
 		{
 			error: failure.code,
@@ -132,7 +133,7 @@ function orderFailureResponse(failure: OrderServiceFailure) {
 	)
 }
 
-function noStoreHeaders() {
+export function noStoreHeaders() {
 	return { 'Cache-Control': 'no-store' }
 }
 
@@ -155,7 +156,7 @@ function dineInUnavailable() {
  * none. `clientAddress` believes forwarding headers only from Cloudflare or a
  * proxy on our own network; an IPv6 client counts by its /64.
  */
-function clientBucket(c: Context): string | null {
+export function clientBucket(c: Context): string | null {
 	const address = clientAddress(c)
 	return address ? addressBucket(address) : null
 }
@@ -593,6 +594,8 @@ publicOrderRoutes.post('/', async (c) => {
 			client: c.req.header('X-Client') ?? null,
 			// A free test order (#119): the one-time code from the operator's link.
 			testOrderCode: c.req.header(TEST_ORDER_HEADER) ?? null,
+			// A group order (#170): the host's own token, with `groupId` in the body.
+			groupToken: c.req.header(GROUP_TOKEN_HEADER) ?? null,
 		})
 		await couponGuard.settle(
 			result.ok ? 'applied' : couponOutcomeOfFailure(result.failure),
