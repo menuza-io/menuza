@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import '@testing-library/jest-dom/vitest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { OrderRequestError } from './order-client'
@@ -154,6 +155,60 @@ describe('the order page section (#191)', () => {
 		expect((await mount()).root.hidden).toBe(true)
 		fetchOrderProblems.mockRejectedValue(new Error('down'))
 		expect((await mount()).root.hidden).toBe(true)
+	})
+
+	it('keeps what the guest typed, the chosen items and the form itself when the page looks again', async () => {
+		fetchOrderProblems.mockResolvedValue(view())
+		const { root, handle } = await mount()
+		root.querySelector<HTMLButtonElement>('[data-problem-open]')!.click()
+		const form = root.querySelector<HTMLFormElement>('[data-problem-form]')!
+		const note = form.querySelector<HTMLTextAreaElement>('textarea')!
+		note.value = 'half written'
+		form.querySelector<HTMLInputElement>('input[name="item"]')!.checked = true
+		note.focus()
+		const statusNode = root.querySelector('[role="status"]')
+		await handle.refresh()
+		await handle.refresh()
+		expect(root.querySelector('[data-problem-form]')).toBe(form)
+		expect(form.querySelector('textarea')!.value).toBe('half written')
+		expect(
+			form.querySelector<HTMLInputElement>('input[name="item"]')!.checked,
+		).toBe(true)
+		expect(note).toHaveFocus()
+		// The status line is one node for the page's life, so it is announced.
+		expect(root.querySelector('[role="status"]')).toBe(statusNode)
+		expect(root.getAttribute('aria-live')).toBeNull()
+	})
+
+	it('draws a new answer into the reports without touching an open form', async () => {
+		fetchOrderProblems.mockResolvedValue(view())
+		const { root, handle } = await mount()
+		root.querySelector<HTMLButtonElement>('[data-problem-open]')!.click()
+		const form = root.querySelector<HTMLFormElement>('[data-problem-form]')!
+		form.querySelector<HTMLTextAreaElement>('textarea')!.value = 'typing'
+		fetchOrderProblems.mockResolvedValue(
+			view({
+				problems: [
+					{
+						id: 'p9',
+						kind: 'late',
+						status: 'answered',
+						resolution: 'reply',
+						createdAt: Date.now(),
+						items: [],
+						note: null,
+						hasPhoto: false,
+						refund: null,
+						credit: null,
+						entries: [],
+					},
+				],
+			}),
+		)
+		await handle.refresh()
+		expect(root.querySelector('[data-problem="p9"]')).toBeTruthy()
+		expect(root.querySelector('[data-problem-form]')).toBe(form)
+		expect(form.querySelector('textarea')!.value).toBe('typing')
 	})
 
 	it('offers the form, and sends the kind, the items and the note with one key; the photo follows', async () => {

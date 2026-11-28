@@ -5,7 +5,7 @@ import {
 	type SavedAddress,
 } from '@repo/common/saved-addresses'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { Alert, View } from 'react-native'
 import { ApiError } from '../../lib/api/api-error'
 import { CustomerAccountClient } from '../../lib/api/customer-account'
 import { useAppSnapshot } from '../../lib/app/use-app'
@@ -117,7 +117,16 @@ export function AddressesSection() {
 							<Button
 								variant="outline"
 								onPress={() =>
-									void run(() => client!.deleteAddress(address.id))
+									// The web page asks first too: a removed address is gone.
+									Alert.alert(t`Remove this address?`, address.label, [
+										{ text: t`Cancel`, style: 'cancel' },
+										{
+											text: t`Remove`,
+											style: 'destructive',
+											onPress: () =>
+												void run(() => client!.deleteAddress(address.id)),
+										},
+									])
 								}
 							>
 								{t`Remove`}

@@ -45,10 +45,16 @@ export function paintHeart(
 	button: HTMLButtonElement,
 	favorite: boolean,
 	labels: Pick<FavoritesLabels, 'add' | 'remove'>,
+	dishName?: string | null,
 ) {
+	// Every heart on the page names its dish, so a list of them is not a list of
+	// identical buttons for a screen reader.
+	const action = favorite ? labels.remove : labels.add
+	const name = dishName?.trim()
+	const text = name ? `${action}: ${name}` : action
 	button.setAttribute('aria-pressed', String(favorite))
-	button.setAttribute('aria-label', favorite ? labels.remove : labels.add)
-	button.title = favorite ? labels.remove : labels.add
+	button.setAttribute('aria-label', text)
+	button.title = text
 	button.classList.toggle('text-destructive', favorite)
 	button.replaceChildren(heartIcon(favorite))
 }
@@ -153,17 +159,34 @@ export function mountMenuFavorites(
 	let favorites: Array<{ itemId: string; createdAt: number }> = []
 	const ids = new Set<string>()
 	const hearts = new Map<string, HTMLButtonElement>()
-	let notice: HTMLElement | null = null
+	/** Dishes whose heart has a request on its way: a second tap waits for it. */
+	const inFlight = new Set<string>()
+	// The alert is in the page from the start (empty), so a screen reader hears
+	// the text when it appears instead of missing a node inserted already filled.
+	const notice: HTMLElement | null = rail ? doc.createElement('p') : null
+	if (rail && notice) {
+		notice.className = 'mt-2 text-sm text-destructive'
+		notice.setAttribute('role', 'alert')
+		rail.querySelector('[data-favorites-notice-slot]')?.append(notice)
+	}
 
 	function say(text: string) {
-		if (!rail) return
-		if (!notice) {
-			notice = doc.createElement('p')
-			notice.className = 'mt-2 text-sm text-destructive'
-			notice.setAttribute('role', 'alert')
-			rail.querySelector('[data-favorites-notice-slot]')?.append(notice)
+		if (notice) notice.textContent = text
+	}
+
+	/** The dish's name as its card shows it. */
+	function nameOf(itemId: string): string | null {
+		for (const card of doc.querySelectorAll<HTMLElement>(
+			'.js-item-card[data-item-id]',
+		)) {
+			if (card.dataset.itemId !== itemId) continue
+			return (
+				card.querySelector('.js-item-open')?.textContent?.trim() ||
+				card.querySelector('h3')?.textContent?.trim() ||
+				null
+			)
 		}
-		notice.textContent = text
+		return null
 	}
 
 	function syncIds() {
@@ -172,9 +195,16 @@ export function mountMenuFavorites(
 	}
 
 	function paintAll() {
-		for (const [id, button] of hearts) paintHeart(button, ids.has(id), labels)
+		for (const [id, button] of hearts) {
+			paintHeart(button, ids.has(id), labels, nameOf(id))
+		}
 		if (modalHeart?.dataset.itemId) {
-			paintHeart(modalHeart, ids.has(modalHeart.dataset.itemId), labels)
+			paintHeart(
+				modalHeart,
+				ids.has(modalHeart.dataset.itemId),
+				labels,
+				nameOf(modalHeart.dataset.itemId),
+			)
 		}
 		renderRail()
 	}
@@ -199,6 +229,18 @@ export function mountMenuFavorites(
 			signInAndReturn()
 			return
 		}
+		// A second tap while the first is still on its way would race a PUT
+		// against a DELETE: it waits for the answer.
+		if (inFlight.has(itemId)) return
+		inFlight.add(itemId)
+		try {
+			await change(itemId)
+		} finally {
+			inFlight.delete(itemId)
+		}
+	}
+
+	async function change(itemId: string) {
 		const wasFavorite = ids.has(itemId)
 		// Optimistic: the heart answers at once, a refused change puts it back.
 		if (wasFavorite) {
@@ -241,7 +283,7 @@ export function mountMenuFavorites(
 		button.dataset.favoriteToggle = itemId
 		button.className =
 			'icon-btn absolute end-2 top-2 z-10 size-9 border-0 bg-background/85 shadow-elev-1 backdrop-blur-sm'
-		paintHeart(button, false, labels)
+		paintHeart(button, false, labels, nameOf(itemId))
 		button.addEventListener('click', (event) => {
 			// The card opens the dish on any click: this one is only the heart.
 			event.stopPropagation()
@@ -261,7 +303,7 @@ export function mountMenuFavorites(
 		if (!modalHeart || !itemId) return
 		modalHeart.dataset.itemId = itemId
 		modalHeart.hidden = false
-		paintHeart(modalHeart, ids.has(itemId), labels)
+		paintHeart(modalHeart, ids.has(itemId), labels, nameOf(itemId))
 	})
 
 	async function refresh() {

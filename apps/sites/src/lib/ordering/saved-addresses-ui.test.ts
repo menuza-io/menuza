@@ -152,7 +152,33 @@ describe('save this address after a quote (#113)', () => {
 			label: 'Home',
 			notes: 'Gate code 4411',
 		})
-		expect(root.textContent).toContain('Address saved')
+		await vi.waitFor(() => expect(root.textContent).toContain('Address saved'))
+	})
+
+	it('keeps the form and what was typed when the same place is quoted again, and saves with the newest token', async () => {
+		isSignedIn.mockReturnValue(true)
+		createSavedAddress.mockResolvedValue({
+			ok: true,
+			data: { address: address('a9') },
+		})
+		const { offer: root } = dom()
+		const onSaved = vi.fn()
+		const form = mountSaveAddressForm({ root, labels, onSaved })
+		form.offer(offer)
+		root.querySelector<HTMLButtonElement>('button')!.click()
+		const [name] = root.querySelectorAll<HTMLInputElement>('input')
+		name!.value = 'Mum'
+		const node = root.querySelector('form')
+		form.offer({ ...offer, quoteToken: 'dq1.newer.token' })
+		expect(root.querySelector('form')).toBe(node)
+		expect(root.querySelector<HTMLInputElement>('input')!.value).toBe('Mum')
+		root
+			.querySelector('form')!
+			.dispatchEvent(new Event('submit', { cancelable: true }))
+		await vi.waitFor(() => expect(onSaved).toHaveBeenCalled())
+		expect(createSavedAddress).toHaveBeenCalledWith(
+			expect.objectContaining({ quoteToken: 'dq1.newer.token', label: 'Mum' }),
+		)
 	})
 
 	it('says why it could not save and lets the guest try again', async () => {

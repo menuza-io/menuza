@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import '@testing-library/jest-dom/vitest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { OrderRequestError } from './order-client'
@@ -156,7 +157,11 @@ describe('helpers', () => {
 		expect(parseAmountMinor(' 7 ')).toBe(700)
 		expect(parseAmountMinor('0')).toBeNull()
 		expect(parseAmountMinor('abc')).toBeNull()
-		expect(parseAmountMinor('1,5')).toBeNull()
+		expect(parseAmountMinor('12,50')).toBe(1250)
+		expect(parseAmountMinor('١٢٫٥٠')).toBe(1250)
+		expect(parseAmountMinor('۷')).toBe(700)
+		expect(parseAmountMinor('1.234')).toBeNull()
+		expect(parseAmountMinor('1,2,3')).toBeNull()
 		expect(deadlineIso('')).toBeNull()
 		expect(deadlineIso('2030-01-01T10:00')).toMatch(/^2030-01-01T/)
 		expect(deadlineIso('nonsense')).toBeNull()
@@ -224,6 +229,28 @@ describe('the group order page (#170)', () => {
 		const input = root.querySelector<HTMLInputElement>('[data-group-share]')!
 		expect(input.value).toContain('/menu/group?g=g1#join=gs1.')
 		expect(new URL(input.value).search).not.toContain('gs1')
+	})
+
+	it('joins with a link token the layout parked in session storage, and clears it once joined', async () => {
+		window.history.replaceState(null, '', '/menu/group?g=g1')
+		sessionStorage.setItem('menuza_pending_join', SHARE)
+		client.readGroup.mockResolvedValue(
+			view({ lines: [], you: null, people: [], canAdd: false }),
+		)
+		client.joinGroup.mockResolvedValue({
+			groupId: 'g1',
+			personToken: PERSON,
+			view: view({ you: { personId: 'p2', isHost: false } }),
+		})
+		const { root } = mount()
+		await settled()
+		const form = root.querySelector<HTMLFormElement>('[data-group-join]')!
+		expect(form).toBeTruthy()
+		root.querySelector<HTMLInputElement>('#group-first-name')!.value = 'Sam'
+		form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+		await settled()
+		expect(client.joinGroup).toHaveBeenCalledWith('g1', SHARE, 'Sam')
+		expect(sessionStorage.getItem('menuza_pending_join')).toBeNull()
 	})
 
 	it('lets a friend join from the link, drops the token from the address bar and keeps their own', async () => {
@@ -369,6 +396,56 @@ describe('the group order page (#170)', () => {
 		expect(root.querySelector('[data-group-state="ordered"]')).toBeTruthy()
 	})
 
+	it('does not redraw when a poll finds the same group, keeps the focus when it does, and drops a stale answer', async () => {
+		localStorage.setItem(
+			'menuza_group_org',
+			JSON.stringify({
+				groupId: 'g1',
+				personToken: PERSON,
+				shareToken: SHARE,
+				isHost: true,
+			}),
+		)
+		client.readGroup.mockResolvedValue(view())
+		const { root, handle } = mount()
+		await settled()
+		const first = root.querySelector('[data-group-view]')
+		const lock = root.querySelector<HTMLButtonElement>('[data-group-lock]')!
+		lock.focus()
+		// The same group again (only the server clock moved): nothing is rebuilt.
+		client.readGroup.mockResolvedValue(view({ serverNow: 6000 }))
+		await handle.refresh()
+		expect(root.querySelector('[data-group-view]')).toBe(first)
+		expect(lock).toHaveFocus()
+		// A newer group redraws, and the focus goes back to the same button.
+		client.readGroup.mockResolvedValue(view({ version: 4, totalMinor: 3000 }))
+		await handle.refresh()
+		expect(root.querySelector('[data-group-view]')).not.toBe(first)
+		const again = root.querySelector<HTMLButtonElement>('[data-group-lock]')!
+		expect(again).toHaveFocus()
+		// An older answer (a poll that was slow) never overwrites a newer one.
+		const shown = root.querySelector('[data-group-view]')
+		client.readGroup.mockResolvedValue(view({ version: 3 }))
+		await handle.refresh()
+		expect(root.querySelector('[data-group-view]')).toBe(shown)
+	})
+
+	it('forgets a leftover checkout note when the group page opens', async () => {
+		sessionStorage.setItem(
+			'menuza_group_checkout_org',
+			JSON.stringify({
+				groupId: 'g1',
+				version: 1,
+				token: PERSON,
+				savedAt: Date.now(),
+			}),
+		)
+		client.readGroup.mockResolvedValue(view())
+		mount()
+		await settled()
+		expect(sessionStorage.getItem('menuza_group_checkout_org')).toBeNull()
+	})
+
 	it('lets the host lock, and checks out with the group’s own cart and a note for the checkout page', async () => {
 		localStorage.setItem(
 			'menuza_group_org',
@@ -409,6 +486,7 @@ describe('the group order page (#170)', () => {
 			groupId: 'g1',
 			version: 7,
 			token: PERSON,
+			savedAt: expect.any(Number),
 		})
 		const cart = JSON.parse(localStorage.getItem('menuza_cart_org_group')!)
 		expect(cart).toHaveLength(2)

@@ -16,6 +16,29 @@ type Writer = Pick<Storage, 'setItem'>
 
 export const testCodeKey = (orgId: string) => `menuza_test_order_${orgId}`
 
+/**
+ * Where the layout's inline script leaves a `#test=` code it moved out of the
+ * address bar before analytics loads; `adoptPendingTestCode` takes it from there.
+ */
+export const PENDING_TEST_KEY = 'menuza_pending_test'
+
+/** Takes a code the layout parked in storage, validating it like a fragment one. */
+export function adoptPendingTestCode(
+	storage: Writer & Reader,
+	orgId: string,
+	now = Date.now(),
+): StoredTestCode | null {
+	let pending: string | null = null
+	try {
+		pending = storage.getItem(PENDING_TEST_KEY)
+		storage.removeItem(PENDING_TEST_KEY)
+	} catch {
+		return null
+	}
+	if (!pending) return null
+	return adoptTestCode(storage, orgId, `#test=${pending}`, now)
+}
+
 /** The code in a URL fragment (`#test=…`, alone or with other parameters). */
 export function testCodeFromHash(hash: string): string | null {
 	const params = new URLSearchParams(hash.replace(/^#/, ''))

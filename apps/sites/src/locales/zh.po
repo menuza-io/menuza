@@ -474,7 +474,7 @@ msgstr "已加入团单。"
 msgid "Adding…"
 msgstr "正在添加…"
 
-#: src/lib/ordering-labels.ts:455
+#: src/lib/ordering-labels.ts:457
 msgid "Address saved"
 msgstr "地址已保存"
 
@@ -1085,7 +1085,7 @@ msgstr "请选择有效的月份和日期。"
 msgid "Choose a time"
 msgstr "选择时间"
 
-#: src/lib/ordering-labels.ts:427
+#: src/lib/ordering-labels.ts:429
 msgid "Choose a time at least 15 minutes from now."
 msgstr "请选择至少 15 分钟之后的时间。"
 
@@ -1093,7 +1093,7 @@ msgstr "请选择至少 15 分钟之后的时间。"
 msgid "Choose a time to continue."
 msgstr "请选择时间以继续。"
 
-#: src/lib/ordering-labels.ts:428
+#: src/lib/ordering-labels.ts:430
 msgid "Choose a time within 7 days."
 msgstr "请选择 7 天内的时间。"
 
@@ -1409,7 +1409,7 @@ msgstr "已拒绝：{reward}。"
 msgid "Decrease quantity"
 msgstr "减少数量"
 
-#: src/lib/ordering-labels.ts:446
+#: src/lib/ordering-labels.ts:448
 msgid "Default"
 msgstr "默认"
 
@@ -1940,7 +1940,7 @@ msgstr "全名"
 msgid "Full time"
 msgstr "全职"
 
-#: src/lib/ordering-labels.ts:452
+#: src/lib/ordering-labels.ts:454
 msgid "Gate code or delivery note"
 msgstr "门禁码或配送备注"
 
@@ -2088,11 +2088,11 @@ msgstr "隐藏详情"
 msgid "History"
 msgstr "记录"
 
-#: src/lib/ordering-labels.ts:450
+#: src/lib/ordering-labels.ts:452
 msgid "Home"
 msgstr "家"
 
-#: src/lib/ordering-labels.ts:449
+#: src/lib/ordering-labels.ts:451
 msgid "Home, Work…"
 msgstr "家、公司…"
 
@@ -2529,7 +2529,7 @@ msgstr "我的订单迟到了"
 msgid "Name"
 msgstr "姓名"
 
-#: src/lib/ordering-labels.ts:448
+#: src/lib/ordering-labels.ts:450
 msgid "Name this address"
 msgstr "为此地址命名"
 
@@ -2884,7 +2884,7 @@ msgstr "{name} 今日仅剩 {count} 份。请返回菜单减少数量。"
 msgid "Only a few left"
 msgstr "所剩不多"
 
-#: src/lib/ordering-labels.ts:436
+#: src/lib/ordering-labels.ts:438
 msgid "Only the host can do that."
 msgstr "只有发起人可以这样做。"
 
@@ -2914,7 +2914,7 @@ msgstr "请打开确认信息中的链接来管理预订。"
 msgid "Open until {time}"
 msgstr "营业至 {time}"
 
-#: src/lib/ordering-labels.ts:438
+#: src/lib/ordering-labels.ts:440
 msgid "Open your group order"
 msgstr "打开您的团单"
 
@@ -3821,7 +3821,7 @@ msgstr "优惠价"
 msgid "Save"
 msgstr "保存"
 
-#: src/lib/ordering-labels.ts:453
+#: src/lib/ordering-labels.ts:455
 msgid "Save address"
 msgstr "保存地址"
 
@@ -3838,11 +3838,11 @@ msgstr "保存更改"
 msgid "Save my choices"
 msgstr "保存我的选择"
 
-#: src/lib/ordering-labels.ts:447
+#: src/lib/ordering-labels.ts:449
 msgid "Save this address"
 msgstr "保存此地址"
 
-#: src/lib/ordering-labels.ts:445
+#: src/lib/ordering-labels.ts:447
 msgid "Saved addresses"
 msgstr "已保存的地址"
 
@@ -3851,7 +3851,7 @@ msgstr "已保存的地址"
 msgid "Saving..."
 msgstr "保存中..."
 
-#: src/lib/ordering-labels.ts:454
+#: src/lib/ordering-labels.ts:456
 msgid "Saving…"
 msgstr "正在保存…"
 
@@ -4042,7 +4042,7 @@ msgstr "出示会员码不会消耗积分。每次使用奖励都需您本人同
 msgid "Sign in"
 msgstr "登录"
 
-#: src/lib/ordering-labels.ts:462
+#: src/lib/ordering-labels.ts:464
 msgid "Sign in again to use your saved addresses."
 msgstr "请重新登录以使用已保存的地址。"
 
@@ -4160,7 +4160,7 @@ msgstr "出了点问题。"
 #: src/lib/catering/labels.ts:83
 #: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:345
-#: src/lib/ordering-labels.ts:433
+#: src/lib/ordering-labels.ts:435
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "出了点问题，请重试。"
@@ -4439,7 +4439,7 @@ msgstr "无法使用该优惠码。"
 msgid "That date is too far ahead to book online."
 msgstr "该日期太远，无法在线预订。"
 
-#: src/lib/ordering-labels.ts:429
+#: src/lib/ordering-labels.ts:431
 msgid "That dish cannot be added to a group order."
 msgstr "该菜品无法加入团单。"
 
@@ -4451,7 +4451,7 @@ msgstr "人数超出线上可接待范围,请致电我们。"
 msgid "That is not available here. Choose pickup or delivery."
 msgstr "此处不支持。请选择自取或配送。"
 
-#: src/lib/ordering-labels.ts:423
+#: src/lib/ordering-labels.ts:424
 msgid "That is over the spend limit for this group order."
 msgstr "这超出了此团单的消费上限。"
 
@@ -4550,7 +4550,7 @@ msgstr "礼品卡金额已变化，请核对新的总额。"
 msgid "The group order changed. Go back to the group order, review it and check out again."
 msgstr "团单已变更。请返回团单，核对后重新结账。"
 
-#: src/lib/ordering-labels.ts:431
+#: src/lib/ordering-labels.ts:433
 msgid "The group order changed. Review it and check out again."
 msgstr "团单已变更。请核对后重新结账。"
 
@@ -4749,7 +4749,7 @@ msgstr "{name} 今日库存不足。请返回菜单修改订单。"
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "以下商品今日库存不足：{names}。请返回菜单修改订单。"
 
-#: src/lib/ordering-labels.ts:461
+#: src/lib/ordering-labels.ts:463
 msgid "This address is no longer saved."
 msgstr "此地址已不再保存。"
 
@@ -4886,11 +4886,11 @@ msgstr "此桌人数过多，无法在桌边下单。请向工作人员咨询。
 msgid "This group order can't be placed any more. Go back to the group order to see where it stands."
 msgstr "该团单无法再下单。请返回团单查看当前状态。"
 
-#: src/lib/ordering-labels.ts:425
+#: src/lib/ordering-labels.ts:427
 msgid "This group order has the most dishes allowed."
 msgstr "此团单的菜品数量已达上限。"
 
-#: src/lib/ordering-labels.ts:424
+#: src/lib/ordering-labels.ts:426
 msgid "This group order is full."
 msgstr "此团单人数已满。"
 
@@ -5139,7 +5139,7 @@ msgstr "尝试次数过多，请稍候再试。"
 msgid "Too many attempts. Try again in a moment."
 msgstr "尝试次数过多,请稍后再试。"
 
-#: src/lib/ordering-labels.ts:434
+#: src/lib/ordering-labels.ts:436
 msgid "Too many requests. Try again in a moment."
 msgstr "请求过多，请稍后再试。"
 
@@ -5183,7 +5183,7 @@ msgstr "在应用中跟踪此订单"
 #: src/lib/guest-account-labels.ts:65
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:162
-#: src/lib/ordering-labels.ts:435
+#: src/lib/ordering-labels.ts:437
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
@@ -5601,7 +5601,7 @@ msgstr "无法恢复您的购物车。"
 msgid "We couldn't save that. Try again."
 msgstr "无法保存，请重试。"
 
-#: src/lib/ordering-labels.ts:459
+#: src/lib/ordering-labels.ts:461
 msgid "We couldn't save this address. Try again."
 msgstr "无法保存此地址，请重试。"
 
@@ -5641,7 +5641,7 @@ msgstr "此地址可配送"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "我们未能及时收到您的回复。您可以重新加入候位名单。"
 
-#: src/lib/ordering-labels.ts:460
+#: src/lib/ordering-labels.ts:462
 msgid "We don't deliver here right now"
 msgstr "目前不配送到这里"
 
@@ -5846,7 +5846,7 @@ msgstr "参与者"
 msgid "Whole"
 msgstr "整份"
 
-#: src/lib/ordering-labels.ts:451
+#: src/lib/ordering-labels.ts:453
 msgid "Work"
 msgstr "公司"
 
@@ -5875,7 +5875,7 @@ msgstr "是，退出"
 msgid "You"
 msgstr "您"
 
-#: src/lib/ordering-labels.ts:426
+#: src/lib/ordering-labels.ts:428
 msgid "You already have the most group orders open."
 msgstr "您已开启的团单数量已达上限。"
 
@@ -5915,7 +5915,7 @@ msgstr "您仍可下单自取。"
 msgid "You have {amount}"
 msgstr "您有 {amount}"
 
-#: src/lib/ordering-labels.ts:457
+#: src/lib/ordering-labels.ts:459
 msgid "You have 10 saved addresses. Remove one in your profile to add another."
 msgstr "你已保存 10 个地址。请在个人资料中移除一个后再添加。"
 
@@ -6088,7 +6088,7 @@ msgstr "你的收藏"
 msgid "Your first name"
 msgstr "您的名字"
 
-#: src/lib/ordering-labels.ts:437
+#: src/lib/ordering-labels.ts:439
 msgid "Your group order"
 msgstr "您的团单"
 

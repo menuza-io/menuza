@@ -51,15 +51,23 @@ export function PlaceTestOrderButton({
 				</Button>
 			</fetcher.Form>
 			{url ? (
-				<a
-					href={url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="text-primary text-xs underline-offset-4 hover:underline"
-					data-testid="test-order-link"
-				>
-					<Trans>Open the test menu again</Trans>
-				</a>
+				<div className="flex flex-col gap-0.5">
+					<a
+						href={url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-primary text-xs underline-offset-4 hover:underline"
+						data-testid="test-order-link"
+					>
+						<Trans>Open the test menu again</Trans>
+					</a>
+					<span className="text-muted-foreground text-xs">
+						<Trans>
+							The link works until the test order is placed. Then start a new
+							one.
+						</Trans>
+					</span>
+				</div>
 			) : null}
 			{fetcher.data?.error ? (
 				<p role="alert" className="text-destructive text-xs">

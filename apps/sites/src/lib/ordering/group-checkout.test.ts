@@ -39,6 +39,26 @@ describe('the host’s group checkout (#170)', () => {
 		expect(readGroupCheckout(null, 'org')).toBeNull()
 	})
 
+	it('lets a note go stale after thirty minutes, so an abandoned checkout is forgotten', () => {
+		const storage = memory()
+		const note = { groupId: 'g1', version: 4, token: 'gp1.x' }
+		saveGroupCheckout(storage, 'org', note, 1_000_000)
+		expect(readGroupCheckout(storage, 'org', 1_000_000 + 29 * 60_000)).toEqual(
+			note,
+		)
+		expect(
+			readGroupCheckout(storage, 'org', 1_000_000 + 31 * 60_000),
+		).toBeNull()
+		// Reading a stale note removes it.
+		expect(readGroupCheckout(storage, 'org', 1_000_000)).toBeNull()
+		// A note without a time (an old one) is not trusted either.
+		storage.setItem(
+			'menuza_group_checkout_org',
+			JSON.stringify({ groupId: 'g1', version: 1, token: 'gp1.x' }),
+		)
+		expect(readGroupCheckout(storage, 'org')).toBeNull()
+	})
+
 	it('keeps the group’s cart apart from the host’s own', () => {
 		expect(groupCartKey('org')).toBe('menuza_cart_org_group')
 		expect(groupCartKey('org')).not.toBe('menuza_cart_org')

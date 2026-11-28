@@ -4261,6 +4261,10 @@ msgstr "A count was due on <0>{due}</0>."
 msgid "A credit cannot be given for this order."
 msgstr "A credit cannot be given for this order."
 
+#: app/components/orders/order-problems.tsx:53
+msgid "A credit cannot be more than the order total."
+msgstr "A credit cannot be more than the order total."
+
 #: app/utils/people/people-errors.ts:21
 msgid "A customer's phone number is managed through sign-in and cannot be changed here."
 msgstr "A customer's phone number is managed through sign-in and cannot be changed here."
@@ -7465,7 +7469,7 @@ msgstr "All reasons"
 msgid "All recipients"
 msgstr ""
 
-#: app/components/orders/order-problems.tsx:490
+#: app/components/orders/order-problems.tsx:574
 msgid "All reports"
 msgstr "All reports"
 
@@ -14066,7 +14070,7 @@ msgstr "Clocked out, {firstName}"
 #: app/components/locations/copy-settings-dialog.tsx:609
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/orders/catering-panel.tsx:1104
-#: app/components/orders/order-problems.tsx:317
+#: app/components/orders/order-problems.tsx:345
 #: app/components/phone-agent/voice-picker.tsx:559
 #: app/components/pos/terminals-manager.tsx:2093
 #: app/components/staff/kiosk-manager.tsx:792
@@ -14135,6 +14139,14 @@ msgstr "Close this job"
 msgid "Close this job?"
 msgstr "Close this job?"
 
+#: app/components/orders/order-problems.tsx:351
+msgid "Close this report"
+msgstr "Close this report"
+
+#: app/components/orders/order-problems.tsx:355
+msgid "Close this report with no refund or credit? It cannot be reopened."
+msgstr "Close this report with no refund or credit? It cannot be reopened."
+
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:114
 msgid "Close this window and open the party again to see the latest details."
 msgstr "Close this window and open the party again to see the latest details."
@@ -14164,7 +14176,7 @@ msgstr "Close, shorten or replace your regular services on holidays, Ramadan, pr
 #: app/components/locations/availability-picker.tsx:374
 #: app/components/locations/special-hours-picker.tsx:276
 #: app/components/menu/drop-wizard/drop-preview.tsx:73
-#: app/components/orders/order-problems.tsx:189
+#: app/components/orders/order-problems.tsx:208
 #: app/components/phone-agent/business-details-section.tsx:244
 #: app/components/phone-agent/flow-editor/flow-meta.ts:98
 #: app/components/pos/terminal-health.tsx:403
@@ -17004,11 +17016,11 @@ msgstr "Creating…"
 msgid "Credit"
 msgstr "Credit"
 
-#: app/components/orders/order-problems.tsx:342
+#: app/components/orders/order-problems.tsx:406
 msgid "Credit amount"
 msgstr "Credit amount"
 
-#: app/components/orders/order-problems.tsx:185
+#: app/components/orders/order-problems.tsx:204
 msgid "Credit given"
 msgstr "Credit given"
 
@@ -17016,7 +17028,7 @@ msgstr "Credit given"
 #~ msgid "Credit given: {0}"
 #~ msgstr "Credit given: {0}"
 
-#: app/components/orders/order-problems.tsx:267
+#: app/components/orders/order-problems.tsx:286
 msgid "Credit given: {creditText}"
 msgstr "Credit given: {creditText}"
 
@@ -21512,7 +21524,7 @@ msgstr "Enter a number of copies"
 msgid "Enter a number of days from 0 to 14."
 msgstr "Enter a number of days from 0 to 14."
 
-#: app/components/orders/order-problems.tsx:141
+#: app/components/orders/order-problems.tsx:158
 msgid "Enter a number of days from 1 to 365."
 msgstr "Enter a number of days from 1 to 365."
 
@@ -21832,8 +21844,8 @@ msgstr "Enter an amount above zero, such as 5.00."
 msgid "Enter an amount above zero."
 msgstr "Enter an amount above zero."
 
-#: app/components/orders/order-problems.tsx:133
-#: app/components/orders/order-problems.tsx:139
+#: app/components/orders/order-problems.tsx:150
+#: app/components/orders/order-problems.tsx:156
 msgid "Enter an amount greater than zero."
 msgstr "Enter an amount greater than zero."
 
@@ -24966,7 +24978,7 @@ msgstr "Gift cards"
 msgid "Gift cards are temporarily unavailable. Try again shortly."
 msgstr "Gift cards are temporarily unavailable. Try again shortly."
 
-#: app/components/orders/order-problems.tsx:296
+#: app/components/orders/order-problems.tsx:323
 msgid "Give a credit"
 msgstr "Give a credit"
 
@@ -25073,6 +25085,11 @@ msgstr "Give visitors room to share thoughtful feedback."
 #: app/components/chat/chat-compose-dialog.tsx:303
 msgid "Give your group a name"
 msgstr "Give your group a name"
+
+#: app/components/orders/order-problems.tsx:52
+#: app/components/orders/order-problems.tsx:394
+msgid "Giving a credit needs the right to refund orders."
+msgstr "Giving a credit needs the right to refund orders."
 
 #: app/components/menu/dietary-tag-switches.tsx:12
 #: app/components/menu/modifier-form.tsx:1677
@@ -28231,7 +28248,7 @@ msgstr "Items marked as alcohol are refused for order types you do not allow. Wh
 #~ msgid "Items named: {0}"
 #~ msgstr "Items named: {0}"
 
-#: app/components/orders/order-problems.tsx:344
+#: app/components/orders/order-problems.tsx:408
 msgid "Items named: {affectedText}"
 msgstr "Items named: {affectedText}"
 
@@ -28482,6 +28499,10 @@ msgstr "Keep existing dishes"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1426
 msgid "Keep it"
 msgstr "Keep it"
+
+#: app/components/orders/order-problems.tsx:375
+msgid "Keep it open"
+msgstr "Keep it open"
 
 #: app/components/website/domain/managed-domain-card.tsx:210
 msgid "Keep managing"
@@ -30355,7 +30376,7 @@ msgstr "Loading profile"
 msgid "Loading promotions…"
 msgstr "Loading promotions…"
 
-#: app/components/orders/order-problems.tsx:500
+#: app/components/orders/order-problems.tsx:584
 msgid "Loading reports…"
 msgstr "Loading reports…"
 
@@ -32496,7 +32517,7 @@ msgstr "Message to {name}"
 msgid "Message to the applicant"
 msgstr "Message to the applicant"
 
-#: app/components/orders/order-problems.tsx:365
+#: app/components/orders/order-problems.tsx:432
 msgid "Message to the guest"
 msgstr "Message to the guest"
 
@@ -35720,7 +35741,7 @@ msgstr "No reminder notifications set."
 msgid "No reply from <0>{supplier}</0> on order <1>#{orderNumber}</1> (expected <2>{due}</2>)."
 msgstr "No reply from <0>{supplier}</0> on order <1>#{orderNumber}</1> (expected <2>{due}</2>)."
 
-#: app/components/orders/order-problems.tsx:509
+#: app/components/orders/order-problems.tsx:593
 msgid "No reports yet"
 msgstr "No reports yet"
 
@@ -37068,7 +37089,7 @@ msgstr "Nothing is short on this delivery, so there is nothing to ask for."
 msgid "Nothing is waiting"
 msgstr "Nothing is waiting"
 
-#: app/components/orders/order-problems.tsx:507
+#: app/components/orders/order-problems.tsx:591
 msgid "Nothing is waiting for an answer"
 msgstr "Nothing is waiting for an answer"
 
@@ -37232,7 +37253,7 @@ msgstr "Nothing was low."
 msgid "Nothing was on hand that day."
 msgstr "Nothing was on hand that day."
 
-#: app/components/orders/order-problems.tsx:322
+#: app/components/orders/order-problems.tsx:381
 msgid "Nothing was paid for this order yet, so it cannot be refunded."
 msgstr "Nothing was paid for this order yet, so it cannot be refunded."
 
@@ -38784,7 +38805,7 @@ msgstr "Open the team to see who still has onboarding to finish."
 msgid "Open the team to see whose certificate needs renewing."
 msgstr "Open the team to see whose certificate needs renewing."
 
-#: app/components/orders/place-test-order-button.tsx:61
+#: app/components/orders/place-test-order-button.tsx:62
 msgid "Open the test menu again"
 msgstr "Open the test menu again"
 
@@ -39265,7 +39286,7 @@ msgstr "Order {orderNum} from {supplier} (<0>{days, plural, one {# day late} oth
 #~ msgid "Order {orderNum} from {supplier} (<0>{days}</0> days late)"
 #~ msgstr "Order {orderNum} from {supplier} (<0>{days}</0> days late)"
 
-#: app/components/orders/order-problems.tsx:168
+#: app/components/orders/order-problems.tsx:187
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:292
 msgid "Order {orderNumber}"
 msgstr "Order {orderNumber}"
@@ -41655,7 +41676,7 @@ msgstr "Photo changed during the run"
 msgid "Photo format cannot be restyled"
 msgstr "Photo format cannot be restyled"
 
-#: app/components/orders/order-problems.tsx:231
+#: app/components/orders/order-problems.tsx:250
 msgid "Photo from the guest"
 msgstr "Photo from the guest"
 
@@ -43363,7 +43384,8 @@ msgstr "Problem"
 msgid "Problem reported"
 msgstr "Problem reported"
 
-#: app/components/orders/order-problems.tsx:564
+#: app/components/orders/order-problems.tsx:557
+#: app/components/orders/order-problems.tsx:648
 msgid "Problem reports"
 msgstr "Problem reports"
 
@@ -45117,7 +45139,7 @@ msgstr "Refund"
 msgid "Refund {refundLabel} for these lines"
 msgstr "Refund {refundLabel} for these lines"
 
-#: app/components/orders/order-problems.tsx:341
+#: app/components/orders/order-problems.tsx:405
 msgid "Refund amount"
 msgstr "Refund amount"
 
@@ -45204,7 +45226,7 @@ msgstr "Refund recorded. Points taken back: {taken}."
 msgid "Refund sent to the guest's card."
 msgstr "Refund sent to the guest's card."
 
-#: app/components/orders/order-problems.tsx:284
+#: app/components/orders/order-problems.tsx:310
 msgid "Refund the affected items"
 msgstr "Refund the affected items"
 
@@ -45233,7 +45255,7 @@ msgid "Refund to the card"
 msgstr "Refund to the card"
 
 #: app/components/orders/order-detail.tsx:1266
-#: app/components/orders/order-problems.tsx:183
+#: app/components/orders/order-problems.tsx:202
 #: app/components/orders/order-status.tsx:39
 #: app/components/print/print-order-labels.ts:21
 #: app/components/settings/cards/organization/shop-card.tsx:61
@@ -45255,7 +45277,7 @@ msgstr "Refunded · Cash"
 msgid "Refunded {refundedAmount}"
 msgstr "Refunded {refundedAmount}"
 
-#: app/components/orders/order-problems.tsx:262
+#: app/components/orders/order-problems.tsx:281
 msgid "Refunded {refundedText}"
 msgstr "Refunded {refundedText}"
 
@@ -45275,7 +45297,7 @@ msgstr "Refunded after the deadline (%)"
 msgid "Refunded to card: {amount}"
 msgstr "Refunded to card: {amount}"
 
-#: app/components/orders/order-problems.tsx:328
+#: app/components/orders/order-problems.tsx:387
 msgid "Refunding an online payment needs the right to refund orders."
 msgstr "Refunding an online payment needs the right to refund orders."
 
@@ -46303,7 +46325,7 @@ msgid "Replay once"
 msgstr "Replay once"
 
 #: app/components/mailbox/reviews-tab.tsx:504
-#: app/components/orders/order-problems.tsx:187
+#: app/components/orders/order-problems.tsx:206
 msgid "Replied"
 msgstr "Replied"
 
@@ -46326,7 +46348,7 @@ msgstr ""
 msgid "Reply in thread"
 msgstr "Reply in thread"
 
-#: app/components/orders/order-problems.tsx:308
+#: app/components/orders/order-problems.tsx:336
 msgid "Reply only"
 msgstr "Reply only"
 
@@ -50109,7 +50131,7 @@ msgstr "Send by"
 msgid "Send code"
 msgstr "Send code"
 
-#: app/components/orders/order-problems.tsx:382
+#: app/components/orders/order-problems.tsx:449
 msgid "Send credit"
 msgstr "Send credit"
 
@@ -50182,11 +50204,11 @@ msgstr "Send Order online, Gift cards or Reservations to another site. Every but
 msgid "Send push"
 msgstr "Send push"
 
-#: app/components/orders/order-problems.tsx:380
+#: app/components/orders/order-problems.tsx:447
 msgid "Send refund"
 msgstr "Send refund"
 
-#: app/components/orders/order-problems.tsx:384
+#: app/components/orders/order-problems.tsx:451
 #: app/routes/_app+/$orgSlug_+/support.tsx:320
 msgid "Send reply"
 msgstr "Send reply"
@@ -55827,7 +55849,7 @@ msgstr "The amount could not be read."
 msgid "The amount is more than the provider can return."
 msgstr "The amount is more than the provider can return."
 
-#: app/components/orders/order-problems.tsx:115
+#: app/components/orders/order-problems.tsx:132
 msgid "The answer could not be sent. Try again."
 msgstr "The answer could not be sent. Try again."
 
@@ -56552,7 +56574,7 @@ msgstr "The guest asked to receive marketing by email"
 msgid "The guest asked to receive marketing by text"
 msgstr "The guest asked to receive marketing by text"
 
-#: app/components/orders/order-problems.tsx:238
+#: app/components/orders/order-problems.tsx:257
 msgid "The guest attached a photo that cannot be shown right now."
 msgstr "The guest attached a photo that cannot be shown right now."
 
@@ -56792,6 +56814,10 @@ msgstr "The link opens your website. It's texted to the number they're calling f
 #: app/components/staff/schedule-link-section.tsx:69
 msgid "The link was turned off."
 msgstr "The link was turned off."
+
+#: app/components/orders/place-test-order-button.tsx:65
+msgid "The link works until the test order is placed. Then start a new one."
+msgstr "The link works until the test order is placed. Then start a new one."
 
 #: app/components/reservations/waitlist/waitlist-screen.tsx:223
 msgid "The list could not be refreshed. What you see may be out of date."
@@ -57492,7 +57518,7 @@ msgstr "The reminder must come before the automatic clock-out."
 msgid "The report figures could not be loaded. The program summary above is up to date."
 msgstr "The report figures could not be loaded. The program summary above is up to date."
 
-#: app/components/orders/order-problems.tsx:432
+#: app/components/orders/order-problems.tsx:499
 msgid "The reports could not be loaded."
 msgstr "The reports could not be loaded."
 
@@ -63327,7 +63353,7 @@ msgid "UTM source (optional)"
 msgstr "UTM source (optional)"
 
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:273
-#: app/components/orders/order-problems.tsx:352
+#: app/components/orders/order-problems.tsx:419
 msgid "Valid for (days)"
 msgstr "Valid for (days)"
 
@@ -64008,7 +64034,7 @@ msgstr "Wait until first paid order"
 #: app/components/media-library/restyle-item-card.tsx:100
 #: app/components/orders/catering-details.tsx:88
 #: app/components/orders/deliveries-panel.tsx:183
-#: app/components/orders/order-problems.tsx:480
+#: app/components/orders/order-problems.tsx:565
 #: app/components/reservations/floor-table.tsx:102
 #: app/components/reservations/status-style.tsx:207
 #: app/components/social/social-labels.ts:42
@@ -64083,7 +64109,7 @@ msgid "Waiting for the terminal…"
 msgstr "Waiting for the terminal…"
 
 #: app/components/orders/order-detail.tsx:659
-#: app/components/orders/order-problems.tsx:177
+#: app/components/orders/order-problems.tsx:196
 #: app/components/orders/waiting-lane.tsx:121
 msgid "Waiting for you"
 msgstr "Waiting for you"
@@ -64100,7 +64126,7 @@ msgstr "Waiting for your registrar"
 msgid "Waiting on you"
 msgstr "Waiting on you"
 
-#: app/components/orders/order-problems.tsx:175
+#: app/components/orders/order-problems.tsx:194
 msgid "Waiting over a day"
 msgstr "Waiting over a day"
 
@@ -64620,7 +64646,7 @@ msgstr "We could not send the email. Try again."
 msgid "We could not set the domain up. Please try again in a moment."
 msgstr "We could not set the domain up. Please try again in a moment."
 
-#: app/components/orders/place-test-order-button.tsx:68
+#: app/components/orders/place-test-order-button.tsx:76
 msgid "We could not start a test order. Try again."
 msgstr "We could not start a test order. Try again."
 
@@ -65421,7 +65447,7 @@ msgstr "When a count is approved, draft an order for each supplier with low item
 msgid "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 msgstr "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 
-#: app/components/orders/order-problems.tsx:513
+#: app/components/orders/order-problems.tsx:597
 msgid "When a guest reports a problem with an order, it appears here."
 msgstr "When a guest reports a problem with an order, it appears here."
 
@@ -66322,7 +66348,7 @@ msgstr "Write the policy they are acknowledging."
 msgid "Write the question."
 msgstr "Write the question."
 
-#: app/components/orders/order-problems.tsx:151
+#: app/components/orders/order-problems.tsx:168
 msgid "Write the reply first."
 msgstr "Write the reply first."
 
@@ -66462,6 +66488,10 @@ msgstr "Yes, as ordered"
 #: app/components/staff/schedule/time-off-page.tsx:390
 msgid "Yes, cancel it"
 msgstr "Yes, cancel it"
+
+#: app/components/orders/order-problems.tsx:367
+msgid "Yes, close it"
+msgstr "Yes, close it"
 
 #: app/components/locations/checkout-rules-cards.tsx:148
 msgid "Yes, include utensils"
@@ -67218,6 +67248,10 @@ msgstr "Your agent didn't join the call. Make sure the voice agent is running an
 msgid "Your answer"
 msgstr "Your answer"
 
+#: app/components/orders/order-problems.tsx:292
+msgid "Your answer was sent."
+msgstr "Your answer was sent."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:544
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
 msgstr ""
@@ -67609,7 +67643,7 @@ msgstr "Your remaining setup steps."
 
 #: app/components/mailbox/reviews-tab.tsx:647
 #: app/components/orders/order-problems.tsx:37
-#: app/components/orders/order-problems.tsx:364
+#: app/components/orders/order-problems.tsx:431
 #: app/routes/_app+/$orgSlug_+/support.tsx:308
 msgid "Your reply"
 msgstr "Your reply"

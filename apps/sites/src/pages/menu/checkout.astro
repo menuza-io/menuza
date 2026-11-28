@@ -3332,6 +3332,11 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 					error instanceof OrderRequestError ? error.code : 'order_failed'
 				// Same key, different payload: the next attempt must mint a new key.
 				if (code === 'idempotency_conflict') clearCheckoutAttempt(orgId)
+				// A refused group checkout is over: the note (with the host's token)
+				// must not ride on the next, ordinary checkout.
+				if (groupCheckout && (code.startsWith('group_') || code === 'forbidden')) {
+					clearGroupCheckout(sessionStorage, orgId)
+				}
 				const discountRefusal =
 					error instanceof OrderRequestError
 						? parseDiscountOrderRefusal(code, error.body)
@@ -3405,6 +3410,7 @@ import { photoTestsForCart } from '~/lib/photo-test-client'
 								// "Call us" on a too-large order: the location the order is for.
 								phone: isDrop ? (pickupLocation?.phone ?? null) : (meta.locationPhone ?? null),
 								nameOf: (dish) => cartNameOf(cart, dish),
+								group: Boolean(groupCheckout),
 							},
 						),
 					)

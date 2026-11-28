@@ -4259,6 +4259,10 @@ msgstr "كان موعد الجرد في <0>{due}</0>."
 msgid "A credit cannot be given for this order."
 msgstr "لا يمكن منح رصيد لهذا الطلب."
 
+#: app/components/orders/order-problems.tsx:53
+msgid "A credit cannot be more than the order total."
+msgstr "لا يمكن أن يزيد الرصيد عن إجمالي الطلب."
+
 #: app/utils/people/people-errors.ts:21
 msgid "A customer's phone number is managed through sign-in and cannot be changed here."
 msgstr "يُدار رقم هاتف العميل من خلال تسجيل الدخول ولا يمكن تغييره هنا."
@@ -7463,7 +7467,7 @@ msgstr "كل الأسباب"
 msgid "All recipients"
 msgstr "جميع المستلمين"
 
-#: app/components/orders/order-problems.tsx:490
+#: app/components/orders/order-problems.tsx:574
 msgid "All reports"
 msgstr "كل البلاغات"
 
@@ -14064,7 +14068,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 #: app/components/locations/copy-settings-dialog.tsx:609
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/orders/catering-panel.tsx:1104
-#: app/components/orders/order-problems.tsx:317
+#: app/components/orders/order-problems.tsx:345
 #: app/components/phone-agent/voice-picker.tsx:559
 #: app/components/pos/terminals-manager.tsx:2093
 #: app/components/staff/kiosk-manager.tsx:792
@@ -14133,6 +14137,14 @@ msgstr "إغلاق هذه الوظيفة"
 msgid "Close this job?"
 msgstr "إغلاق هذه الوظيفة؟"
 
+#: app/components/orders/order-problems.tsx:351
+msgid "Close this report"
+msgstr "إغلاق هذا البلاغ"
+
+#: app/components/orders/order-problems.tsx:355
+msgid "Close this report with no refund or credit? It cannot be reopened."
+msgstr "إغلاق هذا البلاغ دون استرداد أو رصيد؟ لا يمكن إعادة فتحه."
+
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:114
 msgid "Close this window and open the party again to see the latest details."
 msgstr "أغلق هذه النافذة وافتح المجموعة مرة أخرى لعرض أحدث التفاصيل."
@@ -14162,7 +14174,7 @@ msgstr "أغلق خدماتك المعتادة أو اختصرها أو استب
 #: app/components/locations/availability-picker.tsx:374
 #: app/components/locations/special-hours-picker.tsx:276
 #: app/components/menu/drop-wizard/drop-preview.tsx:73
-#: app/components/orders/order-problems.tsx:189
+#: app/components/orders/order-problems.tsx:208
 #: app/components/phone-agent/business-details-section.tsx:244
 #: app/components/phone-agent/flow-editor/flow-meta.ts:98
 #: app/components/pos/terminal-health.tsx:403
@@ -17002,11 +17014,11 @@ msgstr "جارٍ الإنشاء…"
 msgid "Credit"
 msgstr "إشعار دائن"
 
-#: app/components/orders/order-problems.tsx:342
+#: app/components/orders/order-problems.tsx:406
 msgid "Credit amount"
 msgstr "قيمة الرصيد"
 
-#: app/components/orders/order-problems.tsx:185
+#: app/components/orders/order-problems.tsx:204
 msgid "Credit given"
 msgstr "تم منح رصيد"
 
@@ -17014,7 +17026,7 @@ msgstr "تم منح رصيد"
 #~ msgid "Credit given: {0}"
 #~ msgstr "الرصيد الممنوح: {0}"
 
-#: app/components/orders/order-problems.tsx:267
+#: app/components/orders/order-problems.tsx:286
 msgid "Credit given: {creditText}"
 msgstr "الرصيد الممنوح: {creditText}"
 
@@ -21510,7 +21522,7 @@ msgstr "أدخل عدد النسخ"
 msgid "Enter a number of days from 0 to 14."
 msgstr "أدخل عدد أيام من 0 إلى 14."
 
-#: app/components/orders/order-problems.tsx:141
+#: app/components/orders/order-problems.tsx:158
 msgid "Enter a number of days from 1 to 365."
 msgstr "أدخل عدد أيام من 1 إلى 365."
 
@@ -21830,8 +21842,8 @@ msgstr "أدخل مبلغًا أكبر من صفر، مثل 5.00."
 msgid "Enter an amount above zero."
 msgstr "أدخل كمية أكبر من الصفر."
 
-#: app/components/orders/order-problems.tsx:133
-#: app/components/orders/order-problems.tsx:139
+#: app/components/orders/order-problems.tsx:150
+#: app/components/orders/order-problems.tsx:156
 msgid "Enter an amount greater than zero."
 msgstr "أدخل مبلغًا أكبر من صفر."
 
@@ -24964,7 +24976,7 @@ msgstr "بطاقات الهدايا"
 msgid "Gift cards are temporarily unavailable. Try again shortly."
 msgstr "بطاقات الهدايا غير متاحة مؤقتًا. حاول مرة أخرى بعد قليل."
 
-#: app/components/orders/order-problems.tsx:296
+#: app/components/orders/order-problems.tsx:323
 msgid "Give a credit"
 msgstr "منح رصيد"
 
@@ -25071,6 +25083,11 @@ msgstr "امنح الزوار مساحة لمشاركة تعليقاتهم."
 #: app/components/chat/chat-compose-dialog.tsx:303
 msgid "Give your group a name"
 msgstr "أدخل اسمًا لمجموعتك"
+
+#: app/components/orders/order-problems.tsx:52
+#: app/components/orders/order-problems.tsx:394
+msgid "Giving a credit needs the right to refund orders."
+msgstr "منح رصيد يتطلب صلاحية استرداد الطلبات."
 
 #: app/components/menu/dietary-tag-switches.tsx:12
 #: app/components/menu/modifier-form.tsx:1677
@@ -28229,7 +28246,7 @@ msgstr "تُرفض الأصناف المعلّمة ككحول لأنواع ال�
 #~ msgid "Items named: {0}"
 #~ msgstr "الأصناف المذكورة: {0}"
 
-#: app/components/orders/order-problems.tsx:344
+#: app/components/orders/order-problems.tsx:408
 msgid "Items named: {affectedText}"
 msgstr "الأصناف المذكورة: {affectedText}"
 
@@ -28480,6 +28497,10 @@ msgstr "الإبقاء على الأطباق الحالية"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1426
 msgid "Keep it"
 msgstr "إبقاؤه"
+
+#: app/components/orders/order-problems.tsx:375
+msgid "Keep it open"
+msgstr "إبقاؤه مفتوحًا"
 
 #: app/components/website/domain/managed-domain-card.tsx:210
 msgid "Keep managing"
@@ -30353,7 +30374,7 @@ msgstr "جارٍ تحميل الملف الشخصي"
 msgid "Loading promotions…"
 msgstr "جارٍ تحميل العروض الترويجية…"
 
-#: app/components/orders/order-problems.tsx:500
+#: app/components/orders/order-problems.tsx:584
 msgid "Loading reports…"
 msgstr "جارٍ تحميل البلاغات…"
 
@@ -32494,7 +32515,7 @@ msgstr "رسالة إلى {name}"
 msgid "Message to the applicant"
 msgstr "رسالة إلى المتقدّم"
 
-#: app/components/orders/order-problems.tsx:365
+#: app/components/orders/order-problems.tsx:432
 msgid "Message to the guest"
 msgstr "رسالة إلى الضيف"
 
@@ -35718,7 +35739,7 @@ msgstr "لم يتم ضبط تذكيرات."
 msgid "No reply from <0>{supplier}</0> on order <1>#{orderNumber}</1> (expected <2>{due}</2>)."
 msgstr "لا يوجد رد من <0>{supplier}</0> على الطلب <1>#{orderNumber}</1> (المتوقع <2>{due}</2>)."
 
-#: app/components/orders/order-problems.tsx:509
+#: app/components/orders/order-problems.tsx:593
 msgid "No reports yet"
 msgstr "لا توجد بلاغات بعد"
 
@@ -37066,7 +37087,7 @@ msgstr "لا نقص في هذه الشحنة، فلا يوجد ما تطلب ت�
 msgid "Nothing is waiting"
 msgstr "لا شيء بانتظار القرار"
 
-#: app/components/orders/order-problems.tsx:507
+#: app/components/orders/order-problems.tsx:591
 msgid "Nothing is waiting for an answer"
 msgstr "لا شيء ينتظر ردًا"
 
@@ -37230,7 +37251,7 @@ msgstr "لم يكن شيء منخفضًا."
 msgid "Nothing was on hand that day."
 msgstr "لم يكن هناك مخزون في ذلك اليوم."
 
-#: app/components/orders/order-problems.tsx:322
+#: app/components/orders/order-problems.tsx:381
 msgid "Nothing was paid for this order yet, so it cannot be refunded."
 msgstr "لم يُدفع شيء لهذا الطلب بعد، لذلك لا يمكن استرداده."
 
@@ -38782,7 +38803,7 @@ msgstr "افتح الفريق لترى من لديه تهيئة لم تكتمل.
 msgid "Open the team to see whose certificate needs renewing."
 msgstr "افتح الفريق لترى من تحتاج شهادته إلى تجديد."
 
-#: app/components/orders/place-test-order-button.tsx:61
+#: app/components/orders/place-test-order-button.tsx:62
 msgid "Open the test menu again"
 msgstr "فتح القائمة التجريبية مرة أخرى"
 
@@ -39263,7 +39284,7 @@ msgstr "الطلب {orderNum} من {supplier} (<0>{days, plural, zero {متأخ�
 #~ msgid "Order {orderNum} from {supplier} (<0>{days}</0> days late)"
 #~ msgstr "الطلب {orderNum} من {supplier} (متأخر <0>{days}</0> أيام)"
 
-#: app/components/orders/order-problems.tsx:168
+#: app/components/orders/order-problems.tsx:187
 #: app/routes/_app+/$orgSlug_+/inventory+/purchasing.deliveries.$deliveryId.tsx:292
 msgid "Order {orderNumber}"
 msgstr "الطلب {orderNumber}"
@@ -41653,7 +41674,7 @@ msgstr "تغيّرت الصورة أثناء العملية"
 msgid "Photo format cannot be restyled"
 msgstr "لا يمكن تجديد مظهر صيغة هذه الصورة"
 
-#: app/components/orders/order-problems.tsx:231
+#: app/components/orders/order-problems.tsx:250
 msgid "Photo from the guest"
 msgstr "صورة من الضيف"
 
@@ -43361,7 +43382,8 @@ msgstr "المشكلة"
 msgid "Problem reported"
 msgstr "تم الإبلاغ عن مشكلة"
 
-#: app/components/orders/order-problems.tsx:564
+#: app/components/orders/order-problems.tsx:557
+#: app/components/orders/order-problems.tsx:648
 msgid "Problem reports"
 msgstr "بلاغات المشكلات"
 
@@ -45115,7 +45137,7 @@ msgstr "استرداد"
 msgid "Refund {refundLabel} for these lines"
 msgstr "استرداد {refundLabel} لهذه الأسطر"
 
-#: app/components/orders/order-problems.tsx:341
+#: app/components/orders/order-problems.tsx:405
 msgid "Refund amount"
 msgstr "مبلغ الاسترداد"
 
@@ -45202,7 +45224,7 @@ msgstr "تم تسجيل الاسترداد. النقاط المسحوبة: {take
 msgid "Refund sent to the guest's card."
 msgstr "تم إرسال المبلغ المسترد إلى بطاقة الضيف."
 
-#: app/components/orders/order-problems.tsx:284
+#: app/components/orders/order-problems.tsx:310
 msgid "Refund the affected items"
 msgstr "استرداد الأصناف المتأثرة"
 
@@ -45231,7 +45253,7 @@ msgid "Refund to the card"
 msgstr "استرداد إلى البطاقة"
 
 #: app/components/orders/order-detail.tsx:1266
-#: app/components/orders/order-problems.tsx:183
+#: app/components/orders/order-problems.tsx:202
 #: app/components/orders/order-status.tsx:39
 #: app/components/print/print-order-labels.ts:21
 #: app/components/settings/cards/organization/shop-card.tsx:61
@@ -45253,7 +45275,7 @@ msgstr "مسترد · نقدًا"
 msgid "Refunded {refundedAmount}"
 msgstr "تم استرداد {refundedAmount}"
 
-#: app/components/orders/order-problems.tsx:262
+#: app/components/orders/order-problems.tsx:281
 msgid "Refunded {refundedText}"
 msgstr "تم رد {refundedText}"
 
@@ -45273,7 +45295,7 @@ msgstr "المسترد بعد الموعد النهائي (%)"
 msgid "Refunded to card: {amount}"
 msgstr "تم الاسترداد إلى البطاقة: {amount}"
 
-#: app/components/orders/order-problems.tsx:328
+#: app/components/orders/order-problems.tsx:387
 msgid "Refunding an online payment needs the right to refund orders."
 msgstr "استرداد دفعة إلكترونية يتطلب صلاحية استرداد الطلبات."
 
@@ -46301,7 +46323,7 @@ msgid "Replay once"
 msgstr "إعادة التشغيل مرة واحدة"
 
 #: app/components/mailbox/reviews-tab.tsx:504
-#: app/components/orders/order-problems.tsx:187
+#: app/components/orders/order-problems.tsx:206
 msgid "Replied"
 msgstr "تم الرد"
 
@@ -46324,7 +46346,7 @@ msgstr "رد"
 msgid "Reply in thread"
 msgstr "الرد في سلسلة الردود"
 
-#: app/components/orders/order-problems.tsx:308
+#: app/components/orders/order-problems.tsx:336
 msgid "Reply only"
 msgstr "رد فقط"
 
@@ -50107,7 +50129,7 @@ msgstr "الإرسال عبر"
 msgid "Send code"
 msgstr "إرسال الرمز"
 
-#: app/components/orders/order-problems.tsx:382
+#: app/components/orders/order-problems.tsx:449
 msgid "Send credit"
 msgstr "إرسال الرصيد"
 
@@ -50180,11 +50202,11 @@ msgstr "وجّه الطلب عبر الإنترنت أو بطاقات الهدا
 msgid "Send push"
 msgstr "إرسال إشعار"
 
-#: app/components/orders/order-problems.tsx:380
+#: app/components/orders/order-problems.tsx:447
 msgid "Send refund"
 msgstr "إرسال الاسترداد"
 
-#: app/components/orders/order-problems.tsx:384
+#: app/components/orders/order-problems.tsx:451
 #: app/routes/_app+/$orgSlug_+/support.tsx:320
 msgid "Send reply"
 msgstr "إرسال الرد"
@@ -55825,7 +55847,7 @@ msgstr "تعذّرت قراءة المبلغ."
 msgid "The amount is more than the provider can return."
 msgstr "المبلغ أكبر مما يستطيع مزوّد الدفع ردّه."
 
-#: app/components/orders/order-problems.tsx:115
+#: app/components/orders/order-problems.tsx:132
 msgid "The answer could not be sent. Try again."
 msgstr "تعذّر إرسال الرد. حاول مرة أخرى."
 
@@ -56550,7 +56572,7 @@ msgstr "طلب الضيف تلقي الرسائل التسويقية عبر ال
 msgid "The guest asked to receive marketing by text"
 msgstr "طلب الضيف تلقي الرسائل التسويقية عبر الرسائل النصية"
 
-#: app/components/orders/order-problems.tsx:238
+#: app/components/orders/order-problems.tsx:257
 msgid "The guest attached a photo that cannot be shown right now."
 msgstr "أرفق الضيف صورة لا يمكن عرضها الآن."
 
@@ -56790,6 +56812,10 @@ msgstr "يفتح الرابط موقعك الإلكتروني. ويُرسل بر
 #: app/components/staff/schedule-link-section.tsx:69
 msgid "The link was turned off."
 msgstr "تم إيقاف الرابط."
+
+#: app/components/orders/place-test-order-button.tsx:65
+msgid "The link works until the test order is placed. Then start a new one."
+msgstr "يعمل الرابط حتى يتم تقديم الطلب التجريبي. بعدها ابدأ طلبًا جديدًا."
 
 #: app/components/reservations/waitlist/waitlist-screen.tsx:223
 msgid "The list could not be refreshed. What you see may be out of date."
@@ -57490,7 +57516,7 @@ msgstr "يجب أن يأتي التذكير قبل تسجيل الانصراف �
 msgid "The report figures could not be loaded. The program summary above is up to date."
 msgstr "تعذّر تحميل أرقام التقرير. ملخص البرنامج أعلاه محدّث."
 
-#: app/components/orders/order-problems.tsx:432
+#: app/components/orders/order-problems.tsx:499
 msgid "The reports could not be loaded."
 msgstr "تعذّر تحميل البلاغات."
 
@@ -63325,7 +63351,7 @@ msgid "UTM source (optional)"
 msgstr "مصدر UTM (اختياري)"
 
 #: ../../packages/marketing/src/components/coupon-offer-field.tsx:273
-#: app/components/orders/order-problems.tsx:352
+#: app/components/orders/order-problems.tsx:419
 msgid "Valid for (days)"
 msgstr "صالحة لمدة (أيام)"
 
@@ -64006,7 +64032,7 @@ msgstr "الانتظار حتى أول طلب مدفوع"
 #: app/components/media-library/restyle-item-card.tsx:100
 #: app/components/orders/catering-details.tsx:88
 #: app/components/orders/deliveries-panel.tsx:183
-#: app/components/orders/order-problems.tsx:480
+#: app/components/orders/order-problems.tsx:565
 #: app/components/reservations/floor-table.tsx:102
 #: app/components/reservations/status-style.tsx:207
 #: app/components/social/social-labels.ts:42
@@ -64081,7 +64107,7 @@ msgid "Waiting for the terminal…"
 msgstr "في انتظار الجهاز…"
 
 #: app/components/orders/order-detail.tsx:659
-#: app/components/orders/order-problems.tsx:177
+#: app/components/orders/order-problems.tsx:196
 #: app/components/orders/waiting-lane.tsx:121
 msgid "Waiting for you"
 msgstr "بانتظارك"
@@ -64098,7 +64124,7 @@ msgstr "بانتظار المسجّل"
 msgid "Waiting on you"
 msgstr "بانتظار ردك"
 
-#: app/components/orders/order-problems.tsx:175
+#: app/components/orders/order-problems.tsx:194
 msgid "Waiting over a day"
 msgstr "ينتظر منذ أكثر من يوم"
 
@@ -64618,7 +64644,7 @@ msgstr "تعذّر إرسال البريد. حاول مرة أخرى."
 msgid "We could not set the domain up. Please try again in a moment."
 msgstr "تعذّر إعداد النطاق. حاول مرة أخرى بعد قليل."
 
-#: app/components/orders/place-test-order-button.tsx:68
+#: app/components/orders/place-test-order-button.tsx:76
 msgid "We could not start a test order. Try again."
 msgstr "تعذّر بدء طلب تجريبي. حاول مرة أخرى."
 
@@ -65419,7 +65445,7 @@ msgstr "عند اعتماد جرد، تُنشأ مسودة طلب لكل مور�
 msgid "When a customer selects this option, reveal these conditional modifier groups (e.g. selecting \"French Fries\" unlocks \"Fry Size\")."
 msgstr "عندما يختار العميل هذا الخيار، أظهر مجموعات الإضافات الشرطية هذه (مثل اختيار «بطاطس مقلية» يفتح «حجم البطاطس»)."
 
-#: app/components/orders/order-problems.tsx:513
+#: app/components/orders/order-problems.tsx:597
 msgid "When a guest reports a problem with an order, it appears here."
 msgstr "عندما يبلغ ضيف عن مشكلة في طلب، يظهر هنا."
 
@@ -66320,7 +66346,7 @@ msgstr "اكتب السياسة التي سيقرّون بها."
 msgid "Write the question."
 msgstr "اكتب السؤال."
 
-#: app/components/orders/order-problems.tsx:151
+#: app/components/orders/order-problems.tsx:168
 msgid "Write the reply first."
 msgstr "اكتب الرد أولًا."
 
@@ -66460,6 +66486,10 @@ msgstr "نعم، كما طُلب"
 #: app/components/staff/schedule/time-off-page.tsx:390
 msgid "Yes, cancel it"
 msgstr "نعم، ألغِها"
+
+#: app/components/orders/order-problems.tsx:367
+msgid "Yes, close it"
+msgstr "نعم، أغلقه"
 
 #: app/components/locations/checkout-rules-cards.tsx:148
 msgid "Yes, include utensils"
@@ -67216,6 +67246,10 @@ msgstr "لم ينضم الوكيل إلى المكالمة. تأكد من أن �
 msgid "Your answer"
 msgstr "إجابتك"
 
+#: app/components/orders/order-problems.tsx:292
+msgid "Your answer was sent."
+msgstr "تم إرسال ردك."
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:544
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
 msgstr "تم إنشاء مفتاح API بنجاح. انسخه الآن - لن تتمكن من رؤيته مرة أخرى."
@@ -67607,7 +67641,7 @@ msgstr "خطوات الإعداد المتبقية."
 
 #: app/components/mailbox/reviews-tab.tsx:647
 #: app/components/orders/order-problems.tsx:37
-#: app/components/orders/order-problems.tsx:364
+#: app/components/orders/order-problems.tsx:431
 #: app/routes/_app+/$orgSlug_+/support.tsx:308
 msgid "Your reply"
 msgstr "ردك"

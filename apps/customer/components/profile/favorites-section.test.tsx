@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { FavoritesSection } from './favorites-section'
 import { type HttpRequest } from '@/lib/api/http'
 import {
@@ -66,7 +66,11 @@ async function mount(favorites: unknown[]) {
 		app.store,
 		<FavoritesSection loadMenu={async () => menuPayload} />,
 	)
-	return { calls, setList: (next: unknown[]) => void (list = next) }
+	return {
+		app,
+		calls,
+		setList: (next: unknown[]) => void (list = next),
+	}
 }
 
 describe('Profile, Favorites (#158)', () => {
@@ -80,6 +84,15 @@ describe('Profile, Favorites (#158)', () => {
 		expect(screen.getByText('Soup')).toBeTruthy()
 		expect(screen.getByText('Sold out')).toBeTruthy()
 		expect(screen.queryByText('deleted')).toBeNull()
+	})
+
+	it('does not show the previous guest’s favorites after signing out', async () => {
+		const { app } = await mount([{ itemId: 'item_1', createdAt: 1 }])
+		await screen.findByText('Burger')
+		await act(async () => {
+			await app.store.signOut()
+		})
+		expect(screen.queryByText('Burger')).toBeNull()
 	})
 
 	it('shows an empty state and removes a favorite with the region', async () => {

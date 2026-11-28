@@ -597,6 +597,15 @@ export function Orders({
 	)
 }
 
+/** "For Sam": a group order's dish owner, isolated so mixed scripts read right. */
+function ForPerson({ name }: { name: string }) {
+	return (
+		<Trans>
+			For <bdi>{name}</bdi>
+		</Trans>
+	)
+}
+
 function OrderBadges({
 	order,
 	now,
@@ -1378,8 +1387,12 @@ function OrderDetailBody({
 						</p>
 					) : null}
 					{detail.testPrintAnswer !== 'yes' ? (
-						<div className="flex flex-wrap items-center gap-2">
-							<span className="font-medium">
+						<div
+							role="group"
+							aria-labelledby={`test-print-${detail.id}`}
+							className="flex flex-wrap items-center gap-2"
+						>
+							<span id={`test-print-${detail.id}`} className="font-medium">
 								<Trans>Did the ticket print?</Trans>
 							</span>
 							<Button
@@ -2547,7 +2560,7 @@ export function PrintedTicket({
 							{line.forName &&
 							line.forName !== group.lines[index - 1]?.forName ? (
 								<div className="font-semibold" data-order-for>
-									<Trans>For {line.forName}</Trans>
+									<ForPerson name={line.forName} />
 								</div>
 							) : null}
 							<div className="flex justify-between gap-2">

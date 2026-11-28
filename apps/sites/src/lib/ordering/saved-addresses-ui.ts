@@ -126,28 +126,43 @@ export function mountSaveAddressForm(options: {
 	onSaved: (address: SavedAddress) => void
 }): SaveAddressForm {
 	const { root, labels } = options
+	/** What is on screen: the form for one location, a message, or nothing. */
+	let shown: 'form' | 'message' | null = null
+	let shownLocationId = ''
+	/** The offer a submit uses: a re-quote of the same address only updates it. */
+	let currentOffer: SaveAddressOffer | null = null
 	function reset() {
 		root.replaceChildren()
 		root.hidden = true
+		shown = null
+		currentOffer = null
 	}
 
 	function showMessage(text: string, tone: 'ok' | 'error') {
 		root.replaceChildren()
 		root.hidden = false
+		shown = 'message'
 		const message = el(
 			'p',
 			tone === 'ok'
 				? 'text-sm font-medium text-foreground'
 				: 'text-sm font-medium text-destructive',
-			text,
 		)
 		message.setAttribute('role', tone === 'ok' ? 'status' : 'alert')
 		root.append(message)
+		// A live region announces text that arrives after it is in the page, not
+		// one inserted already filled: the words follow on the next task.
+		setTimeout(() => {
+			message.textContent = text
+		}, 0)
 	}
 
 	function renderForm(offer: SaveAddressOffer) {
+		currentOffer = offer
 		root.replaceChildren()
 		root.hidden = false
+		shown = 'form'
+		shownLocationId = offer.locationId
 		const toggle = el(
 			'button',
 			'focus-ring text-sm font-medium text-primary hover:underline',
@@ -200,8 +215,8 @@ export function mountSaveAddressForm(options: {
 		const submit = el('button', 'btn-cta w-full', labels.save)
 		submit.type = 'submit'
 		const status = el('p', 'text-sm text-destructive')
+		// In the form from the start and empty: the text is announced when it lands.
 		status.setAttribute('role', 'alert')
-		status.hidden = true
 		form.append(nameField, notesField, submit, status)
 		toggle.addEventListener('click', () => {
 			const open = form.classList.toggle('hidden') === false
@@ -217,10 +232,11 @@ export function mountSaveAddressForm(options: {
 			}
 			submit.disabled = true
 			submit.textContent = labels.saving
-			status.hidden = true
+			status.textContent = ''
+			const latest = currentOffer ?? offer
 			const result = await createSavedAddress({
-				locationId: offer.locationId,
-				quoteToken: offer.quoteToken,
+				locationId: latest.locationId,
+				quoteToken: latest.quoteToken,
 				label,
 				...(notes.value.trim() ? { notes: notes.value.trim() } : {}),
 			})
@@ -238,7 +254,6 @@ export function mountSaveAddressForm(options: {
 						  result.code === 'session_unavailable'
 						? labels.signInAgain
 						: labels.failed
-			status.hidden = false
 		})
 		root.append(toggle, form)
 	}
@@ -247,6 +262,12 @@ export function mountSaveAddressForm(options: {
 		offer(input) {
 			if (!input || !isSignedIn()) {
 				reset()
+				return
+			}
+			// The same place asked again (a re-quote, a fresh token): the form and
+			// what the guest typed in it stay; only the token a submit uses moves.
+			if (shown === 'form' && shownLocationId === input.locationId) {
+				currentOffer = input
 				return
 			}
 			renderForm(input)

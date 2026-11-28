@@ -49,6 +49,8 @@ const ERRORS: Record<string, ReturnType<typeof msg>> = {
 	payment_disputed: msg`This order's payment is disputed, so it cannot be refunded now.`,
 	loyalty_refund_forbidden: msg`Refunding this order also moves loyalty points, which needs the right to manage loyalty redemptions.`,
 	credit_not_allowed: msg`A credit cannot be given for this order.`,
+	credit_forbidden: msg`Giving a credit needs the right to refund orders.`,
+	credit_too_large: msg`A credit cannot be more than the order total.`,
 }
 
 type Action = 'refund' | 'credit' | 'reply' | null
@@ -72,9 +74,20 @@ function ProblemCard({
 }) {
 	const { _, i18n } = useLingui()
 	const [action, setAction] = useState<Action>(null)
-	const [amount, setAmount] = useState(
-		minorToMajorText(problem.affectedCents, problem.currency),
+	const affectedDefault = minorToMajorText(
+		problem.affectedCents,
+		problem.currency,
 	)
+	const [amount, setAmount] = useState(affectedDefault)
+	const amountTouched = useRef(false)
+	// The guest may add items to the report while it is open: follow the
+	// affected total until the person has typed their own amount.
+	useEffect(() => {
+		if (!amountTouched.current) setAmount(affectedDefault)
+	}, [affectedDefault])
+	const cardRef = useRef<HTMLLIElement>(null)
+	const [confirmClose, setConfirmClose] = useState(false)
+	const [sent, setSent] = useState(false)
 	const [days, setDays] = useState(String(ORDER_PROBLEM_CREDIT_DEFAULT_DAYS))
 	const [message, setMessage] = useState('')
 	const [busy, setBusy] = useState(false)
@@ -103,7 +116,11 @@ function ProblemCard({
 				.parse(answered)
 			setAction(null)
 			setMessage('')
+			setConfirmClose(false)
+			setSent(true)
 			onChanged()
+			// The answer buttons are gone: keep the keyboard on this report.
+			cardRef.current?.focus()
 		} catch (caught) {
 			const code =
 				caught instanceof OperatorRequestError ? caught.code : 'request_failed'
@@ -155,7 +172,9 @@ function ProblemCard({
 
 	return (
 		<li
-			className="space-y-3 rounded-lg border p-4"
+			ref={cardRef}
+			tabIndex={-1}
+			className="space-y-3 rounded-lg border p-4 outline-none focus-visible:ring-2"
 			data-testid="problem-card"
 			data-problem-id={problem.id}
 		>
@@ -268,12 +287,19 @@ function ProblemCard({
 				</p>
 			) : null}
 
+			{sent ? (
+				<p role="status" className="text-sm font-medium">
+					<Trans>Your answer was sent.</Trans>
+				</p>
+			) : null}
+
 			{open && canWrite ? (
 				<div className="space-y-3 border-t pt-3">
 					<div className="flex flex-wrap gap-2">
 						<Button
 							type="button"
 							variant={action === 'refund' ? 'default' : 'outline'}
+							aria-pressed={action === 'refund'}
 							disabled={busy || !mayRefund}
 							onClick={() => {
 								setAction('refund')
@@ -286,7 +312,8 @@ function ProblemCard({
 						<Button
 							type="button"
 							variant={action === 'credit' ? 'default' : 'outline'}
-							disabled={busy}
+							aria-pressed={action === 'credit'}
+							disabled={busy || !canRefund}
 							onClick={() => {
 								setAction('credit')
 								setError(null)
@@ -298,6 +325,7 @@ function ProblemCard({
 						<Button
 							type="button"
 							variant={action === 'reply' ? 'default' : 'outline'}
+							aria-pressed={action === 'reply'}
 							disabled={busy}
 							onClick={() => {
 								setAction('reply')
@@ -311,12 +339,43 @@ function ProblemCard({
 							type="button"
 							variant="ghost"
 							disabled={busy}
-							onClick={() => void send({ action: 'close' })}
+							onClick={() => setConfirmClose(true)}
 							data-testid="problem-close"
 						>
 							<Trans>Close</Trans>
 						</Button>
 					</div>
+					{confirmClose ? (
+						<div
+							role="group"
+							aria-label={_(msg`Close this report`)}
+							className="flex flex-wrap items-center gap-2 text-sm"
+						>
+							<span>
+								<Trans>
+									Close this report with no refund or credit? It cannot be
+									reopened.
+								</Trans>
+							</span>
+							<Button
+								type="button"
+								variant="destructive"
+								disabled={busy}
+								onClick={() => void send({ action: 'close' })}
+								data-testid="problem-close-confirm"
+							>
+								<Trans>Yes, close it</Trans>
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								disabled={busy}
+								onClick={() => setConfirmClose(false)}
+							>
+								<Trans>Keep it open</Trans>
+							</Button>
+						</div>
+					) : null}
 					{!paid ? (
 						<p className="text-muted-foreground text-xs">
 							<Trans>
@@ -328,6 +387,11 @@ function ProblemCard({
 							<Trans>
 								Refunding an online payment needs the right to refund orders.
 							</Trans>
+						</p>
+					) : null}
+					{!canRefund ? (
+						<p className="text-muted-foreground text-xs">
+							<Trans>Giving a credit needs the right to refund orders.</Trans>
 						</p>
 					) : null}
 
@@ -344,7 +408,10 @@ function ProblemCard({
 										hint={_(msg`Items named: ${affectedText}`)}
 										value={amount}
 										inputMode="decimal"
-										onChange={(event) => setAmount(event.target.value)}
+										onChange={(event) => {
+											amountTouched.current = true
+											setAmount(event.target.value)
+										}}
 										data-testid="problem-amount"
 									/>
 									{action === 'credit' ? (
@@ -462,18 +529,36 @@ export function ProblemsInbox({
 	canRefund: boolean
 	request: Request
 }) {
+	const { _ } = useLingui()
 	const [view, setView] = useState<'open' | 'all'>('open')
 	const { data, error, reload } = useProblems(
 		request,
 		view === 'open' ? '?status=open&limit=100' : '?status=all&limit=100',
 	)
+	const rootRef = useRef<HTMLDivElement>(null)
+	const count = data?.problems.length
+	// An answered report leaves the "waiting" list and takes the keyboard's
+	// place with it: bring focus back to the inbox instead of the page top.
+	useEffect(() => {
+		if (count !== undefined && document.activeElement === document.body) {
+			rootRef.current?.focus()
+		}
+	}, [count])
 	return (
-		<div className="space-y-4" data-testid="problems-inbox">
-			<div className="flex gap-2" role="tablist">
+		<div
+			ref={rootRef}
+			tabIndex={-1}
+			className="space-y-4 outline-none"
+			data-testid="problems-inbox"
+		>
+			<div
+				className="flex gap-2"
+				role="group"
+				aria-label={_(msg`Problem reports`)}
+			>
 				<Button
 					type="button"
-					role="tab"
-					aria-selected={view === 'open'}
+					aria-pressed={view === 'open'}
 					variant={view === 'open' ? 'default' : 'ghost'}
 					onClick={() => setView('open')}
 				>
@@ -482,8 +567,7 @@ export function ProblemsInbox({
 				</Button>
 				<Button
 					type="button"
-					role="tab"
-					aria-selected={view === 'all'}
+					aria-pressed={view === 'all'}
 					variant={view === 'all' ? 'default' : 'ghost'}
 					onClick={() => setView('all')}
 				>

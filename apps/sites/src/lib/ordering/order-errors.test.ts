@@ -311,10 +311,11 @@ describe('alcohol refusals (#167)', () => {
 			'group_disabled',
 			'group_empty',
 			'group_unsupported',
-			'forbidden',
 		]) {
 			expect(orderErrorLabelKey(code)).toBe('groupUnavailable')
 		}
+		// `forbidden` is the group's only on a group checkout.
+		expect(orderErrorLabelKey('forbidden')).toBe('generic')
 	})
 
 	it('reads a malformed body as no names', () => {

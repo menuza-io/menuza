@@ -474,7 +474,7 @@ msgstr "Added to the group order."
 msgid "Adding…"
 msgstr "Adding…"
 
-#: src/lib/ordering-labels.ts:455
+#: src/lib/ordering-labels.ts:457
 msgid "Address saved"
 msgstr "Address saved"
 
@@ -1085,7 +1085,7 @@ msgstr "Choose a real month and day."
 msgid "Choose a time"
 msgstr "Choose a time"
 
-#: src/lib/ordering-labels.ts:427
+#: src/lib/ordering-labels.ts:429
 msgid "Choose a time at least 15 minutes from now."
 msgstr "Choose a time at least 15 minutes from now."
 
@@ -1093,7 +1093,7 @@ msgstr "Choose a time at least 15 minutes from now."
 msgid "Choose a time to continue."
 msgstr "Choose a time to continue."
 
-#: src/lib/ordering-labels.ts:428
+#: src/lib/ordering-labels.ts:430
 msgid "Choose a time within 7 days."
 msgstr "Choose a time within 7 days."
 
@@ -1409,7 +1409,7 @@ msgstr "Declined: {reward}."
 msgid "Decrease quantity"
 msgstr "Decrease quantity"
 
-#: src/lib/ordering-labels.ts:446
+#: src/lib/ordering-labels.ts:448
 msgid "Default"
 msgstr "Default"
 
@@ -1940,7 +1940,7 @@ msgstr "Full name"
 msgid "Full time"
 msgstr "Full time"
 
-#: src/lib/ordering-labels.ts:452
+#: src/lib/ordering-labels.ts:454
 msgid "Gate code or delivery note"
 msgstr "Gate code or delivery note"
 
@@ -2088,11 +2088,11 @@ msgstr "Hide details"
 msgid "History"
 msgstr "History"
 
-#: src/lib/ordering-labels.ts:450
+#: src/lib/ordering-labels.ts:452
 msgid "Home"
 msgstr "Home"
 
-#: src/lib/ordering-labels.ts:449
+#: src/lib/ordering-labels.ts:451
 msgid "Home, Work…"
 msgstr "Home, Work…"
 
@@ -2529,7 +2529,7 @@ msgstr "My order was late"
 msgid "Name"
 msgstr "Name"
 
-#: src/lib/ordering-labels.ts:448
+#: src/lib/ordering-labels.ts:450
 msgid "Name this address"
 msgstr "Name this address"
 
@@ -2884,7 +2884,7 @@ msgstr "Only {count} of {name} left today. Please go back to the menu to lower t
 msgid "Only a few left"
 msgstr "Only a few left"
 
-#: src/lib/ordering-labels.ts:436
+#: src/lib/ordering-labels.ts:438
 msgid "Only the host can do that."
 msgstr "Only the host can do that."
 
@@ -2914,7 +2914,7 @@ msgstr "Open the link from your confirmation to manage a reservation."
 msgid "Open until {time}"
 msgstr "Open until {time}"
 
-#: src/lib/ordering-labels.ts:438
+#: src/lib/ordering-labels.ts:440
 msgid "Open your group order"
 msgstr "Open your group order"
 
@@ -3821,7 +3821,7 @@ msgstr "Sale price"
 msgid "Save"
 msgstr "Save"
 
-#: src/lib/ordering-labels.ts:453
+#: src/lib/ordering-labels.ts:455
 msgid "Save address"
 msgstr "Save address"
 
@@ -3838,11 +3838,11 @@ msgstr "Save Changes"
 msgid "Save my choices"
 msgstr "Save my choices"
 
-#: src/lib/ordering-labels.ts:447
+#: src/lib/ordering-labels.ts:449
 msgid "Save this address"
 msgstr "Save this address"
 
-#: src/lib/ordering-labels.ts:445
+#: src/lib/ordering-labels.ts:447
 msgid "Saved addresses"
 msgstr "Saved addresses"
 
@@ -3851,7 +3851,7 @@ msgstr "Saved addresses"
 msgid "Saving..."
 msgstr "Saving..."
 
-#: src/lib/ordering-labels.ts:454
+#: src/lib/ordering-labels.ts:456
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -4042,7 +4042,7 @@ msgstr "Showing your code does not spend any points. You approve every reward yo
 msgid "Sign in"
 msgstr "Sign in"
 
-#: src/lib/ordering-labels.ts:462
+#: src/lib/ordering-labels.ts:464
 msgid "Sign in again to use your saved addresses."
 msgstr "Sign in again to use your saved addresses."
 
@@ -4160,7 +4160,7 @@ msgstr "Something went wrong."
 #: src/lib/catering/labels.ts:83
 #: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:345
-#: src/lib/ordering-labels.ts:433
+#: src/lib/ordering-labels.ts:435
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "Something went wrong. Please try again."
@@ -4439,7 +4439,7 @@ msgstr "That coupon code could not be applied."
 msgid "That date is too far ahead to book online."
 msgstr "That date is too far ahead to book online."
 
-#: src/lib/ordering-labels.ts:429
+#: src/lib/ordering-labels.ts:431
 msgid "That dish cannot be added to a group order."
 msgstr "That dish cannot be added to a group order."
 
@@ -4451,7 +4451,7 @@ msgstr "That is more guests than we can cater online. Please call us."
 msgid "That is not available here. Choose pickup or delivery."
 msgstr "That is not available here. Choose pickup or delivery."
 
-#: src/lib/ordering-labels.ts:423
+#: src/lib/ordering-labels.ts:424
 msgid "That is over the spend limit for this group order."
 msgstr "That is over the spend limit for this group order."
 
@@ -4550,7 +4550,7 @@ msgstr "The gift card amount changed. Review the new total."
 msgid "The group order changed. Go back to the group order, review it and check out again."
 msgstr "The group order changed. Go back to the group order, review it and check out again."
 
-#: src/lib/ordering-labels.ts:431
+#: src/lib/ordering-labels.ts:433
 msgid "The group order changed. Review it and check out again."
 msgstr "The group order changed. Review it and check out again."
 
@@ -4749,7 +4749,7 @@ msgstr "There isn't enough {name} left today. Please go back to the menu to chan
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 
-#: src/lib/ordering-labels.ts:461
+#: src/lib/ordering-labels.ts:463
 msgid "This address is no longer saved."
 msgstr "This address is no longer saved."
 
@@ -4886,11 +4886,11 @@ msgstr "This group is too large to order from the table. Please ask a member of 
 msgid "This group order can't be placed any more. Go back to the group order to see where it stands."
 msgstr "This group order can't be placed any more. Go back to the group order to see where it stands."
 
-#: src/lib/ordering-labels.ts:425
+#: src/lib/ordering-labels.ts:427
 msgid "This group order has the most dishes allowed."
 msgstr "This group order has the most dishes allowed."
 
-#: src/lib/ordering-labels.ts:424
+#: src/lib/ordering-labels.ts:426
 msgid "This group order is full."
 msgstr "This group order is full."
 
@@ -5139,7 +5139,7 @@ msgstr "Too many attempts. Please wait a moment and try again."
 msgid "Too many attempts. Try again in a moment."
 msgstr "Too many attempts. Try again in a moment."
 
-#: src/lib/ordering-labels.ts:434
+#: src/lib/ordering-labels.ts:436
 msgid "Too many requests. Try again in a moment."
 msgstr "Too many requests. Try again in a moment."
 
@@ -5183,7 +5183,7 @@ msgstr "Track this order in the app"
 #: src/lib/guest-account-labels.ts:65
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:162
-#: src/lib/ordering-labels.ts:435
+#: src/lib/ordering-labels.ts:437
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
@@ -5601,7 +5601,7 @@ msgstr "We couldn't restore your cart."
 msgid "We couldn't save that. Try again."
 msgstr "We couldn't save that. Try again."
 
-#: src/lib/ordering-labels.ts:459
+#: src/lib/ordering-labels.ts:461
 msgid "We couldn't save this address. Try again."
 msgstr "We couldn't save this address. Try again."
 
@@ -5641,7 +5641,7 @@ msgstr "We deliver here"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "We did not hear back in time. You can join the waitlist again."
 
-#: src/lib/ordering-labels.ts:460
+#: src/lib/ordering-labels.ts:462
 msgid "We don't deliver here right now"
 msgstr "We don't deliver here right now"
 
@@ -5846,7 +5846,7 @@ msgstr "Who is in"
 msgid "Whole"
 msgstr "Whole"
 
-#: src/lib/ordering-labels.ts:451
+#: src/lib/ordering-labels.ts:453
 msgid "Work"
 msgstr "Work"
 
@@ -5875,7 +5875,7 @@ msgstr "Yes, leave"
 msgid "You"
 msgstr "You"
 
-#: src/lib/ordering-labels.ts:426
+#: src/lib/ordering-labels.ts:428
 msgid "You already have the most group orders open."
 msgstr "You already have the most group orders open."
 
@@ -5915,7 +5915,7 @@ msgstr "You can still order for pickup."
 msgid "You have {amount}"
 msgstr "You have {amount}"
 
-#: src/lib/ordering-labels.ts:457
+#: src/lib/ordering-labels.ts:459
 msgid "You have 10 saved addresses. Remove one in your profile to add another."
 msgstr "You have 10 saved addresses. Remove one in your profile to add another."
 
@@ -6088,7 +6088,7 @@ msgstr "Your favorites"
 msgid "Your first name"
 msgstr "Your first name"
 
-#: src/lib/ordering-labels.ts:437
+#: src/lib/ordering-labels.ts:439
 msgid "Your group order"
 msgstr "Your group order"
 

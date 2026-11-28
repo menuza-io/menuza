@@ -158,6 +158,8 @@ describe('ProblemsInbox (#191)', () => {
 			await screen.findByText('Write the reply first.'),
 		).toBeInTheDocument()
 		await user.click(screen.getByTestId('problem-close'))
+		// Closing is irreversible: it asks first.
+		await user.click(await screen.findByTestId('problem-close-confirm'))
 		await waitFor(() =>
 			expect(
 				request.mock.calls.some(
@@ -187,7 +189,8 @@ describe('ProblemsInbox (#191)', () => {
 		const cards = await screen.findAllByTestId('problem-card')
 		for (const card of cards) {
 			expect(within(card).getByTestId('problem-refund')).toBeDisabled()
-			expect(within(card).getByTestId('problem-credit')).toBeEnabled()
+			// A credit is a cash-equivalent code: it needs the same right.
+			expect(within(card).getByTestId('problem-credit')).toBeDisabled()
 		}
 	})
 

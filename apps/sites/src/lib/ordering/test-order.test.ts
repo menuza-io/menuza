@@ -1,7 +1,9 @@
 import { TEST_ORDER_CODE_PREFIX } from '@repo/common/test-orders'
 import { describe, expect, it } from 'vitest'
 import {
+	adoptPendingTestCode,
 	adoptTestCode,
+	PENDING_TEST_KEY,
 	clearTestCode,
 	readTestCode,
 	testCodeFromHash,
@@ -63,6 +65,22 @@ describe('the test order code in the URL fragment (#119)', () => {
 		storage.setItem(testCodeKey('org'), '{not json')
 		expect(readTestCode(storage, 'org', NOW)).toBeNull()
 		expect(storage.data.has(testCodeKey('org'))).toBe(false)
+	})
+
+	it('takes a code the layout parked in storage before analytics loaded, once', () => {
+		const storage = memory()
+		storage.setItem(PENDING_TEST_KEY, code())
+		expect(adoptPendingTestCode(storage, 'org', NOW)).toMatchObject({
+			code: code(),
+			locationId: 'loc_1',
+		})
+		expect(storage.data.has(PENDING_TEST_KEY)).toBe(false)
+		expect(readTestCode(storage, 'org', NOW)).not.toBeNull()
+		// Nothing parked, or junk parked: nothing adopted, and the junk is dropped.
+		expect(adoptPendingTestCode(storage, 'org', NOW)).toBeNull()
+		storage.setItem(PENDING_TEST_KEY, 'junk')
+		expect(adoptPendingTestCode(storage, 'other', NOW)).toBeNull()
+		expect(storage.data.has(PENDING_TEST_KEY)).toBe(false)
 	})
 
 	it('keeps the code out of the address bar, other fragment parameters kept', () => {

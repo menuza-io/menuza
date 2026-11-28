@@ -18,6 +18,9 @@ export type GroupCheckoutNote = {
 	token: string
 }
 
+/** A note is only good for this long: an abandoned checkout must not linger. */
+export const GROUP_CHECKOUT_NOTE_TTL_MS = 30 * 60_000
+
 const noteKey = (orgId: string) => `menuza_group_checkout_${orgId}`
 
 export const groupCartKey = (orgId: string) => `menuza_cart_${orgId}_group`
@@ -27,11 +30,20 @@ type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 export function readGroupCheckout(
 	storage: StorageLike | null,
 	orgId: string,
+	now: number = Date.now(),
 ): GroupCheckoutNote | null {
 	try {
 		const raw = storage?.getItem(noteKey(orgId))
 		if (!raw) return null
 		const value = JSON.parse(raw) as Record<string, unknown>
+		if (
+			typeof value.savedAt !== 'number' ||
+			now - value.savedAt > GROUP_CHECKOUT_NOTE_TTL_MS ||
+			value.savedAt > now + 60_000
+		) {
+			storage?.removeItem(noteKey(orgId))
+			return null
+		}
 		if (
 			typeof value.groupId === 'string' &&
 			typeof value.token === 'string' &&
@@ -54,9 +66,10 @@ export function saveGroupCheckout(
 	storage: StorageLike | null,
 	orgId: string,
 	note: GroupCheckoutNote,
+	now: number = Date.now(),
 ) {
 	try {
-		storage?.setItem(noteKey(orgId), JSON.stringify(note))
+		storage?.setItem(noteKey(orgId), JSON.stringify({ ...note, savedAt: now }))
 	} catch {
 		// the checkout then reads as an ordinary one: the region refuses nothing here
 	}

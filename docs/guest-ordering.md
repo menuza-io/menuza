@@ -62,10 +62,15 @@ then Sites and the customer app, then Station (kitchen labels).
 
 - Guest: `GET/POST /orders/:id/problems` and
   `POST /orders/:id/problems/:problemId/photo` with the receipt token or the
-  order link (every refusal is the uniform order 404). Kinds: missing item,
-  wrong item, late, quality, other. One open report per order (a second adds to
-  it), accepted for 48 hours after completion, five per order, `Idempotency-Key`
-  required, durable limits per order and per address.
+  order link (every refusal of a capability is the uniform order 404). The
+  forwardable **order link is read-only and redacted**: it reads the reports
+  without the note, the words of the thread or the credit code, and cannot
+  report or attach a photo (403 `receipt_required`); only the placing browser's
+  receipt token writes. Kinds: missing item, wrong item, late, quality, other.
+  One open report per order (a second adds to it, at most ten additions),
+  accepted for 48 hours after completion, five per order, `Idempotency-Key`
+  required, durable limits per order and per address. Bodies are capped by the
+  bytes that arrive, not by `Content-Length`.
 - The photo is checked by its bytes (not the announced type), re-encoded (drops
   EXIF and GPS), capped at 5 MB and stored in the region's bucket under
   `order-problems/<orgId>/`. Deprovision deletes the prefix; person erasure
@@ -76,20 +81,33 @@ then Sites and the customer app, then Station (kitchen labels).
   `POST /operator/orders/problems/:id/answer` (`orders:write`):
   - **refund** the affected items (or an amount): an online payment books a
     provider refund intent (normal refund rules and limits, #80; needs the
-    `refundProvider` grant), a payment at handoff is a recorded refund;
+    `refundProvider` grant), a payment at handoff is a recorded refund. The
+    report is **claimed first** (compare-and-set `open` to `answered`), so a
+    refund and a credit can never both land; a refused booking gives the claim
+    back, a claim that never booked (a crash) can be taken over after two
+    minutes (the refund key is the report's, so it never refunds twice), and a
+    provider refund that later fails opens the report again;
   - **credit**: a single-use `discount_issued_codes` row (source
     `order_problem`), resolved at checkout by `resolveProblemCreditForOrder`
     (one synthetic fixed-amount discount worth the credit, `maxUses` 1, same
-    currency, expiry);
-  - **reply** and **close**.
+    currency, expiry). A credit is a cash-equivalent code: it needs the refund
+    grant (403 `credit_forbidden`, never while impersonating) and cannot exceed
+    the order total (422 `credit_too_large`);
+  - **reply** and **close** (the App asks before closing).
 - The guest sees the thread, refund and credit code on the order page and gets
   the answer by email (and a text only with "Text me order updates", US node,
-  within the daily order text cap). Sending is best effort and never throws.
+  within the daily order text cap). Sending is best effort and never throws. The
+  refund message says a refund was **started** (a provider refund is pending
+  when it is sent), and the Problems report counts only what the refund row has
+  settled.
 - Managers: a generic `order_problem` event (kind word and order number only)
   through `/resources/orders/notify` (alert kind `orders_problem`, shares the
   "orders waiting" push switch); the orders tick retries an alert the App could
   not take and sends the 24-hour reminder once. Unanswered reports appear in
   Needs attention (`/operator/orders/attention` carries `problems`).
+- Erasure also deletes the cloud printer ticket jobs (`print_jobs`) of the
+  erased orders: their payload carries the first name, the address and "For Sam"
+  labels.
 - Reports: subjects `order_problems` (by type, status, location, refunded and
   credited totals, minutes to answer) and `order_problem_dishes`, in the sales
   family. They hold ids, kinds and amounts, never a note.
@@ -105,10 +123,10 @@ then Sites and the customer app, then Station (kitchen labels).
   `restaurant_orders.group_id` and each stored line may carry `forName`.
 - Capabilities, in headers and URL fragments only: the link's **share token**
   (`gs1.` plus an HMAC of the group and its share version; bumping the version
-  burns links) lets a friend look and join; a person's own token (`gp1.`, 256
-  random bits, only its hash stored) changes their own dishes; the host's places
-  the order. Every refusal is the uniform 404 `group_not_found`. Sent as
-  `X-Group-Token`.
+  burns links, which the host does with `POST /orders/group/:id/share/rotate`)
+  lets a friend look and join; a person's own token (`gp1.`, 256 random bits,
+  only its hash stored) changes their own dishes; the host's places the order.
+  Every refusal is the uniform 404 `group_not_found`. Sent as `X-Group-Token`.
 - `/orders/group/*` (mounted before `/orders`): create (customer token), view
   (polled every 5 seconds), join (first name), add and remove a dish (priced by
   the order engine with the walk-in gates), done, host PATCH (deadline 15
@@ -122,6 +140,10 @@ then Sites and the customer app, then Station (kitchen labels).
   is claimed by compare-and-set inside the order's transaction (a lost race
   throws, so nothing is half placed). A retry answers with the order already
   placed.
+- Rate limits count the address first (429 before anything about the group is
+  touched), count the per-group budget only for a request that holds a valid
+  capability (a made-up group id writes no counter row), and give a refused
+  request back. Polls reuse the priced lines per group version.
 - The Kitchen display, cloud tickets, Station Orders, the guest receipt page,
   the receipt email and the App order detail show each person's dishes under
   "For Sam". The forwardable order link leaves names out. Person erasure deletes
@@ -129,7 +151,14 @@ then Sites and the customer app, then Station (kitchen labels).
 - A group with no activity for seven days is deleted by the orders tick.
 - Sites: `/menu/group` (start, join, view, host panel); the host's checkout
   copies the group into its own cart key (`menuza_cart_<org>_group`), leaves a
-  note in `sessionStorage` and uses the normal checkout page.
+  note in `sessionStorage` (good for 30 minutes, cleared on any `group_*`
+  refusal and whenever the group page opens) and uses the normal checkout page.
+  The group view redraws only when the group's version changes and keeps focus.
+- `#test=` and `#join=` capabilities are moved out of the address bar by an
+  inline script in the layout, before any analytics tag loads, into
+  `sessionStorage` (`menuza_pending_test`, `menuza_pending_join`); the menu and
+  group scripts adopt them from there, and the address is cleaned even when
+  storage is blocked.
 
 ## Security gates
 

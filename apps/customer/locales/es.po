@@ -14,7 +14,7 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. placeholder {0}: item.calories
-#: components/ordering/menu-screen.tsx:402
+#: components/ordering/menu-screen.tsx:407
 msgid "{0} Cal"
 msgstr "{0} cal"
 
@@ -34,7 +34,7 @@ msgstr "{amount} más para alcanzar {tier}"
 msgid "{amount} more to unlock {reward}"
 msgstr "Te faltan {amount} para {reward}"
 
-#: components/ordering/menu-screen.tsx:477
+#: components/ordering/menu-screen.tsx:482
 #: lib/loyalty/labels.ts:56
 msgid "{amount} off"
 msgstr "{amount} de descuento"
@@ -67,11 +67,11 @@ msgstr "{n, plural, one {{count} punto} other {{count} puntos}}"
 msgid "{n, plural, one {{count} star} other {{count} stars}}"
 msgstr "{n, plural, one {{count} estrella} other {{count} estrellas}}"
 
-#: components/ordering/menu-screen.tsx:460
+#: components/ordering/menu-screen.tsx:465
 msgid "{name} (limit {count} per order)"
 msgstr "{name} (límite de {count} por pedido)"
 
-#: components/ordering/menu-screen.tsx:456
+#: components/ordering/menu-screen.tsx:461
 msgid "{name} (up to {amount} off)"
 msgstr "{name} (hasta {amount} de descuento)"
 
@@ -79,7 +79,7 @@ msgstr "{name} (hasta {amount} de descuento)"
 msgid "{percent} off"
 msgstr "{percent} de descuento"
 
-#: components/ordering/menu-screen.tsx:469
+#: components/ordering/menu-screen.tsx:474
 msgid "{percentText} off"
 msgstr "{percentText} de descuento"
 
@@ -111,7 +111,7 @@ msgstr "{points} por cada visita (una vez al día)"
 msgid "{points} for every {amount} you spend"
 msgstr "{points} por cada {amount} que gastes"
 
-#: components/ordering/menu-screen.tsx:360
+#: components/ordering/menu-screen.tsx:365
 msgid "{price}, was {originalPrice}"
 msgstr "{price}, antes {originalPrice}"
 
@@ -167,7 +167,7 @@ msgstr "Añade una tarjeta con su código para guardarla aquí. Aun así, puedes
 msgid "Add a gift card"
 msgstr "Añadir una tarjeta regalo"
 
-#: components/profile/addresses-section.tsx:221
+#: components/profile/addresses-section.tsx:242
 msgid "Add an address"
 msgstr "Añadir una dirección"
 
@@ -179,7 +179,7 @@ msgstr "Añade primero una dirección de correo"
 msgid "Add card"
 msgstr "Añadir tarjeta"
 
-#: components/ordering/menu-screen.tsx:380
+#: components/ordering/menu-screen.tsx:385
 msgid "Add to favorites"
 msgstr "Añadir a favoritos"
 
@@ -239,8 +239,8 @@ msgstr "Aprobar {reward}"
 msgid "Approved: {reward}."
 msgstr "Aprobado: {reward}."
 
-#: components/profile/addresses-section.tsx:166
-#: components/profile/addresses-section.tsx:274
+#: components/profile/addresses-section.tsx:187
+#: components/profile/addresses-section.tsx:295
 msgid "Apt, suite or floor"
 msgstr "Apartamento, suite o piso"
 
@@ -296,8 +296,9 @@ msgstr "Al compartir una foto, permites que el restaurante la muestre en su men�
 msgid "Call the restaurant"
 msgstr "Llamar al restaurante"
 
-#: components/profile/addresses-section.tsx:191
-#: components/profile/addresses-section.tsx:298
+#: components/profile/addresses-section.tsx:122
+#: components/profile/addresses-section.tsx:212
+#: components/profile/addresses-section.tsx:319
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -331,7 +332,7 @@ msgstr "Cambiar la hora"
 msgid "Changed by the business"
 msgstr "Cambiado por el negocio"
 
-#: components/ordering/menu-screen.tsx:240
+#: components/ordering/menu-screen.tsx:245
 msgid "Check back later, or open the website menu."
 msgstr "Vuelve más tarde o abre el menú del sitio web."
 
@@ -371,7 +372,7 @@ msgstr "Elige de qué te avisa este teléfono."
 msgid "Choose what you hear from us, and how."
 msgstr "Elige qué recibes de nosotros y cómo."
 
-#: components/ordering/menu-screen.tsx:235
+#: components/ordering/menu-screen.tsx:240
 msgid "Clear a choice to see more of the menu."
 msgstr "Quita una opción para ver más del menú."
 
@@ -428,7 +429,7 @@ msgstr "Copiar enlace de invitación"
 msgid "Cost"
 msgstr "Coste"
 
-#: components/ordering/menu-screen.tsx:506
+#: components/ordering/menu-screen.tsx:511
 msgid "Dairy-free"
 msgstr "Sin lácteos"
 
@@ -456,12 +457,12 @@ msgstr "Rechazada"
 msgid "Declined: {reward}."
 msgstr "Rechazado: {reward}."
 
-#: components/profile/addresses-section.tsx:91
+#: components/profile/addresses-section.tsx:93
 msgid "Default"
 msgstr "Predeterminada"
 
-#: components/ordering/menu-screen.tsx:363
-#: components/ordering/menu-screen.tsx:405
+#: components/ordering/menu-screen.tsx:368
+#: components/ordering/menu-screen.tsx:410
 msgid "Delivery price {deliveryPriceText}"
 msgstr "Precio a domicilio {deliveryPriceText}"
 
@@ -469,11 +470,11 @@ msgstr "Precio a domicilio {deliveryPriceText}"
 msgid "Dietary needs"
 msgstr "Necesidades dietéticas"
 
-#: components/ordering/menu-screen.tsx:198
+#: components/ordering/menu-screen.tsx:201
 msgid "Dietary preferences"
 msgstr "Preferencias alimentarias"
 
-#: components/ordering/menu-screen.tsx:210
+#: components/ordering/menu-screen.tsx:213
 msgid "Dietary tags are the restaurant's own description. Ask staff if you have an allergy."
 msgstr "Las etiquetas alimentarias son la descripción del propio restaurante. Pregunta al personal si tienes alguna alergia."
 
@@ -507,7 +508,7 @@ msgstr "Acumulado"
 msgid "Earning at {multiplier}× rate"
 msgstr "Ganando a tasa de {multiplier}×"
 
-#: components/profile/addresses-section.tsx:99
+#: components/profile/addresses-section.tsx:103
 msgid "Edit"
 msgstr "Editar"
 
@@ -595,7 +596,7 @@ msgstr "Para un grupo de este tamaño, llama al {phone}."
 msgid "Free {item}"
 msgstr "{item} gratis"
 
-#: components/ordering/menu-screen.tsx:487
+#: components/ordering/menu-screen.tsx:492
 msgid "Free delivery"
 msgstr "Envío gratis"
 
@@ -607,8 +608,8 @@ msgstr "Cambios gratuitos hasta las {time}"
 msgid "Frozen"
 msgstr "Congelada"
 
-#: components/profile/addresses-section.tsx:172
-#: components/profile/addresses-section.tsx:287
+#: components/profile/addresses-section.tsx:193
+#: components/profile/addresses-section.tsx:308
 msgid "Gate code or delivery note"
 msgstr "Código de la puerta o nota de entrega"
 
@@ -657,11 +658,11 @@ msgstr "Las tarjetas regalo no están disponibles ahora. Inténtalo de nuevo má
 msgid "Give a friend {friendReward}, get {referrerPoints} after their first paid order."
 msgstr "Regala a un amigo {friendReward} y recibe {referrerPoints} tras su primer pedido pagado."
 
-#: components/ordering/menu-screen.tsx:504
+#: components/ordering/menu-screen.tsx:509
 msgid "Gluten-free"
 msgstr "Sin gluten"
 
-#: components/ordering/menu-screen.tsx:498
+#: components/ordering/menu-screen.tsx:503
 msgid "Halal"
 msgstr "Halal"
 
@@ -673,7 +674,7 @@ msgstr "Ocultar"
 msgid "History"
 msgstr "Historial"
 
-#: components/profile/addresses-section.tsx:281
+#: components/profile/addresses-section.tsx:302
 msgid "Home, Work…"
 msgstr "Casa, trabajo…"
 
@@ -759,7 +760,7 @@ msgstr "Cargar más"
 msgid "Loading drops"
 msgstr "Cargando lanzamientos"
 
-#: components/ordering/menu-screen.tsx:123
+#: components/ordering/menu-screen.tsx:126
 msgid "Loading the menu"
 msgstr "Cargando el menú"
 
@@ -785,12 +786,12 @@ msgstr "Cargando tus recompensas…"
 msgid "Loading…"
 msgstr "Cargando…"
 
-#: components/profile/addresses-section.tsx:110
+#: components/profile/addresses-section.tsx:114
 msgid "Make default"
 msgstr "Hacer predeterminada"
 
 #: app/(tabs)/_layout.tsx:52
-#: components/ordering/menu-screen.tsx:177
+#: components/ordering/menu-screen.tsx:180
 msgid "Menu"
 msgstr "Menú"
 
@@ -823,14 +824,14 @@ msgid "My reservations"
 msgstr "Mis reservas"
 
 #: components/auth/complete-name-screen.tsx:25
-#: components/profile/addresses-section.tsx:164
+#: components/profile/addresses-section.tsx:181
 #: components/profile/profile-screen.tsx:112
 #: lib/reservations/messages.ts:60
 #: lib/reservations/messages.ts:112
 msgid "Name"
 msgstr "Nombre"
 
-#: components/profile/addresses-section.tsx:280
+#: components/profile/addresses-section.tsx:301
 msgid "Name this address"
 msgstr "Ponle nombre a esta dirección"
 
@@ -851,7 +852,7 @@ msgstr "Aún no hay actividad. Tus compras aparecerán aquí."
 msgid "No connection. Please try again."
 msgstr "Sin conexión. Inténtalo de nuevo."
 
-#: components/ordering/menu-screen.tsx:234
+#: components/ordering/menu-screen.tsx:239
 msgid "No dishes match these choices."
 msgstr "Ningún plato coincide con estas opciones."
 
@@ -859,7 +860,7 @@ msgstr "Ningún plato coincide con estas opciones."
 msgid "No drops right now."
 msgstr "No hay lanzamientos ahora mismo."
 
-#: components/profile/favorites-section.tsx:73
+#: components/profile/favorites-section.tsx:74
 msgid "No favorites yet. Tap the heart on a dish to keep it here."
 msgstr "Aún no hay favoritos. Toca el corazón de un plato para guardarlo aquí."
 
@@ -883,7 +884,7 @@ msgstr "No hay solicitudes por ahora."
 msgid "No rewards are available yet."
 msgstr "Aún no hay recompensas disponibles."
 
-#: components/profile/addresses-section.tsx:75
+#: components/profile/addresses-section.tsx:77
 msgid "No saved addresses yet. Add one for quicker delivery."
 msgstr "Aún no hay direcciones guardadas. Añade una para pedir a domicilio más rápido."
 
@@ -919,7 +920,7 @@ msgstr "Ahora no"
 msgid "Not taking online reservations on this day."
 msgstr "No se aceptan reservas en línea este día."
 
-#: components/ordering/menu-screen.tsx:239
+#: components/ordering/menu-screen.tsx:244
 msgid "Nothing on the menu right now."
 msgstr "Ahora mismo no hay nada en el menú."
 
@@ -937,7 +938,7 @@ msgstr "Las notificaciones están desactivadas en los ajustes de tu teléfono. A
 msgid "Notifications from {name}"
 msgstr "Notificaciones de {name}"
 
-#: components/ordering/menu-screen.tsx:508
+#: components/ordering/menu-screen.tsx:513
 msgid "Nut-free"
 msgstr "Sin frutos secos"
 
@@ -987,7 +988,7 @@ msgid "Opens in your browser. Your points and rewards apply when you order there
 msgstr "Se abre en tu navegador. Tus puntos y recompensas se aplican cuando pides allí."
 
 #: components/ordering/drops-screen.tsx:246
-#: components/ordering/menu-screen.tsx:428
+#: components/ordering/menu-screen.tsx:433
 msgid "Opens the website"
 msgstr "Abre el sitio web"
 
@@ -1155,14 +1156,19 @@ msgstr "Bono por recomendación eliminado"
 msgid "Refund adjustment"
 msgstr "Ajuste por reembolso"
 
-#: components/profile/addresses-section.tsx:117
-#: components/profile/favorites-section.tsx:101
+#: components/profile/addresses-section.tsx:124
+#: components/profile/addresses-section.tsx:132
+#: components/profile/favorites-section.tsx:102
 msgid "Remove"
 msgstr "Quitar"
 
-#: components/ordering/menu-screen.tsx:380
+#: components/ordering/menu-screen.tsx:385
 msgid "Remove from favorites"
 msgstr "Quitar de favoritos"
+
+#: components/profile/addresses-section.tsx:121
+msgid "Remove this address?"
+msgstr "¿Quitar esta dirección?"
 
 #: lib/reservations/messages.ts:80
 msgid "Request sent"
@@ -1235,11 +1241,11 @@ msgstr "Ahora no se pueden usar recompensas."
 msgid "Running late"
 msgstr "Voy con retraso"
 
-#: components/profile/addresses-section.tsx:295
+#: components/profile/addresses-section.tsx:316
 msgid "Save address"
 msgstr "Guardar dirección"
 
-#: components/profile/addresses-section.tsx:188
+#: components/profile/addresses-section.tsx:209
 #: components/profile/profile-screen.tsx:170
 msgid "Save changes"
 msgstr "Guardar cambios"
@@ -1268,7 +1274,7 @@ msgstr "Enviar solicitud"
 msgid "Send code"
 msgstr "Enviar código"
 
-#: components/ordering/menu-screen.tsx:485
+#: components/ordering/menu-screen.tsx:490
 msgid "Set price {amount}"
 msgstr "Precio fijo {amount}"
 
@@ -1330,8 +1336,8 @@ msgstr "Cerrar sesión"
 msgid "Site address"
 msgstr "Dirección del sitio"
 
-#: components/ordering/menu-screen.tsx:390
-#: components/profile/favorites-section.tsx:83
+#: components/ordering/menu-screen.tsx:395
+#: components/profile/favorites-section.tsx:84
 msgid "Sold out"
 msgstr "Agotado"
 
@@ -1358,7 +1364,7 @@ msgstr "Usa {points} para {amount} de descuento"
 msgid "Spent"
 msgstr "Gastado"
 
-#: components/ordering/menu-screen.tsx:510
+#: components/ordering/menu-screen.tsx:515
 msgid "Spicy"
 msgstr "Picante"
 
@@ -1366,7 +1372,7 @@ msgstr "Picante"
 msgid "Stops working in {time}"
 msgstr "Deja de valer en {time}"
 
-#: components/profile/addresses-section.tsx:267
+#: components/profile/addresses-section.tsx:288
 msgid "Street address"
 msgstr "Dirección"
 
@@ -1434,7 +1440,7 @@ msgstr "Esa hora acaba de ocuparse. Elige otra."
 msgid "The card ending in {last4} is already saved to your account."
 msgstr "La tarjeta terminada en {last4} ya está guardada en tu cuenta."
 
-#: components/ordering/menu-screen.tsx:129
+#: components/ordering/menu-screen.tsx:132
 msgid "The menu could not be loaded."
 msgstr "No se pudo cargar el menú."
 
@@ -1537,9 +1543,9 @@ msgstr "Total"
 
 #: components/auth/site-unavailable-screen.tsx:26
 #: components/ordering/drops-screen.tsx:117
-#: components/ordering/menu-screen.tsx:131
-#: components/profile/addresses-section.tsx:70
-#: components/profile/favorites-section.tsx:68
+#: components/ordering/menu-screen.tsx:134
+#: components/profile/addresses-section.tsx:72
+#: components/profile/favorites-section.tsx:69
 #: components/profile/orders-section.tsx:101
 #: components/ui/error-message.tsx:28
 #: lib/gift-cards/labels.ts:20
@@ -1599,15 +1605,15 @@ msgstr "Usa una recompensa al hacer tu pedido o muestra tu código en el mostrad
 msgid "Use at the till"
 msgstr "Usar en caja"
 
-#: components/ordering/menu-screen.tsx:301
+#: components/ordering/menu-screen.tsx:306
 msgid "Use code {code}"
 msgstr "Usa el código {code}"
 
-#: components/ordering/menu-screen.tsx:500
+#: components/ordering/menu-screen.tsx:505
 msgid "Vegan"
 msgstr "Vegano"
 
-#: components/ordering/menu-screen.tsx:502
+#: components/ordering/menu-screen.tsx:507
 msgid "Vegetarian"
 msgstr "Vegetariano"
 
@@ -1647,11 +1653,11 @@ msgstr "Lista de espera"
 msgid "We can't show this order here"
 msgstr "No podemos mostrar este pedido aquí"
 
-#: components/profile/addresses-section.tsx:56
+#: components/profile/addresses-section.tsx:58
 msgid "We could not change your addresses. Try again."
 msgstr "No pudimos cambiar tus direcciones. Inténtalo de nuevo."
 
-#: components/profile/addresses-section.tsx:136
+#: components/profile/addresses-section.tsx:152
 msgid "We could not save this address. Try again."
 msgstr "No pudimos guardar esta dirección. Inténtalo de nuevo."
 
@@ -1660,8 +1666,8 @@ msgstr "No pudimos guardar esta dirección. Inténtalo de nuevo."
 msgid "We could not start this order again."
 msgstr "No pudimos volver a iniciar este pedido."
 
-#: components/ordering/menu-screen.tsx:162
-#: components/profile/favorites-section.tsx:96
+#: components/ordering/menu-screen.tsx:165
+#: components/profile/favorites-section.tsx:97
 msgid "We could not update your favorites. Try again."
 msgstr "No pudimos actualizar tus favoritos. Inténtalo de nuevo."
 
@@ -1669,7 +1675,7 @@ msgstr "No pudimos actualizar tus favoritos. Inténtalo de nuevo."
 msgid "We could not upload your photo. Please try again."
 msgstr "No pudimos subir tu foto. Inténtalo de nuevo."
 
-#: components/profile/addresses-section.tsx:237
+#: components/profile/addresses-section.tsx:258
 msgid "We couldn't find that address."
 msgstr "No pudimos encontrar esa dirección."
 
@@ -1694,7 +1700,7 @@ msgstr "No pudimos activar las notificaciones. Inténtalo de nuevo."
 msgid "We couldn't update your place in line. We'll keep trying."
 msgstr "No pudimos actualizar tu lugar en la fila. Seguiremos intentándolo."
 
-#: components/profile/addresses-section.tsx:242
+#: components/profile/addresses-section.tsx:263
 msgid "We don't deliver to this address yet, so it can't be saved."
 msgstr "Aún no entregamos en esta dirección, así que no se puede guardar."
 
@@ -1730,7 +1736,7 @@ msgstr "Bono de bienvenida eliminado"
 msgid "Welcome! {points} added"
 msgstr "¡Bienvenido! Se añadieron {points}"
 
-#: components/ordering/menu-screen.tsx:179
+#: components/ordering/menu-screen.tsx:182
 msgid "What is on the menu today. Checkout is on the website."
 msgstr "Esto es lo que hay en el menú hoy. El pago es en el sitio web."
 
@@ -1758,12 +1764,12 @@ msgstr "Ya tienes el máximo de reservas próximas."
 msgid "You are signed in to a different site. Please sign in again here."
 msgstr "Has iniciado sesión en otro sitio. Vuelve a iniciar sesión aquí."
 
-#: components/profile/addresses-section.tsx:55
-#: components/profile/addresses-section.tsx:135
+#: components/profile/addresses-section.tsx:57
+#: components/profile/addresses-section.tsx:151
 msgid "You have {limit} saved addresses. Remove one to add another."
 msgstr "Tienes {limit} direcciones guardadas. Quita una para añadir otra."
 
-#: components/ordering/menu-screen.tsx:160
+#: components/ordering/menu-screen.tsx:163
 msgid "You have 100 favorites. Remove one to add another."
 msgstr "Tienes 100 favoritos. Quita uno para añadir otro."
 
@@ -1807,11 +1813,11 @@ msgstr "Reserva confirmada"
 msgid "You're number {position} in line"
 msgstr "Eres el número {position} de la fila"
 
-#: components/profile/addresses-section.tsx:64
+#: components/profile/addresses-section.tsx:66
 msgid "Your addresses"
 msgstr "Tus direcciones"
 
-#: components/profile/addresses-section.tsx:68
+#: components/profile/addresses-section.tsx:70
 msgid "Your addresses could not be loaded."
 msgstr "No se pudieron cargar tus direcciones."
 
@@ -1839,12 +1845,12 @@ msgstr "Tu código en el mostrador"
 msgid "Your details"
 msgstr "Tus datos"
 
-#: components/ordering/menu-screen.tsx:216
-#: components/profile/favorites-section.tsx:56
+#: components/ordering/menu-screen.tsx:219
+#: components/profile/favorites-section.tsx:57
 msgid "Your favorites"
 msgstr "Tus favoritos"
 
-#: components/profile/favorites-section.tsx:60
+#: components/profile/favorites-section.tsx:61
 msgid "Your favorites could not be loaded."
 msgstr "No se pudieron cargar tus favoritos."
 

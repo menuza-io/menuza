@@ -154,7 +154,6 @@ const CODE_TO_LABEL: Record<string, OrderErrorLabelKey> = {
 	group_disabled: 'groupUnavailable',
 	group_empty: 'groupUnavailable',
 	group_unsupported: 'groupUnavailable',
-	forbidden: 'groupUnavailable',
 }
 
 export function orderErrorLabelKey(
@@ -288,8 +287,11 @@ export function orderErrorMessageFor(
 		phone?: string | null
 		/** The cart's own name for a dish or option id. */
 		nameOf?: (dish: SoldOutDish) => string | null
+		/** The order is a group checkout: `forbidden` then means "not the host". */
+		group?: boolean
 	} = {},
 ): string {
+	if (code === 'forbidden' && context.group) return labels.groupUnavailable
 	if (code === 'order_too_large') {
 		return orderTooLargeMessage(body, labels, context.phone ?? null)
 	}

@@ -1,4 +1,5 @@
 import {
+	adoptPendingTestCode,
 	adoptTestCode,
 	readTestCode,
 	withoutTestFragment,
@@ -22,15 +23,20 @@ export function mountTestOrderBanner(
 	} catch {
 		storage = null
 	}
-	if (!storage) return null
-	adoptTestCode(storage, orgId, win.location.hash)
-	if (win.location.hash.includes('test=')) {
+	// The address is cleaned first and whatever storage does: a blocked storage
+	// loses the test, it never leaves the one-time code in the bar.
+	const hadFragment = win.location.hash.includes('test=')
+	if (storage) adoptTestCode(storage, orgId, win.location.hash)
+	if (hadFragment) {
 		try {
 			win.history.replaceState(null, '', withoutTestFragment(win.location.href))
 		} catch {
 			// The fragment stays in the bar; the code is already in storage.
 		}
 	}
+	if (!storage) return null
+	// The layout's inline script may already have moved the code out of the bar.
+	adoptPendingTestCode(storage, orgId)
 	const code = readTestCode(storage, orgId)
 	for (const banner of doc.querySelectorAll<HTMLElement>(
 		'[data-test-order-banner]',

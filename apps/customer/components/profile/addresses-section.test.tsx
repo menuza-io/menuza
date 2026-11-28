@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
+import { Alert, type AlertButton } from 'react-native'
 import { AddressesSection } from './addresses-section'
 import { type HttpRequest } from '@/lib/api/http'
 import {
@@ -103,10 +104,17 @@ describe('Profile, Addresses (#113)', () => {
 		)
 	})
 
-	it('removes an address', async () => {
+	it('removes an address, but only after the guest confirms', async () => {
+		const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
 		const { calls } = await mount([address('a1'), address('a2')])
 		await screen.findByText('Work')
 		fireEvent.press(screen.getAllByText('Remove')[1]!)
+		expect(alert).toHaveBeenCalledTimes(1)
+		expect(alert.mock.calls[0]![0]).toBe('Remove this address?')
+		// Nothing is deleted until the destructive button is pressed.
+		expect(calls.some((call) => call.method === 'DELETE')).toBe(false)
+		const buttons = alert.mock.calls[0]![2] as AlertButton[]
+		buttons.find((button) => button.style === 'destructive')!.onPress!()
 		await waitFor(() =>
 			expect(calls).toContainEqual({
 				method: 'DELETE',

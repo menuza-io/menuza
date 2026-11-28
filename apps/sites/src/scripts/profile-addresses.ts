@@ -153,7 +153,12 @@ export function mountAddressesPage(
 		const actions = el('div', 'mt-3 flex flex-wrap gap-2')
 		const edit = el('button', secondary, labels.edit)
 		edit.type = 'button'
-		edit.addEventListener('click', () => item.replaceWith(renderEdit(address)))
+		edit.addEventListener('click', () => {
+			const form = renderEdit(address)
+			item.replaceWith(form)
+			// The Edit button is gone: the keyboard goes to the first field.
+			form.querySelector<HTMLInputElement>('input')?.focus()
+		})
 		actions.append(edit)
 		if (!address.isDefault) {
 			const make = el('button', secondary, labels.makeDefault)
@@ -161,8 +166,10 @@ export function mountAddressesPage(
 			make.addEventListener('click', async () => {
 				make.disabled = true
 				const result = await updateSavedAddress(address.id, { isDefault: true })
-				if (result.ok) await load()
-				else report(result.code)
+				if (result.ok) {
+					await load()
+					focusRow(address.id)
+				} else report(result.code)
 			})
 			actions.append(make)
 		}
@@ -173,8 +180,11 @@ export function mountAddressesPage(
 			void (async () => {
 				remove.disabled = true
 				const result = await deleteSavedAddress(address.id)
-				if (result.ok || result.code === 'address_not_found') await load()
-				else report(result.code)
+				if (result.ok || result.code === 'address_not_found') {
+					await load()
+					// The row is gone: the list heading area takes the focus.
+					focusList()
+				} else report(result.code)
 			})()
 		})
 		actions.append(remove)
@@ -192,7 +202,10 @@ export function mountAddressesPage(
 		save.type = 'submit'
 		const cancel = el('button', secondary, labels.cancel)
 		cancel.type = 'button'
-		cancel.addEventListener('click', () => render())
+		cancel.addEventListener('click', () => {
+			render()
+			focusRow(address.id)
+		})
 		row.append(save, cancel)
 		form.append(
 			field(labels.nameLabel, `addr-label-${address.id}`, label),
@@ -209,13 +222,30 @@ export function mountAddressesPage(
 				unit: unit.value.trim() || null,
 				notes: notes.value.trim() || null,
 			})
-			if (result.ok) await load()
-			else {
+			if (result.ok) {
+				await load()
+				focusRow(address.id)
+			} else {
 				save.disabled = false
 				report(result.code)
 			}
 		})
 		return form
+	}
+
+	/** After a redraw: the row's Edit button, or the list when the row is gone. */
+	function focusRow(id: string) {
+		const row = Array.from(
+			listEl.querySelectorAll<HTMLElement>('[data-saved-address-id]'),
+		).find((item) => item.dataset.savedAddressId === id)
+		const target = row?.querySelector<HTMLElement>('button')
+		if (target) target.focus()
+		else focusList()
+	}
+
+	function focusList() {
+		listEl.tabIndex = -1
+		listEl.focus()
 	}
 
 	function report(code: string) {

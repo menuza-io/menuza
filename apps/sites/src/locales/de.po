@@ -474,7 +474,7 @@ msgstr "Zur Gruppenbestellung hinzugefügt."
 msgid "Adding…"
 msgstr "Wird hinzugefügt …"
 
-#: src/lib/ordering-labels.ts:455
+#: src/lib/ordering-labels.ts:457
 msgid "Address saved"
 msgstr "Adresse gespeichert"
 
@@ -1085,7 +1085,7 @@ msgstr "Wähle einen gültigen Monat und Tag."
 msgid "Choose a time"
 msgstr "Wähle eine Uhrzeit"
 
-#: src/lib/ordering-labels.ts:427
+#: src/lib/ordering-labels.ts:429
 msgid "Choose a time at least 15 minutes from now."
 msgstr "Wählen Sie eine Zeit, die mindestens 15 Minuten in der Zukunft liegt."
 
@@ -1093,7 +1093,7 @@ msgstr "Wählen Sie eine Zeit, die mindestens 15 Minuten in der Zukunft liegt."
 msgid "Choose a time to continue."
 msgstr "Wähle eine Uhrzeit, um fortzufahren."
 
-#: src/lib/ordering-labels.ts:428
+#: src/lib/ordering-labels.ts:430
 msgid "Choose a time within 7 days."
 msgstr "Wählen Sie eine Zeit innerhalb von 7 Tagen."
 
@@ -1409,7 +1409,7 @@ msgstr "Abgelehnt: {reward}."
 msgid "Decrease quantity"
 msgstr "Menge verringern"
 
-#: src/lib/ordering-labels.ts:446
+#: src/lib/ordering-labels.ts:448
 msgid "Default"
 msgstr "Standard"
 
@@ -1940,7 +1940,7 @@ msgstr "Vollständiger Name"
 msgid "Full time"
 msgstr "Vollzeit"
 
-#: src/lib/ordering-labels.ts:452
+#: src/lib/ordering-labels.ts:454
 msgid "Gate code or delivery note"
 msgstr "Torcode oder Lieferhinweis"
 
@@ -2088,11 +2088,11 @@ msgstr "Details ausblenden"
 msgid "History"
 msgstr "Verlauf"
 
-#: src/lib/ordering-labels.ts:450
+#: src/lib/ordering-labels.ts:452
 msgid "Home"
 msgstr "Zuhause"
 
-#: src/lib/ordering-labels.ts:449
+#: src/lib/ordering-labels.ts:451
 msgid "Home, Work…"
 msgstr "Zuhause, Arbeit …"
 
@@ -2529,7 +2529,7 @@ msgstr "Meine Bestellung kam zu spät"
 msgid "Name"
 msgstr "Name"
 
-#: src/lib/ordering-labels.ts:448
+#: src/lib/ordering-labels.ts:450
 msgid "Name this address"
 msgstr "Adresse benennen"
 
@@ -2884,7 +2884,7 @@ msgstr "Heute sind nur noch {count} von {name} übrig. Bitte gehen Sie zurück z
 msgid "Only a few left"
 msgstr "Nur noch wenige übrig"
 
-#: src/lib/ordering-labels.ts:436
+#: src/lib/ordering-labels.ts:438
 msgid "Only the host can do that."
 msgstr "Das kann nur der Gastgeber."
 
@@ -2914,7 +2914,7 @@ msgstr "Öffnen Sie den Link aus Ihrer Bestätigung, um eine Reservierung zu ver
 msgid "Open until {time}"
 msgstr "Geöffnet bis {time}"
 
-#: src/lib/ordering-labels.ts:438
+#: src/lib/ordering-labels.ts:440
 msgid "Open your group order"
 msgstr "Ihre Gruppenbestellung öffnen"
 
@@ -3821,7 +3821,7 @@ msgstr "Angebotspreis"
 msgid "Save"
 msgstr "Speichern"
 
-#: src/lib/ordering-labels.ts:453
+#: src/lib/ordering-labels.ts:455
 msgid "Save address"
 msgstr "Adresse speichern"
 
@@ -3838,11 +3838,11 @@ msgstr "Änderungen speichern"
 msgid "Save my choices"
 msgstr "Meine Auswahl speichern"
 
-#: src/lib/ordering-labels.ts:447
+#: src/lib/ordering-labels.ts:449
 msgid "Save this address"
 msgstr "Diese Adresse speichern"
 
-#: src/lib/ordering-labels.ts:445
+#: src/lib/ordering-labels.ts:447
 msgid "Saved addresses"
 msgstr "Gespeicherte Adressen"
 
@@ -3851,7 +3851,7 @@ msgstr "Gespeicherte Adressen"
 msgid "Saving..."
 msgstr "Speichern..."
 
-#: src/lib/ordering-labels.ts:454
+#: src/lib/ordering-labels.ts:456
 msgid "Saving…"
 msgstr "Wird gespeichert …"
 
@@ -4042,7 +4042,7 @@ msgstr "Das Vorzeigen des Codes kostet keine Punkte. Jede Prämie bestätigen Si
 msgid "Sign in"
 msgstr "Anmelden"
 
-#: src/lib/ordering-labels.ts:462
+#: src/lib/ordering-labels.ts:464
 msgid "Sign in again to use your saved addresses."
 msgstr "Melden Sie sich erneut an, um Ihre gespeicherten Adressen zu nutzen."
 
@@ -4160,7 +4160,7 @@ msgstr "Etwas ist schiefgelaufen."
 #: src/lib/catering/labels.ts:83
 #: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:345
-#: src/lib/ordering-labels.ts:433
+#: src/lib/ordering-labels.ts:435
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
@@ -4439,7 +4439,7 @@ msgstr "Dieser Gutscheincode konnte nicht angewendet werden."
 msgid "That date is too far ahead to book online."
 msgstr "Dieses Datum liegt zu weit in der Zukunft für eine Online-Buchung."
 
-#: src/lib/ordering-labels.ts:429
+#: src/lib/ordering-labels.ts:431
 msgid "That dish cannot be added to a group order."
 msgstr "Dieses Gericht kann nicht zu einer Gruppenbestellung hinzugefügt werden."
 
@@ -4451,7 +4451,7 @@ msgstr "Das sind mehr Gäste, als wir online bedienen können. Bitte rufen Sie u
 msgid "That is not available here. Choose pickup or delivery."
 msgstr "Das ist hier nicht verfügbar. Wählen Sie Abholung oder Lieferung."
 
-#: src/lib/ordering-labels.ts:423
+#: src/lib/ordering-labels.ts:424
 msgid "That is over the spend limit for this group order."
 msgstr "Das überschreitet das Ausgabenlimit dieser Gruppenbestellung."
 
@@ -4550,7 +4550,7 @@ msgstr "Der Gutscheinbetrag hat sich geändert. Prüfen Sie die neue Summe."
 msgid "The group order changed. Go back to the group order, review it and check out again."
 msgstr "Die Gruppenbestellung hat sich geändert. Gehen Sie zurück zur Gruppenbestellung, prüfen Sie sie und bezahlen Sie erneut."
 
-#: src/lib/ordering-labels.ts:431
+#: src/lib/ordering-labels.ts:433
 msgid "The group order changed. Review it and check out again."
 msgstr "Die Gruppenbestellung hat sich geändert. Prüfen Sie sie und bezahlen Sie erneut."
 
@@ -4749,7 +4749,7 @@ msgstr "Heute ist nicht mehr genug {name} übrig. Bitte gehen Sie zurück zur Sp
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "Heute ist nicht mehr genug vorrätig von: {names}. Bitte gehen Sie zurück zur Speisekarte und ändern Sie Ihre Bestellung."
 
-#: src/lib/ordering-labels.ts:461
+#: src/lib/ordering-labels.ts:463
 msgid "This address is no longer saved."
 msgstr "Diese Adresse ist nicht mehr gespeichert."
 
@@ -4886,11 +4886,11 @@ msgstr "Diese Gruppe ist zu groß, um vom Tisch aus zu bestellen. Bitte wenden S
 msgid "This group order can't be placed any more. Go back to the group order to see where it stands."
 msgstr "Diese Gruppenbestellung kann nicht mehr aufgegeben werden. Gehen Sie zurück, um den Stand zu sehen."
 
-#: src/lib/ordering-labels.ts:425
+#: src/lib/ordering-labels.ts:427
 msgid "This group order has the most dishes allowed."
 msgstr "Diese Gruppenbestellung hat die höchste zulässige Zahl an Gerichten erreicht."
 
-#: src/lib/ordering-labels.ts:424
+#: src/lib/ordering-labels.ts:426
 msgid "This group order is full."
 msgstr "Diese Gruppenbestellung ist voll."
 
@@ -5139,7 +5139,7 @@ msgstr "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es er
 msgid "Too many attempts. Try again in a moment."
 msgstr "Zu viele Versuche. Bitte versuchen Sie es gleich noch einmal."
 
-#: src/lib/ordering-labels.ts:434
+#: src/lib/ordering-labels.ts:436
 msgid "Too many requests. Try again in a moment."
 msgstr "Zu viele Anfragen. Versuchen Sie es gleich noch einmal."
 
@@ -5183,7 +5183,7 @@ msgstr "Diese Bestellung in der App verfolgen"
 #: src/lib/guest-account-labels.ts:65
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:162
-#: src/lib/ordering-labels.ts:435
+#: src/lib/ordering-labels.ts:437
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
@@ -5601,7 +5601,7 @@ msgstr "Wir konnten deinen Warenkorb nicht wiederherstellen."
 msgid "We couldn't save that. Try again."
 msgstr "Das konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
 
-#: src/lib/ordering-labels.ts:459
+#: src/lib/ordering-labels.ts:461
 msgid "We couldn't save this address. Try again."
 msgstr "Diese Adresse konnte nicht gespeichert werden. Versuchen Sie es erneut."
 
@@ -5641,7 +5641,7 @@ msgstr "Wir liefern hierhin"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "Wir haben nicht rechtzeitig von Ihnen gehört. Sie können sich erneut auf die Warteliste setzen."
 
-#: src/lib/ordering-labels.ts:460
+#: src/lib/ordering-labels.ts:462
 msgid "We don't deliver here right now"
 msgstr "Hierhin liefern wir gerade nicht"
 
@@ -5846,7 +5846,7 @@ msgstr "Wer dabei ist"
 msgid "Whole"
 msgstr "Ganz"
 
-#: src/lib/ordering-labels.ts:451
+#: src/lib/ordering-labels.ts:453
 msgid "Work"
 msgstr "Arbeit"
 
@@ -5875,7 +5875,7 @@ msgstr "Ja, verlassen"
 msgid "You"
 msgstr "Sie"
 
-#: src/lib/ordering-labels.ts:426
+#: src/lib/ordering-labels.ts:428
 msgid "You already have the most group orders open."
 msgstr "Sie haben bereits die höchste Zahl offener Gruppenbestellungen."
 
@@ -5915,7 +5915,7 @@ msgstr "Du kannst trotzdem zur Abholung bestellen."
 msgid "You have {amount}"
 msgstr "Sie haben {amount}"
 
-#: src/lib/ordering-labels.ts:457
+#: src/lib/ordering-labels.ts:459
 msgid "You have 10 saved addresses. Remove one in your profile to add another."
 msgstr "Sie haben 10 gespeicherte Adressen. Entfernen Sie eine in Ihrem Profil, um eine weitere hinzuzufügen."
 
@@ -6088,7 +6088,7 @@ msgstr "Ihre Favoriten"
 msgid "Your first name"
 msgstr "Ihr Vorname"
 
-#: src/lib/ordering-labels.ts:437
+#: src/lib/ordering-labels.ts:439
 msgid "Your group order"
 msgstr "Ihre Gruppenbestellung"
 

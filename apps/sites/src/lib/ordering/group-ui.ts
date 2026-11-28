@@ -9,11 +9,13 @@ import { createCartStore } from './cart-store.ts'
 import {
 	cartFromGroupView,
 	groupCartKey,
+	clearGroupCheckout,
 	saveGroupCheckout,
 } from './group-checkout.ts'
 import {
 	addGroupLine,
 	clearGroupSession,
+	clearPendingShareToken,
 	createGroup,
 	endGroup,
 	groupShareLink,
@@ -21,6 +23,7 @@ import {
 	leaveGroup,
 	loadGroupSession,
 	readGroup,
+	readPendingShareToken,
 	removeGroupLine,
 	saveGroupSession,
 	setGroupDone,
@@ -105,9 +108,23 @@ export function groupErrorText(
 	}
 }
 
-/** Money typed as "12.50" (major units) to minor units; null when it is not a plain amount. */
+/**
+ * Money typed as "12.50" (major units) to minor units; null when it is not a
+ * plain amount. Arabic-Indic and Persian digits count, and so do "12,50" and the
+ * Arabic decimal separator (a comma is read as the decimal mark, never as a
+ * thousands separator, because the limits here are small). Like every other
+ * amount on this page it is hundredths of the currency.
+ */
 export function parseAmountMinor(text: string): number | null {
-	const trimmed = text.trim()
+	const trimmed = text
+		.trim()
+		.replace(/[\u0660-\u0669]/g, (digit) =>
+			String(digit.charCodeAt(0) - 0x0660),
+		)
+		.replace(/[\u06f0-\u06f9]/g, (digit) =>
+			String(digit.charCodeAt(0) - 0x06f0),
+		)
+		.replace(/[\u066b\u066c,]/g, '.')
 	if (!trimmed) return null
 	if (!/^\d{1,7}(\.\d{1,2})?$/.test(trimmed)) return null
 	const minor = Math.round(Number(trimmed) * 100)
@@ -149,10 +166,40 @@ export function mountGroupPage(options: GroupPageOptions) {
 	let notice = ''
 	let busy = false
 	/** Set once for a friend who opened a link: the token to join with. */
-	const linkToken = shareTokenFromHash(window.location.hash)
+	const tabStorage = (() => {
+		try {
+			return sessionStorage
+		} catch {
+			return null
+		}
+	})()
+	const linkToken =
+		shareTokenFromHash(window.location.hash) ??
+		(tabStorage ? readPendingShareToken(tabStorage) : null)
 	const linkGroupId = new URLSearchParams(window.location.search).get('g')
 	let joinPreview: GroupView | null = null
 	let gone = false
+	/** What is on screen, so a poll that finds nothing new redraws nothing. */
+	let drawnSignature = ''
+	let copied = false
+	// The group page is redrawn from scratch, so what the person was using is
+	// found again by its data attribute and given back the focus.
+	const FOCUS_ATTRIBUTES = [
+		'data-group-remove',
+		'data-group-done',
+		'data-group-lock',
+		'data-group-checkout',
+		'data-group-add-cart',
+		'data-group-share',
+		'data-group-remove-unavailable',
+	]
+	const signatureOf = (current: GroupView) =>
+		JSON.stringify([
+			{ ...current, serverNow: 0 },
+			current.deadlineAt != null && current.serverNow >= current.deadlineAt,
+			notice,
+			copied,
+		])
 
 	const localize = (value: string) =>
 		getLocalizedMenuValue(value, options.locale, options.defaultLocale)
@@ -171,9 +218,13 @@ export function mountGroupPage(options: GroupPageOptions) {
 	async function refresh() {
 		if (!session) return
 		try {
-			view = await readGroup(session.groupId, session.personToken)
+			const next = await readGroup(session.groupId, session.personToken)
+			// An action in flight, or one that finished while this answer was on
+			// its way, has a newer group than this poll saw.
+			if (busy || (view && next.version < view.version)) return
+			view = next
 			gone = false
-			draw()
+			if (signatureOf(next) !== drawnSignature) draw()
 		} catch (error) {
 			if (error instanceof OrderRequestError && error.status === 404) {
 				// The group ended, was purged, or this person left: forget it.
@@ -346,6 +397,7 @@ export function mountGroupPage(options: GroupPageOptions) {
 				session = { groupId: joined.groupId, personToken: joined.personToken }
 				saveGroupSession(options.orgId, session)
 				// The link's token has done its job: it leaves the address bar.
+				if (tabStorage) clearPendingShareToken(tabStorage)
 				history.replaceState(
 					null,
 					'',
@@ -510,10 +562,12 @@ export function mountGroupPage(options: GroupPageOptions) {
 			input.addEventListener('focus', () => input.select())
 			const copy = el('button', 'btn-secondary w-full sm:w-auto', labels.copy)
 			copy.type = 'button'
+			if (copied) copy.textContent = labels.copied
 			copy.addEventListener('click', () => {
 				void navigator.clipboard
 					?.writeText(url)
 					.then(() => {
+						copied = true
 						copy.textContent = labels.copied
 					})
 					.catch(() => input.select())
@@ -745,7 +799,7 @@ export function mountGroupPage(options: GroupPageOptions) {
 					options.defaultLocale,
 				)
 				localStorage.setItem(groupCartKey(options.orgId), JSON.stringify(cart))
-				saveGroupCheckout(sessionStorage, options.orgId, {
+				saveGroupCheckout(tabStorage, options.orgId, {
 					groupId: fresh.id,
 					version: fresh.version,
 					token: session!.personToken,
@@ -789,16 +843,36 @@ export function mountGroupPage(options: GroupPageOptions) {
 	}
 
 	function draw() {
+		const active = document.activeElement
+		let focused: { attribute: string; value: string } | null = null
+		if (active instanceof HTMLElement && root.contains(active)) {
+			for (const attribute of FOCUS_ATTRIBUTES) {
+				if (active.hasAttribute(attribute)) {
+					focused = { attribute, value: active.getAttribute(attribute) ?? '' }
+					break
+				}
+			}
+		}
 		let node: HTMLElement
 		if (session && view) node = drawGroup(view)
 		else if (gone) node = drawGone()
 		else if (!session && linkToken && linkGroupId) node = drawJoin(joinPreview)
 		else if (!session) node = drawStart()
 		else node = el('p', 'text-sm text-muted-foreground', labels.retry)
+		drawnSignature = session && view ? signatureOf(view) : ''
 		root.replaceChildren(node)
+		if (focused) {
+			const { attribute, value } = focused
+			Array.from(root.querySelectorAll<HTMLElement>(`[${attribute}]`))
+				.find((node) => node.getAttribute(attribute) === value)
+				?.focus()
+		}
 	}
 
 	async function init() {
+		// Coming back to the group view ends any half-made checkout: its note (and
+		// the host's token in it) must not ride on a later, ordinary checkout.
+		clearGroupCheckout(tabStorage, options.orgId)
 		if (
 			session &&
 			linkGroupId &&

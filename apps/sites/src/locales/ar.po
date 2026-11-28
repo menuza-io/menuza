@@ -474,7 +474,7 @@ msgstr "تمت الإضافة إلى الطلب الجماعي."
 msgid "Adding…"
 msgstr "جارٍ الإضافة…"
 
-#: src/lib/ordering-labels.ts:455
+#: src/lib/ordering-labels.ts:457
 msgid "Address saved"
 msgstr "تم حفظ العنوان"
 
@@ -1085,7 +1085,7 @@ msgstr "اختر شهراً ويوماً صحيحين."
 msgid "Choose a time"
 msgstr "اختر وقتًا"
 
-#: src/lib/ordering-labels.ts:427
+#: src/lib/ordering-labels.ts:429
 msgid "Choose a time at least 15 minutes from now."
 msgstr "اختر وقتًا بعد 15 دقيقة على الأقل من الآن."
 
@@ -1093,7 +1093,7 @@ msgstr "اختر وقتًا بعد 15 دقيقة على الأقل من الآن
 msgid "Choose a time to continue."
 msgstr "اختر وقتًا للمتابعة."
 
-#: src/lib/ordering-labels.ts:428
+#: src/lib/ordering-labels.ts:430
 msgid "Choose a time within 7 days."
 msgstr "اختر وقتًا خلال 7 أيام."
 
@@ -1409,7 +1409,7 @@ msgstr "تم الرفض: {reward}."
 msgid "Decrease quantity"
 msgstr "تقليل الكمية"
 
-#: src/lib/ordering-labels.ts:446
+#: src/lib/ordering-labels.ts:448
 msgid "Default"
 msgstr "الافتراضي"
 
@@ -1940,7 +1940,7 @@ msgstr "الاسم الكامل"
 msgid "Full time"
 msgstr "دوام كامل"
 
-#: src/lib/ordering-labels.ts:452
+#: src/lib/ordering-labels.ts:454
 msgid "Gate code or delivery note"
 msgstr "رمز البوابة أو ملاحظة التوصيل"
 
@@ -2088,11 +2088,11 @@ msgstr "إخفاء التفاصيل"
 msgid "History"
 msgstr "السجل"
 
-#: src/lib/ordering-labels.ts:450
+#: src/lib/ordering-labels.ts:452
 msgid "Home"
 msgstr "المنزل"
 
-#: src/lib/ordering-labels.ts:449
+#: src/lib/ordering-labels.ts:451
 msgid "Home, Work…"
 msgstr "المنزل، العمل…"
 
@@ -2529,7 +2529,7 @@ msgstr "تأخر طلبي"
 msgid "Name"
 msgstr "الاسم"
 
-#: src/lib/ordering-labels.ts:448
+#: src/lib/ordering-labels.ts:450
 msgid "Name this address"
 msgstr "سمِّ هذا العنوان"
 
@@ -2884,7 +2884,7 @@ msgstr "بقي {count} فقط من {name} اليوم. يرجى العودة إل
 msgid "Only a few left"
 msgstr "لم يتبقَّ سوى القليل"
 
-#: src/lib/ordering-labels.ts:436
+#: src/lib/ordering-labels.ts:438
 msgid "Only the host can do that."
 msgstr "المضيف فقط يمكنه فعل ذلك."
 
@@ -2914,7 +2914,7 @@ msgstr "افتح الرابط الوارد في رسالة التأكيد لإد
 msgid "Open until {time}"
 msgstr "مفتوح حتى {time}"
 
-#: src/lib/ordering-labels.ts:438
+#: src/lib/ordering-labels.ts:440
 msgid "Open your group order"
 msgstr "افتح طلبك الجماعي"
 
@@ -3821,7 +3821,7 @@ msgstr "سعر التخفيض"
 msgid "Save"
 msgstr "حفظ"
 
-#: src/lib/ordering-labels.ts:453
+#: src/lib/ordering-labels.ts:455
 msgid "Save address"
 msgstr "حفظ العنوان"
 
@@ -3838,11 +3838,11 @@ msgstr "حفظ التغييرات"
 msgid "Save my choices"
 msgstr "حفظ اختياراتي"
 
-#: src/lib/ordering-labels.ts:447
+#: src/lib/ordering-labels.ts:449
 msgid "Save this address"
 msgstr "احفظ هذا العنوان"
 
-#: src/lib/ordering-labels.ts:445
+#: src/lib/ordering-labels.ts:447
 msgid "Saved addresses"
 msgstr "العناوين المحفوظة"
 
@@ -3851,7 +3851,7 @@ msgstr "العناوين المحفوظة"
 msgid "Saving..."
 msgstr "جارٍ الحفظ..."
 
-#: src/lib/ordering-labels.ts:454
+#: src/lib/ordering-labels.ts:456
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
 
@@ -4042,7 +4042,7 @@ msgstr "عرض رمزك لا يستهلك أي نقاط. أنت من يوافق 
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
-#: src/lib/ordering-labels.ts:462
+#: src/lib/ordering-labels.ts:464
 msgid "Sign in again to use your saved addresses."
 msgstr "سجّل الدخول مجدداً لاستخدام عناوينك المحفوظة."
 
@@ -4160,7 +4160,7 @@ msgstr "حدث خطأ ما."
 #: src/lib/catering/labels.ts:83
 #: src/lib/gift-cards/labels.ts:54
 #: src/lib/loyalty/labels.ts:345
-#: src/lib/ordering-labels.ts:433
+#: src/lib/ordering-labels.ts:435
 #: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
@@ -4439,7 +4439,7 @@ msgstr "تعذّر تطبيق رمز القسيمة."
 msgid "That date is too far ahead to book online."
 msgstr "هذا التاريخ بعيد جدًا للحجز عبر الإنترنت."
 
-#: src/lib/ordering-labels.ts:429
+#: src/lib/ordering-labels.ts:431
 msgid "That dish cannot be added to a group order."
 msgstr "لا يمكن إضافة هذا الطبق إلى طلب جماعي."
 
@@ -4451,7 +4451,7 @@ msgstr "هذا العدد من الضيوف أكبر مما نستطيع تلب�
 msgid "That is not available here. Choose pickup or delivery."
 msgstr "هذا غير متاح هنا. اختر الاستلام أو التوصيل."
 
-#: src/lib/ordering-labels.ts:423
+#: src/lib/ordering-labels.ts:424
 msgid "That is over the spend limit for this group order."
 msgstr "هذا يتجاوز حد الإنفاق لهذا الطلب الجماعي."
 
@@ -4550,7 +4550,7 @@ msgstr "تغيّر مبلغ بطاقة الهدايا. راجع الإجمالي
 msgid "The group order changed. Go back to the group order, review it and check out again."
 msgstr "تغيّر الطلب الجماعي. ارجع إلى الطلب الجماعي وراجعه ثم أتمم الدفع مرة أخرى."
 
-#: src/lib/ordering-labels.ts:431
+#: src/lib/ordering-labels.ts:433
 msgid "The group order changed. Review it and check out again."
 msgstr "تغيّر الطلب الجماعي. راجعه ثم أتمم الدفع مرة أخرى."
 
@@ -4749,7 +4749,7 @@ msgstr "لا تتوفر كمية كافية من {name} اليوم. يرجى ا�
 msgid "There isn't enough left today of: {names}. Please go back to the menu to change your order."
 msgstr "لا تتوفر كمية كافية اليوم من: {names}. يرجى العودة إلى القائمة لتعديل طلبك."
 
-#: src/lib/ordering-labels.ts:461
+#: src/lib/ordering-labels.ts:463
 msgid "This address is no longer saved."
 msgstr "لم يعد هذا العنوان محفوظاً."
 
@@ -4886,11 +4886,11 @@ msgstr "هذه المجموعة كبيرة جدًا للطلب من الطاول
 msgid "This group order can't be placed any more. Go back to the group order to see where it stands."
 msgstr "لم يعد بالإمكان تقديم هذا الطلب الجماعي. ارجع إليه لمعرفة حالته."
 
-#: src/lib/ordering-labels.ts:425
+#: src/lib/ordering-labels.ts:427
 msgid "This group order has the most dishes allowed."
 msgstr "وصل هذا الطلب الجماعي إلى الحد الأقصى من الأطباق."
 
-#: src/lib/ordering-labels.ts:424
+#: src/lib/ordering-labels.ts:426
 msgid "This group order is full."
 msgstr "هذا الطلب الجماعي ممتلئ."
 
@@ -5139,7 +5139,7 @@ msgstr "محاولات كثيرة جدًا. يرجى الانتظار قليلً
 msgid "Too many attempts. Try again in a moment."
 msgstr "محاولات كثيرة جدًا. حاول مرة أخرى بعد قليل."
 
-#: src/lib/ordering-labels.ts:434
+#: src/lib/ordering-labels.ts:436
 msgid "Too many requests. Try again in a moment."
 msgstr "طلبات كثيرة جدًا. حاول مرة أخرى بعد قليل."
 
@@ -5183,7 +5183,7 @@ msgstr "تتبّع هذا الطلب في التطبيق"
 #: src/lib/guest-account-labels.ts:65
 #: src/lib/loyalty/labels.ts:75
 #: src/lib/ordering-labels.ts:162
-#: src/lib/ordering-labels.ts:435
+#: src/lib/ordering-labels.ts:437
 #: src/lib/reservations/labels.ts:281
 #: src/lib/reservations/labels.ts:385
 #: src/pages/menu/success.astro.ts:3
@@ -5601,7 +5601,7 @@ msgstr "تعذر استعادة سلتك."
 msgid "We couldn't save that. Try again."
 msgstr "تعذّر الحفظ. حاول مرة أخرى."
 
-#: src/lib/ordering-labels.ts:459
+#: src/lib/ordering-labels.ts:461
 msgid "We couldn't save this address. Try again."
 msgstr "تعذّر حفظ هذا العنوان. حاول مرة أخرى."
 
@@ -5641,7 +5641,7 @@ msgstr "نوصّل إلى هنا"
 msgid "We did not hear back in time. You can join the waitlist again."
 msgstr "لم نتلقَّ ردًا في الوقت المناسب. يمكنك الانضمام إلى قائمة الانتظار مجددًا."
 
-#: src/lib/ordering-labels.ts:460
+#: src/lib/ordering-labels.ts:462
 msgid "We don't deliver here right now"
 msgstr "لا نوصّل إلى هنا حالياً"
 
@@ -5846,7 +5846,7 @@ msgstr "المشاركون"
 msgid "Whole"
 msgstr "كاملة"
 
-#: src/lib/ordering-labels.ts:451
+#: src/lib/ordering-labels.ts:453
 msgid "Work"
 msgstr "العمل"
 
@@ -5875,7 +5875,7 @@ msgstr "نعم، مغادرة"
 msgid "You"
 msgstr "أنت"
 
-#: src/lib/ordering-labels.ts:426
+#: src/lib/ordering-labels.ts:428
 msgid "You already have the most group orders open."
 msgstr "لديك بالفعل أقصى عدد من الطلبات الجماعية المفتوحة."
 
@@ -5915,7 +5915,7 @@ msgstr "لا يزال بإمكانك الطلب للاستلام."
 msgid "You have {amount}"
 msgstr "لديك {amount}"
 
-#: src/lib/ordering-labels.ts:457
+#: src/lib/ordering-labels.ts:459
 msgid "You have 10 saved addresses. Remove one in your profile to add another."
 msgstr "لديك 10 عناوين محفوظة. أزل واحداً من ملفك الشخصي لإضافة عنوان آخر."
 
@@ -6088,7 +6088,7 @@ msgstr "مفضلاتك"
 msgid "Your first name"
 msgstr "اسمك الأول"
 
-#: src/lib/ordering-labels.ts:437
+#: src/lib/ordering-labels.ts:439
 msgid "Your group order"
 msgstr "طلبك الجماعي"
 

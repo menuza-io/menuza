@@ -91,7 +91,45 @@ describe('favorite dishes on the menu (#158)', () => {
 		mountMenuFavorites({ labels, rail, modalHeart })
 		expect(document.querySelectorAll('[data-favorite-toggle]')).toHaveLength(3)
 		expect(heart('burger').getAttribute('aria-pressed')).toBe('false')
-		expect(heart('burger').getAttribute('aria-label')).toBe('Add to favorites')
+		// Every heart names its dish, so a screen reader can tell them apart.
+		expect(heart('burger').getAttribute('aria-label')).toBe(
+			'Add to favorites: Burger',
+		)
+		expect(heart('soup').getAttribute('aria-label')).toBe(
+			'Add to favorites: Soup',
+		)
+		// The alert is in the page from the start, empty.
+		const alert = rail.querySelector('[role="alert"]')
+		expect(alert).toBeTruthy()
+		expect(alert!.textContent).toBe('')
+	})
+
+	it('ignores a second tap on a heart while the first is on its way', async () => {
+		isSignedIn.mockReturnValue(true)
+		listFavorites.mockResolvedValue({
+			ok: true,
+			data: { favorites: [], limit: 100 },
+		})
+		let finish: (value: unknown) => void = () => {}
+		addFavorite.mockReturnValue(
+			new Promise((resolve) => {
+				finish = resolve
+			}),
+		)
+		removeFavorite.mockResolvedValue({ ok: true, data: { ok: true } })
+		const { rail, modalHeart } = page()
+		mountMenuFavorites({ labels, rail, modalHeart })
+		await vi.waitFor(() => expect(listFavorites).toHaveBeenCalled())
+		heart('pizza').click()
+		heart('pizza').click()
+		heart('pizza').click()
+		await vi.waitFor(() => expect(addFavorite).toHaveBeenCalledTimes(1))
+		expect(removeFavorite).not.toHaveBeenCalled()
+		finish({ ok: true, data: { ok: true } })
+		await vi.waitFor(() =>
+			expect(heart('pizza').getAttribute('aria-pressed')).toBe('true'),
+		)
+		expect(addFavorite).toHaveBeenCalledTimes(1)
 	})
 
 	it('shows a favorited dish in the row on the next visit, sold out ones marked, deleted ones gone', async () => {
@@ -159,7 +197,8 @@ describe('favorite dishes on the menu (#158)', () => {
 		expect(heart('pizza').getAttribute('aria-pressed')).toBe('true')
 		expect(railIds()).toEqual(['pizza'])
 		expect(opened).not.toHaveBeenCalled()
-		// And back off again.
+		// And back off again (once the first answer has been taken in).
+		await new Promise((resolve) => setTimeout(resolve, 0))
 		removeFavorite.mockResolvedValue({ ok: true, data: { ok: true } })
 		heart('pizza').click()
 		await vi.waitFor(() => expect(removeFavorite).toHaveBeenCalledWith('pizza'))

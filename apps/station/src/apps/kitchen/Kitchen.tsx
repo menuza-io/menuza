@@ -958,8 +958,15 @@ function Ticket({
 								</p>
 							) : null}
 							{ticket.testPrintAnswer !== 'yes' ? (
-								<div className="flex flex-wrap items-center gap-2">
-									<span className="text-sm font-medium">
+								<div
+									role="group"
+									aria-labelledby={`test-print-${ticket.id}`}
+									className="flex flex-wrap items-center gap-2"
+								>
+									<span
+										id={`test-print-${ticket.id}`}
+										className="text-sm font-medium"
+									>
 										<Trans>Did the ticket print?</Trans>
 									</span>
 									<Button
@@ -1052,6 +1059,7 @@ function Ticket({
 			{ticket.cancelled ? wasteAction : null}
 			<ul className="divide-border divide-y">
 				{orderedLines.map((line) => {
+					const person = personHeads.get(line.id)
 					const item = items.get(line.itemId)
 					const added = addedAt(line)
 					const addedTime = added ? time.format(added) : ''
@@ -1086,12 +1094,12 @@ function Ticket({
 									</span>
 								</ItemMedia>
 								<ItemContent className="min-w-0">
-									{personHeads.has(line.id) ? (
+									{person ? (
 										<p
 											className="text-xs font-semibold tracking-wide uppercase"
 											data-kitchen-for
 										>
-											<Trans>For {personHeads.get(line.id)}</Trans>
+											<ForPerson name={person} />
 										</p>
 									) : null}
 									{courseHeads.has(line.id) ? (
@@ -1288,6 +1296,15 @@ function Ticket({
 				</footer>
 			) : null}
 		</article>
+	)
+}
+
+/** "For Sam": a group order's dish owner, isolated so mixed scripts read right. */
+function ForPerson({ name }: { name: string }) {
+	return (
+		<Trans>
+			For <bdi>{name}</bdi>
+		</Trans>
 	)
 }
 

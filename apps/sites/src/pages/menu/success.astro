@@ -414,7 +414,7 @@ const valueClass = 'price font-medium text-foreground'
 
 				{/* "Something wrong?" (#191). Hidden until the region says the
 				    restaurant takes reports and this order can have one (or has some). */}
-				<section id="order-problems" hidden class="surface space-y-4 p-5 sm:p-6" aria-live="polite"></section>
+				<section id="order-problems" hidden class="surface space-y-4 p-5 sm:p-6"></section>
 
 				{/* Online payment states */}
 				<div id="payment-pending" class:list={[noticeClass, 'tone-warning hidden']} role="status">
@@ -1731,9 +1731,14 @@ const valueClass = 'price font-medium text-foreground'
 			renderReceipt(order)
 			syncPaymentView(order)
 			applyStatusHeading()
-			// A status change (completed, cancelled) can open or close the window.
-			void problems?.refresh()
+			// A status change (completed, cancelled) can open or close the window;
+			// the 30 second look below covers the restaurant's answers.
+			if (order.status !== problemsStatus) {
+				problemsStatus = order.status
+				void problems?.refresh()
+			}
 		}
+		let problemsStatus = ''
 
 		// "Something wrong?" (#191): the region's own answers, drawn by the browser.
 		let problems: { refresh: () => Promise<void> } | null = null

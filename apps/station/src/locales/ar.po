@@ -84,7 +84,7 @@ msgstr "{0, plural, zero {لا شيء يحتاج انتباهًا} one {واحد
 #~ msgstr "{0, plural, zero {لا حالات عدم حضور} one {حالة عدم حضور واحدة} two {حالتا عدم حضور} few {# حالات عدم حضور} many {# حالة عدم حضور} other {# حالة عدم حضور}}"
 
 #. placeholder {0}: answer.results.length
-#: src/apps/orders/Orders.tsx:1935
+#: src/apps/orders/Orders.tsx:1948
 msgid "{0, plural, one {# order found} other {# orders found}}"
 msgstr "{0, plural, one {تم العثور على طلب واحد} two {تم العثور على طلبين} other {تم العثور على # طلبات}}"
 
@@ -168,7 +168,7 @@ msgstr "{0} ليس مديرًا. اطلب من أحد المديرين إدخا�
 #~ msgstr "{0} على قائمة الانتظار."
 
 #. placeholder {0}: order.itemCount
-#: src/apps/orders/Orders.tsx:774
+#: src/apps/orders/Orders.tsx:783
 msgid "{0} items"
 msgstr "{0} أصناف"
 
@@ -362,7 +362,7 @@ msgstr "{covers, plural, zero {لا ضيوف} one {ضيف واحد} two {ضيف�
 msgid "{day} at {time}"
 msgstr "{day} الساعة {time}"
 
-#: src/apps/kitchen/Kitchen.tsx:1000
+#: src/apps/kitchen/Kitchen.tsx:1007
 msgid "{elapsed} min"
 msgstr "{elapsed} د"
 
@@ -1144,11 +1144,11 @@ msgstr "لا يمكن أن تتجاوز النسبة المئوية 100."
 msgid "A reference may hold letters, digits, spaces and . # / - only"
 msgstr "يمكن أن يحتوي المرجع على حروف وأرقام ومسافات و . # / - فقط"
 
-#: src/apps/orders/Orders.tsx:833
+#: src/apps/orders/Orders.tsx:842
 msgid "A refund for this order is already on its way. Wait until it finishes before refunding again."
 msgstr "هناك استرداد قيد التنفيذ لهذا الطلب بالفعل. انتظر حتى ينتهي قبل أن تسترد مرة أخرى."
 
-#: src/apps/orders/Orders.tsx:1667
+#: src/apps/orders/Orders.tsx:1680
 msgid "A refund is on its way to the guest's card. It can take a few days to show on their statement."
 msgstr "الاسترداد في طريقه إلى بطاقة الضيف. قد يستغرق ظهوره في كشف حسابه بضعة أيام."
 
@@ -1168,21 +1168,21 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم."
 msgid "About {quotedMin} min, number {position} in line."
 msgstr "حوالي {quotedMin} دقيقة، الترتيب {position} في القائمة."
 
-#: src/apps/orders/Orders.tsx:1424
+#: src/apps/orders/Orders.tsx:1437
 msgid "Accept it to send it to the kitchen, or reject it. If nobody answers in time, it is turned down automatically."
 msgstr "اقبله لإرساله إلى المطبخ، أو ارفضه. إذا لم يرد أحد في الوقت المحدد، يُرفض الطلب تلقائيًا."
 
-#: src/apps/orders/Orders.tsx:1158
+#: src/apps/orders/Orders.tsx:1167
 msgid "Accept order"
 msgstr "قبول الطلب"
 
 #. placeholder {0}: countdownClock(remaining)
-#: src/apps/orders/Orders.tsx:728
+#: src/apps/orders/Orders.tsx:737
 msgid "Accept within {0}"
 msgstr "اقبل خلال {0}"
 
 #: src/apps/orders/Orders.tsx:109
-#: src/apps/orders/Orders.tsx:697
+#: src/apps/orders/Orders.tsx:706
 msgid "Accepted"
 msgstr "مقبول"
 
@@ -1309,7 +1309,7 @@ msgstr "إضافة إلى قائمة الانتظار"
 #~ msgid "Added"
 #~ msgstr "مُضاف"
 
-#: src/apps/kitchen/Kitchen.tsx:1119
+#: src/apps/kitchen/Kitchen.tsx:1127
 msgid "Added {addedTime}"
 msgstr "أُضيف {addedTime}"
 
@@ -1368,7 +1368,7 @@ msgstr "كل المحطات"
 #~ msgstr "كل المحطات · التسليم"
 
 #: src/apps/orders/Orders.tsx:317
-#: src/apps/orders/Orders.tsx:1903
+#: src/apps/orders/Orders.tsx:1916
 msgid "All types"
 msgstr "كل الأنواع"
 
@@ -1376,8 +1376,8 @@ msgstr "كل الأنواع"
 msgid "Allergies, no onions, sauce on the side…"
 msgstr "حساسية، بدون بصل، الصلصة جانبًا…"
 
-#: src/apps/kitchen/Kitchen.tsx:1299
-#: src/apps/orders/Orders.tsx:2349
+#: src/apps/kitchen/Kitchen.tsx:1316
+#: src/apps/orders/Orders.tsx:2362
 msgid "Allergy"
 msgstr "حساسية"
 
@@ -1390,7 +1390,7 @@ msgstr "توجد حساسية"
 #~ msgstr "توجد حساسية. يمكن للمدير رؤية التفاصيل."
 
 #: src/apps/kitchen/Kitchen.tsx:932
-#: src/apps/orders/Orders.tsx:2473
+#: src/apps/orders/Orders.tsx:2486
 msgid "Allergy stated by guest"
 msgstr "الضيف ذكر حساسية"
 
@@ -1419,7 +1419,7 @@ msgstr "هل لديهم حجز؟"
 msgid "Already booked? Seat their booking."
 msgstr "هل لديهم حجز؟ أجلس حجزهم."
 
-#: src/apps/orders/Orders.tsx:2317
+#: src/apps/orders/Orders.tsx:2330
 #: src/screens/Checkout.tsx:713
 #: src/screens/GiftCardSheet.tsx:210
 #: src/screens/ManualDiscount.tsx:322
@@ -1480,7 +1480,7 @@ msgstr "نقطة بيع أخرى كانت قد تولّت هذا الحساب"
 msgid "Any cash tips this shift?"
 msgstr "هل حصلت على بقشيش نقدي في هذه الوردية؟"
 
-#: src/apps/orders/Orders.tsx:1718
+#: src/apps/orders/Orders.tsx:1731
 msgid "Any state"
 msgstr "أي حالة"
 
@@ -1562,7 +1562,7 @@ msgstr "الوصول {0}"
 msgid "Arriving around {0}"
 msgstr "الوصول تقريبًا {0}"
 
-#: src/apps/orders/Orders.tsx:680
+#: src/apps/orders/Orders.tsx:689
 msgid "As soon as possible"
 msgstr "في أقرب وقت"
 
@@ -1622,8 +1622,8 @@ msgstr "مُسند إليك"
 msgid "At the stand"
 msgstr "عند الاستقبال"
 
-#: src/apps/kitchen/Kitchen.tsx:1302
-#: src/apps/orders/Orders.tsx:2352
+#: src/apps/kitchen/Kitchen.tsx:1319
+#: src/apps/orders/Orders.tsx:2365
 msgid "Attention"
 msgstr "انتباه"
 
@@ -1651,7 +1651,7 @@ msgstr "بانتظار العربون"
 msgid "Awaiting payment"
 msgstr "بانتظار الدفع"
 
-#: src/apps/orders/Orders.tsx:2260
+#: src/apps/orders/Orders.tsx:2273
 #: src/apps/reservations/TableSheet.tsx:206
 #: src/apps/stock/CountScreen.tsx:333
 #: src/apps/stock/DeliverySheet.tsx:347
@@ -1928,12 +1928,12 @@ msgstr "إلغاء"
 msgid "Cancel booking"
 msgstr "إلغاء الحجز"
 
-#: src/apps/orders/Orders.tsx:1108
-#: src/apps/orders/Orders.tsx:2137
+#: src/apps/orders/Orders.tsx:1117
+#: src/apps/orders/Orders.tsx:2150
 msgid "Cancel order"
 msgstr "إلغاء الطلب"
 
-#: src/apps/orders/Orders.tsx:2124
+#: src/apps/orders/Orders.tsx:2137
 msgid "Cancel order {number}?"
 msgstr "إلغاء الطلب {number}؟"
 
@@ -1958,14 +1958,14 @@ msgid "Cancel this booking?"
 msgstr "إلغاء هذا الحجز؟"
 
 #: src/apps/orders/Orders.tsx:114
-#: src/apps/orders/Orders.tsx:701
-#: src/apps/orders/Orders.tsx:1722
+#: src/apps/orders/Orders.tsx:710
+#: src/apps/orders/Orders.tsx:1735
 #: src/apps/reservations/sheets.tsx:21
 #: src/screens/OrdersSheet.tsx:1169
 msgid "Cancelled"
 msgstr "ملغى"
 
-#: src/apps/orders/Orders.tsx:2430
+#: src/apps/orders/Orders.tsx:2443
 #: src/screens/PrintedKitchenTicket.tsx:43
 msgid "CANCELLED"
 msgstr "ملغى"
@@ -1974,7 +1974,7 @@ msgstr "ملغى"
 msgid "Cancelled · items taken off"
 msgstr "ملغاة · أصناف محذوفة"
 
-#: src/apps/kitchen/Kitchen.tsx:1049
+#: src/apps/kitchen/Kitchen.tsx:1056
 msgid "Cancelled · stop preparing"
 msgstr "ملغى · أوقف التحضير"
 
@@ -2212,7 +2212,7 @@ msgid "Check balance"
 msgstr "التحقق من الرصيد"
 
 #: src/apps/kitchen/Kitchen.tsx:938
-#: src/apps/orders/Orders.tsx:2482
+#: src/apps/orders/Orders.tsx:2495
 #: src/screens/PrintedKitchenTicket.tsx:96
 #: src/screens/Receipt.tsx:225
 msgid "Check ID"
@@ -2828,7 +2828,7 @@ msgstr "حذف"
 msgid "Delete training data and go back"
 msgstr "حذف بيانات التدريب والعودة"
 
-#: src/apps/orders/Orders.tsx:1465
+#: src/apps/orders/Orders.tsx:1478
 msgid "Deliver to"
 msgstr "التوصيل إلى"
 
@@ -2857,10 +2857,10 @@ msgstr "لوحة التوصيلات"
 #: src/apps/kitchen/Kitchen.tsx:860
 #: src/apps/kitchen/KitchenSettings.tsx:383
 #: src/apps/orders/Orders.tsx:319
-#: src/apps/orders/Orders.tsx:639
-#: src/apps/orders/Orders.tsx:1463
-#: src/apps/orders/Orders.tsx:1905
-#: src/apps/orders/Orders.tsx:2455
+#: src/apps/orders/Orders.tsx:648
+#: src/apps/orders/Orders.tsx:1476
+#: src/apps/orders/Orders.tsx:1918
+#: src/apps/orders/Orders.tsx:2468
 #: src/apps/stock/Stock.tsx:222
 #: src/screens/PhoneOrderSheet.tsx:316
 msgid "Delivery"
@@ -2871,7 +2871,7 @@ msgstr "توصيل"
 msgid "Delivery address"
 msgstr "عنوان التوصيل"
 
-#: src/apps/orders/Orders.tsx:1584
+#: src/apps/orders/Orders.tsx:1597
 #: src/screens/Receipt.tsx:345
 msgid "Delivery fee"
 msgstr "رسوم التوصيل"
@@ -2965,8 +2965,8 @@ msgstr "لم يردّوا"
 msgid "Did the delivery from {supplierName} arrive?"
 msgstr "هل وصلت الشحنة من {supplierName}؟"
 
-#: src/apps/kitchen/Kitchen.tsx:963
-#: src/apps/orders/Orders.tsx:1383
+#: src/apps/kitchen/Kitchen.tsx:970
+#: src/apps/orders/Orders.tsx:1396
 msgid "Did the ticket print?"
 msgstr "هل طُبعت التذكرة؟"
 
@@ -2985,9 +2985,9 @@ msgstr "نظام غذائي: {dietLine}"
 #: src/apps/kitchen/Kitchen.tsx:858
 #: src/apps/kitchen/KitchenSettings.tsx:381
 #: src/apps/orders/Orders.tsx:320
-#: src/apps/orders/Orders.tsx:643
-#: src/apps/orders/Orders.tsx:1906
-#: src/apps/orders/Orders.tsx:2459
+#: src/apps/orders/Orders.tsx:652
+#: src/apps/orders/Orders.tsx:1919
+#: src/apps/orders/Orders.tsx:2472
 #: src/screens/Cart.tsx:272
 #: src/screens/OrdersSheet.tsx:92
 #: src/screens/PrintedKitchenTicket.tsx:68
@@ -3030,7 +3030,7 @@ msgstr "تم تطبيق الخصم، وقد حلّ محل {replaced}."
 msgid "Discount removed"
 msgstr "تمت إزالة الخصم"
 
-#: src/apps/orders/Orders.tsx:1574
+#: src/apps/orders/Orders.tsx:1587
 #: src/screens/ShiftSheet.tsx:507
 #: src/screens/ShiftSheet.tsx:637
 msgid "Discounts"
@@ -3062,7 +3062,7 @@ msgstr "الأطباق"
 msgid "Dismiss"
 msgstr "إغلاق"
 
-#: src/apps/orders/Orders.tsx:657
+#: src/apps/orders/Orders.tsx:666
 msgid "Disputed"
 msgstr "متنازع عليه"
 
@@ -3083,7 +3083,7 @@ msgstr "متنازع عليه"
 msgid "Done"
 msgstr "تم"
 
-#: src/apps/kitchen/Kitchen.tsx:1232
+#: src/apps/kitchen/Kitchen.tsx:1240
 msgid "Done · clear ticket"
 msgstr "تم · إخلاء التذكرة"
 
@@ -3123,8 +3123,8 @@ msgstr "المواد الجافة"
 
 #. placeholder {0}: time.format(order.dueAt)
 #. placeholder {0}: time.format(ticket.dueAt)
-#: src/apps/kitchen/Kitchen.tsx:1014
-#: src/apps/orders/Orders.tsx:679
+#: src/apps/kitchen/Kitchen.tsx:1021
+#: src/apps/orders/Orders.tsx:688
 msgid "Due {0}"
 msgstr "موعدها {0}"
 
@@ -3197,7 +3197,7 @@ msgstr "تعديل تفاصيل الطلب الهاتفي"
 msgid "eggs"
 msgstr "البيض"
 
-#: src/apps/orders/Orders.tsx:1452
+#: src/apps/orders/Orders.tsx:1465
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
@@ -3355,7 +3355,7 @@ msgstr "كل شيء"
 msgid "Everything has been sent."
 msgstr "تم إرسال كل شيء."
 
-#: src/apps/orders/Orders.tsx:2311
+#: src/apps/orders/Orders.tsx:2324
 msgid "Everything left"
 msgstr "كل المتبقي"
 
@@ -3463,14 +3463,17 @@ msgstr "فلات وايت"
 msgid "Floor"
 msgstr "الصالة"
 
-#. placeholder {0}: line.forName
-#. placeholder {0}: personHeads.get(line.id)
 #: src/apps/kitchen/Kitchen.tsx:1094
 #: src/apps/orders/Orders.tsx:2549
-msgid "For {0}"
-msgstr "لـ {0}"
+#~ msgid "For {0}"
+#~ msgstr "لـ {0}"
 
-#: src/apps/orders/Orders.tsx:2330
+#: src/apps/kitchen/Kitchen.tsx:1305
+#: src/apps/orders/Orders.tsx:603
+msgid "For <0>{name}</0>"
+msgstr "لـ <0>{name}</0>"
+
+#: src/apps/orders/Orders.tsx:2343
 msgid "For example: cold fries"
 msgstr "مثال: البطاطس باردة"
 
@@ -3525,7 +3528,7 @@ msgstr "المبلغ كاملًا ({upTo})"
 msgid "Full bottles"
 msgstr "الزجاجات الممتلئة"
 
-#: src/apps/orders/Orders.tsx:2173
+#: src/apps/orders/Orders.tsx:2186
 msgid "Full refund ({refundableLabel})"
 msgstr "استرداد كامل ({refundableLabel})"
 
@@ -3613,7 +3616,7 @@ msgstr "غرام (غ)"
 msgid "Group is full"
 msgstr "المجموعة مكتملة"
 
-#: src/apps/orders/Orders.tsx:1441
+#: src/apps/orders/Orders.tsx:1454
 #: src/apps/reservations/AddSheets.tsx:136
 #: src/apps/reservations/BookingSheet.tsx:714
 #: src/apps/reservations/BookPanel.tsx:1117
@@ -3680,7 +3683,7 @@ msgstr "رفض الضيف الاستلام"
 msgid "Guest tags"
 msgstr "وسوم الضيف"
 
-#: src/apps/orders/Orders.tsx:1134
+#: src/apps/orders/Orders.tsx:1143
 msgid "Guest ticket"
 msgstr "تذكرة الضيف"
 
@@ -3710,13 +3713,13 @@ msgstr "تُفتح حجوزات الضيوف للشخص المسجّل دخول�
 msgid "Halal"
 msgstr "حلال"
 
-#: src/apps/orders/Orders.tsx:1193
+#: src/apps/orders/Orders.tsx:1202
 msgid "Hand over"
 msgstr "تسليم"
 
 #: src/apps/orders/Orders.tsx:112
-#: src/apps/orders/Orders.tsx:700
-#: src/apps/orders/Orders.tsx:1721
+#: src/apps/orders/Orders.tsx:709
+#: src/apps/orders/Orders.tsx:1734
 msgid "Handed over"
 msgstr "تم التسليم"
 
@@ -3725,8 +3728,8 @@ msgstr "تم التسليم"
 msgid "Has notes"
 msgstr "عليه ملاحظات"
 
-#: src/apps/kitchen/Kitchen.tsx:1100
-#: src/apps/orders/Orders.tsx:2542
+#: src/apps/kitchen/Kitchen.tsx:1108
+#: src/apps/orders/Orders.tsx:2555
 #: src/apps/reservations/BookingSheet.tsx:151
 msgid "Held"
 msgstr "محتجزة"
@@ -3792,7 +3795,7 @@ msgstr "كم تبقّى من كل طبق محدود يمكن بيعه اليوم
 msgid "How many?"
 msgstr "كم عددهم؟"
 
-#: src/apps/orders/Orders.tsx:2307
+#: src/apps/orders/Orders.tsx:2320
 #: src/apps/stock/WasteSheet.tsx:492
 msgid "How much"
 msgstr "الكمية"
@@ -3818,7 +3821,7 @@ msgstr "انتهيت من العدّ"
 msgid "I am unavailable · set available"
 msgstr "أنا غير متاح · تعيين كمتاح"
 
-#: src/apps/orders/Orders.tsx:1089
+#: src/apps/orders/Orders.tsx:1098
 msgid "I have received payment at handoff"
 msgstr "استلمتُ الدفع عند التسليم"
 
@@ -3827,7 +3830,7 @@ msgid "In"
 msgstr "إيداع"
 
 #: src/apps/kitchen/PrepView.tsx:171
-#: src/apps/orders/Orders.tsx:1719
+#: src/apps/orders/Orders.tsx:1732
 #: src/apps/stock/Stock.tsx:339
 #: src/apps/stock/Stock.tsx:343
 msgid "In progress"
@@ -3907,7 +3910,7 @@ msgstr "نقطة البيع مضبوطة على فرع غير موجود في ا
 msgid "It is too early to clock in for your shift."
 msgstr "الوقت مبكر جدًا لتسجيل الحضور لورديتك."
 
-#: src/apps/orders/Orders.tsx:2155
+#: src/apps/orders/Orders.tsx:2168
 msgid "It was paid online. Cancelling does not refund it: a manager can refund it afterwards from the order or in the App."
 msgstr "تم دفعه عبر الإنترنت. الإلغاء لا يسترد المبلغ: يمكن للمدير استرداده لاحقًا من الطلب أو من التطبيق."
 
@@ -3915,7 +3918,7 @@ msgstr "تم دفعه عبر الإنترنت. الإلغاء لا يسترد ا
 #~ msgid "It was paid online. Cancelling does not refund it: record the refund after you refund it with your payment provider."
 #~ msgstr "دُفع هذا الطلب عبر الإنترنت. الإلغاء لا يرد المبلغ: سجّل الاسترداد بعد ردّه عبر مزوّد الدفع."
 
-#: src/apps/orders/Orders.tsx:2152
+#: src/apps/orders/Orders.tsx:2165
 msgid "It was paid online. The kitchen stops preparing it and it cannot be reopened. Choose whether to refund the guest."
 msgstr "تم دفعه عبر الإنترنت. سيتوقف المطبخ عن تحضيره ولا يمكن إعادة فتحه. اختر هل تريد رد المبلغ للضيف."
 
@@ -3927,7 +3930,7 @@ msgstr "فات وقت التراجع عن هذا الهدر."
 msgid "Item name"
 msgstr "اسم الصنف"
 
-#: src/apps/kitchen/Kitchen.tsx:1202
+#: src/apps/kitchen/Kitchen.tsx:1210
 msgid "Item ready"
 msgstr "الصنف جاهز"
 
@@ -3935,7 +3938,7 @@ msgstr "الصنف جاهز"
 msgid "Item routing"
 msgstr "توجيه الأصناف"
 
-#: src/apps/orders/Orders.tsx:1525
+#: src/apps/orders/Orders.tsx:1538
 msgid "Items"
 msgstr "الأصناف"
 
@@ -4006,7 +4009,7 @@ msgstr "إبقاؤه غير متوفر"
 msgid "Keep paired"
 msgstr "الإبقاء على الربط"
 
-#: src/apps/orders/Orders.tsx:2128
+#: src/apps/orders/Orders.tsx:2141
 msgid "Keep the order"
 msgstr "الإبقاء على الطلب"
 
@@ -4022,7 +4025,7 @@ msgstr "متابعة التدريب"
 msgid "Keep typing to narrow the list."
 msgstr "تابع الكتابة لتضييق القائمة."
 
-#: src/apps/orders/Orders.tsx:2030
+#: src/apps/orders/Orders.tsx:2043
 msgid "Keep waiting"
 msgstr "متابعة الانتظار"
 
@@ -4074,8 +4077,8 @@ msgstr "إعدادات المطبخ"
 msgid "Kitchen station"
 msgstr "محطة المطبخ"
 
-#: src/apps/orders/Orders.tsx:1142
-#: src/apps/orders/Orders.tsx:2434
+#: src/apps/orders/Orders.tsx:1151
+#: src/apps/orders/Orders.tsx:2447
 #: src/screens/PrintedKitchenTicket.tsx:47
 msgid "Kitchen ticket"
 msgstr "تذكرة المطبخ"
@@ -4127,17 +4130,17 @@ msgstr "اللغة"
 msgid "Large"
 msgstr "كبيرة"
 
-#: src/apps/kitchen/Kitchen.tsx:1033
-#: src/apps/orders/Orders.tsx:1508
-#: src/apps/orders/Orders.tsx:2514
+#: src/apps/kitchen/Kitchen.tsx:1040
+#: src/apps/orders/Orders.tsx:1521
+#: src/apps/orders/Orders.tsx:2527
 msgid "Large order"
 msgstr "طلب كبير"
 
 #. placeholder {0}: detail.largeOrderExtraMinutes
 #. placeholder {0}: ticket.largeOrderExtraMinutes
-#: src/apps/kitchen/Kitchen.tsx:1027
-#: src/apps/orders/Orders.tsx:1504
-#: src/apps/orders/Orders.tsx:2512
+#: src/apps/kitchen/Kitchen.tsx:1034
+#: src/apps/orders/Orders.tsx:1517
+#: src/apps/orders/Orders.tsx:2525
 msgid "Large order +{0} min"
 msgstr "طلب كبير +{0} د"
 
@@ -4156,11 +4159,11 @@ msgstr "مجموعة كبيرة: {text}"
 msgid "last {when}"
 msgstr "آخر زيارة {when}"
 
-#: src/apps/orders/Orders.tsx:1870
+#: src/apps/orders/Orders.tsx:1883
 msgid "Last 4 digits"
 msgstr "آخر 4 أرقام"
 
-#: src/apps/orders/Orders.tsx:1866
+#: src/apps/orders/Orders.tsx:1879
 msgid "Last 4 digits of the guest’s phone"
 msgstr "آخر 4 أرقام من هاتف الضيف"
 
@@ -4185,8 +4188,8 @@ msgstr "فشل آخر تحديث: {error}."
 msgid "Last shift closed remotely by {0}"
 msgstr "أُغلقت آخر وردية عن بُعد بواسطة {0}"
 
-#: src/apps/kitchen/Kitchen.tsx:1009
-#: src/apps/orders/Orders.tsx:625
+#: src/apps/kitchen/Kitchen.tsx:1016
+#: src/apps/orders/Orders.tsx:634
 #: src/apps/reservations/BookPanel.tsx:234
 #: src/apps/stock/Stock.tsx:422
 msgid "Late"
@@ -4212,7 +4215,7 @@ msgstr "الخروج من ملء الشاشة"
 msgid "left"
 msgstr "متبقٍ"
 
-#: src/apps/kitchen/Kitchen.tsx:1149
+#: src/apps/kitchen/Kitchen.tsx:1157
 msgid "Left half"
 msgstr "النصف الأيسر"
 
@@ -4267,7 +4270,7 @@ msgstr "جارٍ تحميل الطلبات الإلكترونية…"
 msgid "Loading prep…"
 msgstr "جارٍ تحميل التحضير…"
 
-#: src/apps/orders/Orders.tsx:1229
+#: src/apps/orders/Orders.tsx:1238
 msgid "Loading the order…"
 msgstr "جارٍ تحميل الطلب…"
 
@@ -4327,8 +4330,8 @@ msgstr "سُجّل كهدر."
 msgid "Logging as {staffName}"
 msgstr "التسجيل باسم {staffName}"
 
-#: src/apps/kitchen/Kitchen.tsx:1301
-#: src/apps/orders/Orders.tsx:2351
+#: src/apps/kitchen/Kitchen.tsx:1318
+#: src/apps/orders/Orders.tsx:2364
 msgid "Long prep"
 msgstr "تحضير طويل"
 
@@ -4389,7 +4392,7 @@ msgid "Mark delivered"
 msgstr "تحديد كمُسلَّم"
 
 #: src/apps/kitchen/Kitchen.tsx:848
-#: src/apps/orders/Orders.tsx:1178
+#: src/apps/orders/Orders.tsx:1187
 #: src/apps/reservations/WaitlistSheet.tsx:136
 msgid "Mark ready"
 msgstr "تحديد كجاهز"
@@ -4614,7 +4617,7 @@ msgid "Never"
 msgstr "أبدًا"
 
 #: src/apps/kitchen/Kitchen.tsx:286
-#: src/apps/orders/Orders.tsx:620
+#: src/apps/orders/Orders.tsx:629
 #: src/apps/reservations/BookPanel.tsx:1290
 #: src/apps/reservations/BookPanel.tsx:1293
 #: src/apps/reservations/BookPanel.tsx:1305
@@ -4690,8 +4693,8 @@ msgstr "اليوم التالي"
 msgid "Next shift"
 msgstr "الوردية القادمة"
 
-#: src/apps/kitchen/Kitchen.tsx:981
-#: src/apps/orders/Orders.tsx:1401
+#: src/apps/kitchen/Kitchen.tsx:988
+#: src/apps/orders/Orders.tsx:1414
 msgid "No"
 msgstr "لا"
 
@@ -4823,8 +4826,8 @@ msgstr "لا توجد طلبات هنا"
 msgid "No orders match your search."
 msgstr "لا توجد طلبات تطابق بحثك."
 
-#: src/apps/orders/Orders.tsx:1933
 #: src/apps/orders/Orders.tsx:1946
+#: src/apps/orders/Orders.tsx:1959
 msgid "No orders match."
 msgstr "لا توجد طلبات مطابقة."
 
@@ -4860,7 +4863,7 @@ msgstr "لم تُحدَّد مستويات التحضير بعد."
 msgid "No quote"
 msgstr "بدون تقدير"
 
-#: src/apps/orders/Orders.tsx:2175
+#: src/apps/orders/Orders.tsx:2188
 msgid "No refund"
 msgstr "بدون استرداد"
 
@@ -4954,9 +4957,9 @@ msgstr "لا أوقات متبقية لـ {size} في هذا اليوم."
 msgid "No tip"
 msgstr "بدون إكرامية"
 
-#: src/apps/kitchen/Kitchen.tsx:1042
-#: src/apps/orders/Orders.tsx:1499
-#: src/apps/orders/Orders.tsx:2503
+#: src/apps/kitchen/Kitchen.tsx:1049
+#: src/apps/orders/Orders.tsx:1512
+#: src/apps/orders/Orders.tsx:2516
 msgid "No utensils"
 msgstr "بدون أدوات"
 
@@ -5117,7 +5120,7 @@ msgstr "لا توجد طلبات مجدولة"
 msgid "Nothing to make right now."
 msgstr "لا شيء للتحضير الآن."
 
-#: src/apps/orders/Orders.tsx:652
+#: src/apps/orders/Orders.tsx:661
 msgid "Nothing to pay"
 msgstr "لا يوجد مبلغ مستحق"
 
@@ -5125,7 +5128,7 @@ msgstr "لا يوجد مبلغ مستحق"
 msgid "Nothing to send."
 msgstr "لا شيء للإرسال."
 
-#: src/apps/orders/Orders.tsx:1366
+#: src/apps/orders/Orders.tsx:1375
 msgid "Nothing was charged and it is not a sale."
 msgstr "لم يُحاسَب أي مبلغ ولا يُحتسب كعملية بيع."
 
@@ -5151,7 +5154,7 @@ msgid "Number of labels"
 msgstr "عدد الملصقات"
 
 #: src/apps/orders/Orders.tsx:325
-#: src/apps/orders/Orders.tsx:1854
+#: src/apps/orders/Orders.tsx:1867
 msgid "Number or name"
 msgstr "الرقم أو الاسم"
 
@@ -5224,8 +5227,8 @@ msgstr "غير متصل: تُحفظ بصمتك وتُرسل لاحقًا."
 msgid "On hold"
 msgstr "معلّق"
 
-#: src/apps/orders/Orders.tsx:1683
-#: src/apps/orders/Orders.tsx:1685
+#: src/apps/orders/Orders.tsx:1696
+#: src/apps/orders/Orders.tsx:1698
 msgid "On Station"
 msgstr "على Station"
 
@@ -5233,8 +5236,8 @@ msgstr "على Station"
 msgid "On the road"
 msgstr "في الطريق"
 
-#: src/apps/orders/Orders.tsx:648
-#: src/apps/orders/Orders.tsx:2615
+#: src/apps/orders/Orders.tsx:657
+#: src/apps/orders/Orders.tsx:2629
 msgid "On the tab"
 msgstr "على الحساب المفتوح"
 
@@ -5303,7 +5306,7 @@ msgstr "الطلبات الإلكترونية"
 msgid "Online orders are not connected. Check the connection and refresh. Actions are paused."
 msgstr "الطلبات الإلكترونية غير متصلة. تحقّق من الاتصال وحدّث. الإجراءات متوقفة مؤقتًا."
 
-#: src/apps/orders/Orders.tsx:1840
+#: src/apps/orders/Orders.tsx:1853
 msgid "Online orders at this location from today and the last {days} days."
 msgstr "الطلبات عبر الإنترنت في هذا الفرع من اليوم وآخر {days} أيام."
 
@@ -5324,7 +5327,7 @@ msgstr "لا يمكن استرداد إلا طلب مدفوع"
 msgid "Only one discount can be applied. This replaces {currentName}."
 msgstr "يمكن تطبيق خصم واحد فقط. هذا الخصم سيحلّ محل {currentName}."
 
-#: src/apps/orders/Orders.tsx:783
+#: src/apps/orders/Orders.tsx:792
 #: src/apps/reservations/StandHeader.tsx:609
 msgid "Open"
 msgstr "متاحة"
@@ -5448,14 +5451,14 @@ msgstr "أو اكتب اسمًا لـ{0}"
 msgid "Or type it"
 msgstr "أو اكتبه"
 
-#: src/apps/orders/Orders.tsx:1071
+#: src/apps/orders/Orders.tsx:1080
 msgid "Order"
 msgstr "الطلب"
 
 #. placeholder {0}: detail.number
 #. placeholder {0}: order.number
-#: src/apps/orders/Orders.tsx:752
-#: src/apps/orders/Orders.tsx:1071
+#: src/apps/orders/Orders.tsx:761
+#: src/apps/orders/Orders.tsx:1080
 msgid "Order {0}"
 msgstr "الطلب {0}"
 
@@ -5495,11 +5498,11 @@ msgstr "الطلب فارغ"
 msgid "Order not found"
 msgstr "الطلب غير موجود"
 
-#: src/apps/orders/Orders.tsx:1867
+#: src/apps/orders/Orders.tsx:1880
 msgid "Order number or guest name"
 msgstr "رقم الطلب أو اسم الضيف"
 
-#: src/apps/orders/Orders.tsx:1870
+#: src/apps/orders/Orders.tsx:1883
 msgid "Order number or name"
 msgstr "رقم الطلب أو الاسم"
 
@@ -5508,7 +5511,7 @@ msgid "Order summary"
 msgstr "ملخص الطلب"
 
 #: src/apps/orders/Orders.tsx:306
-#: src/apps/orders/Orders.tsx:1895
+#: src/apps/orders/Orders.tsx:1908
 #: src/screens/Cart.tsx:266
 msgid "Order type"
 msgstr "نوع الطلب"
@@ -5613,11 +5616,11 @@ msgstr "الشحنات المتأخرة"
 msgid "Packaging"
 msgstr "التعبئة"
 
-#: src/apps/orders/Orders.tsx:1608
+#: src/apps/orders/Orders.tsx:1621
 msgid "Packaging fee"
 msgstr "رسوم التغليف"
 
-#: src/apps/orders/Orders.tsx:1490
+#: src/apps/orders/Orders.tsx:1503
 msgid "Packing"
 msgstr "التعبئة"
 
@@ -5626,9 +5629,9 @@ msgid "Packs that came"
 msgstr "العبوات التي وصلت"
 
 #: src/apps/kitchen/Kitchen.tsx:908
-#: src/apps/orders/Orders.tsx:650
-#: src/apps/orders/Orders.tsx:2522
-#: src/apps/orders/Orders.tsx:2613
+#: src/apps/orders/Orders.tsx:659
+#: src/apps/orders/Orders.tsx:2535
+#: src/apps/orders/Orders.tsx:2627
 #: src/screens/Checkout.tsx:442
 #: src/screens/Checkout.tsx:630
 #: src/screens/OrdersSheet.tsx:739
@@ -5698,7 +5701,7 @@ msgstr "رابط الربط أو رمز ppc1.…"
 msgid "Pairing…"
 msgstr "جارٍ الربط…"
 
-#: src/apps/orders/Orders.tsx:2312
+#: src/apps/orders/Orders.tsx:2325
 msgid "Part of it"
 msgstr "جزء منه"
 
@@ -5727,7 +5730,7 @@ msgstr "مجموعات بانتظار الجلوس"
 msgid "Partly here"
 msgstr "وصل بعضهم"
 
-#: src/apps/orders/Orders.tsx:674
+#: src/apps/orders/Orders.tsx:683
 msgid "Partly refunded"
 msgstr "مسترد جزئيًا"
 
@@ -5809,8 +5812,8 @@ msgstr "دفع · رقم {currentNumber}"
 msgid "Pay {balanceDue}"
 msgstr "دفع {balanceDue}"
 
-#: src/apps/orders/Orders.tsx:653
-#: src/apps/orders/Orders.tsx:2616
+#: src/apps/orders/Orders.tsx:662
+#: src/apps/orders/Orders.tsx:2630
 msgid "Pay at handoff"
 msgstr "الدفع عند التسليم"
 
@@ -5842,7 +5845,7 @@ msgstr "الدفع الآن"
 msgid "Paying now"
 msgstr "المدفوع الآن"
 
-#: src/apps/orders/Orders.tsx:1565
+#: src/apps/orders/Orders.tsx:1578
 #: src/screens/Checkout.tsx:668
 msgid "Payment"
 msgstr "الدفع"
@@ -5879,8 +5882,8 @@ msgstr "النسبة"
 #: src/apps/kitchen/Kitchen.tsx:415
 #: src/apps/kitchen/Kitchen.tsx:853
 #: src/apps/kitchen/KitchenSettings.tsx:388
-#: src/apps/orders/Orders.tsx:1445
-#: src/apps/orders/Orders.tsx:1855
+#: src/apps/orders/Orders.tsx:1458
+#: src/apps/orders/Orders.tsx:1868
 #: src/apps/reservations/AddSheets.tsx:342
 #: src/apps/reservations/guest.ts:249
 #: src/screens/OrdersSheet.tsx:90
@@ -5972,9 +5975,9 @@ msgid "Picked up {placingName}. Tap a table to seat them."
 msgstr "تم اختيار {placingName}. اضغط على طاولة لإجلاسهم."
 
 #: src/apps/orders/Orders.tsx:318
-#: src/apps/orders/Orders.tsx:644
-#: src/apps/orders/Orders.tsx:1904
-#: src/apps/orders/Orders.tsx:2460
+#: src/apps/orders/Orders.tsx:653
+#: src/apps/orders/Orders.tsx:1917
+#: src/apps/orders/Orders.tsx:2473
 #: src/screens/OrdersSheet.tsx:90
 #: src/screens/PhoneOrderSheet.tsx:308
 msgid "Pickup"
@@ -5994,8 +5997,8 @@ msgstr "الاستلام في أقرب وقت"
 #~ msgid "Pickup date and time"
 #~ msgstr "تاريخ ووقت الاستلام"
 
-#: src/apps/orders/Orders.tsx:1514
-#: src/apps/orders/Orders.tsx:1516
+#: src/apps/orders/Orders.tsx:1527
+#: src/apps/orders/Orders.tsx:1529
 msgid "Pickup instructions"
 msgstr "تعليمات الاستلام"
 
@@ -6055,12 +6058,12 @@ msgid "Preparation workflow"
 msgstr "سير التحضير"
 
 #: src/apps/kitchen/Kitchen.tsx:847
-#: src/apps/kitchen/Kitchen.tsx:1197
+#: src/apps/kitchen/Kitchen.tsx:1205
 msgid "Prepare again"
 msgstr "إعادة التحضير"
 
 #: src/apps/kitchen/Kitchen.tsx:287
-#: src/apps/orders/Orders.tsx:698
+#: src/apps/orders/Orders.tsx:707
 #: src/screens/KitchenRounds.tsx:122
 msgid "Preparing"
 msgstr "قيد التحضير"
@@ -6146,8 +6149,8 @@ msgstr "بصمات لم تُسجَّل"
 msgid "Punches saved on this terminal have not gone out yet, so this may be out of date. If you already punched here, ask a manager before punching again."
 msgstr "لم تُرسل بعد بصمات محفوظة على هذا الجهاز، لذا قد لا تكون هذه الحالة محدثة. إن كنت قد بصمت هنا من قبل، فاسأل المدير قبل البصم مرة أخرى."
 
-#: src/apps/kitchen/Kitchen.tsx:1252
-#: src/apps/kitchen/Kitchen.tsx:1257
+#: src/apps/kitchen/Kitchen.tsx:1260
+#: src/apps/kitchen/Kitchen.tsx:1265
 msgid "Push time back"
 msgstr "تأخير الوقت"
 
@@ -6159,7 +6162,7 @@ msgstr "إيداع نقد"
 msgid "Put on the waitlist"
 msgstr "إضافة إلى قائمة الانتظار"
 
-#: src/apps/orders/Orders.tsx:635
+#: src/apps/orders/Orders.tsx:644
 msgid "QR"
 msgstr "QR"
 
@@ -6217,8 +6220,8 @@ msgid "Reading what you said…"
 msgstr "جارٍ قراءة ما قلته…"
 
 #: src/apps/kitchen/Kitchen.tsx:288
-#: src/apps/orders/Orders.tsx:699
-#: src/apps/orders/Orders.tsx:1720
+#: src/apps/orders/Orders.tsx:708
+#: src/apps/orders/Orders.tsx:1733
 #: src/screens/KitchenRounds.tsx:123
 msgid "Ready"
 msgstr "جاهز"
@@ -6236,7 +6239,7 @@ msgstr "جاهز تقريبًا {0}"
 msgid "Ready for a driver"
 msgstr "جاهزة لسائق"
 
-#: src/apps/kitchen/Kitchen.tsx:1236
+#: src/apps/kitchen/Kitchen.tsx:1244
 msgid "Ready for the pass"
 msgstr "جاهز للتسليم"
 
@@ -6252,7 +6255,7 @@ msgstr "تبقى الطلبات الحقيقية التي تنتظر الإرس�
 msgid "Real weight from the scale"
 msgstr "الوزن الفعلي من الميزان"
 
-#: src/apps/orders/Orders.tsx:2326
+#: src/apps/orders/Orders.tsx:2339
 #: src/screens/ManualDiscount.tsx:362
 msgid "Reason"
 msgstr "السبب"
@@ -6265,7 +6268,7 @@ msgstr "سبب الإزالة"
 msgid "Reassign"
 msgstr "إعادة الإسناد"
 
-#: src/apps/kitchen/Kitchen.tsx:1221
+#: src/apps/kitchen/Kitchen.tsx:1229
 msgid "Recall ticket"
 msgstr "استرجاع التذكرة"
 
@@ -6320,21 +6323,21 @@ msgid "Record {0} out"
 msgstr "تسجيل سحب {0}"
 
 #. placeholder {0}: money(cents)
-#: src/apps/orders/Orders.tsx:2280
+#: src/apps/orders/Orders.tsx:2293
 msgid "Record {0} refund"
 msgstr "تسجيل استرداد {0}"
 
 #. placeholder {0}: detail.number
-#: src/apps/orders/Orders.tsx:2255
+#: src/apps/orders/Orders.tsx:2268
 msgid "Record a refund for {0}"
 msgstr "تسجيل استرداد للطلب {0}"
 
-#: src/apps/orders/Orders.tsx:1123
-#: src/apps/orders/Orders.tsx:2281
+#: src/apps/orders/Orders.tsx:1132
+#: src/apps/orders/Orders.tsx:2294
 msgid "Record refund"
 msgstr "تسجيل استرداد"
 
-#: src/apps/orders/Orders.tsx:818
+#: src/apps/orders/Orders.tsx:827
 msgid "Record the payment taken at handoff first."
 msgstr "سجّل الدفع المستلم عند التسليم أولًا."
 
@@ -6364,8 +6367,8 @@ msgstr "تحديث القائمة"
 msgid "Refresh orders"
 msgstr "تحديث الطلبات"
 
-#: src/apps/orders/Orders.tsx:1121
-#: src/apps/orders/Orders.tsx:2278
+#: src/apps/orders/Orders.tsx:1130
+#: src/apps/orders/Orders.tsx:2291
 #: src/screens/OrdersSheet.tsx:824
 #: src/screens/OrdersSheet.tsx:989
 msgid "Refund"
@@ -6377,8 +6380,8 @@ msgstr "الاسترداد (حتى {upTo})"
 
 #. placeholder {0}: detail.number
 #. placeholder {0}: money(cents)
-#: src/apps/orders/Orders.tsx:2254
-#: src/apps/orders/Orders.tsx:2277
+#: src/apps/orders/Orders.tsx:2267
+#: src/apps/orders/Orders.tsx:2290
 msgid "Refund {0}"
 msgstr "استرداد {0}"
 
@@ -6390,12 +6393,12 @@ msgstr "استرداد {amountText}"
 msgid "Refund #{number}"
 msgstr "استرداد الطلب رقم {number}"
 
-#: src/apps/orders/Orders.tsx:666
+#: src/apps/orders/Orders.tsx:675
 msgid "Refund failed"
 msgstr "فشل الاسترداد"
 
-#: src/apps/orders/Orders.tsx:662
-#: src/apps/orders/Orders.tsx:1649
+#: src/apps/orders/Orders.tsx:671
+#: src/apps/orders/Orders.tsx:1662
 msgid "Refund pending"
 msgstr "الاسترداد قيد التنفيذ"
 
@@ -6403,13 +6406,13 @@ msgstr "الاسترداد قيد التنفيذ"
 msgid "Refund recorded"
 msgstr "تم تسجيل الاسترداد"
 
-#: src/apps/orders/Orders.tsx:2162
-#: src/apps/orders/Orders.tsx:2165
+#: src/apps/orders/Orders.tsx:2175
+#: src/apps/orders/Orders.tsx:2178
 msgid "Refund the guest?"
 msgstr "هل تريد رد المبلغ للضيف؟"
 
-#: src/apps/orders/Orders.tsx:670
-#: src/apps/orders/Orders.tsx:1641
+#: src/apps/orders/Orders.tsx:679
+#: src/apps/orders/Orders.tsx:1654
 #: src/screens/OrdersSheet.tsx:754
 #: src/screens/OrdersSheet.tsx:1175
 #: src/screens/Receipt.tsx:435
@@ -6433,15 +6436,15 @@ msgstr "واجهة الطلبات الإقليمية. يملؤها رابط ال
 msgid "Register"
 msgstr "الكاشير"
 
-#: src/apps/orders/Orders.tsx:1099
+#: src/apps/orders/Orders.tsx:1108
 msgid "Reject"
 msgstr "رفض"
 
-#: src/apps/orders/Orders.tsx:2037
+#: src/apps/orders/Orders.tsx:2050
 msgid "Reject order"
 msgstr "رفض الطلب"
 
-#: src/apps/orders/Orders.tsx:2026
+#: src/apps/orders/Orders.tsx:2039
 msgid "Reject order {number}?"
 msgstr "رفض الطلب {number}؟"
 
@@ -6451,8 +6454,8 @@ msgstr "مرفوض"
 
 #. placeholder {0}: rejectedReasonText(_, detail.rejectedReason)
 #. placeholder {0}: rejectedReasonText(_, order.rejectedReason)
-#: src/apps/orders/Orders.tsx:769
-#: src/apps/orders/Orders.tsx:1437
+#: src/apps/orders/Orders.tsx:778
+#: src/apps/orders/Orders.tsx:1450
 msgid "Rejected: {0}"
 msgstr "مرفوض: {0}"
 
@@ -6547,7 +6550,7 @@ msgstr "الحجوزات متوقفة على هذا الجهاز"
 msgid "Reservations need a connection"
 msgstr "تحتاج الحجوزات إلى اتصال"
 
-#: src/apps/kitchen/Kitchen.tsx:1285
+#: src/apps/kitchen/Kitchen.tsx:1293
 msgid "Reset preparation"
 msgstr "إعادة ضبط التحضير"
 
@@ -6583,7 +6586,7 @@ msgstr "استئناف الطلب عبر الإنترنت"
 msgid "Returned plate"
 msgstr "طبق مُرتجع"
 
-#: src/apps/orders/Orders.tsx:783
+#: src/apps/orders/Orders.tsx:792
 msgid "Review"
 msgstr "مراجعة"
 
@@ -6605,7 +6608,7 @@ msgstr "المكافآت"
 msgid "Rewards are not switched on for this restaurant."
 msgstr "المكافآت غير مفعّلة لهذا المطعم."
 
-#: src/apps/kitchen/Kitchen.tsx:1151
+#: src/apps/kitchen/Kitchen.tsx:1159
 msgid "Right half"
 msgstr "النصف الأيمن"
 
@@ -6730,11 +6733,11 @@ msgstr "تنتقل التذاكر المجدولة إلى «مباشر» عند 
 msgid "Seafood"
 msgstr "المأكولات البحرية"
 
-#: src/apps/orders/Orders.tsx:1914
+#: src/apps/orders/Orders.tsx:1927
 msgid "Search"
 msgstr "بحث"
 
-#: src/apps/orders/Orders.tsx:1846
+#: src/apps/orders/Orders.tsx:1859
 msgid "Search by"
 msgstr "البحث حسب"
 
@@ -6756,13 +6759,13 @@ msgstr "ابحث في الأصناف"
 msgid "Search menu"
 msgstr "ابحث في القائمة"
 
-#: src/apps/orders/Orders.tsx:1822
-#: src/apps/orders/Orders.tsx:1919
+#: src/apps/orders/Orders.tsx:1835
+#: src/apps/orders/Orders.tsx:1932
 msgid "Search needs a connection. Reconnect and try again."
 msgstr "يحتاج البحث إلى اتصال. أعد الاتصال وحاول مرة أخرى."
 
 #: src/apps/orders/Orders.tsx:363
-#: src/apps/orders/Orders.tsx:1831
+#: src/apps/orders/Orders.tsx:1844
 #: src/screens/OrdersSheet.tsx:284
 #: src/screens/OrdersSheet.tsx:294
 msgid "Search orders"
@@ -6772,7 +6775,7 @@ msgstr "البحث في الطلبات"
 msgid "Search parties"
 msgstr "البحث في المجموعات"
 
-#: src/apps/orders/Orders.tsx:1943
+#: src/apps/orders/Orders.tsx:1956
 msgid "Search results"
 msgstr "نتائج البحث"
 
@@ -6780,7 +6783,7 @@ msgstr "نتائج البحث"
 msgid "Search the menu"
 msgstr "البحث في القائمة"
 
-#: src/apps/orders/Orders.tsx:1930
+#: src/apps/orders/Orders.tsx:1943
 msgid "Searching…"
 msgstr "جارٍ البحث…"
 
@@ -7056,7 +7059,7 @@ msgstr "أُرسل {time}"
 msgid "Served"
 msgstr "قُدِّم"
 
-#: src/apps/kitchen/Kitchen.tsx:1114
+#: src/apps/kitchen/Kitchen.tsx:1122
 #: src/screens/KitchenRounds.tsx:89
 msgid "Served {servedTime}"
 msgstr "قُدِّم {servedTime}"
@@ -7099,7 +7102,7 @@ msgstr "الفترة"
 msgid "Service charge"
 msgstr "رسوم الخدمة"
 
-#: src/apps/orders/Orders.tsx:1594
+#: src/apps/orders/Orders.tsx:1607
 msgid "Service fee"
 msgstr "رسوم الخدمة"
 
@@ -7193,7 +7196,7 @@ msgstr "عرض"
 msgid "Show all"
 msgstr "عرض الكل"
 
-#: src/apps/orders/Orders.tsx:1457
+#: src/apps/orders/Orders.tsx:1470
 msgid "Show contact"
 msgstr "إظهار بيانات التواصل"
 
@@ -7226,7 +7229,7 @@ msgid "Show server sections on the floor"
 msgstr "اعرض أقسام النُّدُل على الصالة"
 
 #. placeholder {0}: answer.results.length
-#: src/apps/orders/Orders.tsx:1983
+#: src/apps/orders/Orders.tsx:1996
 msgid "Showing the newest {0} matches. Type more of the number or name to narrow it down."
 msgstr "يتم عرض أحدث {0} نتيجة. اكتب المزيد من الرقم أو الاسم لتضييق النتائج."
 
@@ -7367,8 +7370,8 @@ msgstr "شخص آخر"
 msgid "Someone else already counted this shelf. Your count is added to theirs."
 msgstr "عدّ شخص آخر هذا الرف بالفعل. يُضاف عدّك إلى عدّه."
 
-#: src/apps/orders/Orders.tsx:807
-#: src/apps/orders/Orders.tsx:812
+#: src/apps/orders/Orders.tsx:816
+#: src/apps/orders/Orders.tsx:821
 msgid "Someone else already decided on this order. It was read again."
 msgstr "قرر شخص آخر بشأن هذا الطلب بالفعل. تمت قراءته مرة أخرى."
 
@@ -7465,7 +7468,7 @@ msgstr "البدء قبل الاستلام (دقيقة)"
 msgid "Start break"
 msgstr "بدء الاستراحة"
 
-#: src/apps/kitchen/Kitchen.tsx:1200
+#: src/apps/kitchen/Kitchen.tsx:1208
 msgid "Start item"
 msgstr "بدء تحضير الصنف"
 
@@ -7485,7 +7488,7 @@ msgstr "بدء وضع التدريب"
 msgid "Started on this tablet"
 msgstr "بدأ على هذا الجهاز"
 
-#: src/apps/orders/Orders.tsx:1878
+#: src/apps/orders/Orders.tsx:1891
 msgid "State"
 msgstr "الحالة"
 
@@ -7563,7 +7566,7 @@ msgstr "أوقف التسجيل واقرأه"
 msgid "Stop sharing my location"
 msgstr "إيقاف مشاركة موقعي"
 
-#: src/apps/orders/Orders.tsx:1568
+#: src/apps/orders/Orders.tsx:1581
 #: src/screens/Checkout.tsx:605
 #: src/screens/GuestDisplay.tsx:211
 #: src/screens/OrdersSheet.tsx:696
@@ -7607,8 +7610,8 @@ msgstr "الطاولة"
 #. placeholder {0}: order.tableLabel
 #. placeholder {0}: r.tableLabels.join(' + ')
 #: src/apps/kitchen/Kitchen.tsx:920
-#: src/apps/orders/Orders.tsx:642
-#: src/apps/orders/Orders.tsx:2458
+#: src/apps/orders/Orders.tsx:651
+#: src/apps/orders/Orders.tsx:2471
 #: src/apps/reservations/PartySheet.tsx:501
 #: src/apps/reservations/TableSheet.tsx:117
 msgid "Table {0}"
@@ -7934,7 +7937,7 @@ msgstr "اضغط على الفواتير لتخصيص أو مشاركة كل ط�
 msgid "tap to put back in line"
 msgstr "اضغط لإعادتهم إلى القائمة"
 
-#: src/apps/orders/Orders.tsx:1619
+#: src/apps/orders/Orders.tsx:1632
 #: src/screens/Cart.tsx:234
 #: src/screens/Checkout.tsx:618
 #: src/screens/CustomItemSheet.tsx:219
@@ -8006,16 +8009,16 @@ msgid "Terminals are switched off for this restaurant right now."
 msgstr "نقاط البيع متوقفة لهذا المطعم حاليًا."
 
 #: src/apps/kitchen/Kitchen.tsx:946
-#: src/apps/orders/Orders.tsx:631
-#: src/apps/orders/Orders.tsx:1364
+#: src/apps/orders/Orders.tsx:640
+#: src/apps/orders/Orders.tsx:1373
 msgid "TEST"
 msgstr "تجريبي"
 
-#: src/apps/orders/Orders.tsx:1358
+#: src/apps/orders/Orders.tsx:1367
 msgid "Test order"
 msgstr "طلب تجريبي"
 
-#: src/apps/orders/Orders.tsx:2490
+#: src/apps/orders/Orders.tsx:2503
 msgid "TEST ORDER"
 msgstr "طلب تجريبي"
 
@@ -8124,7 +8127,7 @@ msgstr "لم يُحفظ ذلك. حاول مرة أخرى."
 #~ msgid "That did not work. Nothing was changed: try again."
 #~ msgstr "لم ينجح ذلك. لم يتغير شيء: حاول مرة أخرى."
 
-#: src/apps/orders/Orders.tsx:854
+#: src/apps/orders/Orders.tsx:863
 msgid "That did not work. The order was read again."
 msgstr "لم ينجح ذلك. أُعيدت قراءة الطلب."
 
@@ -8176,12 +8179,12 @@ msgstr "يتم ذلك من التطبيق، لا من جهاز الكاشير."
 msgid "That is more than can be refunded (up to {upTo})."
 msgstr "هذا أكثر مما يمكن استرداده (حتى {upTo})."
 
-#: src/apps/orders/Orders.tsx:830
+#: src/apps/orders/Orders.tsx:839
 msgid "That is more than is left to refund."
 msgstr "هذا أكثر من المبلغ المتبقي للاسترداد."
 
 #. placeholder {0}: money(error.refundableCents)
-#: src/apps/orders/Orders.tsx:828
+#: src/apps/orders/Orders.tsx:837
 msgid "That is more than is left to refund. At most {0} can be refunded."
 msgstr "هذا أكثر من المتبقي للاسترداد. الحد الأقصى القابل للاسترداد {0}."
 
@@ -8326,7 +8329,7 @@ msgstr "تعذّر بدء المكالمة. حاول مرة أخرى."
 msgid "The code in the guest's wallet on the website or app."
 msgstr "الرمز الموجود في محفظة الضيف على الموقع أو التطبيق."
 
-#: src/apps/orders/Orders.tsx:851
+#: src/apps/orders/Orders.tsx:860
 msgid "The connection dropped. The order was read again: check it before trying again."
 msgstr "انقطع الاتصال. أُعيدت قراءة الطلب: راجعه قبل المحاولة مجددًا."
 
@@ -8346,15 +8349,15 @@ msgstr "الدرج مطابق"
 msgid "The guest asked to cancel"
 msgstr "طلب الضيف الإلغاء"
 
-#: src/apps/orders/Orders.tsx:837
+#: src/apps/orders/Orders.tsx:846
 msgid "The guest disputed this payment with their bank, so it cannot be refunded here. Handle it in your payment provider's dashboard."
 msgstr "اعترض الضيف على هذه الدفعة لدى بنكه، لذا لا يمكن استردادها من هنا. تعامل معها من لوحة مزود الدفع لديك."
 
-#: src/apps/orders/Orders.tsx:1659
+#: src/apps/orders/Orders.tsx:1672
 msgid "The guest disputed this payment. It cannot be refunded here until the dispute is settled."
 msgstr "اعترض الضيف على هذه الدفعة. لا يمكن استردادها من هنا حتى تتم تسوية النزاع."
 
-#: src/apps/orders/Orders.tsx:2058
+#: src/apps/orders/Orders.tsx:2071
 msgid "The guest only sees \"out of stock\" or \"kitchen closed\". Other reasons stay with you."
 msgstr "يرى الضيف فقط «نفد من المخزون» أو «المطبخ مغلق». تبقى الأسباب الأخرى لديك."
 
@@ -8382,11 +8385,11 @@ msgstr "لا توجد طلبات في المطبخ"
 msgid "The kitchen is not connected. Check the connection and refresh. Changes are paused."
 msgstr "المطبخ غير متصل. تحقّق من الاتصال وحدّث الشاشة. التغييرات متوقفة مؤقتًا."
 
-#: src/apps/orders/Orders.tsx:2054
+#: src/apps/orders/Orders.tsx:2067
 msgid "The kitchen never gets this order and nothing is charged. It cannot be reopened."
 msgstr "لن يصل هذا الطلب إلى المطبخ ولن يُحصَّل أي مبلغ. لا يمكن إعادة فتحه."
 
-#: src/apps/orders/Orders.tsx:2051
+#: src/apps/orders/Orders.tsx:2064
 msgid "The kitchen never gets this order. It was paid online, so the guest is refunded in full. Card fees are usually not returned to you."
 msgstr "لن يصل هذا الطلب إلى المطبخ. تم الدفع عبر الإنترنت، لذا يُسترد للضيف المبلغ كاملًا. عادةً لا تُرد إليك رسوم البطاقة."
 
@@ -8398,7 +8401,7 @@ msgstr "قائمة المطبخ أكبر من أن تُعرض بالكامل. أ
 msgid "The kitchen setup changed elsewhere. Close this panel and open it again before editing."
 msgstr "تغيّرت إعدادات المطبخ من شاشة أخرى. أغلق هذه اللوحة وافتحها مجددًا قبل التعديل."
 
-#: src/apps/orders/Orders.tsx:2157
+#: src/apps/orders/Orders.tsx:2170
 msgid "The kitchen stops preparing it. It cannot be reopened."
 msgstr "يتوقف المطبخ عن تحضيره. لا يمكن إعادة فتحه."
 
@@ -8406,7 +8409,7 @@ msgstr "يتوقف المطبخ عن تحضيره. لا يمكن إعادة فت
 msgid "The last entries are still on their way to the office."
 msgstr "آخر الإدخالات لا تزال في طريقها إلى المكتب."
 
-#: src/apps/orders/Orders.tsx:1675
+#: src/apps/orders/Orders.tsx:1688
 msgid "The last refund failed, so nothing was returned. The amount can be refunded again."
 msgstr "فشل آخر استرداد ولم يُرجع أي مبلغ. يمكن استرداد المبلغ مرة أخرى."
 
@@ -8418,11 +8421,11 @@ msgstr "تأتي القائمة من خادمك الإقليمي."
 msgid "The microphone is not allowed. Type what you counted instead."
 msgstr "الميكروفون غير مسموح به. اكتب ما جردته بدلًا من ذلك."
 
-#: src/apps/orders/Orders.tsx:2289
+#: src/apps/orders/Orders.tsx:2302
 msgid "The money goes back to the guest's card through your payment provider. Card fees are usually not returned to you."
 msgstr "يعود المبلغ إلى بطاقة الضيف عبر مزود الدفع لديك. عادةً لا تُسترد رسوم البطاقة إليك."
 
-#: src/apps/orders/Orders.tsx:2180
+#: src/apps/orders/Orders.tsx:2193
 msgid "The money goes back to the guest's card. Card fees are usually not returned to you."
 msgstr "يعود المبلغ إلى بطاقة الضيف. عادةً لا تُسترد رسوم البطاقة إليك."
 
@@ -8482,43 +8485,43 @@ msgstr "لم يعد لدى المكتب ما يخصه هذا الإدخال."
 msgid "The office refused this."
 msgstr "رفض المكتب هذا."
 
-#: src/apps/orders/Orders.tsx:864
+#: src/apps/orders/Orders.tsx:873
 msgid "The order is cancelled and the refund has started. The money goes back to the guest's card."
 msgstr "تم إلغاء الطلب وبدأ الاسترداد. يعود المبلغ إلى بطاقة الضيف."
 
-#: src/apps/orders/Orders.tsx:879
+#: src/apps/orders/Orders.tsx:888
 msgid "The order is cancelled, but not refunded: this refund takes loyalty points back. Refund it in the App."
 msgstr "تم إلغاء الطلب ولكن لم يُسترد المبلغ: هذا الاسترداد يسحب نقاط الولاء. استرده من التطبيق."
 
-#: src/apps/orders/Orders.tsx:869
+#: src/apps/orders/Orders.tsx:878
 msgid "The order is cancelled, but the payment is disputed, so it was not refunded."
 msgstr "تم إلغاء الطلب، لكن الدفعة متنازع عليها فلم يُسترد المبلغ."
 
-#: src/apps/orders/Orders.tsx:883
+#: src/apps/orders/Orders.tsx:892
 msgid "The order is cancelled, but the refund did not start. Open the order and try Refund."
 msgstr "تم إلغاء الطلب، لكن الاسترداد لم يبدأ. افتح الطلب وجرّب «استرداد»."
 
-#: src/apps/orders/Orders.tsx:873
+#: src/apps/orders/Orders.tsx:882
 msgid "The order is cancelled. A refund for it was already on its way."
 msgstr "تم إلغاء الطلب. كان هناك استرداد قيد التنفيذ بالفعل."
 
-#: src/apps/orders/Orders.tsx:876
+#: src/apps/orders/Orders.tsx:885
 msgid "The order is cancelled. It was already fully refunded."
 msgstr "تم إلغاء الطلب. كان قد استُرد بالكامل بالفعل."
 
-#: src/apps/orders/Orders.tsx:894
+#: src/apps/orders/Orders.tsx:903
 msgid "The order is rejected and the guest is being refunded in full. The money goes back to their card."
 msgstr "تم رفض الطلب ويجري رد المبلغ كاملًا للضيف. يعود المال إلى بطاقته."
 
-#: src/apps/orders/Orders.tsx:899
+#: src/apps/orders/Orders.tsx:908
 msgid "The order is rejected, but the payment is disputed, so it was not refunded."
 msgstr "تم رفض الطلب، لكن الدفعة محل نزاع، لذلك لم يتم رد المبلغ."
 
-#: src/apps/orders/Orders.tsx:906
+#: src/apps/orders/Orders.tsx:915
 msgid "The order is rejected, but the refund did not start. Open the order and try Refund."
 msgstr "تم رفض الطلب، لكن عملية الرد لم تبدأ. افتح الطلب وجرّب «رد المبلغ»."
 
-#: src/apps/orders/Orders.tsx:903
+#: src/apps/orders/Orders.tsx:912
 msgid "The order is rejected. It was already refunded."
 msgstr "تم رفض الطلب. وكان المبلغ قد رُد بالفعل."
 
@@ -8558,7 +8561,7 @@ msgstr "المطعم مغلق في ذلك اليوم."
 msgid "The restaurant is closed this day."
 msgstr "المطعم مغلق في هذا اليوم."
 
-#: src/apps/orders/Orders.tsx:1823
+#: src/apps/orders/Orders.tsx:1836
 msgid "The search did not work. Try again."
 msgstr "لم ينجح البحث. حاول مرة أخرى."
 
@@ -8669,12 +8672,12 @@ msgid "The tab was taken over but could not be saved on this device."
 msgstr "نُقلت الفاتورة المفتوحة إلى هنا لكن تعذّر حفظها على هذا الجهاز."
 
 #: src/apps/kitchen/Kitchen.tsx:954
-#: src/apps/orders/Orders.tsx:1374
+#: src/apps/orders/Orders.tsx:1383
 msgid "The ticket did not print. Check that the printer is on, has paper and is set up in Settings → Terminals in the App."
 msgstr "لم تُطبع التذكرة. تأكد من أن الطابعة تعمل وفيها ورق وأنها مضبوطة في الإعدادات ← الأجهزة الطرفية في التطبيق."
 
 #: src/apps/kitchen/Kitchen.tsx:950
-#: src/apps/orders/Orders.tsx:1370
+#: src/apps/orders/Orders.tsx:1379
 msgid "The ticket printed."
 msgstr "تمت طباعة التذكرة."
 
@@ -8710,7 +8713,7 @@ msgstr "ساعة الحضور غير متاحة الآن. حاول مرة أخر
 msgid "The time clock was off on this terminal when this was punched. Ask a manager to add it."
 msgstr "كانت ساعة الحضور متوقفة على هذا الجهاز عند هذه البصمة. اطلب من المدير إضافتها."
 
-#: src/apps/orders/Orders.tsx:1419
+#: src/apps/orders/Orders.tsx:1432
 msgid "The time to answer has passed. If nobody accepts it, the order is turned down automatically."
 msgstr "انتهى وقت الرد. إذا لم يقبله أحد، يُرفض الطلب تلقائيًا."
 
@@ -8770,7 +8773,7 @@ msgstr "لا يوجد شيء في هذا الجرد بعد."
 msgid "There is nothing to punch right now. Ask a manager."
 msgstr "لا يوجد ما يُسجّل الآن. اطلب من المدير."
 
-#: src/apps/orders/Orders.tsx:840
+#: src/apps/orders/Orders.tsx:849
 msgid "There is nothing to refund on this order."
 msgstr "لا يوجد ما يُسترد في هذا الطلب."
 
@@ -9000,11 +9003,11 @@ msgstr "هذا الرقم سينضم إلى برنامج المكافآت. سن�
 msgid "This order can't be pushed back any further."
 msgstr "لا يمكن تأخير هذا الطلب أكثر من ذلك."
 
-#: src/apps/orders/Orders.tsx:844
+#: src/apps/orders/Orders.tsx:853
 msgid "This order cannot do that any more."
 msgstr "لم يعد هذا الإجراء ممكنًا لهذا الطلب."
 
-#: src/apps/orders/Orders.tsx:815
+#: src/apps/orders/Orders.tsx:824
 msgid "This order changed on another screen. Check it, then try again."
 msgstr "تغيّر هذا الطلب على شاشة أخرى. راجعه ثم حاول مجددًا."
 
@@ -9012,7 +9015,7 @@ msgstr "تغيّر هذا الطلب على شاشة أخرى. راجعه ثم �
 msgid "This order does not have the items that discount needs."
 msgstr "لا يحتوي هذا الطلب على الأصناف التي يحتاجها ذلك الخصم."
 
-#: src/apps/orders/Orders.tsx:1076
+#: src/apps/orders/Orders.tsx:1085
 msgid "This order finished more than four hours ago. It is shown for reference: record refunds and see the guest’s contact in the App."
 msgstr "انتهى هذا الطلب منذ أكثر من أربع ساعات. يُعرض للاطلاع فقط: سجّل المبالغ المستردة واطّلع على بيانات اتصال الضيف في التطبيق."
 
@@ -9030,7 +9033,7 @@ msgstr "يحتوي هذا الطلب على أكثر من {MAX_ORDER_LINES} سط
 msgid "This order is already closed"
 msgstr "هذا الطلب مغلق بالفعل"
 
-#: src/apps/orders/Orders.tsx:842
+#: src/apps/orders/Orders.tsx:851
 msgid "This order is already fully refunded."
 msgstr "تم استرداد هذا الطلب بالكامل."
 
@@ -9050,11 +9053,11 @@ msgstr "اقترب هذا الطلب من حد {MAX_ORDER_LINES} سطرًا. أ�
 msgid "This order is finished."
 msgstr "هذا الطلب منتهٍ."
 
-#: src/apps/orders/Orders.tsx:847
+#: src/apps/orders/Orders.tsx:856
 msgid "This order is on a table tab. Close the tab to take payment."
 msgstr "هذا الطلب على حساب طاولة مفتوح. أغلق الحساب لاستلام الدفع."
 
-#: src/apps/orders/Orders.tsx:1413
+#: src/apps/orders/Orders.tsx:1426
 msgid "This order is waiting for you"
 msgstr "هذا الطلب بانتظار قرارك"
 
@@ -9078,11 +9081,11 @@ msgstr "أُخذ هذا الطلب في الوضع التجريبي، لذا ي�
 msgid "This punch could not be saved. Ask a manager to add it."
 msgstr "تعذّر حفظ هذه البصمة. اطلب من المدير إضافتها."
 
-#: src/apps/orders/Orders.tsx:2294
+#: src/apps/orders/Orders.tsx:2307
 msgid "This records money you returned with your payment provider. It does not move money by itself."
 msgstr "هذا يسجّل مبلغًا أعدته عبر مزوّد الدفع. لا ينقل أي أموال بنفسه."
 
-#: src/apps/orders/Orders.tsx:823
+#: src/apps/orders/Orders.tsx:832
 msgid "This refund takes loyalty points back. Do it in the App, where a manager with the loyalty permission can approve it."
 msgstr "هذا الاسترداد يسحب نقاط الولاء. نفّذه من التطبيق حيث يمكن لمدير لديه صلاحية الولاء الموافقة عليه."
 
@@ -9275,7 +9278,7 @@ msgstr "الوقت"
 msgid "Time clock"
 msgstr "ساعة الدوام"
 
-#: src/apps/orders/Orders.tsx:727
+#: src/apps/orders/Orders.tsx:736
 msgid "Time is up"
 msgstr "انتهى الوقت"
 
@@ -9293,7 +9296,7 @@ msgstr "الجدول الزمني"
 msgid "Timing"
 msgstr "التوقيت"
 
-#: src/apps/orders/Orders.tsx:1627
+#: src/apps/orders/Orders.tsx:1640
 #: src/screens/Checkout.tsx:622
 #: src/screens/Checkout.tsx:648
 #: src/screens/GuestDisplay.tsx:188
@@ -9396,7 +9399,7 @@ msgstr "فات وقت التراجع هنا"
 msgid "Too many changes to one tab. Cancel it and start a new one."
 msgstr "تغييرات كثيرة على حساب واحد. ألغه وابدأ حسابًا جديدًا."
 
-#: src/apps/orders/Orders.tsx:1820
+#: src/apps/orders/Orders.tsx:1833
 msgid "Too many phone searches this hour. Try again later."
 msgstr "عمليات بحث كثيرة بالهاتف خلال هذه الساعة. حاول لاحقًا."
 
@@ -9444,8 +9447,8 @@ msgstr "شحن البطاقة"
 msgid "Topped up. New balance {0}."
 msgstr "تم الشحن. الرصيد الجديد {0}."
 
-#: src/apps/orders/Orders.tsx:1633
-#: src/apps/orders/Orders.tsx:2606
+#: src/apps/orders/Orders.tsx:1646
+#: src/apps/orders/Orders.tsx:2620
 #: src/screens/Checkout.tsx:625
 #: src/screens/GuestDisplay.tsx:229
 #: src/screens/OrdersSheet.tsx:729
@@ -9583,7 +9586,7 @@ msgid "Unit for {name}, another unit"
 msgstr "وحدة {name}، وحدة أخرى"
 
 #: src/apps/kitchen/Kitchen.tsx:908
-#: src/apps/orders/Orders.tsx:2523
+#: src/apps/orders/Orders.tsx:2536
 msgid "Unpaid"
 msgstr "غير مدفوع"
 
@@ -9608,7 +9611,7 @@ msgid "Up next"
 msgstr "التالي"
 
 #. placeholder {0}: money(detail.refundableCents)
-#: src/apps/orders/Orders.tsx:2299
+#: src/apps/orders/Orders.tsx:2312
 msgid "Up to {0} can be refunded."
 msgstr "يمكن استرداد حتى {0}."
 
@@ -9632,7 +9635,7 @@ msgstr "تحديث الصنف"
 msgid "Update Station: this tablet and the office no longer speak the same version. What you saved stays here."
 msgstr "حدّث تطبيق Station: لم يعد هذا الجهاز والمكتب على نفس الإصدار. ما حفظته يبقى هنا."
 
-#: src/apps/orders/Orders.tsx:1222
+#: src/apps/orders/Orders.tsx:1231
 msgid "Updates are paused. Reconnect before changing this order."
 msgstr "التحديثات متوقفة مؤقتًا. أعد الاتصال قبل تغيير هذا الطلب."
 
@@ -9670,13 +9673,13 @@ msgstr "استخدمه قبل (اختياري)"
 msgid "Use these details"
 msgstr "استخدام هذه التفاصيل"
 
-#: src/apps/kitchen/Kitchen.tsx:1038
-#: src/apps/orders/Orders.tsx:1495
-#: src/apps/orders/Orders.tsx:2503
+#: src/apps/kitchen/Kitchen.tsx:1045
+#: src/apps/orders/Orders.tsx:1508
+#: src/apps/orders/Orders.tsx:2516
 msgid "Utensils: yes"
 msgstr "أدوات: نعم"
 
-#: src/apps/kitchen/Kitchen.tsx:1128
+#: src/apps/kitchen/Kitchen.tsx:1136
 msgid "Variant unavailable · check the order"
 msgstr "الخيار غير متاح · راجع الطلب"
 
@@ -9731,7 +9734,7 @@ msgid "VIP: {text}"
 msgstr "ضيف مميز: {text}"
 
 #: src/apps/deliveries/Deliveries.tsx:422
-#: src/apps/kitchen/Kitchen.tsx:1009
+#: src/apps/kitchen/Kitchen.tsx:1016
 msgid "Waiting"
 msgstr "في الانتظار"
 
@@ -9751,9 +9754,9 @@ msgstr "بانتظار الموافقة"
 msgid "Waiting for the guest to approve {waitingName}"
 msgstr "بانتظار موافقة الضيف على {waitingName}"
 
-#: src/apps/orders/Orders.tsx:615
-#: src/apps/orders/Orders.tsx:696
-#: src/apps/orders/Orders.tsx:1409
+#: src/apps/orders/Orders.tsx:624
+#: src/apps/orders/Orders.tsx:705
+#: src/apps/orders/Orders.tsx:1422
 msgid "Waiting for you"
 msgstr "بانتظار قرارك"
 
@@ -9827,7 +9830,7 @@ msgstr "أرسلنا رمزًا من 6 أرقام إلى {masked}. اطلب من
 msgid "We’ll text this number once, about this order only."
 msgstr "سنرسل رسالة واحدة إلى هذا الرقم، بخصوص هذا الطلب فقط."
 
-#: src/apps/orders/Orders.tsx:635
+#: src/apps/orders/Orders.tsx:644
 msgid "Web"
 msgstr "الموقع"
 
@@ -9925,8 +9928,8 @@ msgstr "تذاكر كاملة"
 msgid "Why"
 msgstr "لماذا"
 
-#: src/apps/orders/Orders.tsx:2065
-#: src/apps/orders/Orders.tsx:2190
+#: src/apps/orders/Orders.tsx:2078
+#: src/apps/orders/Orders.tsx:2203
 #: src/screens/AuditSheet.tsx:133
 msgid "Why?"
 msgstr "لماذا؟"
@@ -9951,8 +9954,8 @@ msgstr "ساعات العمل حتى الآن"
 msgid "Wrong address"
 msgstr "عنوان خاطئ"
 
-#: src/apps/kitchen/Kitchen.tsx:972
-#: src/apps/orders/Orders.tsx:1392
+#: src/apps/kitchen/Kitchen.tsx:979
+#: src/apps/orders/Orders.tsx:1405
 msgid "Yes"
 msgstr "نعم"
 
@@ -10041,11 +10044,11 @@ msgstr "يمكنك إدخال رمزك مرة أخرى الآن."
 msgid "You do not have a shift right now. Ask a manager."
 msgstr "ليس لديك وردية الآن. اطلب من المدير."
 
-#: src/apps/orders/Orders.tsx:820
+#: src/apps/orders/Orders.tsx:829
 msgid "You do not have permission to do that."
 msgstr "ليست لديك صلاحية لذلك."
 
-#: src/apps/orders/Orders.tsx:1818
+#: src/apps/orders/Orders.tsx:1831
 msgid "You do not have permission to search by phone."
 msgstr "ليست لديك صلاحية البحث برقم الهاتف."
 

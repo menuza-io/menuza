@@ -143,6 +143,23 @@ export async function mountOrderProblems(
 	/** One key per sending attempt; kept until the report is accepted. */
 	let attemptKey = randomAttemptKey()
 	let status = ''
+	// The section is a fixed shell (heading, reports, a status line that stays in
+	// the page so screen readers announce what it says, and the form or its
+	// button). A poll that finds nothing new changes nothing, and one that finds
+	// a new answer redraws the reports only, never a form someone is filling in.
+	const heading = el(
+		'h2',
+		'text-base font-semibold text-foreground',
+		labels.heading,
+	)
+	const reportsHost = el('div')
+	const statusNode = el('p', 'text-sm font-medium text-foreground')
+	statusNode.setAttribute('role', 'status')
+	statusNode.setAttribute('dir', 'auto')
+	const actionHost = el('div')
+	let shellBuilt = false
+	let drawnReports = ''
+	let drawnAction = ''
 
 	async function load() {
 		const credential = options.credential()
@@ -166,23 +183,33 @@ export async function mountOrderProblems(
 		if (!view.enabled || (!hasReports && !canReport)) {
 			root.hidden = true
 			root.replaceChildren()
+			shellBuilt = false
+			drawnReports = ''
+			drawnAction = ''
 			return
 		}
 		root.hidden = false
-		const children: HTMLElement[] = [
-			el('h2', 'text-base font-semibold text-foreground', labels.heading),
-		]
-		if (hasReports) children.push(drawReports(view.problems))
-		if (status) {
-			const note = el('p', 'text-sm font-medium text-foreground', status)
-			note.setAttribute('role', 'status')
-			note.setAttribute('dir', 'auto')
-			children.push(note)
+		if (!shellBuilt) {
+			root.replaceChildren(heading, reportsHost, statusNode, actionHost)
+			shellBuilt = true
+			drawnReports = ''
+			drawnAction = ''
 		}
-		if (canReport) {
-			children.push(formOpen ? drawForm(view) : drawOpenButton())
+		if (statusNode.textContent !== status) statusNode.textContent = status
+		const reportsKey = JSON.stringify(view.problems)
+		if (reportsKey !== drawnReports) {
+			drawnReports = reportsKey
+			reportsHost.replaceChildren(
+				...(hasReports ? [drawReports(view.problems)] : []),
+			)
 		}
-		root.replaceChildren(...children)
+		const actionKey = canReport ? (formOpen ? 'form' : 'button') : 'none'
+		if (actionKey !== drawnAction) {
+			drawnAction = actionKey
+			actionHost.replaceChildren(
+				...(canReport ? [formOpen ? drawForm(view) : drawOpenButton()] : []),
+			)
+		}
 	}
 
 	function drawOpenButton(): HTMLElement {
@@ -390,6 +417,7 @@ export async function mountOrderProblems(
 		cancel.addEventListener('click', () => {
 			formOpen = false
 			draw()
+			root.querySelector<HTMLElement>('[data-problem-open]')?.focus()
 		})
 		actions.append(send, cancel)
 		form.appendChild(actions)
@@ -475,6 +503,7 @@ export async function mountOrderProblems(
 			formOpen = false
 			await load()
 			draw()
+			root.querySelector<HTMLElement>('[data-problem-open]')?.focus()
 		} catch (caught) {
 			parts.error.textContent = problemErrorText(labels, caught)
 			parts.send.disabled = false

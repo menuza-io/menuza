@@ -253,6 +253,26 @@ export function groupShareLink(
 	return `${origin}${pagePath}?g=${encodeURIComponent(groupId)}#join=${shareToken}`
 }
 
+/** Where the layout's inline script parks a `#join=` token it moved out of the bar. */
+export const PENDING_JOIN_KEY = 'menuza_pending_join'
+
+export function readPendingShareToken(storage: Pick<Storage, 'getItem'>) {
+	try {
+		const value = storage.getItem(PENDING_JOIN_KEY)
+		return value ? shareTokenFromHash(`#join=${value}`) : null
+	} catch {
+		return null
+	}
+}
+
+export function clearPendingShareToken(storage: Pick<Storage, 'removeItem'>) {
+	try {
+		storage.removeItem(PENDING_JOIN_KEY)
+	} catch {
+		// nothing to clear
+	}
+}
+
 /** `#join=<token>` from a URL fragment, or null. */
 export function shareTokenFromHash(hash: string): string | null {
 	const match = /^#?join=(gs1\.[0-9a-f]{64})$/.exec(hash)

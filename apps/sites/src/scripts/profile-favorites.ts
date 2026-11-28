@@ -127,7 +127,7 @@ export function mountFavoritesPage(
 			row.append(body)
 			const heart = el('button', 'icon-btn size-9 shrink-0 border-0')
 			heart.type = 'button'
-			paintHeart(heart, true, labels)
+			paintHeart(heart, true, labels, entry.name)
 			heart.addEventListener('click', async () => {
 				heart.disabled = true
 				const removed = await removeFavorite(entry.id)

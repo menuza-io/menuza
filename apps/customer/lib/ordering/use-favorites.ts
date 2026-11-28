@@ -28,6 +28,11 @@ export function useFavorites() {
 		'loading',
 	)
 	const mounted = useRef(true)
+	/** The client whose answers still count: a signed-out guest's never do. */
+	const current = useRef(client)
+	current.current = client
+	/** Dishes whose change is on its way: a second tap waits for the answer. */
+	const inFlight = useRef(new Set<string>())
 	useEffect(() => {
 		mounted.current = true
 		return () => {
@@ -39,16 +44,24 @@ export function useFavorites() {
 		if (!client) return
 		try {
 			const list = await client.listFavorites()
-			if (!mounted.current) return
+			if (!mounted.current || current.current !== client) return
 			setFavorites(list.favorites)
 			setStatus('ready')
 		} catch {
-			if (mounted.current) setStatus('failed')
+			if (mounted.current && current.current === client) setStatus('failed')
 		}
 	}, [client])
 	useEffect(() => {
+		if (!client) {
+			// Signed out (or another guest signs in): the last guest's hearts must
+			// not show for the next one.
+			setFavorites([])
+			setStatus('loading')
+			inFlight.current.clear()
+			return
+		}
 		void refresh()
-	}, [refresh])
+	}, [client, refresh])
 
 	const ids = useMemo(
 		() => new Set(favorites.map((favorite) => favorite.itemId)),
@@ -58,6 +71,9 @@ export function useFavorites() {
 	const toggle = useCallback(
 		async (itemId: string): Promise<FavoriteOutcome> => {
 			if (!client) return 'failed'
+			// A fast second tap would race a PUT against a DELETE.
+			if (inFlight.current.has(itemId)) return 'ok'
+			inFlight.current.add(itemId)
 			const wasFavorite = ids.has(itemId)
 			setFavorites((current) =>
 				wasFavorite
@@ -74,6 +90,8 @@ export function useFavorites() {
 					error.code === 'favorites_limit_reached'
 					? 'limit'
 					: 'failed'
+			} finally {
+				inFlight.current.delete(itemId)
 			}
 		},
 		[client, ids, refresh],
